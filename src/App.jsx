@@ -433,9 +433,7 @@ export default function K8sQuestApp() {
   const [authChecked, setAuthChecked]     = useState(false);
   const [user, setUser]                   = useState(null);
   const [authScreen, setAuthScreen]       = useState("login");
-  const [email, setEmail]                 = useState("");
-  const [password, setPassword]           = useState("");
-  const [username, setUsername]           = useState("");
+  const authFormRef                       = useRef(null);
   const [authLoading, setAuthLoading]     = useState(false);
   const [authError, setAuthError]         = useState("");
   const [saveError, setSaveError]         = useState("");
@@ -625,11 +623,21 @@ export default function K8sQuestApp() {
     if (data) setLeaderboard(data);
   };
 
+  const getFormValues = () => {
+    const els = authFormRef.current?.elements;
+    return {
+      emailVal:    els?.email?.value    || "",
+      passwordVal: els?.password?.value || "",
+      usernameVal: els?.username?.value || "",
+    };
+  };
+
   const handleSignUp = async () => {
     setAuthLoading(true); setAuthError("");
+    const { emailVal, passwordVal, usernameVal } = getFormValues();
     const { error } = await supabase.auth.signUp({
-      email, password, options: {
-        data: { username: username || email.split("@")[0] },
+      email: emailVal, password: passwordVal, options: {
+        data: { username: usernameVal || emailVal.split("@")[0] },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -645,12 +653,13 @@ export default function K8sQuestApp() {
 
   const handleLogin = async () => {
     setAuthLoading(true); setAuthError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { emailVal, passwordVal } = getFormValues();
+    const { error } = await supabase.auth.signInWithPassword({ email: emailVal, password: passwordVal });
     if (error) {
       setAuthError(t("wrongCredentials"));
     } else if (window.PasswordCredential) {
       try {
-        const cred = new window.PasswordCredential({ id: email, password });
+        const cred = new window.PasswordCredential({ id: emailVal, password: passwordVal });
         await navigator.credentials.store(cred);
       } catch {}
     }
@@ -659,9 +668,10 @@ export default function K8sQuestApp() {
 
   const handleResend = async () => {
     setAuthLoading(true);
+    const { emailVal } = getFormValues();
     const { error } = await supabase.auth.resend({
       type: "signup",
-      email,
+      email: emailVal,
       options: { emailRedirectTo: window.location.origin },
     });
     setAuthError(error ? t("resendError") : t("resendSuccess"));
@@ -918,22 +928,22 @@ export default function K8sQuestApp() {
               </button>
             ))}
           </div>
-          <form onSubmit={e=>{e.preventDefault();authScreen==="login"?handleLogin():handleSignUp();}} autoComplete="on">
+          <form ref={authFormRef} onSubmit={e=>{e.preventDefault();authScreen==="login"?handleLogin():handleSignUp();}} autoComplete="on">
           {authScreen==="signup"&&(
             <div style={{marginBottom:11}}>
               <label style={{color:"#475569",fontSize:11,fontWeight:600,display:"block",marginBottom:5}}>{t("username")}</label>
-              <input name="username" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} placeholder="K8s Hero"
+              <input name="username" autoComplete="username" defaultValue="" placeholder="K8s Hero"
                 style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box"}}/>
             </div>
           )}
           <div style={{marginBottom:11}}>
             <label style={{color:"#475569",fontSize:11,fontWeight:600,display:"block",marginBottom:5}}>{t("email")}</label>
-            <input type="email" name="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"
+            <input type="email" name="email" autoComplete="email" defaultValue="" placeholder="you@example.com"
               style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
           <div style={{marginBottom:14}}>
             <label style={{color:"#475569",fontSize:11,fontWeight:600,display:"block",marginBottom:5}}>{t("password")}</label>
-            <input type="password" name="password" autoComplete={authScreen==="login"?"current-password":"new-password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"
+            <input type="password" name="password" autoComplete={authScreen==="login"?"current-password":"new-password"} defaultValue="" placeholder="••••••••"
               style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
           {authError&&<div style={{marginBottom:12}}>
