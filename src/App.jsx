@@ -643,11 +643,11 @@ export default function K8sQuestApp() {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) { setUser(session.user); loadUserData(session.user.id); }
+      if (session) { setUser(session.user); loadUserData(session.user.id, session.user); }
       setAuthChecked(true);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) { setUser(session.user); loadUserData(session.user.id); }
+      if (session) { setUser(session.user); loadUserData(session.user.id, session.user); }
       setAuthChecked(true);
     });
     return () => subscription.unsubscribe();
@@ -688,13 +688,52 @@ export default function K8sQuestApp() {
     } catch {}
   }, [isGuest, stats, completedTopics, unlockedAchievements]);
 
-  const loadUserData = async (userId) => {
+  const loadUserData = async (userId, sessionUser) => {
     const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
-    if (data) {
-      setStats(data);
-      setCompletedTopics(data.completed_topics || {});
-      setUnlockedAchievements(data.achievements || []);
+
+    // Merge any guest progress from localStorage
+    let guestSaved = null;
+    try {
+      const raw = localStorage.getItem("k8s_quest_guest");
+      if (raw) guestSaved = JSON.parse(raw);
+    } catch {}
+
+    const base = data || {};
+    const gs = guestSaved?.stats || {};
+    const gc = guestSaved?.completedTopics || {};
+    const ga = guestSaved?.unlockedAchievements || [];
+
+    const mergedStats = {
+      total_answered: (base.total_answered || 0) + (gs.total_answered || 0),
+      total_correct:  (base.total_correct  || 0) + (gs.total_correct  || 0),
+      total_score:    (base.total_score    || 0) + (gs.total_score    || 0),
+      max_streak:     Math.max(base.max_streak || 0, gs.max_streak || 0),
+      current_streak: Math.max(base.current_streak || 0, gs.current_streak || 0),
+    };
+
+    const mergedCompleted = { ...(base.completed_topics || {}) };
+    Object.entries(gc).forEach(([key, val]) => {
+      if (!mergedCompleted[key] || val.correct > mergedCompleted[key].correct)
+        mergedCompleted[key] = val;
+    });
+
+    const mergedAch = [...new Set([...(base.achievements || []), ...ga])];
+
+    setStats(mergedStats);
+    setCompletedTopics(mergedCompleted);
+    setUnlockedAchievements(mergedAch);
+
+    // Persist merged data to Supabase and clear guest localStorage
+    if (guestSaved) {
+      const username = sessionUser?.user_metadata?.username || sessionUser?.email?.split("@")[0];
+      await supabase.from("user_stats").upsert({
+        user_id: userId, username,
+        ...mergedStats, completed_topics: mergedCompleted, achievements: mergedAch,
+        updated_at: new Date().toISOString(),
+      });
+      try { localStorage.removeItem("k8s_quest_guest"); } catch {}
     }
+
     achievementsLoaded.current = true;
   };
 
