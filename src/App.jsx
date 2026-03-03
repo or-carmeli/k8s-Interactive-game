@@ -589,7 +589,7 @@ export default function K8sQuestApp() {
         user_id: userId, username,
         ...mergedStats, completed_topics: mergedCompleted, achievements: mergedAch,
         updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: "user_id" });
       try { localStorage.removeItem("k8s_quest_guest"); } catch {}
     }
 
@@ -604,7 +604,7 @@ export default function K8sQuestApp() {
       username: user.user_metadata?.username || user.email?.split("@")[0] || "",
       ...ns, completed_topics: nc, achievements: na,
       updated_at: new Date().toISOString(),
-    });
+    }, { onConflict: "user_id" });
     if (error) {
       setSaveError(t("saveErrorText"));
     }
