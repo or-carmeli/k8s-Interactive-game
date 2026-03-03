@@ -11,9 +11,12 @@ const LEVEL_CONFIG = {
   easy:   { label: "קל",     labelEn: "Easy",   icon: "🌱", color: "#10B981", points: 10 },
   medium: { label: "בינוני", labelEn: "Medium", icon: "⚡", color: "#F59E0B", points: 20 },
   hard:   { label: "קשה",   labelEn: "Hard",   icon: "🔥", color: "#EF4444", points: 30 },
+  mixed:  { label: "מיקס",  labelEn: "Mixed",  icon: "🎲", color: "#A855F7", points: 15 },
 };
 
 const LEVEL_ORDER = ["easy", "medium", "hard"];
+
+const MIXED_TOPIC = { id: "mixed", icon: "🎲", name: "Mixed Quiz", color: "#A855F7", levels: {} };
 
 const ACHIEVEMENTS = [
   { id: "first",    icon: "🌱", name: "ראשית הדרך",   nameEn: "First Steps",     condition: (s) => s.total_answered >= 1 },
@@ -275,16 +278,16 @@ const TOPICS = [
         theory:`Debug מתקדם.\n🔹 kubectl port-forward – מנתב port מ-Pod לlocal machine\n🔹 kubectl cp – מעתיק קבצים מ/ל-Pod\n🔹 kubectl top – CPU/Memory usage בזמן אמת\n🔹 Pod ב-Terminating לא נמחק – בגלל finalizer\nCODE:\nkubectl port-forward pod/my-pod 8080:80\nkubectl cp my-pod:/app/log.txt ./log.txt\nkubectl top pod --sort-by=memory\nkubectl patch pod my-pod -p '{"metadata":{"finalizers":null}}'`,
         theoryEn:`Advanced debugging.\n🔹 kubectl port-forward – routes a port from Pod to local machine\n🔹 kubectl cp – copies files from/to a Pod\n🔹 kubectl top – real-time CPU/Memory usage\n🔹 Pod stuck in Terminating – blocked by a finalizer\nCODE:\nkubectl port-forward pod/my-pod 8080:80\nkubectl cp my-pod:/app/log.txt ./log.txt\nkubectl top pod --sort-by=memory\nkubectl patch pod my-pod -p '{"metadata":{"finalizers":null}}'`,
         questions:[
-          {q:"מה kubectl port-forward עושה?",options:["פותח firewall rule","מנתב port מ-Pod לlocal machine לבדיקות","חושף Pod לאינטרנט","מעדכן Service"],answer:1,explanation:"kubectl port-forward מאפשר גישה ל-Pod מהmachine המקומי ללא Service חיצוני."},
-          {q:"Pod ב-Terminating שלא נמחק – מה הסיבה?",options:["הPod גדול","finalizer מונע את המחיקה","Kubernetes bug","הNetwork קטועה"],answer:1,explanation:"Pod שנתקע ב-Terminating לרוב בגלל finalizer שמחכה לאירוע. ניתן להסיר ב-patch."},
-          {q:"מה kubectl top pod מציג?",options:["פורטים פתוחים","CPU ו-Memory usage של Pods","רשימת volumes","env variables"],answer:1,explanation:"kubectl top pod מציג צריכת CPU וMemory נוכחית של כל Pod."},
-          {q:"איך מעתיקים קובץ מ-Pod לlocal?",options:["kubectl download","kubectl cp pod:/path ./local","kubectl get file","kubectl export"],answer:1,explanation:"kubectl cp [pod]:/remote/path ./local/path מעתיק קבצים מהקונטיינר."},
+          {q:"Pod נתקע ב-CrashLoopBackOff – מה הצעד הראשון לדיבאג?",options:["הגדל memory limits","הרץ kubectl logs [pod] --previous ו-kubectl describe pod","מחק ובנה מחדש את ה-Pod","הפעל מחדש את ה-Deployment"],answer:1,explanation:"הצעד הראשון הוא kubectl logs --previous לראות מה גרם ל-crash, ו-kubectl describe לראות את ה-events."},
+          {q:"Deployment נעצר באמצע Rolling Update – 50% Pods ב-v1, 50% ב-v2. מה עושים?",options:["מחק את כל ה-Pods ידנית","kubectl rollout undo deployment/my-app","הגדל את מספר ה-replicas","kubectl rollout pause"],answer:1,explanation:"kubectl rollout undo מחזיר לגרסה הקודמת באופן מסודר ומבטיח שכל ה-Pods חוזרים ל-v1."},
+          {q:"Service לא מגיע ל-Pods שלו – מה הסיבה הנפוצה ביותר?",options:["Port שגוי ב-Service","selector labels לא תואמים ל-labels של ה-Pods","Namespace שגוי","אין Ingress מוגדר"],answer:1,explanation:"הטעות הנפוצה ביותר היא selector/labels mismatch – ה-Service מחפש Pods עם labels שלא קיימים. בדוק עם kubectl describe service."},
+          {q:"Node נמצא ב-NotReady – מה הפעולה הראשונה?",options:["מחק את ה-Node","kubectl describe node [name] לבדוק events ו-conditions","Restart כל ה-Pods ב-Node","Scale down את ה-Deployment"],answer:1,explanation:"kubectl describe node מציג את ה-conditions וה-events – לרוב תראה שגיאות ב-kubelet, disk pressure, או memory pressure."},
         ],
         questionsEn:[
-          {q:"What does kubectl port-forward do?",options:["Opens a firewall rule","Routes a port from Pod to local machine for testing","Exposes Pod to internet","Updates a Service"],answer:1,explanation:"kubectl port-forward allows access to a Pod from the local machine without an external Service."},
-          {q:"What causes a Pod stuck in Terminating?",options:["Pod too large","A finalizer is blocking deletion","Kubernetes bug","Network cut"],answer:1,explanation:"A Pod stuck in Terminating is usually blocked by a finalizer. Can be removed with patch."},
-          {q:"What does kubectl top pod show?",options:["Open ports","CPU and Memory usage of Pods","List of volumes","env variables"],answer:1,explanation:"kubectl top pod shows the current CPU and Memory consumption of each Pod."},
-          {q:"How do you copy a file from a Pod to local?",options:["kubectl download","kubectl cp pod:/path ./local","kubectl get file","kubectl export"],answer:1,explanation:"kubectl cp [pod]:/remote/path ./local/path copies files from the container to local machine."},
+          {q:"A Pod is stuck in CrashLoopBackOff. What is the first debugging step?",options:["Increase memory limits","Run kubectl logs [pod] --previous and kubectl describe pod","Delete and recreate the Pod","Restart the Deployment"],answer:1,explanation:"The first step is kubectl logs --previous to see what caused the crash, and kubectl describe to see the events."},
+          {q:"A Deployment stalled mid Rolling Update – 50% pods on v1, 50% on v2. What do you do?",options:["Delete all Pods manually","kubectl rollout undo deployment/my-app","Increase the replica count","kubectl rollout pause"],answer:1,explanation:"kubectl rollout undo rolls back to the previous version in an orderly way and ensures all Pods return to v1."},
+          {q:"A Service is not reaching its Pods. What is the most common cause?",options:["Wrong port on Service","Selector labels don't match the Pod labels","Wrong namespace","No Ingress defined"],answer:1,explanation:"The most common mistake is a selector/labels mismatch – the Service is looking for Pods with labels that don't exist. Check with kubectl describe service."},
+          {q:"A Node is in NotReady state. What is the first action?",options:["Delete the Node","kubectl describe node [name] to check events and conditions","Restart all Pods on the Node","Scale down the Deployment"],answer:1,explanation:"kubectl describe node shows conditions and events – you'll typically see kubelet errors, disk pressure, or memory pressure."},
         ],
       },
     }
@@ -332,6 +335,7 @@ const TRANSLATIONS = {
     newAchievement: "הישג חדש!", allRightsReserved: "כל הזכויות שמורות ל",
     optionLabels: ["א","ב","ג","ד"], guestName: "אורח",
     resetProgress: "אפס התקדמות", resetConfirm: "האם אתה בטוח? פעולה זו תמחק את כל ההתקדמות ולא ניתן לבטלה.",
+    mixedQuizBtn: "🎲 חידון מיקס", mixedQuizDesc: "10 שאלות אקראיות מכל הנושאים",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -374,6 +378,7 @@ const TRANSLATIONS = {
     newAchievement: "New Achievement!", allRightsReserved: "All rights reserved to",
     optionLabels: ["A","B","C","D"], guestName: "Guest",
     resetProgress: "Reset Progress", resetConfirm: "Are you sure? This will erase all your progress and cannot be undone.",
+    mixedQuizBtn: "🎲 Mixed Quiz", mixedQuizDesc: "10 random questions from all topics",
   },
 };
 
@@ -461,6 +466,7 @@ export default function K8sQuestApp() {
   const [timerEnabled, setTimerEnabled]                 = useState(true);
   const [timeLeft, setTimeLeft]                         = useState(TIMER_SECONDS);
   const [showConfetti, setShowConfetti]                 = useState(false);
+  const [mixedQuestions, setMixedQuestions]             = useState([]);
 
   const isGuest = user?.id === "guest";
   const achievementsLoaded = useRef(false);
@@ -482,8 +488,8 @@ export default function K8sQuestApp() {
     return idx < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[idx + 1] : null;
   };
 
-  const currentLevelData = selectedTopic && selectedLevel ? getLevelData(selectedTopic, selectedLevel) : null;
-  const currentQuestions = currentLevelData?.questions || [];
+  const currentLevelData = selectedTopic && selectedLevel && selectedTopic.id !== "mixed" ? getLevelData(selectedTopic, selectedLevel) : null;
+  const currentQuestions = selectedTopic?.id === "mixed" ? mixedQuestions : (currentLevelData?.questions || []);
 
   useEffect(() => {
     // Detect Supabase error params redirected back via URL hash (e.g. expired confirmation link)
@@ -730,13 +736,14 @@ export default function K8sQuestApp() {
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
       ];
       setCompletedTopics(newCompleted); setStats(newStats); setUnlockedAchievements(newAch);
-      saveUserData(newStats, newCompleted, newAch);
-      // Confetti if all 3 levels of this topic are now perfect
-      const allPerfect = LEVEL_ORDER.every(lvl => {
-        const r = newCompleted[`${selectedTopic.id}_${lvl}`];
-        return r && r.correct === r.total;
-      });
-      if (allPerfect) { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 4000); }
+      if (selectedTopic.id !== "mixed") {
+        saveUserData(newStats, newCompleted, newAch);
+        const allPerfect = LEVEL_ORDER.every(lvl => {
+          const r = newCompleted[`${selectedTopic.id}_${lvl}`];
+          return r && r.correct === r.total;
+        });
+        if (allPerfect) { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 4000); }
+      }
       setScreen("topicComplete");
     } else {
       setQuestionIndex(p => p + 1);
@@ -758,6 +765,29 @@ export default function K8sQuestApp() {
     if (timerEnabled) setTimeLeft(TIMER_SECONDS);
     setScreen("topic");
     if (isGuest) achievementsLoaded.current = true;
+  };
+
+  const startMixedQuiz = () => {
+    const all = [];
+    TOPICS.forEach(topic => {
+      LEVEL_ORDER.forEach(level => {
+        const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+        qs.forEach(q => all.push(q));
+      });
+    });
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    setMixedQuestions(all.slice(0, 10));
+    isRetryRef.current = false;
+    setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
+    setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
+    setShowExplanation(false);
+    topicCorrectRef.current = 0;
+    setQuizHistory([]); setShowReview(false); setShowConfetti(false);
+    if (timerEnabled) setTimeLeft(TIMER_SECONDS);
+    setScreen("topic");
   };
 
   // Keyboard shortcuts: 1-4 to pick answer, Enter to confirm/next
@@ -963,6 +993,17 @@ export default function K8sQuestApp() {
               </div>
             ))}
           </div>
+          <button onClick={startMixedQuiz} style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+            onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <span style={{fontSize:28}}>🎲</span>
+              <div style={{textAlign:"start"}}>
+                <div style={{color:"#A855F7",fontWeight:800,fontSize:15}}>{t("mixedQuizBtn")}</div>
+                <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("mixedQuizDesc")}</div>
+              </div>
+            </div>
+            <span style={{color:"#A855F7",fontSize:20}}>→</span>
+          </button>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {TOPICS.map(topic=>(
               <div key={topic.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px"}}>
@@ -1148,7 +1189,7 @@ export default function K8sQuestApp() {
               <button onClick={()=>setUser(null)} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
             </div>}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {allCorrect&&getNextLevel(selectedLevel)&&(()=>{
+              {selectedTopic.id!=="mixed"&&allCorrect&&getNextLevel(selectedLevel)&&(()=>{
                 const nextLvl=getNextLevel(selectedLevel);
                 const nextCfg=LEVEL_CONFIG[nextLvl];
                 return(
@@ -1161,7 +1202,7 @@ export default function K8sQuestApp() {
               {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
-              <button onClick={()=>startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
+              <button onClick={()=>selectedTopic.id==="mixed"?startMixedQuiz():startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
               <button onClick={()=>setScreen("home")} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#e2e8f0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
             {showReview&&quizHistory.length>0&&(
