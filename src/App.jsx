@@ -596,11 +596,16 @@ export default function K8sQuestApp() {
     setSaveError("");
     const { error } = await supabase.from("user_stats").upsert({
       user_id: user.id,
-      username: user.user_metadata?.username || email.split("@")[0],
+      username: user.user_metadata?.username || user.email?.split("@")[0] || "",
       ...ns, completed_topics: nc, achievements: na,
       updated_at: new Date().toISOString(),
     });
-    if (error) setSaveError(t("saveErrorText"));
+    if (error) {
+      if (error.message?.includes("session") || error.code === "PGRST301") {
+        setUser(null);
+      }
+      setSaveError(t("saveErrorText"));
+    }
   };
 
   const loadLeaderboard = async () => {
@@ -1028,7 +1033,7 @@ export default function K8sQuestApp() {
               </div>
 
               <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:22,marginBottom:14}}>
-                <div style={{color:"#e2e8f0",fontSize:16,fontWeight:700,lineHeight:1.65}}>{currentQuestions[questionIndex].q}</div>
+                <div dir="auto" style={{color:"#e2e8f0",fontSize:16,fontWeight:700,lineHeight:1.65}}>{currentQuestions[questionIndex].q}</div>
               </div>
 
               <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
@@ -1046,7 +1051,7 @@ export default function K8sQuestApp() {
                       onClick={()=>handleSelectAnswer(i)}
                       style={{width:"100%",textAlign:dir==="rtl"?"right":"left",padding:"13px 16px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:submitted?"default":"pointer",lineHeight:1.5,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
                       <span style={{opacity:0.4,fontSize:12,flexShrink:0}}>{t("optionLabels")[i]}.</span>
-                      <span style={{flex:1}}>{opt}</span>
+                      <span dir="auto" style={{flex:1}}>{opt}</span>
                       {submitted&&isCorrect&&<span>✓</span>}
                       {submitted&&isChosen&&!isCorrect&&<span>✗</span>}
                     </button>
