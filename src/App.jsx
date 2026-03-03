@@ -33,7 +33,7 @@ const year = new Date().getFullYear();
 function Footer() {
   return (
     <div style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid rgba(255,255,255,0.05)"}}>
-      <p style={{color:"#1e293b",fontSize:12,margin:0}}>
+      <p style={{color:"#475569",fontSize:12,margin:0}}>
         © {year} כל הזכויות שמורות לـ{" "}
         <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer"
           style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>
@@ -259,7 +259,7 @@ export default function K8sQuestApp() {
           <circle cx="50" cy="50" r="44" fill="none" stroke="url(#slg)" strokeWidth="5" opacity="0.8"/>
           <circle cx="50" cy="50" r="6" fill="#00D4FF"/>
         </svg>
-        <div style={{color:"#334155",fontSize:13}}>טוען...</div>
+        <div style={{color:"#475569",fontSize:13}}>טוען...</div>
       </div>
     </div>
   );
@@ -290,12 +290,12 @@ export default function K8sQuestApp() {
           🚀 התחל לשחק עכשיו
         </button>
         {/* FIX #6: subtitle same cyan tint as button */}
-        <p style={{textAlign:"center",color:"#7dd3fc",opacity:0.5,fontSize:12,margin:"0 0 26px"}}>ללא הרשמה · ללא סיסמה · מיידי</p>
+        <p style={{textAlign:"center",color:"#7dd3fc",opacity:0.75,fontSize:12,margin:"0 0 26px"}}>ללא הרשמה · ללא סיסמה · מיידי</p>
 
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
-          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.06)"}}/>
-          <span style={{color:"#1e293b",fontSize:12,whiteSpace:"nowrap"}}>רוצה לשמור את ההתקדמות?</span>
-          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.06)"}}/>
+          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.1)"}}/>
+          <span style={{color:"#64748b",fontSize:12,whiteSpace:"nowrap"}}>רוצה לשמור את ההתקדמות?</span>
+          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.1)"}}/>
         </div>
 
         <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"18px 20px"}}>
@@ -335,7 +335,7 @@ export default function K8sQuestApp() {
             {authLoading?"⏳ רגע...":authScreen==="login"?"התחבר":"הירשם"}
           </button>
         </div>
-        <p style={{textAlign:"center",color:"#1e293b",fontSize:11,marginTop:22}}>
+        <p style={{textAlign:"center",color:"#475569",fontSize:11,marginTop:22}}>
           © {year} כל הזכויות שמורות לـ{" "}
           <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>
         </p>
@@ -359,7 +359,7 @@ export default function K8sQuestApp() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
             <div>
               <h1 style={{fontSize:28,fontWeight:900,margin:"0 0 2px",background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>☸️ K8s Quest</h1>
-              <p style={{color:"#475569",fontSize:13,margin:0}}>שלום, {displayName}! 👋 {isGuest&&<span style={{color:"#1e3a4a"}}>· משחק כאורח</span>}</p>
+              <p style={{color:"#475569",fontSize:13,margin:0}}>שלום, {displayName}! 👋 {isGuest&&<span style={{color:"#475569"}}>· משחק כאורח</span>}</p>
             </div>
             <div style={{display:"flex",gap:8}}>
               {!isGuest&&<button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);}} style={{padding:"8px 14px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#94a3b8",cursor:"pointer",fontSize:13}}>🏆 טבלה</button>}
