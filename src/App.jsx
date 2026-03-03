@@ -216,8 +216,10 @@ export default function K8sQuestApp() {
     }
   };
 
+  const isGuest = user?.id === "guest";
+
   const saveUserData = async (newStats, newCompleted, newAchievements) => {
-    if (!user) return;
+    if (!user || isGuest) return;
     await supabase.from("user_stats").upsert({
       user_id: user.id,
       username: user.user_metadata?.username || email.split("@")[0],
@@ -591,6 +593,21 @@ export default function K8sQuestApp() {
           </div>
         );
       })()}
+
+      {/* Footer */}
+      <div style={{ textAlign: "center", padding: "24px 20px", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: 20 }}>
+        <p style={{ color: "#334155", fontSize: 12, margin: 0 }}>
+          {"© "}{new Date().getFullYear()}{" כל הזכויות שמורות לـ "}
+          <a
+            href="https://www.linkedin.com/in/orcarmeli/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#0ea5e9", textDecoration: "none", fontWeight: 600 }}
+          >
+            Or Carmeli
+          </a>
+        </p>
+      </div>
     </div>
   );
 }
