@@ -446,7 +446,7 @@ export default function K8sQuestApp() {
                   <span style={{color:"#475569",fontSize:12}}>שאלה {questionIndex+1} / {currentQuestions.length}</span>
                   {/* FIX #3: always visible streak, changes color only when active */}
                   <span style={{color:stats.current_streak>0?"#FF6B35":"#475569",fontSize:12,fontWeight:700}}>
-                    🔥 {stats.current_streak}
+                    🔥 {stats.current_streak} רצף
                   </span>
                 </div>
                 {/* FIX #5: progress includes current answered question */}
