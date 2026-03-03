@@ -242,6 +242,9 @@ const TRANSLATIONS = {
     emailSent: "✅ נשלח אימייל אימות! בדקי את תיבת הדואר.",
     otpExpired: "❌ קישור האימות פג תוקף. אנא הירשם שוב כדי לקבל קישור חדש.",
     wrongCredentials: "אימייל או סיסמה שגויים",
+    didntReceive: "לא קיבלת את המייל?", resendBtn: "שלח שוב",
+    resendSuccess: "✅ אימייל חדש נשלח! בדוק את תיבת הדואר.",
+    resendError: "❌ שגיאה בשליחה מחדש. נסה שוב.",
     greeting: "שלום", playingAsGuest: "· משחק כאורח",
     leaderboardBtn: "🏆 טבלה", logout: "יציאה",
     guestBanner: "💡 הרשם כדי לשמור התקדמות ולהופיע בלוח התוצאות",
@@ -276,6 +279,9 @@ const TRANSLATIONS = {
     emailSent: "✅ Verification email sent! Check your inbox.",
     otpExpired: "❌ Verification link has expired. Please sign up again to receive a new link.",
     wrongCredentials: "Incorrect email or password",
+    didntReceive: "Didn't receive the email?", resendBtn: "Resend",
+    resendSuccess: "✅ New email sent! Check your inbox.",
+    resendError: "❌ Failed to resend. Please try again.",
     greeting: "Hello", playingAsGuest: "· Playing as guest",
     leaderboardBtn: "🏆 Leaderboard", logout: "Logout",
     guestBanner: "💡 Sign up to save progress and appear on the leaderboard",
@@ -463,6 +469,17 @@ export default function K8sQuestApp() {
     setAuthLoading(false);
   };
 
+  const handleResend = async () => {
+    setAuthLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setAuthError(error ? t("resendError") : t("resendSuccess"));
+    setAuthLoading(false);
+  };
+
   const handleLogout = async () => {
     if (isGuest) {
       setUser(null);
@@ -641,7 +658,16 @@ export default function K8sQuestApp() {
               onKeyDown={e=>e.key==="Enter"&&(authScreen==="login"?handleLogin():handleSignUp())}
               style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
-          {authError&&<div style={{color:authError.startsWith("✅")?"#10B981":"#EF4444",fontSize:12,marginBottom:12,padding:"8px 12px",background:authError.startsWith("✅")?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",borderRadius:8}}>{authError}</div>}
+          {authError&&<div style={{marginBottom:12}}>
+            <div style={{color:authError.startsWith("✅")?"#10B981":"#EF4444",fontSize:12,padding:"8px 12px",background:authError.startsWith("✅")?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",borderRadius:8}}>{authError}</div>
+            {authScreen==="signup"&&authError.startsWith("✅")&&<div style={{textAlign:"center",marginTop:8,fontSize:12,color:"#475569"}}>
+              {t("didntReceive")}{" "}
+              <button onClick={handleResend} disabled={authLoading}
+                style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:12,padding:0,textDecoration:"underline"}}>
+                {t("resendBtn")}
+              </button>
+            </div>}
+          </div>}
           <button onClick={authScreen==="login"?handleLogin:handleSignUp} disabled={authLoading}
             style={{width:"100%",padding:"11px",background:"linear-gradient(135deg,#00D4FF88,#A855F788)",border:"none",borderRadius:10,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",opacity:authLoading?0.7:1}}>
             {authLoading?t("loading"):authScreen==="login"?t("loginBtn"):t("signupBtn")}
