@@ -67,6 +67,7 @@ export default function K8sQuestApp() {
 
   // FIX #2: track correct count via ref to avoid stale closures
   const topicCorrectRef = useRef(0);
+  const isRetryRef = useRef(false);
 
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0,
@@ -182,6 +183,7 @@ export default function K8sQuestApp() {
     }
     setStats(prev => {
       const streak = correct ? prev.current_streak + 1 : 0;
+      if (isRetryRef.current) return { ...prev, current_streak: streak, max_streak: Math.max(prev.max_streak, streak) };
       return {
         ...prev,
         total_answered: prev.total_answered + 1,
@@ -220,6 +222,8 @@ export default function K8sQuestApp() {
   };
 
   const startTopic = (topic, level) => {
+    const key = `${topic.id}_${level}`;
+    isRetryRef.current = !!(completedTopics[key]);
     setSelectedTopic(topic); setSelectedLevel(level); setTopicScreen("theory");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);
