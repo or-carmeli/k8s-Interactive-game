@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import WeakAreaCard from "./components/WeakAreaCard";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://knzawpdrpahilmohzpbl.supabase.co";
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuemF3cGRycGFoaWxtb2h6cGJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NDA2NzYsImV4cCI6MjA4ODExNjY3Nn0.Vh4vwQkSgIHkyr3LPVAvsktni_l5q1DhP3S3MT97KQ8";
@@ -456,6 +457,10 @@ export default function K8sQuestApp() {
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0,
   });
+  const [topicStats, setTopicStats] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("topicStats_v1")) || {}; } catch { return {}; }
+  });
+  const [highlightTopic, setHighlightTopic] = useState(null);
   const [completedTopics, setCompletedTopics]           = useState({});
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const [newAchievement, setNewAchievement]             = useState(null);
@@ -554,6 +559,10 @@ export default function K8sQuestApp() {
       localStorage.setItem("k8s_quest_guest", JSON.stringify({ stats, completedTopics, unlockedAchievements }));
     } catch {}
   }, [isGuest, stats, completedTopics, unlockedAchievements]);
+
+  useEffect(() => {
+    try { localStorage.setItem("topicStats_v1", JSON.stringify(topicStats)); } catch {}
+  }, [topicStats]);
 
   const loadUserData = async (userId, sessionUser) => {
     const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
@@ -698,6 +707,8 @@ export default function K8sQuestApp() {
     setStats(emptyStats);
     setCompletedTopics({});
     setUnlockedAchievements([]);
+    setTopicStats({});
+    try { localStorage.removeItem("topicStats_v1"); } catch {}
     if (isGuest) {
       try { localStorage.removeItem("k8s_quest_guest"); } catch {}
     } else if (user) {
@@ -753,6 +764,12 @@ export default function K8sQuestApp() {
           max_streak:     Math.max(prev.max_streak, streak),
         };
       });
+      if (selectedTopic.id !== "mixed") {
+        setTopicStats(prev => {
+          const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
+          return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
+        });
+      }
     }
   };
 
@@ -989,7 +1006,7 @@ export default function K8sQuestApp() {
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,position:"relative",overflowX:"hidden"}}>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}input,button{outline:none;font-family:inherit}@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)!important}.page-pad{padding:16px 12px!important}.quiz-bar-right{flex-wrap:wrap!important;gap:6px!important}}`}</style>
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}input,button{outline:none;font-family:inherit}@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)!important}.page-pad{padding:16px 12px!important}.quiz-bar-right{flex-wrap:wrap!important;gap:6px!important}}`}</style>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
       {showConfetti&&<Confetti/>}
@@ -1028,6 +1045,10 @@ export default function K8sQuestApp() {
               </div>
             ))}
           </div>
+          <WeakAreaCard topicStats={topicStats} onGoToTopic={(id) => {
+            const el = document.getElementById(`topic-card-${id}`);
+            if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
+          }}/>
           <button onClick={startMixedQuiz} style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -1041,7 +1062,7 @@ export default function K8sQuestApp() {
           </button>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {TOPICS.map(topic=>(
-              <div key={topic.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px"}}>
+              <div key={topic.id} id={`topic-card-${topic.id}`} className={highlightTopic===topic.id?"pulseHighlight":undefined} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
                   <div style={{fontSize:24,width:44,height:44,borderRadius:10,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>{topic.icon}</div>
                   <div style={{flex:1}}>
