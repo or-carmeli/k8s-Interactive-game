@@ -608,7 +608,8 @@ export default function K8sQuestApp() {
     if (!user || isGuest) return;
     setSaveError("");
     const { error } = await supabase.from("user_stats").upsert({
-      user_id: user.id,
+      user_id: user.id,git push
+
       username: user.user_metadata?.username || user.email?.split("@")[0] || "",
       ...ns, completed_topics: nc, achievements: na,
       updated_at: new Date().toISOString(),
@@ -920,12 +921,12 @@ export default function K8sQuestApp() {
           )}
           <div style={{marginBottom:11}}>
             <label style={{color:"#475569",fontSize:11,fontWeight:600,display:"block",marginBottom:5}}>{t("email")}</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"
+            <input type="email" name="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"
               style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
           <div style={{marginBottom:14}}>
             <label style={{color:"#475569",fontSize:11,fontWeight:600,display:"block",marginBottom:5}}>{t("password")}</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"
+            <input type="password" name="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"
               onKeyDown={e=>e.key==="Enter"&&(authScreen==="login"?handleLogin():handleSignUp())}
               style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
