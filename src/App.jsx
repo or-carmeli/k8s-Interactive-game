@@ -911,10 +911,11 @@ export default function K8sQuestApp() {
               </button>
             ))}
           </div>
+          <form onSubmit={e=>{e.preventDefault();authScreen==="login"?handleLogin():handleSignUp();}} autoComplete="on">
           {authScreen==="signup"&&(
             <div style={{marginBottom:11}}>
               <label style={{color:"#475569",fontSize:11,fontWeight:600,display:"block",marginBottom:5}}>{t("username")}</label>
-              <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="K8s Hero"
+              <input name="username" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} placeholder="K8s Hero"
                 style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box"}}/>
             </div>
           )}
@@ -925,24 +926,24 @@ export default function K8sQuestApp() {
           </div>
           <div style={{marginBottom:14}}>
             <label style={{color:"#475569",fontSize:11,fontWeight:600,display:"block",marginBottom:5}}>{t("password")}</label>
-            <input type="password" name="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"
-              onKeyDown={e=>e.key==="Enter"&&(authScreen==="login"?handleLogin():handleSignUp())}
+            <input type="password" name="password" autoComplete={authScreen==="login"?"current-password":"new-password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"
               style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:13,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
           {authError&&<div style={{marginBottom:12}}>
             <div style={{color:authError.startsWith("✅")?"#10B981":"#EF4444",fontSize:12,padding:"8px 12px",background:authError.startsWith("✅")?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",borderRadius:8}}>{authError}</div>
             {authScreen==="signup"&&authError.startsWith("✅")&&<div style={{textAlign:"center",marginTop:8,fontSize:12,color:"#475569"}}>
               {t("didntReceive")}{" "}
-              <button onClick={handleResend} disabled={authLoading}
+              <button type="button" onClick={handleResend} disabled={authLoading}
                 style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:12,padding:0,textDecoration:"underline"}}>
                 {t("resendBtn")}
               </button>
             </div>}
           </div>}
-          <button onClick={authScreen==="login"?handleLogin:handleSignUp} disabled={authLoading}
+          <button type="submit" disabled={authLoading}
             style={{width:"100%",padding:"11px",background:"linear-gradient(135deg,#00D4FF88,#A855F788)",border:"none",borderRadius:10,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",opacity:authLoading?0.7:1}}>
             {authLoading?t("loading"):authScreen==="login"?t("loginBtn"):t("signupBtn")}
           </button>
+          </form>
         </div>
         <p style={{textAlign:"center",color:"#475569",fontSize:11,marginTop:22}}>
           © {year} {t("allRightsReserved")}{" "}
