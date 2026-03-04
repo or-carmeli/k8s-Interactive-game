@@ -554,6 +554,12 @@ const TRANSLATIONS = {
     advancedPractice: "לתרגול מתקדם",
     accuracyLabel: "דיוק",
     goBackToTopic: "חזרי לנושא הזה",
+    // Male-form overrides (used when gender === "m")
+    roadmapStage_m: "אתה בשלב",
+    roadmapContinue_m: "🚀 המשך לשלב הבא",
+    roadmapContinueHere_m: "▶ המשך מכאן",
+    weakAreaEmpty_m: "עדיין אין מספיק נתונים, התחל לענות כדי שנמליץ מה לחזק.",
+    goBackToTopic_m: "חזור לנושא הזה",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -651,6 +657,21 @@ function LangSwitcher({ lang, setLang }) {
   );
 }
 
+function GenderToggle({ gender, setGender }) {
+  return (
+    <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,padding:2}}>
+      {[{v:"f",label:"♀"},{v:"m",label:"♂"}].map(({v,label}) => (
+        <button key={v} onClick={()=>setGender(v)}
+          style={{padding:"4px 9px",border:"none",borderRadius:6,cursor:"pointer",fontSize:13,
+            background:gender===v?"rgba(0,212,255,0.15)":"transparent",
+            color:gender===v?"#00D4FF":"#64748b",fontWeight:gender===v?700:400}}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Footer({ lang }) {
   const txt = TRANSLATIONS[lang] || TRANSLATIONS.he;
   return (
@@ -666,7 +687,12 @@ function Footer({ lang }) {
 
 export default function K8sQuestApp() {
   const [lang, setLang]                   = useState("he");
-  const t = (key) => TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.he[key] ?? key;
+  const [gender, setGender]               = useState(() => localStorage.getItem("gender_v1") || "f");
+  const handleSetGender = (g) => { setGender(g); localStorage.setItem("gender_v1", g); };
+  const t = (key) => {
+    if (lang === "he" && gender === "m" && TRANSLATIONS.he[key + "_m"]) return TRANSLATIONS.he[key + "_m"];
+    return TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.he[key] ?? key;
+  };
   const dir = lang === "he" ? "rtl" : "ltr";
 
   const [authChecked, setAuthChecked]     = useState(false);
@@ -1199,7 +1225,8 @@ export default function K8sQuestApp() {
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,0.2)}70%{box-shadow:0 0 0 14px rgba(0,212,255,0)}}input,button{outline:none;font-family:inherit}.gbtn:hover{background:rgba(0,212,255,0.13)!important;border-color:rgba(0,212,255,0.5)!important;color:#00D4FF!important;transform:translateY(-2px)}`}</style>
       <div style={{width:"100%",maxWidth:400,animation:"fadeIn 0.4s ease"}}>
         {/* Language switcher */}
-        <div style={{display:"flex",justifyContent:"flex-end",direction:"ltr",marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",direction:"ltr",marginBottom:12,gap:8}}>
+          {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
           <LangSwitcher lang={lang} setLang={setLang}/>
         </div>
 
@@ -1302,7 +1329,10 @@ export default function K8sQuestApp() {
           <div style={{marginBottom:20}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
               <h1 style={{fontSize:26,fontWeight:900,margin:0,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>☸️ K8s Quest</h1>
-              <LangSwitcher lang={lang} setLang={setLang}/>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
+                <LangSwitcher lang={lang} setLang={setLang}/>
+              </div>
             </div>
             <p style={{color:"#475569",fontSize:13,margin:"4px 0 10px"}}>{t("greeting")}, {displayName}! 👋 {isGuest&&<span style={{color:"#475569"}}>{t("playingAsGuest")}</span>}</p>
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>

@@ -13,11 +13,13 @@ const LVL_ORDER = ["easy", "medium", "hard"];
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function stageProgress(topicId, completedTopics) {
-  const done = LVL_ORDER.filter(lvl => {
+  const QUESTIONS_PER_LEVEL = 10;
+  const totalQ = LVL_ORDER.length * QUESTIONS_PER_LEVEL;
+  const correctQ = LVL_ORDER.reduce((sum, lvl) => {
     const r = completedTopics[`${topicId}_${lvl}`];
-    return r && r.correct === r.total;
-  }).length;
-  return Math.round((done / LVL_ORDER.length) * 100);
+    return sum + (r ? r.correct : 0);
+  }, 0);
+  return Math.round((correctQ / totalQ) * 100);
 }
 
 function isStageCompleted(topicId, completedTopics) {
@@ -195,7 +197,7 @@ export default function RoadmapView({
                     {t("roadmapLocked")}
                   </div>
                 ) : completed ? (
-                  <button disabled style={{width:"100%",padding:"8px",background:"rgba(16,185,129,0.06)",border:"1px solid rgba(16,185,129,0.18)",borderRadius:10,color:"#10B981",fontSize:13,fontWeight:700,cursor:"default",opacity:0.8}}>
+                  <button disabled style={{width:"100%",padding:"8px",background:"rgba(16,185,129,0.06)",border:"1px solid rgba(16,185,129,0.18)",borderRadius:10,color:"#10B981",fontSize:13,fontWeight:700,cursor:"default",opacity:0.8,direction:dir}}>
                     {t("roadmapDone")}
                   </button>
                 ) : recLvl ? (
