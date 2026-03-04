@@ -1132,7 +1132,7 @@ export const TOPICS = [
               "PriorityClass קובע את עדיפות ה-Pod. Pods עם priorityClassName גבוה יוקצו ראשונים ויכולים לגרום לpreemption.",
           },
           {
-            q: "Pod נשאר Pending. kubectl describe מראה:\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available: 3 node(s) had untolerated taint {dedicated:gpu}.\nמה הפתרון?",
+            q: "Pod נשאר Pending.\n\nkubectl describe מראה:\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available: 3 node(s) had untolerated taint {dedicated:gpu}.\n\nמה הפתרון?",
             options: [
               "הוסף Node חדש לCluster ללא taint",
               "הקטן את ה-CPU request כדי שה-Pod יתאים לNode קטן יותר",
@@ -1141,10 +1141,10 @@ export const TOPICS = [
             ],
             answer: 2,
             explanation:
-              "ה-Node מסומן עם taint dedicated=gpu. Pod בלי toleration תואם לא יתוזמן שם. הוסף tolerations: [{key:'dedicated', value:'gpu', effect:'NoSchedule'}] ל-Pod spec.",
+              "כשNode מסומן עם taint, רק Pods שמגדירים Toleration תואם יכולים לרוץ עליו. הוסף tolerations: [{key:'dedicated', value:'gpu', effect:'NoSchedule'}] ל-Pod spec. האפשרויות האחרות (הקטנת CPU, שינוי Namespace) לא פותרות את בעיית ה-taint.",
           },
           {
-            q: "StatefulSet עם 3 replicas. Pod-1 נשאר Pending. מה הסיבה הנפוצה?",
+            q: "StatefulSet עם 3 replicas רץ בCluster. Pod-1 נשאר Pending.\n\nמה הסיבה הנפוצה?",
             options: [
               "ה-PVC של pod-1 מלא ולא ניתן להקצות אחסון נוסף",
               "Pod-0 לא Ready – StatefulSet מתזמן Pods בסדר לפי ordinal",
@@ -1153,10 +1153,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "StatefulSet מתזמן Pods בסדר: pod-0 חייב להיות Ready לפני pod-1. בדוק kubectl get pod pod-0 ו-kubectl describe pod pod-0 לגלות מה חוסם.",
+              "StatefulSet מתזמן Pods בסדר ordinal: pod-0 חייב להיות Ready לפני שpod-1 מתחיל. זאת התנהגות מכוונת שמבטיחה עקביות ב-stateful applications. בדוק kubectl describe pod pod-0 לגלות מה מונע ממנו להיות Ready.",
           },
           {
-            q: "kubectl get hpa מציג:\nNAME    REFERENCE         TARGETS         MINPODS  MAXPODS  REPLICAS\napp-hpa  Deployment/app   <unknown>/50%   2        10       2\nמה הסיבה ל-<unknown>?",
+            q: "בודק את מצב ה-HPA בCluster.\n\nkubectl get hpa מציג:\nNAME    REFERENCE         TARGETS         MINPODS  MAXPODS  REPLICAS\napp-hpa  Deployment/app   <unknown>/50%   2        10       2\n\nמה הסיבה ל-<unknown>?",
             options: [
               "ה-Deployment שה-HPA מפנה אליו לא קיים בNamespace",
               "metrics-server לא מותקן – HPA לא מקבל מדדי CPU",
@@ -1165,10 +1165,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "<unknown> ב-TARGETS מציין שHPA לא מקבל metrics. הסיבה הנפוצה: metrics-server לא מותקן. בדוק: kubectl get apiservice v1beta1.metrics.k8s.io.",
+              "HPA תלוי ב-metrics-server כדי לקבל נתוני CPU. כשmetrics-server לא מותקן, ה-TARGETS מציג <unknown> כי אין מדדים. בדוק עם: kubectl get apiservice v1beta1.metrics.k8s.io ואם חסר – התקן metrics-server.",
           },
           {
-            q: "Rolling update נתקע. kubectl rollout status מציג:\nWaiting for rollout to finish: 3 out of 5 new replicas have been updated...\nה-YAML מגדיר maxUnavailable: 0. מה הסיבה?",
+            q: "Rolling update נתקע.\n\nkubectl rollout status מציג:\nWaiting for rollout to finish: 3 out of 5 new replicas have been updated...\nה-YAML מגדיר maxUnavailable: 0.\n\nמה הסיבה?",
             options: [
               "ה-Namespace quota מלא ולא ניתן ליצור Pods נוספים",
               "Pods החדשים לא עוברים readiness probe, ו-maxUnavailable:0 מונע הורדת ישנים",
@@ -1177,10 +1177,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "עם maxUnavailable:0, K8s לא יכול להוריד Pod ישן עד שחדש Ready. אם readiness probe נכשלת, rollout נתקע. בדוק logs של Pod חדש.",
+              "maxUnavailable:0 אומר שאסור להוריד Pod ישן עד שhחדש עובר readiness probe. כשPods חדשים נכשלים בreadiness, K8s לא מקדם את ה-rollout ולא מוריד ישנים – ה-update נתקע. בדוק kubectl logs לPod החדש לגלות למה הreadiness probe נכשלת.",
           },
           {
-            q: "DaemonSet לא מופיע על Node חדש. kubectl describe node מראה:\nTaints: node-role.kubernetes.io/control-plane:NoSchedule\nה-DaemonSet spec אינו כולל tolerations. מה הפתרון?",
+            q: "DaemonSet לא מופיע על Node חדש.\n\nkubectl describe node מראה:\nTaints: node-role.kubernetes.io/control-plane:NoSchedule\nה-DaemonSet spec אינו כולל tolerations.\n\nמה הפתרון?",
             options: [
               "מחק ה-Node והוסף אותו מחדש ללא ה-taint",
               "שנה את ה-Namespace של ה-DaemonSet לkube-system",
@@ -1189,10 +1189,10 @@ export const TOPICS = [
             ],
             answer: 2,
             explanation:
-              "Node עם taint NoSchedule דוחה Pods ללא Toleration תואם. DaemonSets ל-system components כמו logging צריכים לכלול את ה-toleration לcontrol-plane.",
+              "control-plane Nodes מסומנים עם NoSchedule taint כדי שPods רגילים לא ירוצו עליהם. כדי שDaemonSet יפעל על control-plane, יש להוסיף toleration מפורש עם key: node-role.kubernetes.io/control-plane. שינוי Namespace לא עוזר – הtaint חל ברמת Node.",
           },
           {
-            q: "Pod חוזר ומקבל OOMKilled. kubectl describe pod מראה:\nLast State: Terminated Reason: OOMKilled Exit Code: 137\nContainers: limits: memory: 128Mi\nמה הצעד הראשון?",
+            q: "Pod חוזר ומקבל OOMKilled.\n\nkubectl describe pod מראה:\nLast State: Terminated  Reason: OOMKilled  Exit Code: 137\nContainers: limits: memory: 128Mi\n\nמה הצעד הראשון?",
             options: [
               "מחק את ה-Pod ויצור אותו מחדש עם RestartPolicy: Never",
               "הגדל limits.memory ל-256Mi+ ובדוק אם האפליקציה דולפת זיכרון",
@@ -1201,10 +1201,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Exit 137 + OOMKilled = חריגה מlimits.memory. הגדל את הlimit. השתמש בkubectl top pod לראות שימוש אמיתי. בדוק גם memory leak באפליקציה.",
+              "Exit 137 + OOMKilled מציין שהקונטיינר חרג מhמגבלת הזיכרון שלו (128Mi) וה-kernel סיים אותו. הפתרון הראשון: הגדל limits.memory ל-256Mi+ ובדוק עם kubectl top pod את השימוש בפועל. בדוק גם memory leak באפליקציה.",
           },
           {
-            q: "Job לא הסתיים. kubectl describe job מציג:\nWarning  BackoffLimitExceeded  Job has reached the specified backoff limit\nמה קורה בנגינה?",
+            q: "Job לא הסתיים.\n\nkubectl describe job מציג:\nWarning  BackoffLimitExceeded  Job has reached the specified backoff limit\n\nמה קורה כעת?",
             options: [
               "Job ממשיך לרוץ לנצח ומנסה שוב ושוב ללא הגבלה",
               "Job מסומן כFailed – Kubernetes הפסיק לנסות מחדש",
@@ -1213,10 +1213,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "BackoffLimitExceeded אומר שJob נכשל backoffLimit פעמים ומסומן Failed. בדוק logs של ה-Pods שנכשלו כדי להבין הסיבה ולתקן.",
+              "כשJob מגיע לbackoffLimit (ברירת מחדל: 6), Kubernetes מסמן אותו כFailed ומפסיק לנסות. ה-Job object נשמר לצורך חקירה. בדוק kubectl logs של הPods שנכשלו כדי להבין הסיבה.",
           },
           {
-            q: "Deployment לא מנהל Pods. kubectl get pods --show-labels מראה: app=backend-v2. ה-Deployment spec:\nspec:\n  selector:\n    matchLabels:\n      app: backend\nמה הבעיה?",
+            q: "Deployment לא מנהל Pods. kubectl get pods --show-labels מראה: app=backend-v2.\n\nה-Deployment spec:\nspec:\n  selector:\n    matchLabels:\n      app: backend\n\nמה הבעיה?",
             options: [
               "ה-Namespace של ה-Pods שונה מה-Namespace של ה-Deployment",
               "selector לא תואם labels של Pods – 'backend' ≠ 'backend-v2'",
@@ -1225,10 +1225,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Deployment.spec.selector.matchLabels חייב להתאים ל-template.metadata.labels. אי-תאימות גורמת ל-Deployment לא לשלוט בPods. שנה selector או label.",
+              "Deployment מוצא את הPods שלו לפי selector.matchLabels. כשselector הוא 'app: backend' אבל ה-Pods מתויגים 'app: backend-v2', ה-Deployment לא שולט בהם כלל. יש לסנכרן בין selector לtemplate.metadata.labels.",
           },
           {
-            q: "kubectl rollout status deployment/app מציג:\nWaiting for rollout to finish: 1 old replicas are pending termination...\nזה נמשך 15 דקות. מה בודקים?",
+            q: "rollout כמעט הסתיים אבל תקוע.\n\nkubectl rollout status deployment/app מציג:\nWaiting for rollout to finish: 1 old replicas are pending termination...\nזה נמשך 15 דקות.\n\nמה בודקים?",
             options: [
               "בודקים אם ה-image של ה-Pod החדש קיים ב-registry",
               "Pod בTerminating בגלל finalizer שלא נוקה, או terminationGracePeriodSeconds גבוה מדי",
@@ -1237,10 +1237,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              'Pod בTerminating לאורך זמן = finalizer לא נוקה, או grace period ארוך. kubectl describe pod <terminating-pod> לראות finalizers. kubectl patch pod ... -p \'{"metadata":{"finalizers":null}}\' לביטול.',
+              'Pod שנשאר Terminating לאורך זמן נמנע ממחיקה בגלל finalizer שלא נוקה, או terminationGracePeriodSeconds גבוה מאוד. בדוק kubectl describe pod <terminating-pod> לראות את ה-finalizers. להסיר ידנית: kubectl patch pod ... -p \'{"metadata":{"finalizers":null}}\'.',
           },
           {
-            q: "VPA ב-Recommendation mode. kubectl describe vpa app-vpa מציג:\nTarget: cpu: 450m, memory: 512Mi\nה-Pod רץ עם requests: cpu: 100m, memory: 128Mi. מה עושים?",
+            q: "VPA מוגדר ב-Recommendation mode.\n\nkubectl describe vpa app-vpa מציג:\nTarget: cpu: 450m, memory: 512Mi\nה-Pod רץ עם requests: cpu: 100m, memory: 128Mi.\n\nמה עושים?",
             options: [
               "VPA מעדכן אוטומטית ב-Recommendation mode ואין צורך בפעולה",
               "ה-VPA רק ממליץ – יש לעדכן ידנית את ה-Deployment requests",
@@ -1249,7 +1249,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "VPA Recommendation mode רק מציג המלצות – לא מעדכן. Off/Initial/Auto מעדכנים. יש לעדכן ידנית את ה-Deployment לפי ההמלצה.",
+              "VPA במצב Recommendation אינו משנה דבר בפועל – הוא רק מציג את ההמלצות. רק מצבי Auto, Initial, ו-Off (עדכון ב-creation) מיישמים שינויים. יש לעדכן ידנית את ה-Deployment requests לפי ההמלצה.",
           },
         ],
         questionsEn: [
@@ -1373,7 +1373,7 @@ export const TOPICS = [
               "PriorityClass sets a Pod's priority. Pods with a higher priorityClassName are scheduled first and can trigger preemption.",
           },
           {
-            q: "A Pod stays Pending. kubectl describe shows:\nEvents:\n  Warning  FailedScheduling  0/3 nodes available: 3 node(s) had untolerated taint {dedicated:gpu}.\nWhat is the fix?",
+            q: "A Pod stays Pending.\n\nkubectl describe shows:\nEvents:\n  Warning  FailedScheduling  0/3 nodes available: 3 node(s) had untolerated taint {dedicated:gpu}.\n\nWhat is the fix?",
             options: [
               "Add a new untainted Node to the cluster with sufficient resources",
               "Reduce the CPU request so the Pod fits on a smaller available Node",
@@ -1382,10 +1382,10 @@ export const TOPICS = [
             ],
             answer: 2,
             explanation:
-              "The Node has a taint dedicated=gpu. A Pod without a matching Toleration won't be scheduled there. Add tolerations: [{key:'dedicated', value:'gpu', effect:'NoSchedule'}] to the Pod spec.",
+              "A taint on a Node blocks all Pods that don't declare a matching Toleration. Adding a Toleration with the correct key and effect tells the Scheduler it is allowed to place the Pod on that Node. Reducing CPU or changing Namespace does not address taints.",
           },
           {
-            q: "A StatefulSet with 3 replicas: Pod-1 stays Pending. What is the most likely cause?",
+            q: "A StatefulSet with 3 replicas is running in your cluster. Pod-1 stays Pending.\n\nWhat is the most likely cause?",
             options: [
               "The PVC for pod-1 is full and no additional storage can be allocated",
               "Pod-0 is not Ready — StatefulSet schedules Pods in ordinal order",
@@ -1394,10 +1394,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "StatefulSet schedules Pods sequentially: pod-0 must be Ready before pod-1 starts. Check kubectl get pod pod-0 and kubectl describe pod pod-0 to find the blocker.",
+              "StatefulSet schedules Pods in ordinal order: pod-0 must be Ready before pod-1 is created. This is intentional — it ensures ordered startup for stateful applications. Check kubectl describe pod pod-0 to find what is preventing it from becoming Ready.",
           },
           {
-            q: "kubectl get hpa shows:\nNAME    TARGETS         MINPODS  MAXPODS  REPLICAS\napp-hpa  <unknown>/50%   2        10       2\nWhat causes <unknown>?",
+            q: "You check the HPA status in the cluster.\n\nkubectl get hpa shows:\nNAME    TARGETS         MINPODS  MAXPODS  REPLICAS\napp-hpa  <unknown>/50%   2        10       2\n\nWhat causes <unknown>?",
             options: [
               "The Deployment the HPA references does not exist in the Namespace",
               "metrics-server is not installed — HPA cannot receive CPU metrics",
@@ -1406,10 +1406,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "<unknown> in TARGETS means HPA has no metrics. Most common cause: metrics-server is not installed. Check: kubectl get apiservice v1beta1.metrics.k8s.io.",
+              "HPA depends on metrics-server to receive CPU data. When metrics-server is absent the TARGETS column shows <unknown>. Verify with: kubectl get apiservice v1beta1.metrics.k8s.io — if it is missing, install metrics-server.",
           },
           {
-            q: "A rolling update is stuck. kubectl rollout status shows:\nWaiting for rollout to finish: 3 out of 5 new replicas updated...\nThe YAML sets maxUnavailable: 0. What is the cause?",
+            q: "A rolling update is stuck.\n\nkubectl rollout status shows:\nWaiting for rollout to finish: 3 out of 5 new replicas updated...\nThe YAML sets maxUnavailable: 0.\n\nWhat is the cause?",
             options: [
               "The Namespace quota is full and new Pods cannot be created",
               "New Pods are failing readiness probes, and maxUnavailable:0 prevents removing old ones",
@@ -1418,10 +1418,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "With maxUnavailable:0, K8s can't remove an old Pod until a new one is Ready. If the readiness probe fails, the rollout stalls. Check logs of a new Pod.",
+              "maxUnavailable:0 means Kubernetes cannot remove an old Pod until a new one becomes Ready. If new Pods fail their readiness probe, the rollout permanently stalls — old Pods stay up but new ones never get promoted. Check kubectl logs on a new Pod to find the readiness failure.",
           },
           {
-            q: "A DaemonSet Pod is missing from a new Node. kubectl describe node shows:\nTaints: node-role.kubernetes.io/control-plane:NoSchedule\nThe DaemonSet has no tolerations. What is the fix?",
+            q: "A DaemonSet Pod is missing from a new Node.\n\nkubectl describe node shows:\nTaints: node-role.kubernetes.io/control-plane:NoSchedule\nThe DaemonSet has no tolerations.\n\nWhat is the fix?",
             options: [
               "Delete the Node and re-add it to the cluster without the taint",
               "Change the DaemonSet's Namespace to kube-system where the taint is ignored",
@@ -1430,10 +1430,10 @@ export const TOPICS = [
             ],
             answer: 2,
             explanation:
-              "A NoSchedule taint blocks Pods without a matching Toleration. DaemonSets for system components like logging that need to run on control-plane nodes must include the matching toleration.",
+              "Control-plane Nodes carry a NoSchedule taint to prevent regular Pods from landing there. A DaemonSet must include an explicit Toleration for that taint to be scheduled on control-plane nodes. Changing the Namespace has no effect on Node-level taints.",
           },
           {
-            q: "A Pod keeps getting OOMKilled. kubectl describe shows:\nLast State: Terminated  Reason: OOMKilled  Exit Code: 137\nContainers: limits: memory: 128Mi\nWhat is the first step?",
+            q: "A Pod keeps getting OOMKilled.\n\nkubectl describe shows:\nLast State: Terminated  Reason: OOMKilled  Exit Code: 137\nContainers: limits: memory: 128Mi\n\nWhat is the first step?",
             options: [
               "Delete the Pod and recreate it with restartPolicy: Never to stop the loop",
               "Increase limits.memory to 256Mi+ and check for memory leaks in the app",
@@ -1442,10 +1442,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Exit 137 + OOMKilled = limits.memory exceeded. Increase the limit. Use kubectl top pod to see actual usage. Also profile the app for memory leaks.",
+              "Exit code 137 combined with OOMKilled confirms the container was killed by the kernel for exceeding its limits.memory (128Mi). The correct first step is to raise the limit and observe actual usage with kubectl top pod. Setting restartPolicy: Never just stops recovery without fixing anything.",
           },
           {
-            q: "A Job never completed. kubectl describe job shows:\nWarning  BackoffLimitExceeded  Job has reached the specified backoff limit\nWhat happens next?",
+            q: "A Job never completed.\n\nkubectl describe job shows:\nWarning  BackoffLimitExceeded  Job has reached the specified backoff limit\n\nWhat happens next?",
             options: [
               "The Job keeps running indefinitely and retries without any limit",
               "Job is marked Failed — Kubernetes stops retrying and the object remains for inspection",
@@ -1454,10 +1454,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "BackoffLimitExceeded means the Job failed backoffLimit times and is now marked Failed. Check the failed Pod logs to understand the root cause and fix the issue.",
+              "Once a Job exceeds its backoffLimit, Kubernetes marks it Failed and stops creating new retry Pods. The Job object and its failed Pods remain so you can inspect them. The Job does not keep running indefinitely or delete itself automatically.",
           },
           {
-            q: "A Deployment does not manage its Pods. kubectl get pods --show-labels shows: app=backend-v2. The Deployment spec reads:\nspec:\n  selector:\n    matchLabels:\n      app: backend\nWhat is wrong?",
+            q: "A Deployment does not manage its Pods. kubectl get pods --show-labels shows: app=backend-v2.\n\nThe Deployment spec reads:\nspec:\n  selector:\n    matchLabels:\n      app: backend\n\nWhat is wrong?",
             options: [
               "The Pods are in a different Namespace than the Deployment",
               "selector doesn't match Pod labels — 'backend' ≠ 'backend-v2'",
@@ -1466,10 +1466,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Deployment.spec.selector.matchLabels must match template.metadata.labels. A mismatch means the Deployment doesn't control those Pods. Fix either the selector or the Pod label.",
+              "A Deployment discovers its Pods using selector.matchLabels. When the selector is 'app: backend' but Pods are labeled 'app: backend-v2', the Deployment has zero matching Pods and cannot manage them. Align the selector with template.metadata.labels.",
           },
           {
-            q: "kubectl rollout status deployment/app shows:\nWaiting for rollout to finish: 1 old replica pending termination...\nThis has continued for 15 minutes. What do you check?",
+            q: "A rollout is almost done but stalled.\n\nkubectl rollout status deployment/app shows:\nWaiting for rollout to finish: 1 old replica pending termination...\nThis has continued for 15 minutes.\n\nWhat do you check?",
             options: [
               "Check whether the container image exists in the registry for the new Pod version",
               "Pod stuck in Terminating due to a finalizer that was not cleared or a high terminationGracePeriodSeconds",
@@ -1478,10 +1478,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              'A Pod stuck Terminating usually means an uncleared finalizer or a long grace period. kubectl describe pod <terminating-pod> to inspect finalizers. kubectl patch pod ... -p \'{"metadata":{"finalizers":null}}\' to force-clear.',
+              'A Pod stuck in Terminating for many minutes almost always means a finalizer was not cleaned up by its controller, or terminationGracePeriodSeconds is very high. Run kubectl describe pod <terminating-pod> to see the finalizers field. To force-clear: kubectl patch pod ... -p \'{"metadata":{"finalizers":null}}\'.',
           },
           {
-            q: "VPA is in Recommendation mode. kubectl describe vpa shows:\nTarget: cpu: 450m  memory: 512Mi\nThe Pod runs with requests: cpu: 100m  memory: 128Mi. What must you do?",
+            q: "VPA is in Recommendation mode.\n\nkubectl describe vpa shows:\nTarget: cpu: 450m  memory: 512Mi\nThe Pod runs with requests: cpu: 100m  memory: 128Mi.\n\nWhat must you do?",
             options: [
               "Nothing — VPA updates the Pod's requests automatically in Recommendation mode",
               "VPA only recommends — update the Deployment requests manually to match the target",
@@ -1490,7 +1490,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "VPA Recommendation mode only shows suggestions — it does not apply them. Only Off/Initial/Auto modes update Pod specs. Update the Deployment requests manually according to the recommendation.",
+              "VPA Recommendation mode is read-only — it records what the resource requests should be but makes no changes. Only Auto and Initial modes actually mutate Pod specs. You must manually update the Deployment's requests to match the VPA recommendation.",
           },
         ],
       },
@@ -2580,7 +2580,7 @@ export const TOPICS = [
               "CNI plugin יוצר overlay network (VXLAN ב-Flannel, BGP ב-Calico) שמאפשר לכל Pod להגיע לכל Pod ב-Cluster.",
           },
           {
-            q: "Service לא מנתב תנועה לPods. kubectl get endpoints app-svc מציג:\nNAME      ENDPOINTS\napp-svc   <none>\nה-Pod רץ עם label: app=App (A גדולה). ה-Service:\nspec:\n  selector:\n    app: app\nמה הבעיה?",
+            q: "Service לא מנתב תנועה לPods.\n\nkubectl get endpoints app-svc מציג:\nNAME      ENDPOINTS\napp-svc   <none>\nה-Pod רץ עם label: app=App (A גדולה). ה-Service:\nspec:\n  selector:\n    app: app\n\nמה הבעיה?",
             options: [
               "Service port שגוי",
               "selector לא תואם – 'app: app' ≠ 'app: App' (רגישות לrcase)",
@@ -2592,7 +2592,7 @@ export const TOPICS = [
               "Kubernetes labels רגישים לrcase. 'app' ≠ 'App'. Service selector חייב לתאים בדיוק ל-Pod labels. תקן את ה-selector ל-app: App.",
           },
           {
-            q: "NetworkPolicy חוסמת DNS. Pods לא מצליחים לפתור שמות. NetworkPolicy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\nמה חסר?",
+            q: "NetworkPolicy חוסמת DNS. Pods לא מצליחים לפתור שמות.\n\nNetworkPolicy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n\nמה חסר?",
             options: [
               "ingress rule",
               "egress rule לport 53 (DNS) לCoreDNS",
@@ -2601,10 +2601,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "NetworkPolicy שמגדירה egress חייבת לכלול port 53 TCP+UDP לCoreDNS. ללא זה, DNS queries נחסמות. הוסף egress: [{ports: [{port:53,protocol:UDP},{port:53,protocol:TCP}]}].",
+              "כשמגדירים policyTypes: [Egress], כל יציאה שלא מוגדרת מפורשות נחסמת — כולל DNS. מכיוון שDNS עובד על port 53 (UDP ו-TCP) לכיוון CoreDNS, צריך להוסיף egress rule ל-port 53. port 443 בלבד לא מספיק.",
           },
           {
-            q: "Ingress מחזיר 503. kubectl describe ingress מציג:\nBackend: api-svc:80 (<error: endpoints not found>)\nמה הבעיה?",
+            q: "Ingress מחזיר 503.\n\nkubectl describe ingress מציג:\nBackend: api-svc:80 (<error: endpoints not found>)\n\nמה הבעיה?",
             options: [
               "Ingress Controller לא מותקן",
               "Service api-svc לא קיים או selector לא מתאים לPods",
@@ -2613,7 +2613,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "<error: endpoints not found> אומר ש-Service קיים אבל Endpoints ריקים (Pods לא תואמים). בדוק kubectl get endpoints api-svc ו-kubectl get pods --show-labels.",
+              "השגיאה endpoints not found אומרת ש-Service קיים אבל אין Pods שמתאימים ל-selector שלו, כך שה-Endpoints ריקים. הIngress Controller לא יכול לנתב לשום מקום ומחזיר 503. בדוק kubectl get endpoints api-svc ו-kubectl get pods --show-labels להשוות label-ים.",
           },
           {
             q: "Pod מנסה לגשת ל-api-svc.backend.svc.cluster.local ולא מצליח, אך api-svc.backend עובד. מה השם הנכון?",
@@ -2628,7 +2628,7 @@ export const TOPICS = [
               "FQDN מלא: <service>.<namespace>.svc.cluster.local. api-svc.backend עובד בזכות search domains. api-svc.backend.cluster.local (ללא svc) לא יפעל.",
           },
           {
-            q: "Service עם ExternalTrafficPolicy:Local. בקשות חיצוניות נדחות לסירוגין. kubectl get pods -o wide מציג שPods רצים רק ב-node-1 ו-node-2. מה הסיבה?",
+            q: "Service עם ExternalTrafficPolicy:Local. בקשות חיצוניות נדחות לסירוגין.\n\nkubectl get pods -o wide מציג שPods רצים רק ב-node-1 ו-node-2.\n\nמה הסיבה?",
             options: [
               "Service לא מוגדר נכון",
               "Nodes ללא Pod (node-3) מקבלים תנועה ולא מנתבים – node-3 דוחה תנועה",
@@ -2637,10 +2637,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "ExternalTrafficPolicy:Local מנתב רק לNode שמכיל Pod. עם LB/NodePort, תנועה ל-Node ללא Pod מוחזרת עם connection refused. צריך health check מה-LB לדעת אילו Nodes פעילים.",
+              "ExternalTrafficPolicy:Local אומר לkube-proxy לנתב תנועה רק לPods שרצים על אותו Node. Node שאין עליו Pod (node-3) יקבל תנועה מה-LB ויחזיר connection refused. הפתרון הוא להגדיר health check על ה-LB כך שישלח תנועה רק לNodes פעילים.",
           },
           {
-            q: "kubectl get ingress מציג:\nNAME      CLASS    HOSTS   ADDRESS\napp-ing   <none>   *       \nIngress לא עובד. מה הסיבה הסבירה?",
+            q: "Ingress לא עובד.\n\nkubectl get ingress מציג:\nNAME      CLASS    HOSTS   ADDRESS\napp-ing   <none>   *       \n\nמה הסיבה הסבירה?",
             options: [
               "TLS שגוי",
               "ingressClassName לא מוגדר והIngress Controller לא מטפל ב-Ingresses ללא class",
@@ -2649,10 +2649,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "מגרסת K8s 1.18+ Ingress Controller מחפש ingressClassName. ללא הגדרה, Controller לא יטפל ב-Ingress. הוסף: spec: ingressClassName: nginx.",
+              "מגרסת Kubernetes 1.18 ואילך, Ingress Controller מטפל רק ב-Ingress objects שמציינים את ה-ingressClassName שלו. כשהClass הוא none, אף Controller לא לוקח בעלות על ה-Ingress ולא מעבד אותו. הוסף spec: ingressClassName: nginx.",
           },
           {
-            q: "NetworkPolicy:\nspec:\n  podSelector:\n    matchLabels:\n      app: frontend\n  ingress:\n  - from:\n    - namespaceSelector:\n        matchLabels:\n          team: backend\nPod backend רץ ב-namespace עם label team:backend. הוא לא מצליח לגשת ל-frontend. מה בודקים?",
+            q: "Pod backend רץ ב-namespace עם label team:backend. הוא לא מצליח לגשת ל-frontend.\n\nNetworkPolicy:\nspec:\n  podSelector:\n    matchLabels:\n      app: frontend\n  ingress:\n  - from:\n    - namespaceSelector:\n        matchLabels:\n          team: backend\n\nמה בודקים?",
             options: [
               "port חסר",
               "ה-Namespace אכן מכיל label team:backend – בדוק kubectl get namespace <ns> --show-labels",
@@ -2661,10 +2661,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "namespaceSelector מחפש label על ה-Namespace עצמו. בדוק kubectl get namespace <ns> --show-labels. אם label חסר, הוסף: kubectl label namespace <ns> team=backend.",
+              "namespaceSelector מסתכל על labels של ה-Namespace עצמו, לא על labels של הPods בתוכו. גם אם ה-Pod נמצא ב-namespace הנכון, אם ל-Namespace עצמו אין label team=backend, ה-NetworkPolicy לא תאפשר גישה. בדוק kubectl get namespace <ns> --show-labels.",
           },
           {
-            q: "Pod לא מצליח להגיע לאינטרנט. kubectl exec -- curl https://google.com מחזיר timeout. NetworkPolicy:\nspec:\n  podSelector: {matchLabels: {app: worker}}\n  policyTypes: [Egress]\n  egress:\n  - to:\n    - podSelector: {}\nמה חסר?",
+            q: "Pod לא מצליח להגיע לאינטרנט.\n\nkubectl exec -- curl https://google.com מחזיר timeout.\n\nNetworkPolicy:\nspec:\n  podSelector: {matchLabels: {app: worker}}\n  policyTypes: [Egress]\n  egress:\n  - to:\n    - podSelector: {}\n\nמה חסר?",
             options: [
               "ingress rule",
               "egress ל-0.0.0.0/0 (כל IPs) חסר – NetworkPolicy חוסמת תנועה לChיצון",
@@ -2673,7 +2673,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "egress: [{podSelector:{}}] מאפשר רק לPods בCluster. תנועה לIPs חיצוניים חסומה. הוסף: egress: [{to:[{ipBlock:{cidr:'0.0.0.0/0'}}]}] וכן port 53 לDNS.",
+              "podSelector:{} מאפשר תנועה לכל Pod בCluster, אבל IPs חיצוניים (כמו Google) אינם Pods. כדי לאפשר גישה לאינטרנט צריך להוסיף ipBlock: {cidr: '0.0.0.0/0'} לrule. בנוסף, port 53 לDNS גם חייב להיות מוגדר כדי שname resolution יעבוד.",
           },
           {
             q: "Pod מנסה להגיע ל-Service ב-Namespace אחר בשם 'db-svc' ב-namespace 'data'. הוא מנסה: curl db-svc. זה נכשל. מה הפתרון?",
@@ -2685,10 +2685,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "search domains עובדים רק בNamespace הנוכחי. לגישה לService בNamespace אחר חייבים להשתמש בFQDN: db-svc.data.svc.cluster.local.",
+              "CoreDNS מוסיף search domains כמו <namespace>.svc.cluster.local רק עבור ה-Namespace הנוכחי. db-svc בלבד עובד רק בתוך namespace data. מ-Namespace אחר חייבים להשתמש ב-FQDN המלא: db-svc.data.svc.cluster.local.",
           },
           {
-            q: "Ingress Controller nginx רץ. בקשות ל-/api מחזירות 404 מה-backend. ה-Ingress:\npath: /api\nbackend: api-svc:8080\nה-backend מאזין על /. מה חסר?",
+            q: "Ingress Controller nginx רץ. בקשות ל-/api מחזירות 404 מה-backend.\n\nה-Ingress:\npath: /api\nbackend: api-svc:8080\nה-backend מאזין על /.\n\nמה חסר?",
             options: [
               "TLS certificate",
               "annotation rewrite-target: / – ללא זה backend מקבל /api ולא /",
@@ -2697,7 +2697,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "ללא rewrite-target, nginx מעביר /api ישירות לbackend. אם הbackend מאזין על / ולא /api, הוא יחזיר 404. הוסף: nginx.ingress.kubernetes.io/rewrite-target: /",
+              "ה-nginx Ingress Controller מעביר את ה-path המקורי (/api) לbackend. אם ה-backend לא מכיר את המסלול /api ומאזין רק על /, הוא יחזיר 404. ה-annotation rewrite-target: / גורם לnginx לשנות את ה-path ל-/ לפני שהוא מעביר את הבקשה.",
           },
         ],
         questionsEn: [
@@ -2821,7 +2821,7 @@ export const TOPICS = [
               "The CNI plugin creates an overlay network (VXLAN in Flannel, BGP in Calico) that lets every Pod reach every other Pod in the cluster.",
           },
           {
-            q: "A Service returns no traffic. kubectl get endpoints app-svc shows:\nNAME      ENDPOINTS\napp-svc   <none>\nThe Pod runs with label: app=App (capital A). The Service:\nspec:\n  selector:\n    app: app\nWhat is the problem?",
+            q: "A Service returns no traffic.\n\nkubectl get endpoints app-svc shows:\nNAME      ENDPOINTS\napp-svc   <none>\nThe Pod runs with label: app=App (capital A). The Service:\nspec:\n  selector:\n    app: app\n\nWhat is the problem?",
             options: [
               "Wrong Service port",
               "Selector mismatch — 'app: app' ≠ 'app: App' (case sensitive)",
@@ -2830,10 +2830,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Kubernetes labels are case sensitive. 'app' ≠ 'App'. The Service selector must match Pod labels exactly. Fix the selector to app: App.",
+              "Kubernetes label selectors are case-sensitive, so 'app: app' and 'app: App' are two different values. When the selector does not match any Pod label, the Service Endpoints list stays empty and no traffic is routed. Fix the Service selector to app: App to match the Pod.",
           },
           {
-            q: "A NetworkPolicy blocks DNS. Pods cannot resolve names. The policy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\nWhat is missing?",
+            q: "A NetworkPolicy blocks DNS. Pods cannot resolve names.\n\nThe policy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n\nWhat is missing?",
             options: [
               "An ingress rule",
               "An egress rule for port 53 (DNS) to CoreDNS",
@@ -2842,10 +2842,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "An egress-only NetworkPolicy must include port 53 TCP+UDP for CoreDNS. Without it, DNS queries are blocked. Add: egress: [{ports: [{port:53,protocol:UDP},{port:53,protocol:TCP}]}].",
+              "When policyTypes includes Egress, all outbound traffic not explicitly allowed is blocked — including DNS on port 53. Without a rule permitting port 53 UDP and TCP to CoreDNS, Pod name resolution fails entirely. Only permitting port 443 is not enough.",
           },
           {
-            q: "Ingress returns 503. kubectl describe ingress shows:\nBackend: api-svc:80 (<error: endpoints not found>)\nWhat is wrong?",
+            q: "Ingress returns 503.\n\nkubectl describe ingress shows:\nBackend: api-svc:80 (<error: endpoints not found>)\n\nWhat is wrong?",
             options: [
               "Ingress Controller not installed",
               "Service api-svc exists but selector doesn't match Pods",
@@ -2854,7 +2854,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "<error: endpoints not found> means the Service exists but Endpoints are empty (no matching Pods). Check kubectl get endpoints api-svc and kubectl get pods --show-labels.",
+              "The error 'endpoints not found' means the Service exists but its selector matches no Pods, so the Endpoints list is empty and the Ingress Controller has nowhere to send traffic. Run kubectl get endpoints api-svc and kubectl get pods --show-labels to compare the selector with the actual Pod labels.",
           },
           {
             q: "A Pod tries to access api-svc.backend.svc.cluster.local and fails, but api-svc.backend works. What is the correct FQDN?",
@@ -2866,10 +2866,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Full FQDN: <service>.<namespace>.svc.cluster.local. api-svc.backend works because of search domain expansion. api-svc.backend.cluster.local (missing 'svc') will not resolve.",
+              "CoreDNS adds search domains scoped to the current Namespace, so a short name like api-svc.backend resolves within that Namespace only. The full FQDN is api-svc.backend.svc.cluster.local. The form api-svc.backend.cluster.local is missing the 'svc' segment and will not resolve.",
           },
           {
-            q: "A Service has ExternalTrafficPolicy:Local. External requests are intermittently dropped. kubectl get pods -o wide shows Pods run only on node-1 and node-2. What is happening?",
+            q: "A Service has ExternalTrafficPolicy:Local. External requests are intermittently dropped.\n\nkubectl get pods -o wide shows Pods run only on node-1 and node-2.\n\nWhat is happening?",
             options: [
               "Service misconfigured",
               "Nodes without a Pod (node-3) receive traffic but can't route it — node-3 drops connections",
@@ -2878,10 +2878,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "ExternalTrafficPolicy:Local only routes traffic to Nodes that have a Pod. Traffic hitting a Node without a Pod is rejected. The load balancer must use health checks to only send traffic to Nodes with a running Pod.",
+              "ExternalTrafficPolicy:Local tells kube-proxy to only route traffic to Pods running on the same Node. A Node with no Pod (node-3) receives traffic from the load balancer and immediately drops it. The fix is to configure health checks on the load balancer so it only sends traffic to Nodes that have a running Pod.",
           },
           {
-            q: "kubectl get ingress shows:\nNAME      CLASS    HOSTS   ADDRESS\napp-ing   <none>   *\nIngress is not working. What is the likely cause?",
+            q: "Ingress is not working.\n\nkubectl get ingress shows:\nNAME      CLASS    HOSTS   ADDRESS\napp-ing   <none>   *\n\nWhat is the likely cause?",
             options: [
               "Wrong TLS",
               "ingressClassName is not set and the Ingress Controller ignores Ingresses without a class",
@@ -2890,10 +2890,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "From K8s 1.18+, Ingress Controllers look for ingressClassName. Without it, the controller may ignore the Ingress. Add: spec: ingressClassName: nginx.",
+              "Since Kubernetes 1.18, Ingress Controllers only process Ingress objects that declare the matching ingressClassName. When the class is none, no controller claims ownership of the Ingress and no routing rules are installed. Add spec: ingressClassName: nginx to fix it.",
           },
           {
-            q: "A NetworkPolicy:\nspec:\n  podSelector:\n    matchLabels:\n      app: frontend\n  ingress:\n  - from:\n    - namespaceSelector:\n        matchLabels:\n          team: backend\nA backend Pod runs in a namespace labeled team:backend but cannot reach frontend. What do you check?",
+            q: "A backend Pod runs in a namespace labeled team:backend but cannot reach frontend.\n\nNetworkPolicy:\nspec:\n  podSelector:\n    matchLabels:\n      app: frontend\n  ingress:\n  - from:\n    - namespaceSelector:\n        matchLabels:\n          team: backend\n\nWhat do you check?",
             options: [
               "Missing port",
               "Verify the Namespace actually has the label team:backend — run kubectl get namespace <ns> --show-labels",
@@ -2902,10 +2902,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "namespaceSelector matches labels on the Namespace object itself. Run kubectl get namespace <ns> --show-labels. If the label is missing, add it: kubectl label namespace <ns> team=backend.",
+              "namespaceSelector matches labels on the Namespace object itself, not on Pods inside it. Even if the Pod is in the right namespace, if the Namespace object does not have the label team=backend, the NetworkPolicy won't allow traffic. Run kubectl get namespace <ns> --show-labels to confirm.",
           },
           {
-            q: "A Pod cannot reach the internet. kubectl exec -- curl https://google.com times out. NetworkPolicy:\nspec:\n  podSelector: {matchLabels: {app: worker}}\n  policyTypes: [Egress]\n  egress:\n  - to:\n    - podSelector: {}\nWhat is missing?",
+            q: "A Pod cannot reach the internet.\n\nkubectl exec -- curl https://google.com times out.\n\nNetworkPolicy:\nspec:\n  podSelector: {matchLabels: {app: worker}}\n  policyTypes: [Egress]\n  egress:\n  - to:\n    - podSelector: {}\n\nWhat is missing?",
             options: [
               "An ingress rule",
               "An egress rule to 0.0.0.0/0 is missing — the policy blocks external traffic",
@@ -2914,7 +2914,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "egress: [{podSelector:{}}] only permits traffic to cluster Pods. External IP traffic is blocked. Add: egress: [{to:[{ipBlock:{cidr:'0.0.0.0/0'}}]}] and also port 53 for DNS.",
+              "podSelector:{} allows traffic only to other Pods inside the cluster. External IP addresses (like google.com) are not Pods, so that traffic is blocked. To allow internet access add an ipBlock rule for 0.0.0.0/0, and also add a port 53 egress rule so DNS resolution works.",
           },
           {
             q: "A Pod tries to reach a Service 'db-svc' in namespace 'data' using: curl db-svc. It fails. What is the fix?",
@@ -2926,10 +2926,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "DNS search domains only expand within the current Namespace. To reach a Service in another Namespace you must use the FQDN: db-svc.data.svc.cluster.local.",
+              "CoreDNS adds search domains scoped to the current Namespace, so a bare name like db-svc resolves only within the same Namespace. To reach a Service in a different Namespace you must use the full FQDN: db-svc.data.svc.cluster.local.",
           },
           {
-            q: "The nginx Ingress Controller is running. Requests to /api return 404 from the backend. The Ingress:\npath: /api\nbackend: api-svc:8080\nThe backend listens at /. What is missing?",
+            q: "The nginx Ingress Controller is running. Requests to /api return 404 from the backend.\n\nThe Ingress:\npath: /api\nbackend: api-svc:8080\nThe backend listens at /.\n\nWhat is missing?",
             options: [
               "A TLS certificate",
               "The annotation rewrite-target: / — without it the backend receives /api instead of /",
@@ -2938,7 +2938,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Without rewrite-target, nginx forwards /api unchanged to the backend. If the backend listens at / not /api, it returns 404. Add: nginx.ingress.kubernetes.io/rewrite-target: /",
+              "By default, nginx passes the original path (/api) to the backend unchanged. If the backend only handles requests at /, the path /api is unknown and returns 404. The annotation nginx.ingress.kubernetes.io/rewrite-target: / rewrites the path to / before forwarding the request.",
           },
         ],
       },
@@ -4032,7 +4032,7 @@ export const TOPICS = [
               "NetworkPolicy עם podSelector: {} ו-policyTypes: Ingress ללא ingress rules חוסמת כל תנועה נכנסת לכל Pods בNamespace.",
           },
           {
-            q: "Pod מקבל שגיאה:\nError: pods is forbidden: User 'system:serviceaccount:default:my-sa' cannot list resource 'pods' in API group '' in the namespace 'prod'\nמה הפתרון?",
+            q: "Pod מקבל שגיאה:\n\nError: pods is forbidden: User 'system:serviceaccount:default:my-sa' cannot list resource 'pods' in API group '' in the namespace 'prod'\n\nמה הפתרון?",
             options: [
               "מחק את ה-ServiceAccount",
               "צור Role עם list pods + RoleBinding לmy-sa ב-namespace prod",
@@ -4041,10 +4041,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "השגיאה מציינת שServiceAccount my-sa אין הרשאת list pods ב-prod. יש ליצור Role: rules:[{apiGroups:[''],resources:['pods'],verbs:['list']}] ו-RoleBinding.",
+              "הודעת השגיאה מציינת בדיוק מה חסר: ServiceAccount my-sa אין הרשאת list על pods ב-namespace prod. הפתרון הנכון הוא ליצור Role עם הרשאת list על pods, ולאחר מכן RoleBinding שמקשר את ה-Role לServiceAccount my-sa. הוספת cluster-admin היא רחבה מדי ומהווה סיכון אבטחה.",
           },
           {
-            q: "kubectl auth can-i get secrets --as=system:serviceaccount:prod:app-sa -n prod מחזיר 'no'. Pod בproduction צריך לקרוא Secrets. מה עושים?",
+            q: "Pod בproduction צריך לקרוא Secrets.\n\nkubectl auth can-i get secrets --as=system:serviceaccount:prod:app-sa -n prod מחזיר 'no'.\n\nמה עושים?",
             options: [
               "מוסיפים ClusterAdmin",
               "יוצרים Role עם get secrets + RoleBinding ל-app-sa ב-prod",
@@ -4053,10 +4053,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "kubectl auth can-i עם --as מאמת עבור ServiceAccount ספציפי. הפתרון: Role עם verbs:[get,list] על secrets ו-RoleBinding שמקשר ל-app-sa.",
+              "kubectl auth can-i --as מאפשר לבדוק הרשאות עבור ServiceAccount ספציפי בלי להריץ פקודה אמיתית. כש-'no' מוחזר, הפתרון הוא ליצור Role עם verbs: [get, list] על resources: secrets, ואז RoleBinding שמחבר אותו ל-app-sa ב-namespace prod. הוספת ClusterAdmin היא עודפת וסיכון אבטחה.",
           },
           {
-            q: "Admission webhook מחזיר:\nError from server: error when creating 'deploy.yaml': admission webhook 'validate.kyverno.svc' denied the request: Container image must come from 'gcr.io/'\nמה קורה?",
+            q: "מנסים לפרוס Deployment ומקבלים שגיאה:\n\nError from server: error when creating 'deploy.yaml': admission webhook 'validate.kyverno.svc' denied the request: Container image must come from 'gcr.io/'\n\nמה קורה?",
             options: [
               "Kubernetes API server נפל",
               "ValidatingAdmissionWebhook חסם את ה-Deployment כי ה-image לא מ-approved registry",
@@ -4065,10 +4065,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "ValidatingAdmissionWebhook (Kyverno/OPA/Gatekeeper) חסם את היצירה לפי policy שמאשרת רק images מ-gcr.io/. שנה את ה-image לreg מאושר.",
+              "ValidatingAdmissionWebhook הוא שכבת validation שרצה לפני שKubernetes מאשר כל resource. Kyverno (או OPA Gatekeeper) מגדיר policy שמאפשרת רק images מ-gcr.io/. הפתרון הוא לשנות את ה-image URL ב-Deployment לרשומה המאושרת. ה-API server לא נפל — זו חסימה מכוונת.",
           },
           {
-            q: "Pod ב-EKS לא מצליח לגשת ל-S3. ה-IAM policy נכונה. Pod spec:\napiVersion: v1\nkind: Pod\nspec:\n  serviceAccountName: app-sa\nה-ServiceAccount:\nannotations:\n  eks.amazonaws.com/role-arn: arn:aws:iam::123:role/app-role\nמה הבעיה הנפוצה ב-IRSA?",
+            q: "Pod ב-EKS לא מצליח לגשת ל-S3. ה-IAM policy נכונה.\n\nPod spec:\napiVersion: v1\nkind: Pod\nspec:\n  serviceAccountName: app-sa\nה-ServiceAccount:\nannotations:\n  eks.amazonaws.com/role-arn: arn:aws:iam::123:role/app-role\n\nמה הבעיה הנפוצה ב-IRSA?",
             options: [
               "IAM policy שגויה",
               "OIDC provider לא מוגדר ב-EKS Cluster או trust policy לא מכוון לcorrect namespace:serviceaccount",
@@ -4077,10 +4077,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "IRSA דורש: 1) OIDC Provider מוגדר ב-EKS. 2) Trust Policy ב-IAM Role מכוון ל-'system:serviceaccount:<namespace>:<sa-name>'. שגיאה נפוצה: namespace שגוי ב-trust policy.",
+              "IRSA (IAM Roles for Service Accounts) עובד על ידי קישור בין ServiceAccount של Kubernetes ל-IAM Role דרך OIDC. לשם כך נדרשים שני תנאים: OIDC Provider מוגדר ב-EKS, ו-Trust Policy ב-IAM Role שמציינת את ה-namespace וה-ServiceAccount הנכונים. שגיאה נפוצה היא trust policy עם namespace שגוי.",
           },
           {
-            q: "PSA מוגדר עם enforce=restricted. Deployment נדחה:\nPod violates PodSecurity 'restricted:latest': allowPrivilegeEscalation != false\nמה מוסיפים ל-container spec?",
+            q: "PSA מוגדר עם enforce=restricted. Deployment נדחה:\n\nPod violates PodSecurity 'restricted:latest': allowPrivilegeEscalation != false\n\nמה מוסיפים ל-container spec?",
             options: [
               "privileged: true",
               "securityContext: {allowPrivilegeEscalation: false, runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}",
@@ -4089,17 +4089,17 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "restricted PSA דורש: allowPrivilegeEscalation: false, runAsNonRoot: true, seccompProfile מוגדר. הוסף את כולם ל-container securityContext.",
+              "רמת restricted ב-Pod Security Admission דורשת מספר הגדרות אבטחה מפורשות. יש להוסיף לcontainer securityContext: allowPrivilegeEscalation: false, runAsNonRoot: true, ו-seccompProfile: {type: RuntimeDefault}. הגדרת privileged: true היא ההפך הגמור ותחמיר את הבעיה.",
           },
           {
-            q: "Secret ב-K8s עם value:\napiVersion: v1\nkind: Secret\ndata:\n  password: dGVzdDEyMw==\nמה הvalue האמיתי?",
+            q: "Secret ב-K8s עם value:\n\napiVersion: v1\nkind: Secret\ndata:\n  password: dGVzdDEyMw==\n\nמה הvalue האמיתי?",
             options: ["dGVzdDEyMw==", "test123 – base64 decoded", "בלתי ניתן לפענוח", "PASSWORD"],
             answer: 1,
             explanation:
-              "base64 decode של 'dGVzdDEyMw==' = 'test123'. Secrets רק מקודדים בbase64 – לא מוצפנים! echo 'dGVzdDEyMw==' | base64 -d = test123.",
+              "Kubernetes Secrets מאחסנים ערכים כbase64, שהוא קידוד ולא הצפנה — כל אחד יכול לפענח אותו. echo 'dGVzdDEyMw==' | base64 -d מחזיר 'test123'. לאבטחה אמיתית יש להפעיל Encryption at Rest עבור etcd, או להשתמש ב-Sealed Secrets.",
           },
           {
-            q: "OPA Gatekeeper דוחה Deployment:\nviolation: container 'app' has no resource limits\nמה הפתרון?",
+            q: "OPA Gatekeeper דוחה Deployment:\n\nviolation: container 'app' has no resource limits\n\nמה הפתרון?",
             options: [
               "מוחק את ה-OPA policy",
               "מוסיף resources: limits: cpu ו-memory לcontainer spec",
@@ -4108,7 +4108,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "ה-OPA policy דורשת resource limits. הוסף לkcontainer spec: resources: {limits: {cpu: '500m', memory: '256Mi'}}. שינוי ה-policy מצריך cluster-admin.",
+              "OPA Gatekeeper בודק resource objects לפני שKubernetes מאשר אותם. כדי לעבור את ה-policy, כל container חייב להגדיר resources.limits עם cpu ו-memory. מחיקת ה-policy אפשרית אבל מורידה את ההגנה — הפתרון הנכון הוא לתקן את ה-Deployment.",
           },
           {
             q: "Sealed Secret הוצפן ב-Cluster A. מנסים להשתמש בו ב-Cluster B ומקבלים שגיאה. למה?",
@@ -4120,10 +4120,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Sealed Secrets controller ב-Cluster A מחזיק את ה-private key. ה-SealedSecret מוצפן לpublic key של Cluster A בלבד – לא ניתן לפתוח ב-Cluster B ללא ה-keypair.",
+              "Sealed Secrets עובדים עם asymmetric encryption: כל Cluster מייצר keypair ייחודי. ה-SealedSecret מוצפן עם ה-public key של Cluster A, וה-private key שיכול לפתוח אותו נמצא רק ב-Cluster A. כדי להשתמש ב-Cluster B צריך להצפין מחדש עם ה-public key של Cluster B.",
           },
           {
-            q: 'Kubernetes Audit Log מציג:\n{"verb":"get","resource":"secrets","user":{"username":"system:serviceaccount:default:compromised-sa"}}\nמה המשמעות?',
+            q: 'Kubernetes Audit Log מציג:\n\n{"verb":"get","resource":"secrets","user":{"username":"system:serviceaccount:default:compromised-sa"}}\n\nמה המשמעות?',
             options: [
               "Log תקין",
               "ServiceAccount 'compromised-sa' גישה לSecret – ייתכן unauthorized access, צריך לחקור ולבטל הרשאות",
@@ -4132,10 +4132,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Audit log מתעד כל גישה לAPI. ServiceAccount שמגיש לSecrets ללא צורך = potential breach. בדוק RBAC, הגבל הרשאות, שקול rotation של Secrets.",
+              "Kubernetes Audit Logs מתעדים כל קריאה לAPI server, כולל גישה לSecrets. כשServiceAccount ניגש לSecrets שלא אמור להיות לו צורך בהם, זה אות אזהרה לפריצה אפשרית. יש לחקור, להגביל את ה-RBAC של אותו ServiceAccount, ולשקול rotation של כל הSecrets שנחשפו.",
           },
           {
-            q: "Deployment נדחה:\nForbidden: unable to validate against any security policy\nCluster עם PSP ישן. מה הצעד הנכון ב-K8s 1.25+?",
+            q: "Deployment נדחה ב-Cluster עם PSP ישן:\n\nForbidden: unable to validate against any security policy\n\nמה הצעד הנכון ב-K8s 1.25+?",
             options: [
               "הוסף cluster-admin",
               "PSP הוסר ב-1.25. עבור ל-Pod Security Admission (PSA) עם labels על ה-Namespace",
@@ -4144,7 +4144,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "PodSecurityPolicy הוסר ב-K8s 1.25. הפתרון: Pod Security Admission + labels. או Kyverno/OPA Gatekeeper להרחבות מתקדמות.",
+              "PodSecurityPolicy (PSP) הוצא משימוש ב-K8s 1.21 והוסר לחלוטין ב-1.25. הפתרון המובנה החלופי הוא Pod Security Admission (PSA), שמופעל על ידי הוספת labels לNamespace. לצרכים מתקדמים יותר ניתן להשתמש ב-Kyverno או OPA Gatekeeper.",
           },
         ],
         questionsEn: [
@@ -4268,7 +4268,7 @@ export const TOPICS = [
               "A NetworkPolicy with podSelector: {} and policyTypes: Ingress with no ingress rules blocks all inbound traffic to every Pod in the Namespace.",
           },
           {
-            q: "A Pod receives:\nError: pods is forbidden: User 'system:serviceaccount:default:my-sa' cannot list resource 'pods' in namespace 'prod'\nWhat is the fix?",
+            q: "A Pod receives:\n\nError: pods is forbidden: User 'system:serviceaccount:default:my-sa' cannot list resource 'pods' in namespace 'prod'\n\nWhat is the fix?",
             options: [
               "Delete the ServiceAccount",
               "Create a Role with list pods + a RoleBinding to my-sa in namespace prod",
@@ -4277,10 +4277,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "The error shows my-sa has no list pods permission in prod. Create a Role: rules:[{apiGroups:[''],resources:['pods'],verbs:['list']}] and a RoleBinding for my-sa.",
+              "The error message pinpoints exactly what is missing: ServiceAccount my-sa lacks the list verb on pods in namespace prod. Create a Role with that permission and a RoleBinding connecting it to my-sa. Adding cluster-admin is overly broad and violates least-privilege principles.",
           },
           {
-            q: "kubectl auth can-i get secrets --as=system:serviceaccount:prod:app-sa -n prod returns 'no'. A production Pod needs to read Secrets. What do you do?",
+            q: "A production Pod needs to read Secrets.\n\nkubectl auth can-i get secrets --as=system:serviceaccount:prod:app-sa -n prod returns 'no'.\n\nWhat do you do?",
             options: [
               "Add cluster-admin",
               "Create a Role with get secrets + a RoleBinding for app-sa in prod",
@@ -4289,10 +4289,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "kubectl auth can-i with --as validates for a specific ServiceAccount. Fix: create a Role with verbs:[get,list] on secrets and a RoleBinding pointing to app-sa.",
+              "kubectl auth can-i --as lets you test permissions for any ServiceAccount without running a real operation. When it returns 'no', create a Role with verbs: [get, list] on secrets and a RoleBinding attaching it to app-sa in the prod Namespace. Adding cluster-admin is excessive and a security risk.",
           },
           {
-            q: "An admission webhook returns:\nError: admission webhook 'validate.kyverno.svc' denied the request: Container image must come from 'gcr.io/'\nWhat is happening?",
+            q: "Deploying a workload fails with:\n\nError: admission webhook 'validate.kyverno.svc' denied the request: Container image must come from 'gcr.io/'\n\nWhat is happening?",
             options: [
               "The Kubernetes API server crashed",
               "A ValidatingAdmissionWebhook blocked the Deployment because the image is not from an approved registry",
@@ -4301,10 +4301,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "A ValidatingAdmissionWebhook (Kyverno/OPA/Gatekeeper) enforces a policy requiring images from gcr.io/. Change the image source to the approved registry.",
+              "A ValidatingAdmissionWebhook intercepts every resource creation before Kubernetes accepts it. Kyverno here enforces a policy that only allows images from gcr.io/. The API server did not crash — this is an intentional policy block. Fix by changing the container image URL to a gcr.io-hosted image.",
           },
           {
-            q: "An EKS Pod cannot access S3. The IAM policy is correct. The ServiceAccount has:\nannotations:\n  eks.amazonaws.com/role-arn: arn:aws:iam::123:role/app-role\nWhat is the most common IRSA misconfiguration?",
+            q: "An EKS Pod cannot access S3. The IAM policy is correct. The ServiceAccount has:\n\nannotations:\n  eks.amazonaws.com/role-arn: arn:aws:iam::123:role/app-role\n\nWhat is the most common IRSA misconfiguration?",
             options: [
               "Wrong IAM policy",
               "OIDC provider not configured on the EKS Cluster, or the trust policy points to the wrong namespace:serviceaccount",
@@ -4313,10 +4313,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "IRSA requires: 1) An OIDC Provider configured on the EKS Cluster. 2) A trust policy in the IAM Role targeting 'system:serviceaccount:<namespace>:<sa-name>'. The most common error is a wrong namespace in the trust policy.",
+              "IRSA links a Kubernetes ServiceAccount to an IAM Role using OIDC token projection. Two things must be correct: the EKS cluster must have an OIDC Provider configured, and the IAM Role's trust policy must reference the exact namespace and ServiceAccount name. A wrong namespace in the trust policy is the most common failure.",
           },
           {
-            q: "PSA is set to enforce=restricted. A Deployment is rejected:\nPod violates PodSecurity 'restricted:latest': allowPrivilegeEscalation != false\nWhat must you add to the container spec?",
+            q: "PSA is set to enforce=restricted. A Deployment is rejected:\n\nPod violates PodSecurity 'restricted:latest': allowPrivilegeEscalation != false\n\nWhat must you add to the container spec?",
             options: [
               "privileged: true",
               "securityContext: {allowPrivilegeEscalation: false, runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}",
@@ -4325,17 +4325,17 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "The restricted PSA level requires: allowPrivilegeEscalation: false, runAsNonRoot: true, and a defined seccompProfile. Add all three to the container securityContext.",
+              "The restricted Pod Security Standard mandates explicit hardening fields in the container securityContext. You must set allowPrivilegeEscalation: false, runAsNonRoot: true, and seccompProfile: {type: RuntimeDefault}. Setting privileged: true is the opposite — it would further violate the policy.",
           },
           {
-            q: "A K8s Secret contains:\napiVersion: v1\nkind: Secret\ndata:\n  password: dGVzdDEyMw==\nWhat is the actual value?",
+            q: "A K8s Secret contains:\n\napiVersion: v1\nkind: Secret\ndata:\n  password: dGVzdDEyMw==\n\nWhat is the actual value?",
             options: ["dGVzdDEyMw==", "test123 — base64 decoded", "Undecipherable", "PASSWORD"],
             answer: 1,
             explanation:
-              "base64 decoding 'dGVzdDEyMw==' = 'test123'. Secrets are only base64 encoded — not encrypted! echo 'dGVzdDEyMw==' | base64 -d = test123.",
+              "Kubernetes Secrets store values as base64, which is encoding not encryption — anyone can reverse it. Running echo 'dGVzdDEyMw==' | base64 -d gives 'test123'. For real protection enable Encryption at Rest for etcd, or use Sealed Secrets.",
           },
           {
-            q: "OPA Gatekeeper rejects a Deployment:\nviolation: container 'app' has no resource limits\nWhat is the fix?",
+            q: "OPA Gatekeeper rejects a Deployment:\n\nviolation: container 'app' has no resource limits\n\nWhat is the fix?",
             options: [
               "Delete the OPA policy",
               "Add resources: limits: cpu and memory to the container spec",
@@ -4344,7 +4344,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "The OPA policy requires resource limits on all containers. Add to container spec: resources: {limits: {cpu: '500m', memory: '256Mi'}}. Changing the policy itself requires cluster-admin access.",
+              "OPA Gatekeeper runs as an admission webhook and validates every resource before Kubernetes accepts it. The policy here requires resource limits on every container. Add resources: limits: {cpu and memory} to the container spec to satisfy the constraint. Deleting the policy would remove the guardrail, not fix the underlying issue.",
           },
           {
             q: "A SealedSecret was encrypted in Cluster A. Using it in Cluster B fails. Why?",
@@ -4356,10 +4356,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "The Sealed Secrets controller in Cluster A holds the private key. The SealedSecret is encrypted to Cluster A's public key only — it cannot be decrypted in Cluster B without importing the keypair.",
+              "Sealed Secrets use asymmetric encryption: each cluster generates a unique keypair. A SealedSecret encrypted with Cluster A's public key can only be decrypted by Cluster A's controller, which holds the matching private key. To use it in Cluster B you would need to re-encrypt it with Cluster B's public key.",
           },
           {
-            q: 'A Kubernetes Audit Log shows:\n{"verb":"get","resource":"secrets","user":{"username":"system:serviceaccount:default:compromised-sa"}}\nWhat does this mean?',
+            q: 'A Kubernetes Audit Log shows:\n\n{"verb":"get","resource":"secrets","user":{"username":"system:serviceaccount:default:compromised-sa"}}\n\nWhat does this mean?',
             options: [
               "A normal log entry",
               "ServiceAccount 'compromised-sa' accessed a Secret — possible unauthorized access, investigate and revoke permissions",
@@ -4368,10 +4368,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "Audit logs record every API access. A ServiceAccount accessing Secrets unexpectedly is a potential breach indicator. Audit the RBAC, restrict permissions, and consider rotating Secrets.",
+              "Kubernetes Audit Logs record every call to the API server, including Secret reads. A ServiceAccount named 'compromised-sa' accessing Secrets it shouldn't need is a red flag for unauthorized access. Investigate the RBAC permissions, revoke unnecessary access, and rotate any Secrets that may have been exposed.",
           },
           {
-            q: "A Deployment is rejected:\nForbidden: unable to validate against any security policy\nThe cluster runs K8s 1.25+. What is the correct approach?",
+            q: "A Deployment is rejected on a cluster running K8s 1.25+:\n\nForbidden: unable to validate against any security policy\n\nWhat is the correct approach?",
             options: [
               "Add cluster-admin",
               "PSP was removed in K8s 1.25. Migrate to Pod Security Admission (PSA) with Namespace labels",
@@ -4380,7 +4380,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "PodSecurityPolicy was removed in K8s 1.25. The replacement is Pod Security Admission + Namespace labels (pod-security.kubernetes.io/enforce). Kyverno/OPA Gatekeeper provide more advanced alternatives.",
+              "PodSecurityPolicy was deprecated in Kubernetes 1.21 and fully removed in 1.25. This error means the cluster still references the removed API. The built-in replacement is Pod Security Admission, activated by adding pod-security.kubernetes.io/enforce labels on Namespaces. For more advanced policy enforcement, Kyverno or OPA Gatekeeper are good alternatives.",
           },
         ],
       },
@@ -5450,7 +5450,7 @@ export const TOPICS = [
               "Rook-Ceph הוא operator שמנהל Ceph cluster בתוך Kubernetes ומספק Block, Object, ו-File storage.",
           },
           {
-            q: "PVC נשאר Pending. kubectl describe pvc מציג:\nEvents:\n  Warning  ProvisioningFailed  storageclass.storage.k8s.io 'fast-ssd' not found\nמה הבעיה?",
+            q: "PVC נשאר Pending.\n\nkubectl describe pvc מציג:\nEvents:\n  Warning  ProvisioningFailed  storageclass.storage.k8s.io 'fast-ssd' not found\n\nמה הבעיה?",
             options: [
               "PVC גדול מדי",
               "StorageClass 'fast-ssd' לא קיים בCluster – שגיאת הגדרה",
@@ -5459,7 +5459,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "ה-PVC מבקש StorageClass שלא קיים. בדוק kubectl get storageclass לרשימת StorageClasses קיימים. תקן את storageClassName ב-PVC לשם נכון.",
+              "כשStorageClass שציין ה-PVC לא קיים, ה-provisioner לא יכול ליצור PV והPVC נשאר Pending. בדוק kubectl get storageclass לרשימת ה-StorageClasses הזמינים ותקן את storageClassName ב-PVC לשם הנכון.",
           },
           {
             q: "StatefulSet DB. לאחר helm uninstall, ה-PVCs נשארים. הCluster מלא. מה הפקודה הנכונה?",
@@ -5471,7 +5471,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "StatefulSet PVCs לא נמחקים אוטומטית. כדי לנקות: kubectl delete pvc -l selector=value. תמיד אמת שגיבוי נעשה לפני מחיקה!",
+              "StatefulSet מגדיר volumeClaimTemplates, אבל PVCs שנוצרו לא נמחקים כש-StatefulSet או Helm Release מוסרים — זה מכוון כדי למנוע אובדן נתונים. לניקוי מכוון: kubectl delete pvc -l app=my-db -n production, לאחר אימות שהנתונים גובו. kubectl delete pvc --all מסוכן יותר.",
           },
           {
             q: "helm upgrade כשל באמצע. Release ב-status 'failed'. ה-ConfigMap מחצית עודכן. מה הצעד הבא?",
@@ -5483,10 +5483,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "helm rollback מחזיר ל-revision תקין. helm history לראות revisions. helm rollback my-release 2 מחזיר ל-revision 2.",
+              "כש-helm upgrade נכשל, ה-Release נשאר בסטטוס 'failed' עם resources שעודכנו חלקית. helm rollback my-release [revision] מחזיר את כל ה-resources ל-revision תקין קודם. ראשית הרץ helm history my-release כדי לראות את מספרי ה-revision הזמינים.",
           },
           {
-            q: "PVC מוגדר עם storageClassName: standard. kubectl get pvc מציג Pending. kubectl get storageclass מציג:\nNAME       PROVISIONER\nfast       ebs.csi.aws.com\nמה הבעיה?",
+            q: "PVC מוגדר עם storageClassName: standard. kubectl get pvc מציג Pending.\n\nkubectl get storageclass מציג:\nNAME       PROVISIONER\nfast       ebs.csi.aws.com\n\nמה הבעיה?",
             options: [
               "PVC גדול מדי",
               "StorageClass 'standard' לא קיים – PVC מבקש class שאינו בCluster",
@@ -5495,10 +5495,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "StorageClass 'standard' לא קיים – רק 'fast'. תקן PVC לשימוש ב-storageClassName: fast, או צור StorageClass בשם standard.",
+              "ה-PVC מחכה ל-StorageClass בשם 'standard', אבל בCluster קיים רק 'fast'. Kubernetes לא יוכל ליצור PV ול-PVC ישאר Pending. הפתרון הוא לעדכן את storageClassName ב-PVC ל-'fast', או ליצור StorageClass חדש בשם 'standard'.",
           },
           {
-            q: "VolumeSnapshot לא נוצר. kubectl describe volumesnapshot מציג:\nready-to-use: false\nerror: rpc error: code = Unimplemented\nמה הסיבה הנפוצה?",
+            q: "VolumeSnapshot לא נוצר.\n\nkubectl describe volumesnapshot מציג:\nready-to-use: false\nerror: rpc error: code = Unimplemented\n\nמה הסיבה הנפוצה?",
             options: [
               "Namespace שגוי",
               "CSI driver לא תומך ב-snapshot capability – צריך לבדוק אם snapshot-controller ו-CSI driver תומכים",
@@ -5507,10 +5507,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "VolumeSnapshot דורש CSI driver עם snapshot capability ו-snapshot-controller מותקן. 'Unimplemented' = ה-driver לא תומך בsnapshotting.",
+              "VolumeSnapshots דורשים שני דברים: snapshot-controller מותקן בCluster, וCSI driver עם תמיכת snapshot capability. השגיאה code = Unimplemented מגיע מה-CSI driver ומציינת שהוא לא מממש את ה-API הנדרש לsnapshots.",
           },
           {
-            q: "Pod לא יכול לכתוב לvolume. kubectl logs מציג:\nError: read-only file system: /data\nmountPath: /data\nה-Pod spec:\nvolumeMounts:\n- mountPath: /data\n  readOnly: true\nמה הפתרון?",
+            q: "Pod לא יכול לכתוב לvolume.\n\nkubectl logs מציג:\nError: read-only file system: /data\n\nה-Pod spec:\nvolumeMounts:\n- mountPath: /data\n  readOnly: true\n\nמה הפתרון?",
             options: [
               "הגדל PVC",
               "שנה readOnly: false ב-volumeMount",
@@ -5519,10 +5519,10 @@ export const TOPICS = [
             ],
             answer: 2,
             explanation:
-              "volumeMount.readOnly: true מוסיף את ה-volume כread-only לcontainer. שנה ל-readOnly: false (או הסר את ה-field) כדי לאפשר כתיבה.",
+              "readOnly: true ב-volumeMount גורם לLinux לעשות mount של ה-volume כ-read-only filesystem, כך שכל ניסיון כתיבה נכשל עם 'read-only file system'. שנה ל-readOnly: false או הסר את השדה לחלוטין (ברירת המחדל היא read-write).",
           },
           {
-            q: "helm upgrade כשל ונרשם:\nError: UPGRADE FAILED: cannot patch 'my-configmap' with kind ConfigMap: ConfigMap.data is immutable\nמה הפתרון?",
+            q: "helm upgrade כשל ונרשם:\n\nError: UPGRADE FAILED: cannot patch 'my-configmap' with kind ConfigMap: ConfigMap.data is immutable\n\nמה הפתרון?",
             options: [
               "rollback מיד",
               "הסר immutable: true מה-ConfigMap לפני upgrade, או מחק ויצור מחדש",
@@ -5531,7 +5531,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "ConfigMap עם immutable: true לא ניתן לשינוי. יש למחוק אותו: kubectl delete cm my-configmap ואז helm upgrade. שים לב שData ב-immutable ConfigMap אבד.",
+              "ConfigMap עם immutable: true נועל את ה-data לחלוטין — Kubernetes מסרב לכל patch שמנסה לשנות אותו. הפתרון הוא למחוק את ה-ConfigMap ולתת ל-Helm ליצור אותו מחדש: kubectl delete cm my-configmap ואז helm upgrade. rollback יחזיר לגרסה הקודמת ללא שינוי.",
           },
           {
             q: "Pod עם PVC ב-AWS EKS. Pod עבר לNode אחר. PVC לא נמצא. kubectl get pvc מציג Bound. מה הסיבה?",
@@ -5543,7 +5543,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "EBS Volumes קשורים ל-AZ. אם Pod עבר ל-Node ב-AZ אחרת, EBS לא יכול להיות attached. פתרון: הוסף topologySpreadConstraints או nodeAffinity לאותה AZ.",
+              "EBS Volumes ב-AWS הם single-AZ — הם יכולים להיות attached רק לNode שנמצא באותה Availability Zone. כש-Pod מתזמן מחדש ל-Node ב-AZ אחרת, ה-EBS לא יכול לעקוב. הפתרון הוא להשתמש ב-StorageClass עם WaitForFirstConsumer וב-nodeAffinity כדי לשמור Pod ו-Volume באותה AZ.",
           },
           {
             q: "Helm Chart מכיל Secret. מה הדרך הנכונה לנהל secrets ב-Helm ב-production?",
@@ -5555,10 +5555,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "secrets ב-values.yaml גלויים ב-git! הדרכים הנכונות: 1) helm-secrets עם SOPS מצפין. 2) External Secrets Operator מושך מ-Vault/AWS. 3) sealed-secrets.",
+              "שמירת secrets ישירות ב-values.yaml מסוכנת כי קבצי Helm נשמרים ב-git ורואים לכולם. הדרכים הנכונות הן: helm-secrets plugin עם SOPS שמצפין ב-git, External Secrets Operator שמושך ערכים מ-Vault/AWS בזמן ריצה, או Sealed Secrets. base64 ב-values.yaml אינו הצפנה.",
           },
           {
-            q: "kubectl describe pv data-pv מציג:\nStatus: Released\nClaimRef: prod/data-pvc\nReclaim Policy: Retain\nמה זה אומר וכיצד לנצל מחדש?",
+            q: "kubectl describe pv data-pv מציג:\n\nStatus: Released\nClaimRef: prod/data-pvc\nReclaim Policy: Retain\n\nמה זה אומר וכיצד לנצל מחדש?",
             options: [
               "PV פנוי אוטומטית",
               'PV הוחזק לאחר מחיקת PVC. ל-reuse: מחק ClaimRef: kubectl patch pv data-pv -p \'{"spec":{"claimRef":null}}\'',
@@ -5567,7 +5567,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              'Released = PV היה bound לPVC שנמחק, עם Retain policy. הנתונים שמורים. ל-reuse: kubectl patch pv data-pv -p \'{"spec":{"claimRef":null}}\' → הPV חוזר לAvailable ויכול לbind לPVC חדש.',
+              "סטטוס Released אומר שה-PVC שהיה מחובר ל-PV נמחק, אבל עם Reclaim Policy: Retain, ה-PV והנתונים שמורים ולא נמחקים. כדי לעשות reuse: נקה את ה-ClaimRef עם kubectl patch pv data-pv -p '{\"spec\":{\"claimRef\":null}}' — ה-PV יחזור לסטטוס Available ויוכל לbind לPVC חדש.",
           },
         ],
         questionsEn: [
@@ -5691,7 +5691,7 @@ export const TOPICS = [
               "Rook-Ceph is an operator that manages a Ceph cluster inside Kubernetes, providing Block, Object, and File storage.",
           },
           {
-            q: "A PVC stays Pending. kubectl describe pvc shows:\nEvents:\n  Warning  ProvisioningFailed  storageclass.storage.k8s.io 'fast-ssd' not found\nWhat is wrong?",
+            q: "A PVC stays Pending.\n\nkubectl describe pvc shows:\nEvents:\n  Warning  ProvisioningFailed  storageclass.storage.k8s.io 'fast-ssd' not found\n\nWhat is wrong?",
             options: [
               "PVC is too large",
               "StorageClass 'fast-ssd' does not exist in the cluster — configuration error",
@@ -5700,7 +5700,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "The PVC requests a StorageClass that doesn't exist. Run kubectl get storageclass to list available classes. Update storageClassName in the PVC to the correct name.",
+              "When the StorageClass named in the PVC does not exist, the provisioner cannot create a PV and the PVC stays Pending indefinitely. Run kubectl get storageclass to see what is available, then update storageClassName in the PVC to a real class name.",
           },
           {
             q: "A StatefulSet DB. After helm uninstall, PVCs remain and the cluster is running out of space. What is the correct command?",
@@ -5712,7 +5712,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "StatefulSet PVCs are not deleted automatically. To clean up: kubectl delete pvc -l selector=value. Always verify that backups exist before deleting!",
+              "StatefulSet PVCs are intentionally not deleted when a StatefulSet or Helm Release is removed, to prevent accidental data loss. To clean up, target them by label: kubectl delete pvc -l app=my-db -n production, but only after confirming backups exist. Running kubectl delete pvc --all is riskier as it can catch unrelated PVCs.",
           },
           {
             q: "helm upgrade failed midway. The Release is in 'failed' status. A ConfigMap is half-updated. What is the next step?",
@@ -5724,10 +5724,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "helm rollback restores the last good revision. Use helm history to find revision numbers. helm rollback my-release 2 returns to revision 2.",
+              "When a helm upgrade fails partway through, resources may be in an inconsistent state. helm rollback my-release [revision] restores all resources to a previously known good state. Run helm history my-release first to see available revision numbers.",
           },
           {
-            q: "A PVC sets storageClassName: standard. kubectl get pvc shows Pending. kubectl get storageclass shows:\nNAME    PROVISIONER\nfast    ebs.csi.aws.com\nWhat is wrong?",
+            q: "A PVC sets storageClassName: standard. kubectl get pvc shows Pending.\n\nkubectl get storageclass shows:\nNAME    PROVISIONER\nfast    ebs.csi.aws.com\n\nWhat is wrong?",
             options: [
               "PVC is too large",
               "StorageClass 'standard' does not exist — PVC requests a class not in the cluster",
@@ -5736,10 +5736,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "StorageClass 'standard' doesn't exist — only 'fast'. Fix: update the PVC to storageClassName: fast, or create a StorageClass named standard.",
+              "The PVC requests a StorageClass named 'standard' but the only one in the cluster is 'fast'. Kubernetes has no provisioner to satisfy the request, so the PVC stays Pending. Update storageClassName to 'fast' in the PVC, or create a new StorageClass with the name 'standard'.",
           },
           {
-            q: "A VolumeSnapshot is not created. kubectl describe volumesnapshot shows:\nready-to-use: false\nerror: rpc error: code = Unimplemented\nWhat is the likely cause?",
+            q: "A VolumeSnapshot is not created.\n\nkubectl describe volumesnapshot shows:\nready-to-use: false\nerror: rpc error: code = Unimplemented\n\nWhat is the likely cause?",
             options: [
               "Wrong Namespace",
               "CSI driver does not support snapshot capability — check if snapshot-controller and CSI driver support it",
@@ -5748,10 +5748,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "VolumeSnapshot requires a CSI driver with snapshot capability and a snapshot-controller installed. 'Unimplemented' = the driver doesn't support snapshotting.",
+              "VolumeSnapshots depend on two components: a snapshot-controller running in the cluster and a CSI driver that implements snapshot support. The error code = Unimplemented comes from the CSI driver itself, meaning it does not implement the CreateSnapshot RPC. Verify that both components are installed and the driver supports snapshots.",
           },
           {
-            q: "A Pod cannot write to a volume. kubectl logs shows:\nError: read-only file system: /data\nThe Pod spec has:\nvolumeMounts:\n- mountPath: /data\n  readOnly: true\nWhat is the fix?",
+            q: "A Pod cannot write to a volume.\n\nkubectl logs shows:\nError: read-only file system: /data\n\nThe Pod spec has:\nvolumeMounts:\n- mountPath: /data\n  readOnly: true\n\nWhat is the fix?",
             options: [
               "Increase the PVC size",
               "Change readOnly: false in the volumeMount",
@@ -5760,10 +5760,10 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "volumeMount.readOnly: true mounts the volume as read-only inside the container. Change to readOnly: false (or remove the field) to allow writes.",
+              "Setting readOnly: true on a volumeMount causes the Linux kernel to mount the filesystem in read-only mode, blocking all writes. Change it to readOnly: false, or remove the field entirely since the default is read-write. Increasing the PVC size or adding a securityContext does not address this flag.",
           },
           {
-            q: "helm upgrade fails with:\nError: UPGRADE FAILED: cannot patch 'my-configmap': ConfigMap.data is immutable\nWhat is the fix?",
+            q: "helm upgrade fails with:\n\nError: UPGRADE FAILED: cannot patch 'my-configmap': ConfigMap.data is immutable\n\nWhat is the fix?",
             options: [
               "Rollback immediately",
               "Remove immutable: true from the ConfigMap before upgrading, or delete and recreate it",
@@ -5772,7 +5772,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "A ConfigMap with immutable: true cannot be changed. Delete it first: kubectl delete cm my-configmap, then run helm upgrade. Note that deleting an immutable ConfigMap loses its data.",
+              "A ConfigMap with immutable: true is locked — Kubernetes rejects any patch that changes its data, regardless of who issues it. The only way forward is to delete the ConfigMap and let Helm recreate it: kubectl delete cm my-configmap then helm upgrade. A rollback would return to the prior Helm state without resolving the immutability.",
           },
           {
             q: "A Pod with a PVC on AWS EKS. The Pod moved to a different Node. The PVC is Bound but the Pod can't start. What is happening?",
@@ -5784,7 +5784,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "EBS Volumes are AZ-bound. If the Pod moves to a Node in a different AZ, the EBS volume cannot attach. Fix: add topologySpreadConstraints or nodeAffinity to pin the Pod to the correct AZ.",
+              "AWS EBS Volumes are zone-specific — a volume created in us-east-1a cannot be attached to a Node in us-east-1b. When a Pod reschedules to a Node in a different AZ, the volume attachment fails even though the PVC shows Bound. Use a StorageClass with WaitForFirstConsumer binding mode and add nodeAffinity to keep the Pod in the same AZ as its volume.",
           },
           {
             q: "A Helm Chart contains a Secret. What is the correct way to manage secrets in Helm for production?",
