@@ -37,7 +37,7 @@ function mulberry32(seed) {
 const TRANSLATIONS = {
   he: {
     tagline: "למדי Kubernetes בצורה כיפית ואינטראקטיבית",
-    startPlaying: "🚀 התחילי לשחק עכשיו",
+    startPlaying: "⚡ התחילי לשחק עכשיו",
     noRegNoPass: "ללא הרשמה · ללא סיסמה · מיידי",
     saveProgress: "רוצה לשמור את ההתקדמות?",
     username: "שם משתמש", email: "אימייל", password: "סיסמה",
@@ -101,7 +101,7 @@ const TRANSLATIONS = {
     goBackToTopic: "חזרי לנושא הזה",
     // Male-form overrides (used when gender === "m")
     tagline_m: "למד Kubernetes בצורה כיפית ואינטראקטיבית",
-    startPlaying_m: "🚀 התחל לשחק עכשיו",
+    startPlaying_m: "⚡ התחל לשחק עכשיו",
     loginBtn_m: "התחבר", signupBtn_m: "הירשם",
     emailAlreadySent_m: "✅ אימייל אימות כבר נשלח! בדוק את תיבת הדואר שלך.",
     otpExpired_m: "❌ קישור האימות פג תוקף. אנא הירשם שוב כדי לקבל קישור חדש.",
@@ -135,7 +135,7 @@ const TRANSLATIONS = {
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
-    startPlaying: "🚀 Start Playing Now",
+    startPlaying: "⚡ Start Playing Now",
     noRegNoPass: "No registration · No password · Instant",
     saveProgress: "Want to save your progress?",
     username: "Username", email: "Email", password: "Password",
