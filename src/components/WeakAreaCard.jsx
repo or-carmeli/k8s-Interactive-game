@@ -1,9 +1,9 @@
 const TOPIC_NAMES = {
-  workloads:       "Workloads",
-  networking:      "Networking",
-  config:          "Config & Security",
-  storage:         "Storage & Helm",
-  troubleshooting: "Troubleshooting",
+  workloads:       "Workloads & Scheduling",
+  networking:      "Networking & Service Exposure",
+  config:          "Configuration & Security",
+  storage:         "Storage & Package Management",
+  troubleshooting: "Cluster Operations & Troubleshooting",
 };
 
 // Returns the hex color for the side-bar indicator based on accuracy (0–100).

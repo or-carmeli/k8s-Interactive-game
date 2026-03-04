@@ -1,11 +1,11 @@
 import { useState } from "react";
 
 const STAGE_SUBTITLES = {
-  workloads:       "Pods · Deployments · StatefulSets · DaemonSets",
-  networking:      "Services · Ingress · Network Policies",
-  config:          "ConfigMaps · Secrets · RBAC",
-  storage:         "PersistentVolumes · StorageClass · Helm",
-  troubleshooting: "Debugging · שגיאות נפוצות · כלים",
+  workloads:       "Pods · Deployments · StatefulSets · Scheduling · Resources",
+  networking:      "Services · Ingress · NetworkPolicy · DNS",
+  config:          "ConfigMaps · Secrets · RBAC · ServiceAccounts",
+  storage:         "PersistentVolumes · StorageClass · Helm · Operators",
+  troubleshooting: "Debugging · Observability · Diagnosis · Tools",
 };
 
 const LVL_ORDER = ["easy", "medium", "hard"];

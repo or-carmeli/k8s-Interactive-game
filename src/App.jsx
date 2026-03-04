@@ -19,6 +19,21 @@ const LEVEL_CONFIG = {
 const LEVEL_ORDER = ["easy", "medium", "hard"];
 
 const MIXED_TOPIC = { id: "mixed", icon: "🎲", name: "Mixed Quiz", color: "#A855F7", levels: {} };
+const DAILY_TOPIC = { id: "daily", icon: "🔥", name: "Daily Challenge", color: "#F59E0B", levels: {} };
+
+// ── Deterministic daily randomisation ────────────────────────────────────────
+function mulberry32(seed) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function getDailySeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
 
 const ACHIEVEMENTS = [
   { id: "first",    icon: "🌱", name: "ראשית הדרך",   nameEn: "First Steps",     condition: (s) => s.total_answered >= 1 },
@@ -29,8 +44,8 @@ const ACHIEVEMENTS = [
 ];
 
 const TOPICS = [
-  { id:"workloads", icon:"🚀", name:"Workloads", color:"#00D4FF",
-    description:"Pods · Deployments · StatefulSets · DaemonSets", descriptionEn:"Pods · Deployments · StatefulSets · DaemonSets",
+  { id:"workloads", icon:"🚀", name:"Workloads & Scheduling", color:"#00D4FF",
+    description:"Pods · Deployments · StatefulSets · Scheduling · Resources", descriptionEn:"Pods · Deployments · StatefulSets · Scheduling · Resources",
     levels:{
       easy:{
         theory:`Pods ו-Deployments הם ליבת Kubernetes.\n🔹 Pod – יחידת הריצה הקטנה ביותר, מכיל קונטיינר אחד או יותר\n🔹 Pods זמניים – כשמת, נוצר חדש עם IP חדש\n🔹 Deployment מנהל קבוצת Pods זהים ומבטיח שהמספר הרצוי תמיד רץ\n🔹 replicas – עותקים זהים של ה-Pod שרצים במקביל\nCODE:\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: my-app\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: my-app`,
@@ -82,8 +97,8 @@ const TOPICS = [
       },
     }
   },
-  { id:"networking", icon:"🌐", name:"Networking", color:"#A855F7",
-    description:"Services · Ingress · Network Policies", descriptionEn:"Services · Ingress · Network Policies",
+  { id:"networking", icon:"🌐", name:"Networking & Service Exposure", color:"#A855F7",
+    description:"Services · Ingress · NetworkPolicy · DNS", descriptionEn:"Services · Ingress · NetworkPolicy · DNS",
     levels:{
       easy:{
         theory:`Services מספקים כתובת IP יציבה לגישה ל-Pods.\n🔹 ClusterIP – גישה פנימית בלבד (ברירת מחדל)\n🔹 NodePort – חשיפה על port בכל Node\n🔹 LoadBalancer – IP חיצוני ב-cloud\n🔹 Service מוצא Pods לפי labels ו-selector\nCODE:\napiVersion: v1\nkind: Service\nspec:\n  selector:\n    app: my-app\n  ports:\n  - port: 80\n    targetPort: 8080`,
@@ -135,8 +150,8 @@ const TOPICS = [
       },
     }
   },
-  { id:"config", icon:"🔐", name:"Config & Security", color:"#F59E0B",
-    description:"ConfigMaps · Secrets · RBAC", descriptionEn:"ConfigMaps · Secrets · RBAC",
+  { id:"config", icon:"🔐", name:"Configuration & Security", color:"#F59E0B",
+    description:"ConfigMaps · Secrets · RBAC · ServiceAccounts", descriptionEn:"ConfigMaps · Secrets · RBAC · ServiceAccounts",
     levels:{
       easy:{
         theory:`ConfigMap ו-Secret מפרידים קוד מקונפיגורציה.\n🔹 ConfigMap – הגדרות רגילות (DB_URL, timeout)\n🔹 Secret – נתונים רגישים (passwords, tokens)\n🔹 Secrets מקודדים ב-base64 (לא מוצפנים לחלוטין!)\n🔹 שניהם: env variables או volume\nCODE:\napiVersion: v1\nkind: ConfigMap\ndata:\n  DB_URL: postgres://db:5432\n  MAX_CONN: "100"`,
@@ -188,8 +203,8 @@ const TOPICS = [
       },
     }
   },
-  { id:"storage", icon:"💾", name:"Storage & Helm", color:"#10B981",
-    description:"PersistentVolumes · StorageClass · Helm", descriptionEn:"PersistentVolumes · StorageClass · Helm",
+  { id:"storage", icon:"💾", name:"Storage & Package Management", color:"#10B981",
+    description:"PersistentVolumes · StorageClass · Helm · Operators", descriptionEn:"PersistentVolumes · StorageClass · Helm · Operators",
     levels:{
       easy:{
         theory:`PersistentVolumes ו-Helm בסיסי.\n🔹 PV – יחידת אחסון בCluster (admin מגדיר)\n🔹 PVC – בקשה לאחסון מ-Pod\n🔹 Helm Chart – חבילה של Kubernetes manifests עם templates\n🔹 helm install – מתקין Chart ויוצר Release\nCODE:\napiVersion: v1\nkind: PersistentVolumeClaim\nspec:\n  accessModes: [ReadWriteOnce]\n  resources:\n    requests:\n      storage: 10Gi`,
@@ -241,8 +256,8 @@ const TOPICS = [
       },
     }
   },
-  { id:"troubleshooting", icon:"🔧", name:"Troubleshooting", color:"#EF4444",
-    description:"Debugging · שגיאות נפוצות · כלים", descriptionEn:"Debugging · Common Errors · Tools",
+  { id:"troubleshooting", icon:"🔧", name:"Cluster Operations & Troubleshooting", color:"#EF4444",
+    description:"Debugging · Observability · אבחון · כלים", descriptionEn:"Debugging · Observability · Diagnosis · Tools",
     levels:{
       easy:{
         theory:`פקודות Debug בסיסיות.\n🔹 kubectl describe – events ומידע מפורט על resource\n🔹 kubectl logs – לוגים של קונטיינר\n🔹 kubectl exec – מריץ פקודה בתוך Pod\n🔹 kubectl get pods -A – כל הPods בכל הNamespaces\nCODE:\nkubectl describe pod my-pod\nkubectl logs my-pod\nkubectl logs my-pod -c my-container\nkubectl exec -it my-pod -- bash\nkubectl get pods -A`,
@@ -497,8 +512,9 @@ export default function K8sQuestApp() {
     return idx < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[idx + 1] : null;
   };
 
-  const currentLevelData = selectedTopic && selectedLevel && selectedTopic.id !== "mixed" ? getLevelData(selectedTopic, selectedLevel) : null;
-  const currentQuestions = selectedTopic?.id === "mixed" ? mixedQuestions : (currentLevelData?.questions || []);
+  const isFreeMode = (id) => id === "mixed" || id === "daily";
+  const currentLevelData = selectedTopic && selectedLevel && !isFreeMode(selectedTopic.id) ? getLevelData(selectedTopic, selectedLevel) : null;
+  const currentQuestions = isFreeMode(selectedTopic?.id) ? mixedQuestions : (currentLevelData?.questions || []);
 
   useEffect(() => {
     // Detect Supabase error params redirected back via URL hash (e.g. expired confirmation link)
@@ -772,7 +788,7 @@ export default function K8sQuestApp() {
           max_streak:     Math.max(prev.max_streak, streak),
         };
       });
-      if (selectedTopic.id !== "mixed") {
+      if (!isFreeMode(selectedTopic.id)) {
         setTopicStats(prev => {
           const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
           return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
@@ -795,7 +811,7 @@ export default function K8sQuestApp() {
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
       ];
       setCompletedTopics(newCompleted); setStats(newStats); setUnlockedAchievements(newAch);
-      if (selectedTopic.id !== "mixed") {
+      if (!isFreeMode(selectedTopic.id)) {
         saveUserData(newStats, newCompleted, newAch);
         const allPerfect = LEVEL_ORDER.every(lvl => {
           const r = newCompleted[`${selectedTopic.id}_${lvl}`];
@@ -841,6 +857,31 @@ export default function K8sQuestApp() {
     setMixedQuestions(all.slice(0, 10));
     isRetryRef.current = false;
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
+    setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
+    setShowExplanation(false);
+    topicCorrectRef.current = 0;
+    setQuizHistory([]); setShowReview(false); setShowConfetti(false);
+    if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? 25 : TIMER_SECONDS);
+    setScreen("topic");
+  };
+
+  const startDailyChallenge = () => {
+    const rng = mulberry32(getDailySeed());
+    const all = [];
+    TOPICS.forEach(topic => {
+      LEVEL_ORDER.forEach(level => {
+        const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+        qs.forEach(q => all.push(q));
+      });
+    });
+    // Seeded Fisher-Yates — same result for all users on the same day
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    setMixedQuestions(all.slice(0, 10));
+    isRetryRef.current = false;
+    setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);
     topicCorrectRef.current = 0;
@@ -1065,6 +1106,20 @@ export default function K8sQuestApp() {
             const el = document.getElementById(`topic-card-${id}`);
             if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
           }}/>
+          <button onClick={startDailyChallenge} style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+            onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <span style={{fontSize:28}}>🔥</span>
+              <div style={{textAlign:"start"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{color:"#F59E0B",fontWeight:800,fontSize:15}}>{lang==="en"?"Daily Challenge":"אתגר יומי"}</span>
+                  <span style={{background:"rgba(245,158,11,0.2)",color:"#F59E0B",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>{lang==="en"?"NEW DAILY":"חדש היום"}</span>
+                </div>
+                <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{lang==="en"?"10 mixed questions · resets every day":"10 שאלות מכל הנושאים · מתחלף כל יום"}</div>
+              </div>
+            </div>
+            <span style={{color:"#F59E0B",fontSize:20}}>→</span>
+          </button>
           <button onClick={startMixedQuiz} style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -1289,7 +1344,7 @@ export default function K8sQuestApp() {
               {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
-              <button onClick={()=>selectedTopic.id==="mixed"?startMixedQuiz():startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
+              <button onClick={()=>selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
               <button onClick={()=>setScreen("home")} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#e2e8f0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
             {showReview&&quizHistory.length>0&&(
