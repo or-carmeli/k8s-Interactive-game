@@ -937,7 +937,25 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,position:"relative",overflowX:"hidden"}}>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}input,button{outline:none;font-family:inherit}@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)!important}.page-pad{padding:12px 10px!important}.quiz-bar{flex-wrap:wrap!important;row-gap:6px!important}.quiz-bar-right{width:100%!important;justify-content:flex-start!important;gap:8px!important}.quiz-bar-right span,.quiz-bar-right button{font-size:11px!important}.home-actions{gap:5px!important}.home-actions>button{font-size:11px!important;padding:5px 9px!important}}`}</style>
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}input,button{outline:none;font-family:inherit}@media(max-width:600px){
+.stats-grid{grid-template-columns:repeat(2,1fr)!important}
+.page-pad{padding:12px 8px!important}
+.quiz-bar{flex-wrap:wrap!important;row-gap:6px!important}
+.quiz-bar-right{width:100%!important;justify-content:flex-start!important;gap:8px!important}
+.quiz-bar-right span,.quiz-bar-right button{font-size:11px!important}
+.home-actions{gap:5px!important}
+.home-actions>button{font-size:11px!important;padding:5px 8px!important}
+.home-screen{padding:12px 10px!important}
+.roadmap-row{gap:8px!important;margin-bottom:8px!important}
+.roadmap-node-col{width:28px!important}
+.roadmap-node-circle{width:26px!important;height:26px!important;font-size:10px!important}
+.roadmap-card{padding:10px 10px!important}
+.roadmap-card-header{gap:6px!important}
+.roadmap-icon{width:28px!important;height:28px!important;font-size:15px!important}
+.roadmap-title{font-size:12px!important}
+.roadmap-subtitle{font-size:10px!important}
+.roadmap-pct{min-width:30px!important;font-size:11px!important}
+}`}</style>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
       {showConfetti&&<Confetti/>}
@@ -948,16 +966,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {/* HOME */}
       {screen==="home"&&(
-        <div style={{maxWidth:700,margin:"0 auto",padding:"20px 14px",animation:"fadeIn 0.4s ease",overflow:"hidden",direction:dir}}>
+        <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
           <div style={{marginBottom:16}}>
-            {/* Row 1: Title (center) + controls (right) */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,direction:"ltr"}}>
-              <div style={{width:1,flexShrink:0}}/>
-              <h1 style={{fontSize:26,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:5}}>
+            {/* Row 1: Title truly centered, controls absolutely on the right */}
+            <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,minHeight:40,direction:"ltr"}}>
+              <h1 style={{fontSize:24,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:5,zIndex:1}}>
                 <span>☸️</span>
                 <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>KubeQuest</span>
               </h1>
-              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <div style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",display:"flex",gap:5,alignItems:"center",direction:"ltr"}}>
                 {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
                 <LangSwitcher lang={lang} setLang={setLang}/>
               </div>

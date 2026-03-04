@@ -120,12 +120,12 @@ export default function RoadmapView({
           return (
             // Use flexDirection:row-reverse for RTL instead of direction:rtl
             // to avoid RTL flex overflow bugs in mobile browsers
-            <div key={topic.id} style={{display:"flex",flexDirection:rowDir,alignItems:"stretch",gap:14}}>
+            <div key={topic.id} className="roadmap-row" style={{display:"flex",flexDirection:rowDir,alignItems:"stretch",gap:14}}>
 
               {/* ── Node column ── */}
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:36,flexShrink:0,paddingTop:2}}>
+              <div className="roadmap-node-col" style={{display:"flex",flexDirection:"column",alignItems:"center",width:36,flexShrink:0,paddingTop:2}}>
                 {/* Circle node */}
-                <div style={{
+                <div className="roadmap-node-circle" style={{
                   width:34,height:34,borderRadius:"50%",
                   border:nodeBorder,
                   background:completed?"rgba(16,185,129,0.12)":isCurrent&&!locked?`${topic.color}14`:"rgba(255,255,255,0.03)",
@@ -150,7 +150,7 @@ export default function RoadmapView({
               </div>
 
               {/* ── Stage card ── */}
-              <div style={{
+              <div className="roadmap-card" style={{
                 flex:1,
                 minWidth:0,
                 marginBottom: isLast ? 0 : 12,
@@ -165,27 +165,28 @@ export default function RoadmapView({
                 {/* Stage header */}
                 <div
                   onClick={()=>{ if (!locked) setExpandedStage(isExpanded ? null : topic.id); }}
+                  className="roadmap-card-header"
                   style={{cursor:locked?"default":"pointer",display:"flex",flexDirection:rowDir,alignItems:"center",gap:8,marginBottom:8}}>
 
                   {/* Icon */}
-                  <div style={{fontSize:18,width:32,height:32,borderRadius:8,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>
+                  <div className="roadmap-icon" style={{fontSize:18,width:32,height:32,borderRadius:8,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>
                     {topic.icon}
                   </div>
 
                   {/* Text — takes remaining space, clips instead of wrapping */}
                   <div style={{flex:1,minWidth:0,direction:dir}}>
-                    <div style={{fontWeight:700,color:"#e2e8f0",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>
+                    <div className="roadmap-title" style={{fontWeight:700,color:"#e2e8f0",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>
                       <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{topic.name}</span>
                       {completed&&<span style={{flexShrink:0}}>✅</span>}
                     </div>
-                    <div style={{color:"#475569",fontSize:11,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    <div className="roadmap-subtitle" style={{color:"#475569",fontSize:11,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                       {STAGE_SUBTITLES[topic.id]}
                     </div>
                   </div>
 
                   {/* Progress % + expand arrow */}
                   {!locked&&(
-                    <div style={{flexShrink:0,textAlign:"center",minWidth:36}}>
+                    <div className="roadmap-pct" style={{flexShrink:0,textAlign:"center",minWidth:36}}>
                       <div style={{color:completed?"#10B981":isCurrent?topic.color:"#64748b",fontWeight:700,fontSize:12}}>{progress}%</div>
                       <div style={{color:"#475569",fontSize:10}}>{isExpanded?"▲":"▼"}</div>
                     </div>
