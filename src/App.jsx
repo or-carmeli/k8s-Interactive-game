@@ -949,30 +949,32 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* HOME */}
       {screen==="home"&&(
         <div style={{maxWidth:700,margin:"0 auto",padding:"20px 14px",animation:"fadeIn 0.4s ease",overflow:"hidden",direction:dir}}>
-          <div style={{marginBottom:20,textAlign:"center"}}>
-            {/* Title */}
-            <h1 style={{fontSize:28,fontWeight:900,margin:"0 0 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-              <span>☸️</span>
-              <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>KubeQuest</span>
-            </h1>
-            {/* Greeting */}
-            <p style={{color:"#94a3b8",fontSize:14,margin:"0 0 12px"}}>
+          <div style={{marginBottom:16}}>
+            {/* Row 1: Title (center) + controls (right) */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6,direction:"ltr"}}>
+              <div style={{width:1,flexShrink:0}}/>
+              <h1 style={{fontSize:26,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:5}}>
+                <span>☸️</span>
+                <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>KubeQuest</span>
+              </h1>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
+                <LangSwitcher lang={lang} setLang={setLang}/>
+              </div>
+            </div>
+            {/* Row 2: Greeting */}
+            <p style={{color:"#94a3b8",fontSize:13,margin:"0 0 10px",textAlign:"center"}}>
               {t("greeting")}, <span style={{color:"#e2e8f0",fontWeight:700}}>{displayName}</span>! 👋
-              {isGuest&&<span style={{color:"#475569",fontSize:12,display:"block",marginTop:2}}>{t("playingAsGuest")}</span>}
+              {isGuest&&<span style={{color:"#475569",fontSize:12}}> · {t("playingAsGuest")}</span>}
             </p>
-            {/* Language + gender controls */}
-            <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginBottom:12,direction:"ltr"}}>
-              {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
-              <LangSwitcher lang={lang} setLang={setLang}/>
+            {/* Row 3: Action buttons */}
+            <div className="home-actions" style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center"}}>
+              {!isGuest&&<button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);}} style={{padding:"6px 11px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#94a3b8",cursor:"pointer",fontSize:12}}>{t("leaderboardBtn")}</button>}
+              <button onClick={()=>setIsInterviewMode(p=>!p)} style={{padding:"6px 11px",background:isInterviewMode?"rgba(168,85,247,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${isInterviewMode?"rgba(168,85,247,0.4)":"rgba(255,255,255,0.09)"}`,borderRadius:8,color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:12,fontWeight:isInterviewMode?700:400}}>{t("interviewMode")}</button>
+              <button onClick={handleResetProgress} style={{padding:"6px 11px",background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:8,color:"#EF4444",cursor:"pointer",fontSize:12}}>{t("resetProgress")}</button>
+              <button onClick={handleLogout} style={{padding:"6px 11px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#94a3b8",cursor:"pointer",fontSize:12}}>{t("logout")}</button>
             </div>
-            {/* Action buttons */}
-            <div className="home-actions" style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
-              {!isGuest&&<button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);}} style={{padding:"7px 12px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#94a3b8",cursor:"pointer",fontSize:13}}>{t("leaderboardBtn")}</button>}
-              <button onClick={()=>setIsInterviewMode(p=>!p)} style={{padding:"7px 12px",background:isInterviewMode?"rgba(168,85,247,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${isInterviewMode?"rgba(168,85,247,0.4)":"rgba(255,255,255,0.09)"}`,borderRadius:8,color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,fontWeight:isInterviewMode?700:400}}>{t("interviewMode")}</button>
-              <button onClick={handleResetProgress} style={{padding:"7px 12px",background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:8,color:"#EF4444",cursor:"pointer",fontSize:13}}>{t("resetProgress")}</button>
-              <button onClick={handleLogout} style={{padding:"7px 12px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#94a3b8",cursor:"pointer",fontSize:13}}>{t("logout")}</button>
-            </div>
-            {isInterviewMode&&<p style={{color:"#64748b",fontSize:11,margin:"8px 0 0",direction:dir}}>{t("interviewModeHint")}</p>}
+            {isInterviewMode&&<p style={{color:"#64748b",fontSize:11,margin:"6px 0 0",textAlign:"center",direction:dir}}>{t("interviewModeHint")}</p>}
           </div>
           {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13}}>{t("guestBanner")}</span><button onClick={()=>setUser(null)} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>{t("signupNow")}</button></div>}
           <div style={{display:"flex",gap:6,marginBottom:16,background:"rgba(255,255,255,0.03)",borderRadius:10,padding:3,direction:"ltr"}}>

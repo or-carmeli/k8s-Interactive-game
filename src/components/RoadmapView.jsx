@@ -69,7 +69,7 @@ export default function RoadmapView({
   };
 
   return (
-    <div style={{animation:"fadeIn 0.4s ease"}}>
+    <div style={{animation:"fadeIn 0.4s ease",direction:"ltr"}}>
 
       {/* ── Summary header ── */}
       <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px",marginBottom:16,direction:dir}}>
