@@ -972,8 +972,18 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{marginBottom:16}}>
             {/* Row 1: Title truly centered, controls absolutely on the right */}
             <div className="home-header" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,minHeight:40,direction:"ltr"}}>
-              <h1 style={{fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:8,zIndex:1}}>
-                <span>☸️</span>
+              <h1 style={{fontSize:42,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:8,zIndex:1}}>
+                <svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
+                  <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
+                  <circle cx="50" cy="50" r="50" fill="url(#hbg)"/>
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="url(#hgr)" strokeWidth="4" opacity="0.9"/>
+                  <g transform="translate(50,50)" stroke="url(#hgr)" strokeWidth="2.8" strokeLinecap="round">
+                    {[0,51.4,102.8,154.2,205.7,257.1,308.5].map((deg,i)=><line key={i} x1="0" y1="-18" x2="0" y2="-34" transform={`rotate(${deg})`}/>)}
+                  </g>
+                  <circle cx="50" cy="50" r="10" fill="none" stroke="url(#hgr)" strokeWidth="3"/>
+                  <circle cx="50" cy="50" r="5" fill="#00D4FF"/>
+                  {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
+                </svg>
                 <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>KubeQuest</span>
               </h1>
               <div className="home-controls" style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",display:"flex",gap:5,alignItems:"center",direction:"ltr"}}>
