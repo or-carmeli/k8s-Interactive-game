@@ -126,7 +126,7 @@ const TRANSLATIONS = {
     resetTopic_m: "אפס נושא",
     allPerfectMsg_m: "כל הנושאים עם דיוק מלא. רוצה להמשיך לאתגר הבא?",
     roadmapStage_m: "אתה בשלב",
-    roadmapStart_m: "🗺️ התחל את המסלול",
+    roadmapStart_m: "התחל את המסלול",
     roadmapStartHere_m: "▶ התחל כאן",
     roadmapContinue_m: "🚀 המשך לשלב הבא",
     roadmapContinueHere_m: "▶ המשך מכאן",
@@ -180,7 +180,7 @@ const TRANSLATIONS = {
     roadmapAllDone: "🎉 You completed all stages!",
     roadmapStage: "You're on stage", roadmapStageOf: "of",
     roadmapCompletedPct: "completed",
-    roadmapStart: "🗺️ Start Roadmap",
+    roadmapStart: "🚀 Start Roadmap",
     roadmapStartHere: "▶ Start here",
     roadmapContinue: "🚀 Continue to Next Stage",
     roadmapLocked: "🔒 Unlocks after completing the previous stage",
@@ -1324,7 +1324,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   setScreen("topic");
                 }}
                   style={{padding:13,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:12,color:"#EF4444",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                  🔄 {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} שאלה${wrongQs.length>1?"ות":""} שגויות`}
+                  🔄 {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
                 </button>
               )}
               {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
