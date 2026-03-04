@@ -535,7 +535,7 @@ const TRANSLATIONS = {
     tabTopics: "📚 נושאים", tabRoadmap: "🗺️ מסלול",
     interviewMode: "🎯 מצב ראיון", interviewModeHint: "רמזים כבויים, יש טיימר לכל שאלה",
     dailyChallengeTitle: "אתגר יומי", dailyChallengeNew: "חדש היום",
-    dailyChallengeDesc: "10 שאלות מכל הנושאים · מתחלף כל יום",
+    dailyChallengeDesc: "5 שאלות מכל הנושאים · מתחלף כל יום",
     roadmapTitle: "ההתקדמות במסלול",
     roadmapAllDone: "🎉 השלמת את כל השלבים!",
     roadmapStage: "את בשלב", roadmapStageOf: "מתוך",
@@ -619,7 +619,7 @@ const TRANSLATIONS = {
     tabTopics: "📚 Topics", tabRoadmap: "🗺️ Roadmap",
     interviewMode: "🎯 Interview Mode", interviewModeHint: "Hints off, timer on for every question",
     dailyChallengeTitle: "Daily Challenge", dailyChallengeNew: "NEW DAILY",
-    dailyChallengeDesc: "10 mixed questions · resets every day",
+    dailyChallengeDesc: "5 mixed questions · resets every day",
   },
 };
 
@@ -1134,9 +1134,9 @@ export default function K8sQuestApp() {
     // Pick a non-overlapping window by day-of-year — no repeats until full pool cycles
     const now = new Date();
     const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    const numWindows = Math.floor(shuffled.length / 10);
-    const startIdx = (dayOfYear % numWindows) * 10;
-    setMixedQuestions(shuffled.slice(startIdx, startIdx + 10));
+    const numWindows = Math.floor(shuffled.length / 5);
+    const startIdx = (dayOfYear % numWindows) * 5;
+    setMixedQuestions(shuffled.slice(startIdx, startIdx + 5));
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
