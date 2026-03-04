@@ -329,6 +329,7 @@ export default function K8sQuestApp() {
   const [sessionScore, setSessionScore]                 = useState(0);
   const [retryMode, setRetryMode]                       = useState(false);
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
+  const [showMenu, setShowMenu]                         = useState(false);
 
   const isGuest = user?.id === "guest";
   const achievementsLoaded = useRef(false);
@@ -972,8 +973,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
           <div style={{marginBottom:24}}>
-            {/* Row 1: Title truly centered, controls absolutely on the right */}
-            <div className="home-header" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,minHeight:40,direction:"ltr"}}>
+            {/* Row 1: Title centered + burger button */}
+            <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,minHeight:48,direction:"ltr"}}>
               <h1 style={{fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:10,zIndex:1,filter:"drop-shadow(0 0 18px rgba(0,212,255,0.35))"}}>
                 <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
                   <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
@@ -988,24 +989,35 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </svg>
                 <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite"}}>KubeQuest</span>
               </h1>
-              <div className="home-controls" style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",display:"flex",gap:5,alignItems:"center",direction:"ltr"}}>
-                {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
-                <LangSwitcher lang={lang} setLang={setLang}/>
-              </div>
+              {/* Burger button */}
+              <button onClick={()=>setShowMenu(p=>!p)}
+                style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",width:40,height:40,background:showMenu?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${showMenu?"rgba(0,212,255,0.3)":"rgba(255,255,255,0.1)"}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:5,zIndex:201,transition:"all 0.2s"}}>
+                {[0,1,2].map(i=><span key={i} style={{display:"block",width:18,height:2,borderRadius:2,background:showMenu?"#00D4FF":"#94a3b8",transition:"background 0.2s"}}/>)}
+              </button>
+              {/* Dropdown menu */}
+              {showMenu&&(<>
+                <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
+                <div style={{position:"absolute",top:"calc(100% + 8px)",right:0,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:220,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr"}}>
+                  {/* Language + Gender */}
+                  <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
+                    {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
+                    <LangSwitcher lang={lang} setLang={setLang}/>
+                  </div>
+                  {/* Menu items */}
+                  {!isGuest&&<button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span>🏆</span>{t("leaderboardBtn")}</button>}
+                  <button onClick={()=>{setIsInterviewMode(p=>!p);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400}}><span>🎯</span>{t("interviewMode")}{isInterviewMode&&<span style={{marginLeft:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}</button>
+                  <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#EF4444",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span>🗑</span>{t("resetProgress")}</button>
+                  <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#64748b",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,textDecoration:"none"}}><span>✉️</span>{lang==="en"?"Contact":"צור קשר"}</a>
+                  <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span>🚪</span>{t("logout")}</button>
+                </div>
+              </>)}
             </div>
             {/* Row 2: Greeting */}
             <p style={{color:"#94a3b8",fontSize:13,margin:"0 0 16px",textAlign:"center"}}>
               {t("greeting")}, <span style={{color:"#e2e8f0",fontWeight:700}}>{displayName}</span>! 👋
               {isGuest&&<span style={{color:"#475569",fontSize:12}}> · {t("playingAsGuest")}</span>}
             </p>
-            {/* Row 3: Action buttons */}
-            <div className="home-actions" style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center"}}>
-              {!isGuest&&<button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);}} style={{padding:"6px 11px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#94a3b8",cursor:"pointer",fontSize:12}}>{t("leaderboardBtn")}</button>}
-              <button onClick={()=>setIsInterviewMode(p=>!p)} style={{padding:"6px 11px",background:isInterviewMode?"rgba(168,85,247,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${isInterviewMode?"rgba(168,85,247,0.4)":"rgba(255,255,255,0.09)"}`,borderRadius:8,color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:12,fontWeight:isInterviewMode?700:400}}>{t("interviewMode")}</button>
-              <button onClick={handleResetProgress} style={{padding:"6px 11px",background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:8,color:"#EF4444",cursor:"pointer",fontSize:12}}>{t("resetProgress")}</button>
-              <button onClick={handleLogout} style={{padding:"6px 11px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#94a3b8",cursor:"pointer",fontSize:12}}>{t("logout")}</button>
-            </div>
-            {isInterviewMode&&<p style={{color:"#64748b",fontSize:11,margin:"6px 0 0",textAlign:"center",direction:dir}}>{t("interviewModeHint")}</p>}
+            {isInterviewMode&&<p style={{color:"#64748b",fontSize:11,margin:"-10px 0 14px",textAlign:"center",direction:dir}}>{t("interviewModeHint")}</p>}
           </div>
           {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13}}>{t("guestBanner")}</span><button onClick={()=>setUser(null)} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>{t("signupNow")}</button></div>}
           <div style={{display:"flex",gap:6,marginBottom:16,background:"rgba(255,255,255,0.03)",borderRadius:10,padding:3,direction:"ltr"}}>
