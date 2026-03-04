@@ -99,6 +99,7 @@ const TRANSLATIONS = {
     advancedPractice: "לתרגול מתקדם",
     accuracyLabel: "דיוק",
     goBackToTopic: "חזרי לנושא הזה",
+    a11yTitle: "♿ נגישות", a11yFontSize: "גודל טקסט", a11yReduceMotion: "הפחת תנועה", a11yHighContrast: "ניגודיות גבוהה",
     // Male-form overrides (used when gender === "m")
     tagline_m: "למד Kubernetes בצורה כיפית ואינטראקטיבית",
     startPlaying_m: "⚡ התחל לשחק עכשיו",
@@ -197,6 +198,7 @@ const TRANSLATIONS = {
     interviewMode: "🎯 Interview Mode", interviewModeHint: "Hints off, timer on for every question",
     dailyChallengeTitle: "Daily Challenge", dailyChallengeNew: "NEW DAILY",
     dailyChallengeDesc: "5 mixed questions · resets every day",
+    a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
   },
 };
 
@@ -336,6 +338,10 @@ export default function K8sQuestApp() {
   const [retryMode, setRetryMode]                       = useState(false);
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
   const [showMenu, setShowMenu]                         = useState(false);
+  const [a11y, setA11y] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("a11y_v1")) || { fontSize: "normal", reduceMotion: false, highContrast: false }; }
+    catch { return { fontSize: "normal", reduceMotion: false, highContrast: false }; }
+  });
 
   const isGuest = user?.id === "guest";
   const achievementsLoaded = useRef(false);
@@ -619,6 +625,12 @@ export default function K8sQuestApp() {
   };
 
 
+  const updateA11y = (key, val) => setA11y(prev => {
+    const next = { ...prev, [key]: val };
+    try { localStorage.setItem("a11y_v1", JSON.stringify(next)); } catch {}
+    return next;
+  });
+
   const handleSelectAnswer = (idx) => {
     if (submitted) return;
     setSelectedAnswer(idx);
@@ -851,6 +863,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
   );
 
   const accuracy = stats.total_answered > 0 ? Math.round(stats.total_correct / stats.total_answered * 100) : 0;
+  const FONT_SCALES = { normal: 1, large: 1.2, xl: 1.4 };
+  const fs      = FONT_SCALES[a11y.fontSize] || 1;
+  const hcText  = a11y.highContrast ? "#ffffff" : "#e2e8f0";
+  const hcMuted = a11y.highContrast ? "#cbd5e1" : "#94a3b8";
 
   if (!user) return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817,#0f172a)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,padding:"20px"}}>
@@ -946,7 +962,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,position:"relative",overflowX:"hidden"}}>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}input,button{outline:none;font-family:inherit}@media(max-width:600px){
+      <style>{`${a11y.reduceMotion?"*{animation-duration:0.001ms!important;transition-duration:0.001ms!important}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}input,button{outline:none;font-family:inherit}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
 .quiz-bar{flex-wrap:wrap!important;row-gap:6px!important}
@@ -968,8 +984,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .roadmap-pct{min-width:30px!important;font-size:11px!important}
 }`}</style>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
-      {flash&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
-      {showConfetti&&<Confetti/>}
+      {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
+      {showConfetti&&!a11y.reduceMotion&&<Confetti/>}
       {newAchievement&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
       {saveError&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
 
@@ -1008,6 +1024,29 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
                     {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
                     <LangSwitcher lang={lang} setLang={setLang}/>
+                  </div>
+                  {/* Accessibility */}
+                  <div style={{padding:"10px 14px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+                    <div style={{fontSize:11,color:"#475569",fontWeight:700,marginBottom:8,letterSpacing:0.5}}>{t("a11yTitle")}</div>
+                    <div style={{marginBottom:7}}>
+                      <div style={{fontSize:11,color:"#64748b",marginBottom:5}}>{t("a11yFontSize")}</div>
+                      <div style={{display:"flex",gap:4}}>
+                        {[["normal","A",12],["large","A+",14],["xl","A++",16]].map(([sz,label,sz_px])=>(
+                          <button key={sz} onClick={()=>updateA11y("fontSize",sz)}
+                            style={{flex:1,padding:"5px 0",fontSize:sz_px,fontWeight:a11y.fontSize===sz?800:500,background:a11y.fontSize===sz?"rgba(0,212,255,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y.fontSize===sz?"rgba(0,212,255,0.4)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y.fontSize===sz?"#00D4FF":"#64748b",cursor:"pointer"}}>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:4}}>
+                      {(["reduceMotion","highContrast"]).map((key,i)=>(
+                        <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
+                          style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
+                          {i===0?t("a11yReduceMotion"):t("a11yHighContrast")}{a11y[key]?" ✓":""}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   {/* Menu items */}
                   {!isGuest&&<button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}>{t("leaderboardBtn")}</button>}
@@ -1180,8 +1219,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               </div>
 
-              <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"20px 22px",marginBottom:14}}>
-                {(()=>{const qText=currentQuestions[questionIndex].q;const qDir=hasHebrew(qText)?dir:"ltr";return<div dir={qDir} style={{color:"#e2e8f0",fontSize:17,fontWeight:700,lineHeight:1.75,wordBreak:"break-word",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"plaintext"}}>{renderBidi(qText,lang)}</div>;})()}
+              <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${a11y.highContrast?"rgba(255,255,255,0.22)":"rgba(255,255,255,0.08)"}`,borderRadius:14,padding:"20px 22px",marginBottom:14}}>
+                {(()=>{const qText=currentQuestions[questionIndex].q;const qDir=hasHebrew(qText)?dir:"ltr";return<div dir={qDir} style={{color:hcText,fontSize:Math.round(17*fs),fontWeight:700,lineHeight:1.75,wordBreak:"break-word",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"plaintext"}}>{renderBidi(qText,lang)}</div>;})()}
               </div>
 
               <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
@@ -1198,7 +1237,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   return (
                     <button key={i} className="opt-btn"
                       onClick={()=>handleSelectAnswer(i)}
-                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:submitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
+                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:Math.round(14*fs),cursor:submitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
                       <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
                       <span dir={optDir} style={{flex:1}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
                       {submitted&&isCorrect&&<span style={{flexShrink:0,fontSize:16}}>✓</span>}
@@ -1230,7 +1269,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                               ?`${t("timeUp")} ${lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: ${q.options[q.answer]}`
                               :t("incorrect")}
                         </div>
-                        {!isInterviewMode&&<div style={{color:"#94a3b8",fontSize:13,lineHeight:1.7}}>{renderBidi(q.explanation,lang)}</div>}
+                        {!isInterviewMode&&<div style={{color:hcMuted,fontSize:Math.round(13*fs),lineHeight:1.7}}>{renderBidi(q.explanation,lang)}</div>}
                       </div>
                     );
                   })()}
