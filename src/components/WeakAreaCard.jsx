@@ -16,9 +16,10 @@ function indicatorColor(accuracy) {
 export default function WeakAreaCard({ topicStats, onGoToTopic, t, dir }) {
   // Only consider topics the user has actually answered at least once.
   const entries = Object.entries(topicStats).filter(([, v]) => v.answered > 0);
+  const totalAnswered = entries.reduce((sum, [, v]) => sum + v.answered, 0);
 
   // ── Empty state ────────────────────────────────────────────────────────────
-  if (entries.length === 0) {
+  if (entries.length === 0 || totalAnswered < 5) {
     return (
       <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"14px 18px",marginBottom:16,direction:dir}}>
         <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",marginBottom:8,letterSpacing:0.5}}>{t("weakAreaTitle")}</div>
