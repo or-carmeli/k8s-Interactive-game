@@ -1372,27 +1372,28 @@ export default function K8sQuestApp() {
     if (correct) {
       topicCorrectRef.current += 1;
       setFlash(true); setTimeout(() => setFlash(false), 600);
-      if (!isRetryRef.current) setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel]?.points ?? 0));
+      setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel]?.points ?? 0));
     }
     setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: q.answer, chosen: selectedAnswer, explanation: q.explanation }]);
-    if (!isRetryRef.current) {
-      setStats(prev => {
-        const streak = correct ? prev.current_streak + 1 : 0;
-        return {
-          ...prev,
-          total_answered: prev.total_answered + 1,
-          total_correct:  correct ? prev.total_correct + 1 : prev.total_correct,
-          // total_score is NOT updated here — it is derived from completedTopics at quiz end
-          current_streak: streak,
-          max_streak:     Math.max(prev.max_streak, streak),
-        };
-      });
-      if (!isFreeMode(selectedTopic.id)) {
-        setTopicStats(prev => {
-          const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
-          return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
-        });
+    setStats(prev => {
+      const streak = correct ? prev.current_streak + 1 : 0;
+      const base = {
+        ...prev,
+        // total_score is NOT updated here — it is derived from completedTopics at quiz end
+        current_streak: streak,
+        max_streak:     Math.max(prev.max_streak, streak),
+      };
+      if (!isRetryRef.current) {
+        base.total_answered = prev.total_answered + 1;
+        base.total_correct  = correct ? prev.total_correct + 1 : prev.total_correct;
       }
+      return base;
+    });
+    if (!isRetryRef.current && !isFreeMode(selectedTopic.id)) {
+      setTopicStats(prev => {
+        const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
+        return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
+      });
     }
   };
 
