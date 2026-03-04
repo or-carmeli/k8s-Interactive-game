@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
+import { DAILY_QUESTIONS } from "./dailyQuestions";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://knzawpdrpahilmohzpbl.supabase.co";
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuemF3cGRycGFoaWxtb2h6cGJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NDA2NzYsImV4cCI6MjA4ODExNjY3Nn0.Vh4vwQkSgIHkyr3LPVAvsktni_l5q1DhP3S3MT97KQ8";
@@ -30,10 +31,6 @@ function mulberry32(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-}
-function getDailySeed() {
-  const d = new Date();
-  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 }
 
 const ACHIEVEMENTS = [
@@ -1125,20 +1122,21 @@ export default function K8sQuestApp() {
   };
 
   const startDailyChallenge = () => {
-    const rng = mulberry32(getDailySeed());
-    const all = [];
-    TOPICS.forEach(topic => {
-      LEVEL_ORDER.forEach(level => {
-        const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
-        qs.forEach(q => all.push(q));
-      });
-    });
-    // Seeded Fisher-Yates — same result for all users on the same day
-    for (let i = all.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [all[i], all[j]] = [all[j], all[i]];
+    const pool = lang === "en" ? DAILY_QUESTIONS.en : DAILY_QUESTIONS.he;
+    // Shuffle once per year with a fixed annual seed (same order for all users)
+    const annualSeed = new Date().getFullYear() * 31337;
+    const annualRng = mulberry32(annualSeed);
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(annualRng() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    setMixedQuestions(all.slice(0, 10));
+    // Pick a non-overlapping window by day-of-year — no repeats until full pool cycles
+    const now = new Date();
+    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    const numWindows = Math.floor(shuffled.length / 10);
+    const startIdx = (dayOfYear % numWindows) * 10;
+    setMixedQuestions(shuffled.slice(startIdx, startIdx + 10));
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
