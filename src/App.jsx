@@ -972,7 +972,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{marginBottom:16}}>
             {/* Row 1: Title truly centered, controls absolutely on the right */}
             <div className="home-header" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,minHeight:40,direction:"ltr"}}>
-              <h1 style={{fontSize:42,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:8,zIndex:1}}>
+              <h1 style={{fontSize:52,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:8,zIndex:1}}>
                 <svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
                   <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
                   <circle cx="50" cy="50" r="50" fill="url(#hbg)"/>
