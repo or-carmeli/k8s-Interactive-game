@@ -85,13 +85,13 @@ export default function RoadmapView({
         <div style={{fontSize:12,color:"#94a3b8",textAlign:"center"}}>{overallProgress}% {t("roadmapCompletedPct")}</div>
       </div>
 
-      {/* ── Global continue ── */}
-      {!allDone&&(
+      {/* ── Global start (only shown before user begins) ── */}
+      {!allDone && overallProgress === 0 && (
         <button onClick={handleGlobalContinue}
           style={{width:"100%",marginBottom:20,padding:"14px 20px",background:"linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1))",border:"1px solid rgba(0,212,255,0.3)",borderRadius:14,cursor:"pointer",color:"#00D4FF",fontWeight:800,fontSize:15,direction:dir,transition:"transform 0.2s"}}
           onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
           onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-          {overallProgress === 0 ? t("roadmapStart") : t("roadmapContinue")}
+          {t("roadmapStart")}
         </button>
       )}
 
