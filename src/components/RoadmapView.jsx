@@ -17,7 +17,8 @@ function stageProgress(topicId, completedTopics) {
   let score = 0;
   LVL_ORDER.forEach(lvl => {
     const r = completedTopics[`${topicId}_${lvl}`];
-    if (r && r.total > 0) score += Math.min(r.correct, r.total) / r.total;
+    if (!r || r.total === 0) return;
+    score += r.retryComplete ? 1 : Math.min(r.correct, r.total) / r.total;
   });
   return Math.min(100, Math.round((score / LVL_ORDER.length) * 100));
 }
@@ -25,7 +26,7 @@ function stageProgress(topicId, completedTopics) {
 function isStageCompleted(topicId, completedTopics) {
   return LVL_ORDER.every(lvl => {
     const r = completedTopics[`${topicId}_${lvl}`];
-    return r && r.correct === r.total;
+    return r && (r.correct === r.total || r.retryComplete);
   });
 }
 
@@ -33,7 +34,7 @@ function nextRecommendedLevel(topicId, completedTopics, isLevelLocked) {
   for (const lvl of LVL_ORDER) {
     if (isLevelLocked(topicId, lvl)) continue;
     const r = completedTopics[`${topicId}_${lvl}`];
-    if (!r || r.correct < r.total) return lvl;
+    if (!r || (!r.retryComplete && r.correct < r.total)) return lvl;
   }
   return null;
 }

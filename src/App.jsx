@@ -633,7 +633,7 @@ export default function K8sQuestApp() {
     if (correct) {
       topicCorrectRef.current += 1;
       setFlash(true); setTimeout(() => setFlash(false), 600);
-      setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel]?.points ?? 0));
+      if (!isRetryRef.current) setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel]?.points ?? 0));
     }
     setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: q.answer, chosen: selectedAnswer, explanation: q.explanation }]);
     setStats(prev => {
@@ -671,7 +671,7 @@ export default function K8sQuestApp() {
           const key = `${selectedTopic.id}_${selectedLevel}`;
           const prevResult = completedTopics[key];
           if (prevResult) {
-            const newCompleted = { ...completedTopics, [key]: { correct: prevResult.total, total: prevResult.total } };
+            const newCompleted = { ...completedTopics, [key]: { ...prevResult, retryComplete: true } };
             setCompletedTopics(newCompleted);
             if (!isFreeMode(selectedTopic.id)) saveUserData(stats, newCompleted, unlockedAchievements);
           }
