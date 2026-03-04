@@ -1,9 +1,9 @@
-# ☸️ K8s Quest
+# ☸️ KubeQuest
 
 An interactive Kubernetes learning game built with React and Supabase.
 Learn Kubernetes concepts through quizzes, earn points, track your progress, and compete on the leaderboard.
 
-🌐 **Live:** [k8s-interactive-game.vercel.app](https://k8s-interactive-game.vercel.app)
+🌐 **Live:** [KubeQuest.vercel.app](https://KubeQuest.vercel.app)
 
 ---
 
