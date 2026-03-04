@@ -972,7 +972,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{marginBottom:16}}>
             {/* Row 1: Title truly centered, controls absolutely on the right */}
             <div className="home-header" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,minHeight:40,direction:"ltr"}}>
-              <h1 style={{fontSize:24,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:5,zIndex:1}}>
+              <h1 style={{fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:8,zIndex:1}}>
                 <span>☸️</span>
                 <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>KubeQuest</span>
               </h1>
