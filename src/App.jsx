@@ -473,7 +473,7 @@ export default function K8sQuestApp() {
   const [timerEnabled, setTimerEnabled]                 = useState(true);
   const [timeLeft, setTimeLeft]                         = useState(TIMER_SECONDS);
   const [isInterviewMode, setIsInterviewMode]           = useState(() => localStorage.getItem("isInterviewMode_v1") === "true");
-  const [homeTab, setHomeTab]                           = useState("categories");
+  const [homeTab, setHomeTab]                           = useState("roadmap");
   const [showConfetti, setShowConfetti]                 = useState(false);
   const [mixedQuestions, setMixedQuestions]             = useState([]);
 
