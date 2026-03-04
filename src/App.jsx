@@ -255,7 +255,7 @@ const hasHebrew = (text) => /[\u05D0-\u05EA]/.test(text ?? "");
 function renderBidi(text, lang) {
   if (!text || lang !== "he") return text;
   if (!/[A-Za-z]/.test(text)) return text;
-  const parts = text.split(/((?:[A-Za-z][A-Za-z0-9\-_.:/]*(?:\s+(?=[A-Za-z]))?)+)/);
+  const parts = text.split(/((?:[A-Za-z][A-Za-z0-9\-_.:/]*(?:\s+(?=[A-Za-z]))?)+[?!.,;]?)/);
   if (parts.length <= 1) return text;
   return parts.map((part, i) =>
     /^[A-Za-z]/.test(part) ? <span key={i} dir="ltr">{part}</span> : part
@@ -1181,8 +1181,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               </div>
 
-              <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:22,marginBottom:14}}>
-                {(()=>{const qText=currentQuestions[questionIndex].q;const qDir=hasHebrew(qText)?dir:"ltr";return<div dir={qDir} style={{color:"#e2e8f0",fontSize:16,fontWeight:700,lineHeight:1.65,wordBreak:"break-word",textAlign:qDir==="ltr"?"left":"right"}}>{renderBidi(qText,lang)}</div>;})()}
+              <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"20px 22px",marginBottom:14}}>
+                {(()=>{const qText=currentQuestions[questionIndex].q;const qDir=hasHebrew(qText)?dir:"ltr";return<div dir={qDir} style={{color:"#e2e8f0",fontSize:17,fontWeight:700,lineHeight:1.75,wordBreak:"break-word",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"plaintext"}}>{renderBidi(qText,lang)}</div>;})()}
               </div>
 
               <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
