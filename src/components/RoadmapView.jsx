@@ -108,14 +108,14 @@ export default function RoadmapView({
 
           // Node visuals
           const nodeBorder = locked ? "2px solid #1e293b" : completed ? "2px solid #10B981" : isCurrent ? `2px solid ${topic.color}` : "2px solid #334155";
-          const nodeGlow   = isCurrent && !locked ? `0 0 18px ${topic.color}55` : "none";
+          const nodeGlow   = isCurrent && !locked ? `0 0 24px ${topic.color}88` : "none";
           const nodeLabel  = completed ? "✓" : locked ? "🔒" : String(idx + 1);
           const nodeFg     = locked ? "#334155" : completed ? "#10B981" : isCurrent ? topic.color : "#475569";
 
           // Connector line color
           const lineColor = completed
             ? `linear-gradient(to bottom,#10B981,${topics[idx + 1]?.color ?? "#10B981"}55)`
-            : "rgba(255,255,255,0.07)";
+            : "rgba(255,255,255,0.12)";
 
           return (
             // Use flexDirection:row-reverse for RTL instead of direction:rtl
@@ -126,15 +126,17 @@ export default function RoadmapView({
               <div className="roadmap-node-col" style={{display:"flex",flexDirection:"column",alignItems:"center",width:36,flexShrink:0,paddingTop:2}}>
                 {/* Circle node */}
                 <div className="roadmap-node-circle" style={{
-                  width:34,height:34,borderRadius:"50%",
+                  width:36,height:36,borderRadius:"50%",
                   border:nodeBorder,
-                  background:completed?"rgba(16,185,129,0.12)":isCurrent&&!locked?`${topic.color}14`:"rgba(255,255,255,0.03)",
+                  background:completed?"rgba(16,185,129,0.15)":isCurrent&&!locked?`${topic.color}20`:"rgba(255,255,255,0.04)",
                   boxShadow:nodeGlow,
                   display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:completed?16:locked?12:12,
+                  fontSize:completed?17:locked?12:13,
                   fontWeight:800,color:nodeFg,
                   flexShrink:0,
                   transition:"box-shadow 0.3s",
+                  animation:isCurrent&&!locked?`nodePulse 2.5s ease-in-out infinite`:undefined,
+                  ["--nc"]:topic.color,
                 }}>
                   {nodeLabel}
                 </div>
@@ -155,8 +157,8 @@ export default function RoadmapView({
                 minWidth:0,
                 marginBottom: isLast ? 0 : 12,
                 opacity: locked ? 0.45 : 1,
-                background: isCurrent&&!locked ? `${topic.color}07` : "rgba(255,255,255,0.02)",
-                border:`1px solid ${isCurrent&&!locked ? `${topic.color}30` : "rgba(255,255,255,0.07)"}`,
+                background: isCurrent&&!locked ? `${topic.color}10` : "rgba(255,255,255,0.04)",
+                border:`1px solid ${isCurrent&&!locked ? `${topic.color}40` : "rgba(255,255,255,0.10)"}`,
                 borderRadius:14,
                 padding:"12px 14px",
                 transition:"opacity 0.2s,border-color 0.2s",
@@ -179,7 +181,7 @@ export default function RoadmapView({
                       <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{topic.name}</span>
                       {completed&&<span style={{flexShrink:0}}>✅</span>}
                     </div>
-                    <div className="roadmap-subtitle" style={{color:"#475569",fontSize:11,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    <div className="roadmap-subtitle" style={{color:"#64748b",fontSize:11,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                       {STAGE_SUBTITLES[topic.id]}
                     </div>
                   </div>
