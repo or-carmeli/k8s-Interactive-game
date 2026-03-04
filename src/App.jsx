@@ -947,8 +947,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .home-actions{gap:5px!important}
 .home-actions>button{font-size:11px!important;padding:5px 8px!important}
 .home-screen{padding:12px 14px!important}
-.home-header{flex-direction:column!important;gap:6px!important;min-height:auto!important}
-.home-controls{position:static!important;transform:none!important}
+.home-header{flex-direction:column!important;gap:10px!important;min-height:auto!important}
+.home-controls{position:static!important;transform:none!important;margin-bottom:4px!important}
 .roadmap-row{gap:8px!important;margin-bottom:8px!important}
 .roadmap-node-col{width:28px!important}
 .roadmap-node-circle{width:26px!important;height:26px!important;font-size:10px!important}
@@ -970,9 +970,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* HOME */}
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
-          <div style={{marginBottom:16}}>
+          <div style={{marginBottom:24}}>
             {/* Row 1: Title truly centered, controls absolutely on the right */}
-            <div className="home-header" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:6,minHeight:40,direction:"ltr"}}>
+            <div className="home-header" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,minHeight:40,direction:"ltr"}}>
               <h1 style={{fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:10,zIndex:1,filter:"drop-shadow(0 0 18px rgba(0,212,255,0.35))"}}>
                 <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
                   <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
@@ -993,7 +993,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             </div>
             {/* Row 2: Greeting */}
-            <p style={{color:"#94a3b8",fontSize:13,margin:"0 0 10px",textAlign:"center"}}>
+            <p style={{color:"#94a3b8",fontSize:13,margin:"0 0 16px",textAlign:"center"}}>
               {t("greeting")}, <span style={{color:"#e2e8f0",fontWeight:700}}>{displayName}</span>! 👋
               {isGuest&&<span style={{color:"#475569",fontSize:12}}> · {t("playingAsGuest")}</span>}
             </p>
