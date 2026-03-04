@@ -1080,18 +1080,9 @@ export default function K8sQuestApp() {
   const achievementsLoaded = useRef(false);
 
   // Shuffle answer options so the correct answer isn't predictably the longest/same position
-  const shuffleOptions = (questions) => questions.map(q => {
-    const order = [0, 1, 2, 3].slice(0, q.options.length);
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
-    return { ...q, options: order.map(i => q.options[i]), answer: order.indexOf(q.answer) };
-  });
-
   const getLevelData = (topic, level) => ({
     theory: lang === "en" ? topic.levels[level].theoryEn : topic.levels[level].theory,
-    questions: shuffleOptions(lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions),
+    questions: lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions,
   });
 
   const isLevelLocked = (topicId, level) => {
@@ -1485,7 +1476,7 @@ export default function K8sQuestApp() {
       const j = Math.floor(Math.random() * (i + 1));
       [all[i], all[j]] = [all[j], all[i]];
     }
-    setMixedQuestions(shuffleOptions(all.slice(0, 10)));
+    setMixedQuestions(all.slice(0, 10));
     isRetryRef.current = false;
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
@@ -1513,7 +1504,7 @@ export default function K8sQuestApp() {
     const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
     const numWindows = Math.floor(shuffled.length / 5);
     const startIdx = (dayOfYear % numWindows) * 5;
-    setMixedQuestions(shuffleOptions(shuffled.slice(startIdx, startIdx + 5)));
+    setMixedQuestions(shuffled.slice(startIdx, startIdx + 5));
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
@@ -2006,7 +1997,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {/* Retry wrong answers */}
               {!isFreeMode(selectedTopic.id)&&wrongQs.length>0&&(
                 <button onClick={()=>{
-                  const qs=shuffleOptions(wrongQs.map(h=>({q:h.q,options:h.options,answer:h.answer,explanation:h.explanation})));
+                  const qs=wrongQs.map(h=>({q:h.q,options:h.options,answer:h.answer,explanation:h.explanation}));
                   setMixedQuestions(qs);
                   setRetryMode(true);
                   isRetryRef.current=true;
