@@ -942,10 +942,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {/* HOME */}
       {screen==="home"&&(
-        <div style={{maxWidth:700,margin:"0 auto",padding:"20px 14px",animation:"fadeIn 0.4s ease"}}>
+        <div style={{maxWidth:700,margin:"0 auto",padding:"20px 14px",animation:"fadeIn 0.4s ease",overflow:"hidden"}}>
           <div style={{marginBottom:20}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
-              <h1 style={{fontSize:26,fontWeight:900,margin:0,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>☸️ KubeQuest</h1>
+              <h1 style={{fontSize:26,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:6,flexShrink:1,minWidth:0}}>
+                <span>☸️</span>
+                <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>KubeQuest</span>
+              </h1>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
                 <LangSwitcher lang={lang} setLang={setLang}/>

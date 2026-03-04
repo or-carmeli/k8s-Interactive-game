@@ -107,7 +107,6 @@ export default function RoadmapView({
           const isExpanded = expandedStage === topic.id && !locked;
 
           // Node visuals
-          const nodeColor  = locked ? "#1e293b" : completed ? "#10B981" : isCurrent ? topic.color : "#334155";
           const nodeBorder = locked ? "2px solid #1e293b" : completed ? "2px solid #10B981" : isCurrent ? `2px solid ${topic.color}` : "2px solid #334155";
           const nodeGlow   = isCurrent && !locked ? `0 0 18px ${topic.color}55` : "none";
           const nodeLabel  = completed ? "✓" : locked ? "🔒" : String(idx + 1);
@@ -119,7 +118,7 @@ export default function RoadmapView({
             : "rgba(255,255,255,0.07)";
 
           return (
-            <div key={topic.id} style={{display:"flex",alignItems:"stretch",gap:14,direction:dir}}>
+            <div key={topic.id} style={{display:"flex",alignItems:"stretch",gap:14,direction:dir,minWidth:0,overflow:"hidden"}}>
 
               {/* ── Node column (RTL: right side = first child) ── */}
               <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:42,flexShrink:0,paddingTop:2}}>
@@ -152,6 +151,8 @@ export default function RoadmapView({
               {/* ── Stage card ── */}
               <div style={{
                 flex:1,
+                minWidth:0,
+                overflow:"hidden",
                 marginBottom: isLast ? 0 : 12,
                 opacity: locked ? 0.45 : 1,
                 background: isCurrent&&!locked ? `${topic.color}07` : "rgba(255,255,255,0.02)",
