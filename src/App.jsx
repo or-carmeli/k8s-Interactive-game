@@ -230,7 +230,8 @@ function GenderToggle({ gender, setGender }) {
     <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,padding:2}}>
       {[{v:"f",label:"♀"},{v:"m",label:"♂"}].map(({v,label}) => (
         <button key={v} onClick={()=>setGender(v)}
-          style={{padding:"4px 9px",border:"none",borderRadius:6,cursor:"pointer",fontSize:13,
+          style={{padding:"4px 9px",border:"none",borderRadius:6,cursor:"pointer",fontSize:15,
+            display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,
             background:gender===v?"rgba(0,212,255,0.15)":"transparent",
             color:gender===v?"#00D4FF":"#64748b",fontWeight:gender===v?700:400}}>
           {label}
