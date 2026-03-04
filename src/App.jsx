@@ -1542,7 +1542,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <circle cx="50" cy="50" r="5" fill="#00D4FF"/>
             {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
           </svg>
-          <h1 style={{fontSize:33,fontWeight:900,margin:"0 0 6px",background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>K8s Quest</h1>
+          <h1 style={{fontSize:33,fontWeight:900,margin:"0 0 6px",background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>KubeQuest</h1>
           <p style={{color:"#94a3b8",fontSize:14,margin:0}}>{t("tagline")}</p>
         </div>
 
@@ -1628,7 +1628,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         <div style={{maxWidth:700,margin:"0 auto",padding:"20px 14px",animation:"fadeIn 0.4s ease"}}>
           <div style={{marginBottom:20}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
-              <h1 style={{fontSize:26,fontWeight:900,margin:0,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>☸️ K8s Quest</h1>
+              <h1 style={{fontSize:26,fontWeight:900,margin:0,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 5s linear infinite"}}>☸️ KubeQuest</h1>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
                 <LangSwitcher lang={lang} setLang={setLang}/>
