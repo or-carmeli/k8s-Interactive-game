@@ -5818,7 +5818,7 @@ export const TOPICS = [
     id: "troubleshooting",
     icon: "🔧",
     name: "Cluster Operations & Troubleshooting",
-    color: "#EF4444",
+    color: "#F97316",
     description: "Debugging · Observability · אבחון · כלים",
     descriptionEn: "Debugging · Observability · Diagnosis · Tools",
     levels: {
