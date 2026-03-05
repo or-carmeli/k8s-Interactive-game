@@ -422,8 +422,15 @@ export default function K8sQuestApp() {
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
   const [showMenu, setShowMenu]                         = useState(false);
   const [a11y, setA11y] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("a11y_v1")) || { fontSize: "normal", reduceMotion: false, highContrast: false }; }
-    catch { return { fontSize: "normal", reduceMotion: false, highContrast: false }; }
+    try {
+      const saved = JSON.parse(localStorage.getItem("a11y_v1"));
+      if (saved) return saved;
+    } catch {}
+    return {
+      fontSize: "normal",
+      reduceMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+      highContrast: window.matchMedia?.("(prefers-contrast: more)").matches ?? false,
+    };
   });
 
   const isGuest = user?.id === "guest";
@@ -509,6 +516,18 @@ export default function K8sQuestApp() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Close any open overlay when the user presses Escape
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      if (showMenu)        { setShowMenu(false);       return; }
+      if (showLeaderboard) { setShowLeaderboard(false); return; }
+      if (resumeData)      { clearQuizState(); setResumeData(null); }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [showMenu, showLeaderboard, resumeData]);
 
   useEffect(() => {
     if (!achievementsLoaded.current) return;
@@ -1269,6 +1288,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,position:"relative",overflowX:"hidden"}}>
+      {/* Skip-to-content — invisible until focused by keyboard */}
+      <a href="#main-content"
+        style={{position:"fixed",top:-100,left:8,zIndex:9999,padding:"8px 16px",background:"#00D4FF",color:"#020817",borderRadius:8,fontWeight:700,fontSize:14,textDecoration:"none",transition:"top 0.15s",direction:"ltr"}}
+        onFocus={e=>e.currentTarget.style.top="8px"}
+        onBlur={e=>e.currentTarget.style.top="-100px"}>
+        {lang==="en"?"Skip to content":"דלג לתוכן"}
+      </a>
       <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
@@ -1305,7 +1331,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <button onClick={handleResumeQuiz}
+              <button onClick={handleResumeQuiz} autoFocus
                 style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(0,212,255,0.15),rgba(168,85,247,0.15))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,color:"#00D4FF",fontSize:15,fontWeight:800,cursor:"pointer"}}>
                 ▶ {t("resumeBtn")}
               </button>
@@ -1460,7 +1486,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </div>
                   {(()=>{const done=LEVEL_ORDER.filter(lvl=>completedTopics[`${topic.id}_${lvl}`]).length;return done>0&&<div style={{display:"flex",alignItems:"center",gap:6}}>
                     <div style={{fontSize:11,color:topic.color,fontWeight:700,whiteSpace:"nowrap"}}>{done}/3</div>
-                    <button onClick={e=>{e.stopPropagation();handleResetTopic(topic.id);}} title={t("resetTopic")} style={{background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",padding:"2px 4px",lineHeight:1}} onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="#475569"}>↺</button>
+                    <button onClick={e=>{e.stopPropagation();handleResetTopic(topic.id);}} aria-label={t("resetTopic")} style={{background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",padding:"2px 4px",lineHeight:1}} onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="#475569"}>↺</button>
                   </div>})()}
                 </div>
                 {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:10}}><div style={{height:"100%",borderRadius:2,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
@@ -1470,19 +1496,21 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     const done=completedTopics[key];
                     const locked=isLevelLocked(topic.id,lvl);
                     return(
-                      <div key={lvl} className={locked?"":"card-hover"}
-                        onClick={()=>!locked&&startTopic(topic,lvl)}
+                      <button key={lvl} className={locked?"":"card-hover"}
+                        onClick={()=>startTopic(topic,lvl)}
+                        disabled={locked}
+                        aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` – ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
                         style={{padding:"10px 8px",
                           background:locked?"rgba(255,255,255,0.01)":done?`${cfg.color}12`:"rgba(255,255,255,0.03)",
                           border:`1px solid ${locked?"rgba(255,255,255,0.04)":done?cfg.color+"44":"rgba(255,255,255,0.07)"}`,
                           borderRadius:10,textAlign:"center",opacity:locked?0.45:1,cursor:locked?"not-allowed":"pointer"}}>
-                        <div style={{fontSize:16}}>{locked?"🔒":cfg.icon}</div>
+                        <div style={{fontSize:16}} aria-hidden="true">{locked?"🔒":cfg.icon}</div>
                         <div style={{fontSize:12,fontWeight:700,color:locked?"#334155":done?cfg.color:"#64748b"}}>{lang==="en"?cfg.labelEn:cfg.label}</div>
-                        {done&&!locked&&<div style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}}>
+                        {done&&!locked&&<div style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}} aria-hidden="true">
                           {done.correct>0?"✓":""} {done.correct}/{done.total}
                         </div>}
-                        <div style={{fontSize:10,color:locked?"#1e293b":"#475569"}}>+{cfg.points}{t("pts")}</div>
-                      </div>
+                        <div style={{fontSize:10,color:locked?"#1e293b":"#475569"}} aria-hidden="true">+{cfg.points}{t("pts")}</div>
+                      </button>
                     );
                   })}
                 </div>
@@ -1583,11 +1611,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   return (
                     <button key={i} className="opt-btn"
                       onClick={()=>{ if (tryAgainActive && tryAgainSelected===null) setTryAgainSelected(i); else if (!isInHistoryMode && !tryAgainActive) handleSelectAnswer(i); }}
+                      aria-pressed={!dispSubmitted ? i === dispSelectedAnswer : undefined}
                       style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
-                      <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
+                      <span aria-hidden="true" style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
                       <span dir={optDir} style={{flex:1}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
-                      {dispSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:16}}>✓</span>}
-                      {dispSubmitted&&isChosen&&!isCorrect&&<span style={{flexShrink:0,fontSize:16}}>✗</span>}
+                      {dispSubmitted&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:16}}>✓</span>}
+                      {dispSubmitted&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:16}}>✗</span>}
                     </button>
                   );
                 })}

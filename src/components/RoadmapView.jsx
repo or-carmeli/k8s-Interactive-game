@@ -166,10 +166,12 @@ export default function RoadmapView({
               }}>
 
                 {/* Stage header */}
-                <div
+                <button
                   onClick={()=>{ if (!locked) setExpandedStage(isExpanded ? null : topic.id); }}
+                  aria-expanded={!locked ? isExpanded : undefined}
+                  aria-disabled={locked}
                   className="roadmap-card-header"
-                  style={{cursor:locked?"default":"pointer",display:"flex",flexDirection:rowDir,alignItems:"center",gap:8,marginBottom:8}}>
+                  style={{cursor:locked?"default":"pointer",display:"flex",flexDirection:rowDir,alignItems:"center",gap:8,marginBottom:8,width:"100%",background:"none",border:"none",padding:0,textAlign:dir==="rtl"?"right":"left"}}>
 
                   {/* Icon */}
                   <div className="roadmap-icon" style={{fontSize:18,width:32,height:32,borderRadius:8,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>
@@ -191,10 +193,10 @@ export default function RoadmapView({
                   {!locked&&(
                     <div className="roadmap-pct" style={{flexShrink:0,textAlign:"center",minWidth:36}}>
                       <div style={{color:completed?"#10B981":isCurrent?topic.color:"#64748b",fontWeight:700,fontSize:12}}>{progress}%</div>
-                      <div style={{color:"#475569",fontSize:10}}>{isExpanded?"▲":"▼"}</div>
+                      <div aria-hidden="true" style={{color:"#475569",fontSize:10}}>{isExpanded?"▲":"▼"}</div>
                     </div>
                   )}
-                </div>
+                </button>
 
                 {/* Progress bar */}
                 {!locked&&(
@@ -229,16 +231,18 @@ export default function RoadmapView({
                       const done      = completedTopics[key];
                       const lvlLocked = isLevelLocked(topic.id, lvl);
                       return (
-                        <div key={lvl} className={lvlLocked?"":"card-hover"}
-                          onClick={()=>!lvlLocked&&startTopic(topic,lvl)}
+                        <button key={lvl} className={lvlLocked?"":"card-hover"}
+                          onClick={()=>startTopic(topic,lvl)}
+                          disabled={lvlLocked}
+                          aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` – ${done.correct}/${done.total}`:""}${lvlLocked?" (locked)":""}`}
                           style={{padding:"10px 8px",background:lvlLocked?"rgba(255,255,255,0.01)":done?`${cfg.color}12`:"rgba(255,255,255,0.03)",border:`1px solid ${lvlLocked?"rgba(255,255,255,0.04)":done?cfg.color+"44":"rgba(255,255,255,0.07)"}`,borderRadius:10,textAlign:"center",opacity:lvlLocked?0.45:1,cursor:lvlLocked?"not-allowed":"pointer"}}>
-                          <div style={{fontSize:16}}>{lvlLocked?"🔒":cfg.icon}</div>
+                          <div aria-hidden="true" style={{fontSize:16}}>{lvlLocked?"🔒":cfg.icon}</div>
                           <div style={{fontSize:12,fontWeight:700,color:lvlLocked?"#334155":done?cfg.color:"#64748b"}}>
                             {lang==="en"?cfg.labelEn:cfg.label}
                           </div>
-                          {done&&!lvlLocked&&<div style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}}>{done.correct>0?"✓":""} {done.correct}/{done.total}</div>}
-                          <div style={{fontSize:10,color:lvlLocked?"#1e293b":"#475569"}}>+{cfg.points}{t("pts")}</div>
-                        </div>
+                          {done&&!lvlLocked&&<div aria-hidden="true" style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}}>{done.correct>0?"✓":""} {done.correct}/{done.total}</div>}
+                          <div aria-hidden="true" style={{fontSize:10,color:lvlLocked?"#1e293b":"#475569"}}>+{cfg.points}{t("pts")}</div>
+                        </button>
                       );
                     })}
                   </div>
