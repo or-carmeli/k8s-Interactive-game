@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="format-detection" content="telephone=no,date=no,address=no,email=no" />
 
+    <!-- Canonical (important for OG + SEO) -->
+    <link rel="canonical" href="https://www.kubequest.online/" />
+
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#020817" />
@@ -21,13 +24,15 @@
     <meta name="description" content="Learn Kubernetes with an interactive game." />
 
     <!-- Open Graph -->
+    <meta property="og:locale" content="he_IL" />
     <meta property="og:title" content="KubeQuest – Learn Kubernetes with an Interactive Game" />
     <meta property="og:site_name" content="KubeQuest" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://kubequest.online/" />
-    <meta property="og:description" content="Practice Kubernetes scenarios and test your DevOps skills." />
 
-    <!-- IMPORTANT: set this to the URL that returns 200 (no redirect) -->
+    <!-- IMPORTANT: keep og:url consistent with canonical host -->
+    <meta property="og:url" content="https://www.kubequest.online/" />
+
+    <meta property="og:description" content="Practice Kubernetes scenarios and test your DevOps skills." />
     <meta property="og:image" content="https://www.kubequest.online/og-image.png" />
     <meta property="og:image:secure_url" content="https://www.kubequest.online/og-image.png" />
     <meta property="og:image:type" content="image/png" />
