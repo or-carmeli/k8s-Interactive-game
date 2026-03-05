@@ -1697,20 +1697,20 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       onClick={()=>setHintVisible(true)}
                       disabled={hintVisible}
                       aria-pressed={hintVisible}
-                      style={{flex:1,padding:"7px 10px",background:"rgba(245,158,11,0.07)",border:`1px solid ${hintVisible?"rgba(245,158,11,0.4)":"rgba(245,158,11,0.18)"}`,borderRadius:8,color:hintVisible?"#F59E0B":"#92400e",fontSize:12,cursor:hintVisible?"default":"pointer",fontWeight:hintVisible?700:400,transition:"all 0.15s"}}>
+                      style={{flex:1,padding:"7px 10px",background:"rgba(245,158,11,0.07)",border:`1px solid ${hintVisible?"rgba(245,158,11,0.4)":"rgba(245,158,11,0.18)"}`,borderRadius:8,color:hintVisible?"#F59E0B":"#d97706",fontSize:12,cursor:hintVisible?"default":"pointer",fontWeight:hintVisible?700:400,transition:"all 0.15s"}}>
                       {t("hint")}{hintVisible?" ✓":""}
                     </button>
                     <button
                       onClick={handleEliminate}
                       disabled={eliminatedOption!==null}
                       aria-pressed={eliminatedOption!==null}
-                      style={{flex:1,padding:"7px 10px",background:"rgba(239,68,68,0.07)",border:`1px solid ${eliminatedOption!==null?"rgba(239,68,68,0.4)":"rgba(239,68,68,0.18)"}`,borderRadius:8,color:eliminatedOption!==null?"#EF4444":"#7f1d1d",fontSize:12,cursor:eliminatedOption!==null?"default":"pointer",fontWeight:eliminatedOption!==null?700:400,transition:"all 0.15s"}}>
+                      style={{flex:1,padding:"7px 10px",background:"rgba(239,68,68,0.07)",border:`1px solid ${eliminatedOption!==null?"rgba(239,68,68,0.4)":"rgba(239,68,68,0.18)"}`,borderRadius:8,color:eliminatedOption!==null?"#EF4444":"#dc2626",fontSize:12,cursor:eliminatedOption!==null?"default":"pointer",fontWeight:eliminatedOption!==null?700:400,transition:"all 0.15s"}}>
                       {t("eliminate")}{eliminatedOption!==null?" ✓":""}
                     </button>
                   </div>
                   {hintVisible&&(
                     <div role="note" style={{background:"rgba(245,158,11,0.07)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:9,padding:"9px 13px",fontSize:13,color:"#fbbf24",lineHeight:1.6,direction:dir,animation:"fadeIn 0.2s ease"}}>
-                      {renderBidi(currentQuestions[questionIndex].explanation.split(/\.\s+/)[0]+".", lang)}
+                      {renderBidi(currentQuestions[questionIndex].explanation.split(/\.\s+/)[0], lang)}
                     </div>
                   )}
                 </div>
