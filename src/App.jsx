@@ -367,6 +367,7 @@ export default function K8sQuestApp() {
 
   const topicCorrectRef = useRef(0);
   const isRetryRef = useRef(false);
+  const lastSessionScoreRef = useRef(0);
 
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0,
@@ -756,13 +757,16 @@ export default function K8sQuestApp() {
       const key = `${selectedTopic.id}_${selectedLevel}`;
       const prevResult = completedTopics[key];
       const bestCorrect = prevResult ? Math.min(Math.max(prevResult.correct, finalCorrect), currentQuestions.length) : Math.min(finalCorrect, currentQuestions.length);
-      const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length } };
+      // Preserve retryComplete so replaying doesn't re-lock the next level
+      const keepRetryComplete = prevResult?.retryComplete || bestCorrect === currentQuestions.length;
+      const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
       // Recompute score from the full completedTopics snapshot — single source of truth
       const newStats = { ...stats, total_score: computeScore(newCompleted) };
       const newAch = [
         ...unlockedAchievements,
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
       ];
+      lastSessionScoreRef.current = sessionScore;
       setSessionScore(0);
       setCompletedTopics(newCompleted); setStats(newStats); setUnlockedAchievements(newAch);
       if (!isFreeMode(selectedTopic.id)) {
@@ -792,6 +796,7 @@ export default function K8sQuestApp() {
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);
     topicCorrectRef.current = 0;
+    lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     setStats(prev => ({ ...prev, current_streak: 0 }));
@@ -817,7 +822,7 @@ export default function K8sQuestApp() {
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);
-    topicCorrectRef.current = 0;
+    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     setStats(prev => ({ ...prev, current_streak: 0 }));
@@ -845,7 +850,7 @@ export default function K8sQuestApp() {
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);
-    topicCorrectRef.current = 0;
+    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     setStats(prev => ({ ...prev, current_streak: 0 }));
@@ -1392,9 +1397,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <span style={{color:"#e2e8f0",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
               {allCorrect&&<span style={{color:"#F59E0B",fontSize:13,fontWeight:700}}>{t("perfect")}</span>}
             </div>
-            <div style={{color:"#00D4FF",fontWeight:800,fontSize:18,marginBottom:20}}>
-              +{(result?.correct||0)*LEVEL_CONFIG[selectedLevel].points} {t("points")}
-            </div>
+            {lastSessionScoreRef.current > 0 && (
+              <div style={{color:"#00D4FF",fontWeight:800,fontSize:18,marginBottom:20}}>
+                +{lastSessionScoreRef.current} {t("points")}
+              </div>
+            )}
             {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:16,fontSize:13,color:"#4a9aba"}}>
               {t("guestSaveHint")}{" "}
               <button onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
