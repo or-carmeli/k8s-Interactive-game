@@ -4,6 +4,7 @@ import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
 import { DAILY_QUESTIONS } from "./dailyQuestions";
 import { TOPICS, ACHIEVEMENTS } from "./topics";
+import { INCIDENTS } from "./incidents";
 import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://knzawpdrpahilmohzpbl.supabase.co";
@@ -22,9 +23,24 @@ const LEVEL_CONFIG = {
 
 const LEVEL_ORDER = ["easy", "medium", "hard"];
 
+// Incident mode difficulty colours (intentionally separate from LEVEL_CONFIG)
+const INCIDENT_DIFFICULTY_CONFIG = {
+  easy:   { label: "Easy",   labelHe: "קל",    color: "#10B981" },
+  medium: { label: "Medium", labelHe: "בינוני", color: "#F59E0B" },
+  hard:   { label: "Hard",   labelHe: "קשה",   color: "#EF4444" },
+};
+
+const INCIDENT_SAVE_KEY = "incident_progress_v1";
+
 const MIXED_TOPIC     = { id: "mixed",     icon: "🎲", name: "Mixed Quiz",        color: "#A855F7", levels: {} };
 const DAILY_TOPIC     = { id: "daily",     icon: "🔥", name: "Daily Challenge",    color: "#F59E0B", levels: {} };
 const BOOKMARKS_TOPIC = { id: "bookmarks", icon: "🔖", name: "Saved Questions",    color: "#A855F7", levels: {} };
+
+function formatIncidentTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 
 function getTodayLocal() {
   const d = new Date();
@@ -159,6 +175,20 @@ const TRANSLATIONS = {
     tryAgainCorrect: "✅ נכון! כל הכבוד",
     tryAgainWrong: "❌ לא נכון",
     exitTryAgain: "חזרי לסקירה", exitTryAgain_m: "חזור לסקירה",
+    incidentModeBtn: "🚨 מצב אירוע", incidentModeDesc: "הדמיית אירועי Kubernetes אמיתיים",
+    incidentModeBtn_m: "🚨 מצב אירוע",
+    incidentListTitle: "בחר אירוע",
+    incidentDifficulty: "רמה", incidentSteps: "שלבים", incidentEstTime: "זמן משוער",
+    incidentStep: "שלב", incidentScore: "ניקוד", incidentMistakes: "שגיאות", incidentTime: "זמן",
+    incidentConfirm: "✔ אשר פעולה", incidentNext: "שלב הבא →", incidentFinish: "סיים אירוע →",
+    incidentResolved: "🎉 האירוע נפתר!",
+    incidentResolved_m: "🎉 האירוע נפתר!",
+    incidentCorrect: "✅ נכון!", incidentWrong: "❌ לא נכון",
+    incidentTryAnother: "נסי אירוע אחר", incidentTryAnother_m: "נסה אירוע אחר",
+    incidentShareBtn: "🔗 שתפי תוצאה", incidentShareBtn_m: "🔗 שתף תוצאה",
+    incidentShareCopied: "✓ הועתק! הדבק ב-LinkedIn",
+    incidentResumeBanner: "המשיכי את האירוע", incidentResumeBanner_m: "המשך את האירוע",
+    incidentDiscard: "נטשי", incidentDiscard_m: "נטוש",
     savedQuestions: "🔖 שאלות שמורות", savedQuestionsTitle: "שאלות שמורות",
     noBookmarks: "עוד לא שמרת שאלות. לחצי על ☆ בזמן חידון כדי לשמור.",
     noBookmarks_m: "עוד לא שמרת שאלות. לחץ על ☆ בזמן חידון כדי לשמור.",
@@ -247,6 +277,18 @@ const TRANSLATIONS = {
     tryAgainCorrect: "✅ Correct! Well done",
     tryAgainWrong: "❌ Incorrect",
     exitTryAgain: "Back to Review",
+    incidentModeBtn: "🚨 Incident Mode", incidentModeDesc: "Simulate real K8s production incidents",
+    incidentListTitle: "Choose an Incident",
+    incidentDifficulty: "Difficulty", incidentSteps: "steps", incidentEstTime: "Est. time",
+    incidentStep: "Step", incidentScore: "Score", incidentMistakes: "Mistakes", incidentTime: "Time",
+    incidentConfirm: "✔ Confirm Action", incidentNext: "Next Step →", incidentFinish: "Resolve Incident →",
+    incidentResolved: "🎉 Incident Resolved!",
+    incidentCorrect: "✅ Correct!", incidentWrong: "❌ Wrong",
+    incidentTryAnother: "Try Another Incident",
+    incidentShareBtn: "🔗 Share Result",
+    incidentShareCopied: "✓ Copied! Paste in LinkedIn",
+    incidentResumeBanner: "Continue Incident",
+    incidentDiscard: "Discard",
     savedQuestions: "🔖 Saved Questions", savedQuestionsTitle: "Saved Questions",
     noBookmarks: "No saved questions yet. Tap ☆ during a quiz to save one.",
     startSavedQuiz: "▶ Practice Saved Questions",
@@ -484,6 +526,19 @@ export default function K8sQuestApp() {
   });
   const [showBookmarks, setShowBookmarks] = useState(false);
 
+  // ── Incident Mode state ───────────────────────────────────────────────────
+  const [selectedIncident,   setSelectedIncident]   = useState(null);
+  const [incidentStepIndex,  setIncidentStepIndex]  = useState(0);
+  const [incidentScore,      setIncidentScore]      = useState(0);
+  const [incidentMistakes,   setIncidentMistakes]   = useState(0);
+  const [incidentElapsed,    setIncidentElapsed]    = useState(0);   // seconds
+  const [incidentAnswer,     setIncidentAnswer]     = useState(null);
+  const [incidentSubmitted,  setIncidentSubmitted]  = useState(false);
+  const [incidentHistory,    setIncidentHistory]    = useState([]);
+  const [incidentResume,     setIncidentResume]     = useState(null); // saved state for resume banner
+  const [incidentShareCopied,setIncidentShareCopied]= useState(false);
+  const incidentTimerRef = useRef(null);
+
   // Shuffle answer options so the correct answer isn't predictably the longest/same position
   const getLevelData = (topic, level) => ({
     theory: lang === "en" ? topic.levels[level].theoryEn : topic.levels[level].theory,
@@ -684,6 +739,19 @@ export default function K8sQuestApp() {
     const saved = loadQuizState();
     if (saved && saved.userId === (user.id || "guest")) setResumeData(saved);
   }, [screen]);
+
+  // Check for a saved in-progress incident whenever we land on home or incident list
+  useEffect(() => {
+    if (screen !== "home" && screen !== "incidentList") return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(INCIDENT_SAVE_KEY));
+      if (saved?.incidentId) {
+        const incident = INCIDENTS.find(i => i.id === saved.incidentId);
+        if (incident) { setIncidentResume({ ...saved, incident }); return; }
+      }
+    } catch {}
+    setIncidentResume(null);
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadUserData = async (userId, sessionUser) => {
     const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
@@ -1284,6 +1352,86 @@ export default function K8sQuestApp() {
     setShowBookmarks(false);
   };
 
+  // ── Incident Mode: persistence helpers ───────────────────────────────────
+  const saveIncidentProgress = (incident, stepIndex, score, mistakes, elapsed, history) => {
+    try {
+      localStorage.setItem(INCIDENT_SAVE_KEY, JSON.stringify({
+        incidentId: incident.id, stepIndex, score, mistakes, elapsed, history,
+      }));
+    } catch {}
+  };
+  const clearIncidentProgress = () => { try { localStorage.removeItem(INCIDENT_SAVE_KEY); } catch {} };
+
+  // ── Incident Mode: action functions ──────────────────────────────────────
+  const startIncident = (incident) => {
+    clearIncidentProgress();
+    setSelectedIncident(incident);
+    setIncidentStepIndex(0);
+    setIncidentScore(0);
+    setIncidentMistakes(0);
+    setIncidentElapsed(0);
+    setIncidentAnswer(null);
+    setIncidentSubmitted(false);
+    setIncidentHistory([]);
+    setScreen("incident");
+  };
+
+  const submitIncidentStep = () => {
+    if (incidentAnswer === null || incidentSubmitted || !selectedIncident) return;
+    const step = selectedIncident.steps[incidentStepIndex];
+    const correct = incidentAnswer === step.answer;
+    const newScore    = incidentScore    + (correct ? 10 : 0);
+    const newMistakes = incidentMistakes + (correct ? 0 : 1);
+    const newHistory  = [...incidentHistory, { chosen: incidentAnswer, correct, answer: step.answer }];
+    setIncidentScore(newScore);
+    setIncidentMistakes(newMistakes);
+    setIncidentHistory(newHistory);
+    setIncidentSubmitted(true);
+    saveIncidentProgress(selectedIncident, incidentStepIndex, newScore, newMistakes, incidentElapsed, newHistory);
+  };
+
+  const nextIncidentStep = () => {
+    const isLast = incidentStepIndex >= selectedIncident.steps.length - 1;
+    if (isLast) {
+      clearIncidentProgress();
+      setScreen("incidentComplete");
+    } else {
+      const nextIdx = incidentStepIndex + 1;
+      setIncidentStepIndex(nextIdx);
+      setIncidentAnswer(null);
+      setIncidentSubmitted(false);
+      saveIncidentProgress(selectedIncident, nextIdx, incidentScore, incidentMistakes, incidentElapsed, incidentHistory);
+    }
+  };
+
+  const resumeIncident = () => {
+    if (!incidentResume) return;
+    const { incident, stepIndex, score, mistakes, elapsed, history } = incidentResume;
+    setSelectedIncident(incident);
+    setIncidentStepIndex(stepIndex);
+    setIncidentScore(score);
+    setIncidentMistakes(mistakes);
+    setIncidentElapsed(elapsed);
+    setIncidentAnswer(null);
+    setIncidentSubmitted(false);
+    setIncidentHistory(history || []);
+    setIncidentResume(null);
+    setScreen("incident");
+  };
+
+  const handleIncidentShare = () => {
+    if (!selectedIncident) return;
+    const maxScore = selectedIncident.steps.length * 10;
+    const time = formatIncidentTime(incidentElapsed);
+    const msg = lang === "he"
+      ? `🚨 פתרתי את אירוע ה-Kubernetes "${selectedIncident.titleHe || selectedIncident.title}" ב-KubeQuest תוך ${time} עם ניקוד ${incidentScore}/${maxScore}!\nתוכלו לנצח? 💪\n\n#Kubernetes #DevOps #SRE #K8s\nhttps://kubequest.online`
+      : `🚨 I just resolved the Kubernetes incident "${selectedIncident.title}" on KubeQuest in ${time} with a score of ${incidentScore}/${maxScore}!\nCan you beat it? 💪\n\n#Kubernetes #DevOps #SRE #K8s\nhttps://kubequest.online`;
+    navigator.clipboard?.writeText(msg).catch(() => {});
+    window.open("https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fkubequest.online", "_blank", "noopener,noreferrer,width=620,height=640");
+    setIncidentShareCopied(true);
+    setTimeout(() => setIncidentShareCopied(false), 4000);
+  };
+
   // Keyboard shortcuts: 1-4 to pick answer, Enter to confirm/next
   useEffect(() => {
     if (screen !== "topic" || topicScreen !== "quiz" || isInHistoryMode) return;
@@ -1327,6 +1475,13 @@ export default function K8sQuestApp() {
     }
   }, [timeLeft]);
 
+  // ── Incident Mode: count-up timer (only runs while on the incident screen) ─
+  useEffect(() => {
+    if (screen !== "incident") { clearInterval(incidentTimerRef.current); return; }
+    incidentTimerRef.current = setInterval(() => setIncidentElapsed(p => p + 1), 1000);
+    return () => clearInterval(incidentTimerRef.current);
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const renderTheory = (text) => {
     let inCode = false;
     return text.split('\n').map((line, i) => {
@@ -1341,6 +1496,19 @@ export default function K8sQuestApp() {
       if (line.startsWith('🔹')) return <div key={i} style={{color:"#94a3b8",fontSize:13,marginBottom:5}}>{line}</div>;
       if (!line.trim()) return <div key={i} style={{height:6}}/>;
       return <div key={i} style={{color:"#e2e8f0",fontSize:15,fontWeight:700,marginBottom:8}}>{line}</div>;
+    });
+  };
+
+// Renders incident step prompt: detects terminal/kubectl lines and styles them in monospace
+  const renderIncidentPrompt = (text) => {
+    if (!text) return null;
+    const terminalPat = /^(kubectl|NAME\s|READY|STATUS\s|\s{2,}|[a-z0-9]+-[a-z0-9]+\s|FATAL|Error|Failed|rpc error|unauthorized|  [A-Za-z])/;
+    return text.split("\n").map((line, i) => {
+      if (!line.trim()) return <div key={i} style={{height:5}}/>;
+      if (terminalPat.test(line)) {
+        return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre-wrap"}}>{line}</div>;
+      }
+      return <div key={i} style={{color:"#e2e8f0",fontSize:14,lineHeight:1.75,marginBottom:2}}>{line}</div>;
     });
   };
 
@@ -1706,7 +1874,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
             <span style={{color:"#F59E0B",fontSize:20}}>{dir==="rtl"?"←":"→"}</span>
           </button>
-          <button onClick={startMixedQuiz} style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={startMixedQuiz} style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <div style={{textAlign:"start"}}>
@@ -1715,6 +1883,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             </div>
             <span style={{color:"#A855F7",fontSize:20}}>{dir==="rtl"?"←":"→"}</span>
+          </button>
+
+          {/* Incident Mode entry */}
+          <button onClick={()=>setScreen("incidentList")}
+            style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.05))",border:"1px solid rgba(239,68,68,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+            onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <span style={{fontSize:28}}>🚨</span>
+              <div style={{textAlign:"start"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{color:"#EF4444",fontWeight:800,fontSize:15}}>{t("incidentModeBtn")}</span>
+                  <span style={{background:"rgba(239,68,68,0.15)",color:"#EF4444",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>NEW</span>
+                </div>
+                <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("incidentModeDesc")}</div>
+              </div>
+            </div>
+            <span style={{color:"#EF4444",fontSize:20}}>{dir==="rtl"?"←":"→"}</span>
           </button>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {TOPICS.map(topic=>(
@@ -2116,6 +2301,205 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>
         );
       })()}
+      {/* ── INCIDENT LIST ─────────────────────────────────────────────────── */}
+      {screen==="incidentList"&&(
+        <div style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease",direction:dir}}>
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
+            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <span aria-hidden="true">{dir==="rtl"?"→":"←"}</span>
+            </button>
+            <div>
+              <h2 style={{margin:0,color:"#EF4444",fontSize:20,fontWeight:900}}>🚨 {t("incidentModeBtn")}</h2>
+              <p style={{margin:0,color:"#64748b",fontSize:13}}>{t("incidentModeDesc")}</p>
+            </div>
+          </div>
+
+          {/* Resume banner */}
+          {incidentResume&&(
+            <div style={{background:"rgba(239,68,68,0.07)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:18}}>⏸️</span>
+                <div>
+                  <div style={{color:"#e2e8f0",fontWeight:700,fontSize:13}}>{t("incidentResumeBanner")}: {incidentResume.incident.title}</div>
+                  <div style={{color:"#64748b",fontSize:12}}>{t("incidentStep")} {incidentResume.stepIndex+1}/{incidentResume.incident.steps.length} · ⭐ {incidentResume.score} · ⏱ {formatIncidentTime(incidentResume.elapsed)}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={resumeIncident} style={{padding:"7px 14px",background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:8,color:"#EF4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>▶ {t("incidentResumeBanner")}</button>
+                <button onClick={()=>{clearIncidentProgress();setIncidentResume(null);}} style={{padding:"7px 10px",background:"none",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#475569",fontSize:13,cursor:"pointer"}}>{t("incidentDiscard")}</button>
+              </div>
+            </div>
+          )}
+
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {INCIDENTS.map(incident=>{
+              const diff = INCIDENT_DIFFICULTY_CONFIG[incident.difficulty] || INCIDENT_DIFFICULTY_CONFIG.medium;
+              return(
+                <button key={incident.id} onClick={()=>startIncident(incident)}
+                  style={{width:"100%",padding:"16px 18px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:dir==="rtl"?"right":"left",transition:"all 0.2s"}}
+                  onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.06)";e.currentTarget.style.borderColor="rgba(239,68,68,0.3)";}}
+                  onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.02)";e.currentTarget.style.borderColor="rgba(255,255,255,0.07)";}}>
+                  <span style={{fontSize:30,flexShrink:0}}>{incident.icon}</span>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:3}}>
+                      <span style={{color:"#e2e8f0",fontWeight:800,fontSize:15}}>{lang==="he"?incident.titleHe:incident.title}</span>
+                      <span style={{background:`${diff.color}22`,color:diff.color,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,letterSpacing:0.5}}>{lang==="he"?diff.labelHe:diff.label}</span>
+                    </div>
+                    <div style={{color:"#64748b",fontSize:12,marginBottom:2}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
+                    <div style={{color:"#475569",fontSize:11}}>{incident.steps.length} {t("incidentSteps")} · {incident.estimatedTime}</div>
+                  </div>
+                  <span style={{color:"#EF4444",fontSize:18,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
+                </button>
+              );
+            })}
+          </div>
+          <Footer lang={lang}/>
+        </div>
+      )}
+
+      {/* ── INCIDENT PLAYING ──────────────────────────────────────────────── */}
+      {screen==="incident"&&selectedIncident&&(()=>{
+        const step = selectedIncident.steps[incidentStepIndex];
+        const totalSteps = selectedIncident.steps.length;
+        const maxScore = totalSteps * 10;
+        const progress = ((incidentStepIndex + (incidentSubmitted ? 1 : 0)) / totalSteps) * 100;
+        return(
+          <div style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease",direction:"ltr"}}>
+            {/* Top bar */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
+              <button onClick={()=>{saveIncidentProgress(selectedIncident,incidentStepIndex,incidentScore,incidentMistakes,incidentElapsed,incidentHistory);setScreen("incidentList");}}
+                style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13}}>
+                ← {lang==="he"?"חזרה":"Back"}
+              </button>
+              <div style={{display:"flex",gap:14,alignItems:"center",fontSize:13,fontWeight:700}}>
+                <span style={{color:"#94a3b8"}}>{t("incidentStep")} <span style={{color:"#e2e8f0"}}>{incidentStepIndex+1}/{totalSteps}</span></span>
+                <span style={{color:"#A855F7"}}>⭐ {incidentScore}<span style={{color:"#475569",fontWeight:400}}>/{maxScore}</span></span>
+                <span style={{color:incidentMistakes>0?"#EF4444":"#475569"}}>❌ {incidentMistakes}</span>
+                <span style={{color:"#F59E0B"}}>⏱ {formatIncidentTime(incidentElapsed)}</span>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{height:4,background:"rgba(255,255,255,0.06)",borderRadius:4,marginBottom:16}}>
+              <div style={{height:"100%",borderRadius:4,width:`${progress}%`,background:"linear-gradient(90deg,#EF4444,#F59E0B)",transition:"width 0.4s ease"}}/>
+            </div>
+
+            {/* Incident title badge */}
+            <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(239,68,68,0.07)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:10,padding:"8px 14px",marginBottom:14}}>
+              <span>{selectedIncident.icon}</span>
+              <span style={{color:"#EF4444",fontWeight:700,fontSize:13}}>{lang==="he"?selectedIncident.titleHe:selectedIncident.title}</span>
+              <span style={{marginLeft:"auto",color:INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty]?.color||"#F59E0B",fontSize:11,fontWeight:700}}>{INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty]?.[lang==="he"?"labelHe":"label"]}</span>
+            </div>
+
+            {/* Prompt */}
+            <div style={{background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"18px 20px",marginBottom:14}}>
+              {renderIncidentPrompt(step.prompt)}
+            </div>
+
+            {/* Options */}
+            <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
+              {step.options.map((opt,i)=>{
+                const isCorrect  = i === step.answer;
+                const isChosen   = i === incidentAnswer;
+                let bg = "rgba(255,255,255,0.02)", border = "rgba(255,255,255,0.09)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
+                if (!incidentSubmitted && isChosen) { bg="rgba(239,68,68,0.08)"; border="#EF444466"; color="#fca5a5"; labelBg="rgba(239,68,68,0.2)"; labelColor="#EF4444"; }
+                if (incidentSubmitted) {
+                  if (isCorrect)       { bg="rgba(16,185,129,0.1)"; border="#10B981"; color="#10B981"; labelBg="rgba(16,185,129,0.2)"; labelColor="#10B981"; }
+                  else if (isChosen)   { bg="rgba(239,68,68,0.1)";  border="#EF4444"; color="#EF4444"; labelBg="rgba(239,68,68,0.2)";  labelColor="#EF4444"; }
+                }
+                return(
+                  <button key={i} onClick={()=>{ if (!incidentSubmitted) setIncidentAnswer(i); }}
+                    aria-pressed={!incidentSubmitted ? i===incidentAnswer : undefined}
+                    style={{width:"100%",textAlign:"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s"}}>
+                    <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1}}>
+                      {["A","B","C","D"][i]}
+                    </span>
+                    <span style={{flex:1,direction:"ltr"}}>{opt}</span>
+                    {incidentSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✓</span>}
+                    {incidentSubmitted&&isChosen&&!isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✗</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Confirm button */}
+            {!incidentSubmitted&&incidentAnswer!==null&&(
+              <button onClick={submitIncidentStep}
+                style={{width:"100%",padding:"15px",background:"linear-gradient(135deg,#EF4444dd,#F59E0Baa)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:10,boxShadow:"0 4px 16px rgba(239,68,68,0.3)"}}>
+                {t("incidentConfirm")}
+              </button>
+            )}
+
+            {/* Result + explanation */}
+            {incidentSubmitted&&(
+              <div style={{animation:"fadeIn 0.3s ease"}}>
+                <div style={{background:incidentAnswer===step.answer?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",border:`1px solid ${incidentAnswer===step.answer?"#10B98130":"#EF444430"}`,borderRadius:12,padding:"14px 16px",marginBottom:12}}>
+                  <div style={{fontWeight:800,fontSize:13,marginBottom:8,color:incidentAnswer===step.answer?"#10B981":"#EF4444"}}>
+                    {incidentAnswer===step.answer?t("incidentCorrect"):t("incidentWrong")}
+                  </div>
+                  <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.7,direction:"ltr"}}>{step.explanation}</div>
+                </div>
+                <button onClick={nextIncidentStep}
+                  style={{width:"100%",padding:15,background:"linear-gradient(135deg,#EF4444cc,#F59E0B88)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                  {incidentStepIndex>=selectedIncident.steps.length-1?t("incidentFinish"):t("incidentNext")}
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── INCIDENT COMPLETE ─────────────────────────────────────────────── */}
+      {screen==="incidentComplete"&&selectedIncident&&(()=>{
+        const maxScore = selectedIncident.steps.length * 10;
+        const perfect  = incidentScore === maxScore;
+        const goodRun  = incidentMistakes <= 1;
+        return(
+          <div style={{maxWidth:480,margin:"30px auto",padding:"0 18px",textAlign:"center",animation:"fadeIn 0.5s ease",direction:dir}}>
+            <div style={{fontSize:56,marginBottom:10}}>{perfect?"🏆":goodRun?"🎯":"💪"}</div>
+            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 6px",color:"#EF4444"}}>{t("incidentResolved")}</h2>
+            <p style={{color:"#64748b",fontSize:13,margin:"0 0 20px"}}>{lang==="he"?selectedIncident.titleHe:selectedIncident.title}</p>
+
+            {/* Stats grid */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:24}}>
+              {[
+                {label:t("incidentScore"),  value:`${incidentScore}/${maxScore}`, icon:"⭐", color:"#A855F7"},
+                {label:t("incidentTime"),   value:formatIncidentTime(incidentElapsed), icon:"⏱", color:"#F59E0B"},
+                {label:t("incidentMistakes"),value:incidentMistakes,               icon:"❌", color:incidentMistakes===0?"#10B981":"#EF4444"},
+              ].map((s,i)=>(
+                <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 8px"}}>
+                  <div style={{fontSize:20}}>{s.icon}</div>
+                  <div style={{fontSize:18,fontWeight:800,color:s.color,marginTop:4}}>{s.value}</div>
+                  <div style={{fontSize:12,color:"#475569",marginTop:2}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {/* LinkedIn share */}
+              <div>
+                <button onClick={handleIncidentShare}
+                  style={{width:"100%",padding:13,background:incidentShareCopied?"rgba(10,102,194,0.18)":"rgba(10,102,194,0.1)",border:`1px solid ${incidentShareCopied?"rgba(10,102,194,0.6)":"rgba(10,102,194,0.35)"}`,borderRadius:12,color:"#4a9ede",fontSize:14,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
+                  {incidentShareCopied?t("incidentShareCopied"):t("incidentShareBtn")}
+                </button>
+                {incidentShareCopied&&<div style={{fontSize:11,color:"#64748b",textAlign:"center",marginTop:5,animation:"fadeIn 0.2s ease"}}>
+                  {lang==="en"?"Post text copied — paste it in the LinkedIn dialog":"טקסט הפוסט הועתק — הדבק אותו בחלון LinkedIn"}
+                </div>}
+              </div>
+              <button onClick={()=>setScreen("incidentList")}
+                style={{padding:13,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:12,color:"#EF4444",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                {t("incidentTryAnother")}
+              </button>
+              <button onClick={()=>setScreen("home")}
+                style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                {t("backToTopics")}
+              </button>
+            </div>
+            <Footer lang={lang}/>
+          </div>
+        );
+      })()}
+
       </main>
     </div>
   );
