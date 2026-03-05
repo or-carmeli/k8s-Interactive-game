@@ -103,8 +103,10 @@ const TRANSLATIONS = {
     a11yTitle: "♿ נגישות", a11yFontSize: "גודל טקסט", a11yReduceMotion: "הפחת תנועה", a11yHighContrast: "ניגודיות גבוהה",
     readQuestion: "🔊 קראי שאלה", stopSpeech: "⏹ עצרי", autoRead: "קריאה אוטומטית",
     hint: "💡 רמז", eliminate: "❌ הסרי תשובה שגויה",
+    shareResult: "🔗 שתפי תוצאה",
     readQuestion_m: "🔊 קרא שאלה", stopSpeech_m: "⏹ עצור", autoRead_m: "קריאה אוטומטית",
     hint_m: "💡 רמז", eliminate_m: "❌ הסר תשובה שגויה",
+    shareResult_m: "🔗 שתף תוצאה",
     // Male-form overrides (used when gender === "m")
     tagline_m: "למד Kubernetes בצורה כיפית ואינטראקטיבית",
     startPlaying_m: "⚡ התחל לשחק עכשיו",
@@ -218,6 +220,7 @@ const TRANSLATIONS = {
     a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
     readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop", autoRead: "Auto Read",
     hint: "💡 Hint", eliminate: "❌ Eliminate Wrong",
+    shareResult: "🔗 Share Result",
     resumeTitle: "Resume Quiz?",
     resumeBody: "You have an unfinished quiz. Continue where you left off?",
     resumeBtn: "Continue",
@@ -1903,6 +1906,16 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
+              <button onClick={()=>{
+                const lvlLabel = lang==="en" ? LEVEL_CONFIG[selectedLevel].labelEn : LEVEL_CONFIG[selectedLevel].label;
+                const msg = lang==="en"
+                  ? `I just scored ${result?.correct}/${result?.total} on the ${lvlLabel} Kubernetes quiz on KubeQuest! 🚀 Think you can beat it? https://kubequest.online`
+                  : `קיבלתי ${result?.correct}/${result?.total} בחידון Kubernetes ברמת ${lvlLabel} ב-KubeQuest! 🚀 תוכלו לנצח? https://kubequest.online`;
+                const url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent("https://kubequest.online")}&title=${encodeURIComponent("KubeQuest – Kubernetes Quiz")}&summary=${encodeURIComponent(msg)}`;
+                window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
+              }} style={{padding:13,background:"rgba(10,102,194,0.1)",border:"1px solid rgba(10,102,194,0.35)",borderRadius:12,color:"#4a9ede",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                {t("shareResult")}
+              </button>
               <button onClick={()=>selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
               <button onClick={()=>setScreen("home")} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#e2e8f0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
