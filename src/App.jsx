@@ -422,6 +422,17 @@ export default function K8sQuestApp() {
 
   const isFreeMode = (id) => id === "mixed" || id === "daily";
 
+  // Weighted progress % for a single topic — matches Roadmap's stageProgress logic.
+  const computeTopicProgress = (topicId) => {
+    let score = 0;
+    LEVEL_ORDER.forEach(lvl => {
+      const r = completedTopics[`${topicId}_${lvl}`];
+      if (!r || r.total === 0) return;
+      score += r.retryComplete ? 1 : Math.min(r.correct, r.total) / r.total;
+    });
+    return Math.min(100, Math.round((score / LEVEL_ORDER.length) * 100));
+  };
+
   // Derive total_score canonically from completedTopics so it can never be gamed.
   // Each topic/level key is "topicId_level" (e.g. "workloads_easy").
   // Free-mode keys (mixed_mixed, daily_daily) are excluded — they are session-only.
@@ -554,15 +565,25 @@ export default function K8sQuestApp() {
     setCompletedTopics(mergedCompleted);
     setUnlockedAchievements(mergedAch);
 
-    if (!data) {
+    if (data) {
+      // Fix 4: load topic_stats from Supabase for existing accounts (overrides localStorage)
+      if (data.topic_stats && Object.keys(data.topic_stats).length > 0) {
+        setTopicStats(data.topic_stats);
+        try { localStorage.setItem("topicStats_v1", JSON.stringify(data.topic_stats)); } catch {}
+      }
+    } else {
       // BUG-B fix: use INSERT (not upsert) for new accounts to guarantee one row per user
       const username = sessionUser?.user_metadata?.username || sessionUser?.email?.split("@")[0];
       const cleanNc = Object.fromEntries(
         Object.entries(mergedCompleted).filter(([k]) => !isFreeMode(k.split("_")[0]))
       );
+      // Fix 4: carry guest topicStats into the new account row
+      let guestTopicStats = {};
+      try { guestTopicStats = JSON.parse(localStorage.getItem("topicStats_v1")) || {}; } catch {}
       await supabase.from("user_stats").insert({
         user_id: userId, username,
         ...mergedStats, completed_topics: cleanNc, achievements: mergedAch,
+        topic_stats: guestTopicStats,
         updated_at: new Date().toISOString(),
       });
     }
@@ -582,6 +603,7 @@ export default function K8sQuestApp() {
     const { error } = await supabase.from("user_stats").update({
       username: user.user_metadata?.username || user.email?.split("@")[0] || "",
       ...ns, completed_topics: cleanNc, achievements: na,
+      topic_stats: topicStats,          // Fix 4: persist weak-area data across devices
       updated_at: new Date().toISOString(),
     }).eq("user_id", user.id);
     if (error) {
@@ -677,7 +699,7 @@ export default function K8sQuestApp() {
       // BUG-B fix: update, not upsert
       await supabase.from("user_stats").update({
         username: user.user_metadata?.username || user.email?.split("@")[0] || "",
-        ...emptyStats, completed_topics: {}, achievements: [],
+        ...emptyStats, completed_topics: {}, achievements: [], topic_stats: {},
         updated_at: new Date().toISOString(),
       }).eq("user_id", user.id);
     }
@@ -686,11 +708,25 @@ export default function K8sQuestApp() {
   const handleResetTopic = async (topicId) => {
     if (!window.confirm(t("resetTopicConfirm"))) return;
     const newCompleted = { ...completedTopics };
-    LEVEL_ORDER.forEach(lvl => delete newCompleted[`${topicId}_${lvl}`]);
-    const newScore = computeScore(newCompleted);
-    const newStats = { ...stats, total_score: newScore };
+    // Subtract previously-counted questions so resetting then replaying doesn't double-count
+    let removedAnswered = 0, removedCorrect = 0;
+    LEVEL_ORDER.forEach(lvl => {
+      const r = newCompleted[`${topicId}_${lvl}`];
+      if (r) { removedAnswered += r.total || 0; removedCorrect += r.correct || 0; }
+      delete newCompleted[`${topicId}_${lvl}`];
+    });
+    const newStats = {
+      ...stats,
+      total_score:    computeScore(newCompleted),
+      total_answered: Math.max(0, stats.total_answered - removedAnswered),
+      total_correct:  Math.max(0, stats.total_correct  - removedCorrect),
+    };
+    // Also clear per-topic weak-area data for this topic
+    const newTopicStats = { ...topicStats };
+    delete newTopicStats[topicId];
     setCompletedTopics(newCompleted);
     setStats(newStats);
+    setTopicStats(newTopicStats);
     if (!isGuest && user) {
       await saveUserData(newStats, newCompleted, unlockedAchievements);
     }
@@ -811,7 +847,6 @@ export default function K8sQuestApp() {
     lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
-    setStats(prev => ({ ...prev, current_streak: 0 }));
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[level] || 25) : (TIMER_DURATIONS[level] || 30));
     setScreen("topic");
     if (isGuest) achievementsLoaded.current = true;
@@ -837,7 +872,6 @@ export default function K8sQuestApp() {
     topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
-    setStats(prev => ({ ...prev, current_streak: 0 }));
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? 25 : TIMER_DURATIONS.mixed);
     setScreen("topic");
   };
@@ -865,7 +899,6 @@ export default function K8sQuestApp() {
     topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
-    setStats(prev => ({ ...prev, current_streak: 0 }));
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? 25 : TIMER_DURATIONS.daily);
     setScreen("topic");
   };
@@ -1217,7 +1250,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     <button onClick={e=>{e.stopPropagation();handleResetTopic(topic.id);}} title={t("resetTopic")} style={{background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",padding:"2px 4px",lineHeight:1}} onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="#475569"}>↺</button>
                   </div>})()}
                 </div>
-                {(()=>{const done=LEVEL_ORDER.filter(lvl=>completedTopics[`${topic.id}_${lvl}`]).length;return(<div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:10}}><div style={{height:"100%",borderRadius:2,width:`${(done/3)*100}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
+                {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:10}}><div style={{height:"100%",borderRadius:2,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
                   {Object.entries(LEVEL_CONFIG).filter(([lvl])=>lvl!=="mixed"&&lvl!=="daily").map(([lvl,cfg])=>{
                     const key=`${topic.id}_${lvl}`;
