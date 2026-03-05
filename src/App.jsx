@@ -228,7 +228,7 @@ const TRANSLATIONS = {
 
 const year = new Date().getFullYear();
 const TIMER_DURATIONS    = { easy: 30, medium: 45, hard: 60, mixed: 45, daily: 45 };
-const INTERVIEW_DURATIONS = { easy: 20, medium: 30, hard: 40 };
+const INTERVIEW_DURATIONS = { easy: 20, medium: 30, hard: 40, mixed: 25, daily: 25 };
 
 function Confetti() {
   const colors = ["#00D4FF","#A855F7","#FF6B35","#10B981","#F59E0B","#EC4899"];
@@ -578,6 +578,7 @@ export default function K8sQuestApp() {
       retryMode,
       isRetry,
       timerEnabled,
+      isInterviewMode,
       timeLeft,
       statsDelta: {
         answered:       isFree || isRetry ? 0 : quizHistory.length,
@@ -850,9 +851,13 @@ export default function K8sQuestApp() {
     quizRunIdRef.current    = saved.quizRunId;
     liveIndexRef.current    = saved.questionIndex ?? 0;
 
+    // Restore interview mode as it was when the quiz was saved
+    const savedInterviewMode = saved.isInterviewMode || false;
+    setIsInterviewMode(savedInterviewMode);
+
     // Timer: if mid-question reset to full, if on explanation screen restore saved value
-    const fullTime = isInterviewMode
-      ? (INTERVIEW_DURATIONS[saved.level] || 25)
+    const fullTime = savedInterviewMode
+      ? (INTERVIEW_DURATIONS[saved.level] || INTERVIEW_DURATIONS.mixed)
       : (TIMER_DURATIONS[saved.level] || 30);
     setTimeLeft(saved.submitted ? (saved.timeLeft ?? fullTime) : fullTime);
 
@@ -1026,7 +1031,7 @@ export default function K8sQuestApp() {
     topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
-    if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? 25 : TIMER_DURATIONS.mixed);
+    if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
     setScreen("topic");
   };
 
@@ -1056,7 +1061,7 @@ export default function K8sQuestApp() {
     topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
-    if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? 25 : TIMER_DURATIONS.daily);
+    if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.daily : TIMER_DURATIONS.daily);
     setScreen("topic");
   };
 
@@ -1086,14 +1091,14 @@ export default function K8sQuestApp() {
 
   // Timer countdown
   useEffect(() => {
-    if (screen !== "topic" || topicScreen !== "quiz" || !timerEnabled || submitted || timeLeft <= 0 || isInHistoryMode) return;
+    if (screen !== "topic" || topicScreen !== "quiz" || (!timerEnabled && !isInterviewMode) || submitted || timeLeft <= 0 || isInHistoryMode || tryAgainActive) return;
     const id = setTimeout(() => setTimeLeft(t => t - 1), 1000);
     return () => clearTimeout(id);
-  }, [screen, topicScreen, timerEnabled, submitted, timeLeft]);
+  }, [screen, topicScreen, timerEnabled, isInterviewMode, submitted, timeLeft, tryAgainActive]);
 
   // Timer expired – force-submit as missed
   useEffect(() => {
-    if (timeLeft !== 0 || submitted || screen !== "topic" || topicScreen !== "quiz" || !timerEnabled || isInHistoryMode) return;
+    if (timeLeft !== 0 || submitted || screen !== "topic" || topicScreen !== "quiz" || (!timerEnabled && !isInterviewMode) || isInHistoryMode || tryAgainActive) return;
     const q = currentQuestions[questionIndex];
     setSubmitted(true);
     setShowExplanation(true);
