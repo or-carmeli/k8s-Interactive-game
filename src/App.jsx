@@ -869,9 +869,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
   const accuracy = stats.total_answered > 0 ? Math.round(stats.total_correct / stats.total_answered * 100) : 0;
   const FONT_SCALES = { normal: 1, large: 1.2, xl: 1.4 };
-  const fs      = FONT_SCALES[a11y.fontSize] || 1;
-  const hcText  = a11y.highContrast ? "#ffffff" : "#e2e8f0";
-  const hcMuted = a11y.highContrast ? "#cbd5e1" : "#94a3b8";
+  const fs = FONT_SCALES[a11y.fontSize] || 1;
 
   if (!user) return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817,#0f172a)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,padding:"20px"}}>
@@ -967,7 +965,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,position:"relative",overflowX:"hidden"}}>
-      <style>{`${a11y.reduceMotion?"*{animation-duration:0.001ms!important;transition-duration:0.001ms!important}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}@media(max-width:600px){
+      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
 .quiz-bar{flex-wrap:wrap!important;row-gap:6px!important}
@@ -996,7 +994,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:20}}><h3 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><button onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"#475569",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"rgba(255,255,255,0.06)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{entry.username||t("anonymous")}</div><div style={{color:"#475569",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}</div></div>}
 
-      <main id="main-content">
+      <main id="main-content" style={a11y.fontSize !== "normal" ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`, margin: "0 auto"} : undefined}>
       {/* HOME */}
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
@@ -1231,8 +1229,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               </div>
 
-              <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${a11y.highContrast?"rgba(255,255,255,0.22)":"rgba(255,255,255,0.08)"}`,borderRadius:14,padding:"20px 22px",marginBottom:14}}>
-                {(()=>{const qText=currentQuestions[questionIndex].q;const qDir=hasHebrew(qText)?dir:"ltr";return<div dir={qDir} style={{color:hcText,fontSize:Math.round(17*fs),fontWeight:700,lineHeight:1.75,wordBreak:"break-word",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"plaintext"}}>{renderBidi(qText,lang)}</div>;})()}
+              <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"20px 22px",marginBottom:14}}>
+                {(()=>{const qText=currentQuestions[questionIndex].q;const qDir=hasHebrew(qText)?dir:"ltr";return<div dir={qDir} style={{color:"#e2e8f0",fontSize:17,fontWeight:700,lineHeight:1.75,wordBreak:"break-word",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"plaintext"}}>{renderBidi(qText,lang)}</div>;})()}
               </div>
 
               <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
@@ -1249,7 +1247,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   return (
                     <button key={i} className="opt-btn"
                       onClick={()=>handleSelectAnswer(i)}
-                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:Math.round(14*fs),cursor:submitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
+                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:submitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
                       <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
                       <span dir={optDir} style={{flex:1}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
                       {submitted&&isCorrect&&<span style={{flexShrink:0,fontSize:16}}>✓</span>}
@@ -1281,7 +1279,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                               ?`${t("timeUp")} ${lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: ${q.options[q.answer]}`
                               :t("incorrect")}
                         </div>
-                        {!isInterviewMode&&<div style={{color:hcMuted,fontSize:Math.round(13*fs),lineHeight:1.7}}>{renderBidi(q.explanation,lang)}</div>}
+                        {!isInterviewMode&&<div style={{color:"#94a3b8",fontSize:13,lineHeight:1.7}}>{renderBidi(q.explanation,lang)}</div>}
                       </div>
                     );
                   })()}
