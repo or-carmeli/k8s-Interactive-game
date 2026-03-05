@@ -1312,6 +1312,49 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:20}}><h3 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><button onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"#475569",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"rgba(255,255,255,0.06)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{entry.username||t("anonymous")}</div><div style={{color:"#475569",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}</div></div>}
 
+      {/* Dropdown menu — rendered outside <main> so CSS zoom never affects it */}
+      {showMenu&&(<>
+        <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
+        <div style={{position:"fixed",top:68,[lang==="en"?"left":"right"]:12,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:220,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr"}}>
+          {/* Language + Gender */}
+          <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
+            {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
+            <LangSwitcher lang={lang} setLang={setLang}/>
+          </div>
+          {/* Accessibility */}
+          <div style={{padding:"10px 14px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+            <div style={{fontSize:11,color:"#475569",fontWeight:700,marginBottom:8,letterSpacing:0.5}}>{t("a11yTitle")}</div>
+            <div style={{marginBottom:7}}>
+              <div style={{fontSize:11,color:"#64748b",marginBottom:5}}>{t("a11yFontSize")}</div>
+              <div style={{display:"flex",gap:4}}>
+                {[["normal","A",12],["large","A+",14],["xl","A++",16]].map(([sz,label,sz_px])=>(
+                  <button key={sz} onClick={()=>updateA11y("fontSize",sz)}
+                    aria-pressed={a11y.fontSize===sz}
+                    aria-label={`${t("a11yFontSize")}: ${label}`}
+                    style={{flex:1,padding:"5px 0",fontSize:sz_px,fontWeight:a11y.fontSize===sz?800:500,background:a11y.fontSize===sz?"rgba(0,212,255,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y.fontSize===sz?"rgba(0,212,255,0.4)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y.fontSize===sz?"#00D4FF":"#64748b",cursor:"pointer"}}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{display:"flex",gap:4}}>
+              {(["reduceMotion","highContrast"]).map((key,i)=>(
+                <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
+                  aria-pressed={a11y[key]}
+                  style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
+                  {i===0?t("a11yReduceMotion"):t("a11yHighContrast")}{a11y[key]?" ✓":""}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Menu items */}
+          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}>{t("leaderboardBtn")}</button>
+          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400}}>{t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginLeft:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}</button>
+          <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#EF4444",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🗑</span>{t("resetProgress")}</button>
+          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#64748b",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,textDecoration:"none"}}><span>✉️</span>{lang==="en"?"Contact":"צור קשר"}</a>
+          <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🚪</span>{t("logout")}</button>
+        </div>
+      </>)}
       <main id="main-content" style={a11y.fontSize !== "normal" ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`, margin: "0 auto"} : undefined}>
       {/* HOME */}
       {screen==="home"&&(
@@ -1341,49 +1384,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 style={{position:"absolute",[lang==="en"?"left":"right"]:0,top:"50%",transform:"translateY(-50%)",width:40,height:40,background:showMenu?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${showMenu?"rgba(0,212,255,0.3)":"rgba(255,255,255,0.1)"}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:5,zIndex:201,transition:"all 0.2s"}}>
                 {[0,1,2].map(i=><span key={i} aria-hidden="true" style={{display:"block",width:18,height:2,borderRadius:2,background:showMenu?"#00D4FF":"#94a3b8",transition:"background 0.2s"}}/>)}
               </button>
-              {/* Dropdown menu */}
-              {showMenu&&(<>
-                <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-                <div style={{position:"absolute",top:"calc(100% + 8px)",[lang==="en"?"left":"right"]:0,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:220,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr"}}>
-                  {/* Language + Gender */}
-                  <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
-                    {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
-                    <LangSwitcher lang={lang} setLang={setLang}/>
-                  </div>
-                  {/* Accessibility */}
-                  <div style={{padding:"10px 14px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-                    <div style={{fontSize:11,color:"#475569",fontWeight:700,marginBottom:8,letterSpacing:0.5}}>{t("a11yTitle")}</div>
-                    <div style={{marginBottom:7}}>
-                      <div style={{fontSize:11,color:"#64748b",marginBottom:5}}>{t("a11yFontSize")}</div>
-                      <div style={{display:"flex",gap:4}}>
-                        {[["normal","A",12],["large","A+",14],["xl","A++",16]].map(([sz,label,sz_px])=>(
-                          <button key={sz} onClick={()=>updateA11y("fontSize",sz)}
-                            aria-pressed={a11y.fontSize===sz}
-                            aria-label={`${t("a11yFontSize")}: ${label}`}
-                            style={{flex:1,padding:"5px 0",fontSize:sz_px,fontWeight:a11y.fontSize===sz?800:500,background:a11y.fontSize===sz?"rgba(0,212,255,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y.fontSize===sz?"rgba(0,212,255,0.4)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y.fontSize===sz?"#00D4FF":"#64748b",cursor:"pointer"}}>
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{display:"flex",gap:4}}>
-                      {(["reduceMotion","highContrast"]).map((key,i)=>(
-                        <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
-                          aria-pressed={a11y[key]}
-                          style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
-                          {i===0?t("a11yReduceMotion"):t("a11yHighContrast")}{a11y[key]?" ✓":""}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Menu items */}
-                  <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}>{t("leaderboardBtn")}</button>
-                  <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400}}>{t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginLeft:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}</button>
-                  <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#EF4444",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🗑</span>{t("resetProgress")}</button>
-                  <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#64748b",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,textDecoration:"none"}}><span>✉️</span>{lang==="en"?"Contact":"צור קשר"}</a>
-                  <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🚪</span>{t("logout")}</button>
-                </div>
-              </>)}
             </div>
             {/* Row 2: Greeting */}
             <p style={{color:"#94a3b8",fontSize:13,margin:"0 0 16px",textAlign:"center"}}>
