@@ -101,8 +101,8 @@ const TRANSLATIONS = {
     accuracyLabel: "דיוק",
     goBackToTopic: "חזרי לנושא הזה",
     a11yTitle: "♿ נגישות", a11yFontSize: "גודל טקסט", a11yReduceMotion: "הפחת תנועה", a11yHighContrast: "ניגודיות גבוהה",
-    readQuestion: "🔊 קראי שאלה", stopSpeech: "⏹ עצרי",
-    readQuestion_m: "🔊 קרא שאלה", stopSpeech_m: "⏹ עצור",
+    readQuestion: "🔊 קראי שאלה", stopSpeech: "⏹ עצרי", autoRead: "קריאה אוטומטית",
+    readQuestion_m: "🔊 קרא שאלה", stopSpeech_m: "⏹ עצור", autoRead_m: "קריאה אוטומטית",
     // Male-form overrides (used when gender === "m")
     tagline_m: "למד Kubernetes בצורה כיפית ואינטראקטיבית",
     startPlaying_m: "⚡ התחל לשחק עכשיו",
@@ -214,7 +214,7 @@ const TRANSLATIONS = {
     dailyChallengeTitle: "Daily Challenge", dailyChallengeNew: "NEW DAILY",
     dailyChallengeDesc: "5 mixed questions · resets every day",
     a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
-    readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop",
+    readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop", autoRead: "Auto Read",
     resumeTitle: "Resume Quiz?",
     resumeBody: "You have an unfinished quiz. Continue where you left off?",
     resumeBtn: "Continue",
@@ -433,6 +433,7 @@ export default function K8sQuestApp() {
       fontSize: "normal",
       reduceMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
       highContrast: window.matchMedia?.("(prefers-contrast: more)").matches ?? false,
+      autoRead: false,
     };
   });
 
@@ -951,7 +952,17 @@ export default function K8sQuestApp() {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
-  }, [questionIndex, screen, topicScreen]);
+    if (a11y.autoRead && screen === "topic" && topicScreen === "quiz") {
+      const q = currentQuestions?.[questionIndex]?.q;
+      if (!q) return;
+      const utt = new SpeechSynthesisUtterance(q);
+      utt.lang = lang === "he" ? "he-IL" : "en-US";
+      utt.onend = () => setIsSpeaking(false);
+      utt.onerror = () => setIsSpeaking(false);
+      setIsSpeaking(true);
+      window.speechSynthesis.speak(utt);
+    }
+  }, [questionIndex, screen, topicScreen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectAnswer = (idx) => {
     if (submitted) return;
@@ -1422,12 +1433,21 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </button>
               ))}
             </div>
-            {screen==="topic"&&topicScreen==="quiz"&&window.speechSynthesis&&(
-              <button onClick={speakQuestion}
-                aria-pressed={isSpeaking}
-                style={{width:"100%",marginTop:7,padding:"6px 4px",background:isSpeaking?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${isSpeaking?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:isSpeaking?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:isSpeaking?700:400}}>
-                {isSpeaking?t("stopSpeech"):t("readQuestion")}
-              </button>
+            {window.speechSynthesis&&(
+              <div style={{display:"flex",gap:4,marginTop:7}}>
+                {screen==="topic"&&topicScreen==="quiz"&&(
+                  <button onClick={speakQuestion}
+                    aria-pressed={isSpeaking}
+                    style={{flex:1,padding:"6px 4px",background:isSpeaking?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${isSpeaking?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:isSpeaking?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:isSpeaking?700:400}}>
+                    {isSpeaking?t("stopSpeech"):t("readQuestion")}
+                  </button>
+                )}
+                <button onClick={()=>updateA11y("autoRead",!a11y.autoRead)}
+                  aria-pressed={a11y.autoRead}
+                  style={{flex:1,padding:"6px 4px",background:a11y.autoRead?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y.autoRead?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y.autoRead?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:a11y.autoRead?700:400}}>
+                  {t("autoRead")}{a11y.autoRead?" ✓":""}
+                </button>
+              </div>
             )}
           </div>
           {/* Menu items */}
