@@ -634,10 +634,12 @@ export default function K8sQuestApp() {
 
     const mergedAch = [...new Set([...(base.achievements || []), ...ga])];
 
+    const topicBaseScore = computeScore(mergedCompleted);
     const mergedStats = {
       total_answered: (base.total_answered || 0) + (gs.total_answered || 0),
       total_correct:  (base.total_correct  || 0) + (gs.total_correct  || 0),
-      total_score:    computeScore(mergedCompleted),
+      // Prefer the DB value — it includes free-mode bonus on top of topic score
+      total_score:    base.total_score != null ? Math.max(base.total_score, topicBaseScore) : topicBaseScore,
       max_streak:     Math.max(base.max_streak || 0, gs.max_streak || 0),
       current_streak: Math.max(base.current_streak || 0, gs.current_streak || 0),
     };
@@ -699,7 +701,7 @@ export default function K8sQuestApp() {
 
   const loadLeaderboard = async () => {
     const { data } = await supabase.from("user_stats")
-      .select("username,total_score,max_streak")
+      .select("username,total_score,max_streak,total_answered")
       .order("total_score", { ascending: false }).limit(10);
     if (data) setLeaderboard(data);
   };
@@ -781,6 +783,7 @@ export default function K8sQuestApp() {
     setUnlockedAchievements([]);
     setTopicStats({});
     try { localStorage.removeItem("topicStats_v1"); } catch {}
+    try { localStorage.removeItem("scoredFreeKeys_v1"); } catch {}
     if (isGuest) {
       try { localStorage.removeItem("k8s_quest_guest"); } catch {}
     } else if (user) {
@@ -927,6 +930,19 @@ export default function K8sQuestApp() {
         return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
       });
     }
+    // Free mode: award points per unique correct answer (deduped by question text)
+    if (!isRetryRef.current && isFreeMode(selectedTopic?.id) && correct) {
+      const freeKey = currentQuestions[questionIndex].q.slice(0, 100);
+      try {
+        const scored = new Set(JSON.parse(localStorage.getItem("scoredFreeKeys_v1")) || []);
+        if (!scored.has(freeKey)) {
+          scored.add(freeKey);
+          localStorage.setItem("scoredFreeKeys_v1", JSON.stringify([...scored]));
+          const pts = LEVEL_CONFIG[selectedLevel]?.points ?? 15;
+          setStats(prev => ({ ...prev, total_score: prev.total_score + pts }));
+        }
+      } catch {}
+    }
   };
 
   const nextQuestion = () => {
@@ -959,8 +975,9 @@ export default function K8sQuestApp() {
       // Preserve retryComplete so replaying doesn't re-lock the next level
       const keepRetryComplete = prevResult?.retryComplete || bestCorrect === currentQuestions.length;
       const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
-      // Recompute score from the full completedTopics snapshot — single source of truth
-      const newStats = { ...stats, total_score: computeScore(newCompleted) };
+      // Recompute topic score; add any free-mode bonus accumulated on top
+      const freeBonus = Math.max(0, stats.total_score - computeScore(completedTopics));
+      const newStats = { ...stats, total_score: computeScore(newCompleted) + freeBonus };
       const newAch = [
         ...unlockedAchievements,
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
