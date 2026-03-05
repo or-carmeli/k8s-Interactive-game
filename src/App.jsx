@@ -22,8 +22,15 @@ const LEVEL_CONFIG = {
 
 const LEVEL_ORDER = ["easy", "medium", "hard"];
 
-const MIXED_TOPIC = { id: "mixed", icon: "🎲", name: "Mixed Quiz", color: "#A855F7", levels: {} };
-const DAILY_TOPIC = { id: "daily", icon: "🔥", name: "Daily Challenge", color: "#F59E0B", levels: {} };
+const MIXED_TOPIC     = { id: "mixed",     icon: "🎲", name: "Mixed Quiz",        color: "#A855F7", levels: {} };
+const DAILY_TOPIC     = { id: "daily",     icon: "🔥", name: "Daily Challenge",    color: "#F59E0B", levels: {} };
+const BOOKMARKS_TOPIC = { id: "bookmarks", icon: "🔖", name: "Saved Questions",    color: "#A855F7", levels: {} };
+
+function getTodayLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function makeQuestionId(topicId, level, qIdx) { return `${topicId}|${level}|${qIdx}`; }
 
 // ── Deterministic daily randomisation ────────────────────────────────────────
 function mulberry32(seed) {
@@ -152,6 +159,14 @@ const TRANSLATIONS = {
     tryAgainCorrect: "✅ נכון! כל הכבוד",
     tryAgainWrong: "❌ לא נכון",
     exitTryAgain: "חזרי לסקירה", exitTryAgain_m: "חזור לסקירה",
+    savedQuestions: "🔖 שאלות שמורות", savedQuestionsTitle: "שאלות שמורות",
+    noBookmarks: "עוד לא שמרת שאלות. לחצי על ☆ בזמן חידון כדי לשמור.",
+    noBookmarks_m: "עוד לא שמרת שאלות. לחץ על ☆ בזמן חידון כדי לשמור.",
+    startSavedQuiz: "▶ תרגלי שאלות שמורות", startSavedQuiz_m: "▶ תרגל שאלות שמורות",
+    removeBookmark: "הסרי", removeBookmark_m: "הסר",
+    bookmark: "☆ שמרי", bookmarkActive: "★ שמורה",
+    bookmark_m: "☆ שמור", bookmarkActive_m: "★ שמור",
+    dailyStreak: "ימים ברצף",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -232,6 +247,12 @@ const TRANSLATIONS = {
     tryAgainCorrect: "✅ Correct! Well done",
     tryAgainWrong: "❌ Incorrect",
     exitTryAgain: "Back to Review",
+    savedQuestions: "🔖 Saved Questions", savedQuestionsTitle: "Saved Questions",
+    noBookmarks: "No saved questions yet. Tap ☆ during a quiz to save one.",
+    startSavedQuiz: "▶ Practice Saved Questions",
+    removeBookmark: "Remove",
+    bookmark: "☆ Save", bookmarkActive: "★ Saved",
+    dailyStreak: "day streak",
   },
 };
 
@@ -455,6 +476,13 @@ export default function K8sQuestApp() {
   const [hintVisible, setHintVisible]         = useState(false);
   const [eliminatedOption, setEliminatedOption] = useState(null);
   const [resumeData, setResumeData] = useState(null);
+  const [dailyStreak, setDailyStreak] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("daily_streak_v1")) || { date: null, streak: 0 }; } catch { return { date: null, streak: 0 }; }
+  });
+  const [bookmarks, setBookmarks] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("bookmarks_v1")) || []; } catch { return []; }
+  });
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
   // Shuffle answer options so the correct answer isn't predictably the longest/same position
   const getLevelData = (topic, level) => ({
@@ -474,7 +502,7 @@ export default function K8sQuestApp() {
     return idx < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[idx + 1] : null;
   };
 
-  const isFreeMode = (id) => id === "mixed" || id === "daily";
+  const isFreeMode = (id) => id === "mixed" || id === "daily" || id === "bookmarks";
 
   // Weighted progress % for a single topic — matches Roadmap's stageProgress logic.
   const computeTopicProgress = (topicId) => {
@@ -894,9 +922,10 @@ export default function K8sQuestApp() {
 
     // Resolve topic object
     let topic = null;
-    if (saved.topicId === "mixed")      topic = MIXED_TOPIC;
-    else if (saved.topicId === "daily") topic = DAILY_TOPIC;
-    else                                topic = TOPICS.find(tp => tp.id === saved.topicId);
+    if (saved.topicId === "mixed")           topic = MIXED_TOPIC;
+    else if (saved.topicId === "daily")      topic = DAILY_TOPIC;
+    else if (saved.topicId === "bookmarks")  topic = BOOKMARKS_TOPIC;
+    else                                     topic = TOPICS.find(tp => tp.id === saved.topicId);
     if (!topic || !saved.questions?.length) { clearQuizState(); setResumeData(null); return; }
 
     // Restore shuffled question list to the correct state slot
@@ -1065,6 +1094,7 @@ export default function K8sQuestApp() {
           }
           setAllowNextLevel(true);
         }
+        updateDailyStreak();
         setScreen("topicComplete");
         return;
       }
@@ -1094,6 +1124,7 @@ export default function K8sQuestApp() {
         });
         if (allPerfect) { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 4000); }
       }
+      updateDailyStreak();
       setScreen("topicComplete");
     } else {
       liveIndexRef.current = questionIndex + 1;
@@ -1200,6 +1231,59 @@ export default function K8sQuestApp() {
     setEliminatedOption(wrong[Math.floor(Math.random() * wrong.length)]);
   };
 
+  const updateDailyStreak = () => {
+    const today = getTodayLocal();
+    setDailyStreak(prev => {
+      if (prev.date === today) return prev; // already played today
+      let newStreak = 1;
+      if (prev.date) {
+        const prevDate = new Date(prev.date + "T12:00:00");
+        const todayDate = new Date(today + "T12:00:00");
+        const diffDays = Math.round((todayDate - prevDate) / 86400000);
+        if (diffDays === 1) newStreak = (prev.streak || 0) + 1;
+      }
+      const next = { date: today, streak: newStreak };
+      try { localStorage.setItem("daily_streak_v1", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  const toggleBookmark = () => {
+    const q = currentQuestions[questionIndex];
+    if (!q || !selectedTopic || !selectedLevel) return;
+    const qid = makeQuestionId(selectedTopic.id, selectedLevel, questionIndex);
+    setBookmarks(prev => {
+      const next = prev.some(b => b.question_id === qid)
+        ? prev.filter(b => b.question_id !== qid)
+        : [...prev, {
+            question_id: qid, topic_id: selectedTopic.id, topic_name: selectedTopic.name,
+            topic_color: selectedTopic.color, level: selectedLevel, question_index: questionIndex,
+            question_text: q.q, options: q.options, answer: q.answer, explanation: q.explanation,
+          }];
+      try { localStorage.setItem("bookmarks_v1", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  const startBookmarksQuiz = () => {
+    if (!bookmarks.length) return;
+    quizRunIdRef.current = Date.now().toString(36);
+    liveIndexRef.current = 0;
+    clearQuizState();
+    const qs = bookmarks.map(b => ({ q: b.question_text, options: b.options, answer: b.answer, explanation: b.explanation }));
+    setMixedQuestions(shuffleOptions([...qs]));
+    isRetryRef.current = false;
+    setSelectedTopic(BOOKMARKS_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
+    setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
+    setShowExplanation(false);
+    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setQuizHistory([]); setShowReview(false); setShowConfetti(false);
+    setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
+    if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
+    setScreen("topic");
+    setShowBookmarks(false);
+  };
+
   // Keyboard shortcuts: 1-4 to pick answer, Enter to confirm/next
   useEffect(() => {
     if (screen !== "topic" || topicScreen !== "quiz" || isInHistoryMode) return;
@@ -1283,6 +1367,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
   // History navigation: questionIndex can go below liveIndexRef.current to review past answers
   const isInHistoryMode     = questionIndex < liveIndexRef.current;
+  const currentQBookmarked  = screen === "topic" && selectedTopic && selectedLevel && currentQuestions[questionIndex]
+    ? bookmarks.some(b => b.question_id === makeQuestionId(selectedTopic.id, selectedLevel, questionIndex))
+    : false;
   const dispSubmitted       = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : submitted);
   const dispSelectedAnswer  = tryAgainActive ? (tryAgainSelected ?? -1) : (isInHistoryMode ? (quizHistory[questionIndex]?.chosen ?? -1) : selectedAnswer);
   const dispShowExplanation = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : showExplanation);
@@ -1439,6 +1526,40 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h3 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><div style={{fontSize:11,color:"#475569",fontWeight:700,letterSpacing:1.5,marginTop:3}}>{lang==="en"?"TOP 10":"טופ 10"}</div></div><button autoFocus onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"#475569",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"rgba(255,255,255,0.06)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{entry.username ? (entry.username.includes("@") ? entry.username.split("@")[0] : entry.username) : t("anonymous")}</div><div style={{color:"#475569",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}{userRank&&<div style={{marginTop:4,paddingTop:12,borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"center",gap:8,color:"#94a3b8",fontSize:13,fontWeight:600}}><span>{lang==="en"?"Your Rank":"הדירוג שלך"}</span><span style={{color:"#e2e8f0",fontWeight:800}}>#{userRank.rank}</span><span style={{color:"rgba(255,255,255,0.2)"}}>|</span><span>{lang==="en"?"Score":"ניקוד"}</span><span style={{color:"#00D4FF",fontWeight:800}}>{userRank.score}</span></div>}</div></div>}
 
+      {showBookmarks&&(
+        <div onClick={()=>setShowBookmarks(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+          <div role="dialog" aria-modal="true" aria-label={t("savedQuestionsTitle")} onClick={e=>e.stopPropagation()}
+            style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:20,width:"min(400px,calc(100vw - 32px))",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"fadeIn 0.3s ease",direction:dir}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:800}}>{t("savedQuestionsTitle")}</h3>
+              <button autoFocus onClick={()=>setShowBookmarks(false)} aria-label={lang==="en"?"Close":"סגור"} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>✕</button>
+            </div>
+            {bookmarks.length === 0 ? (
+              <div style={{color:"#475569",textAlign:"center",padding:"24px 0",fontSize:13}}>{t("noBookmarks")}</div>
+            ) : (<>
+              <div style={{overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+                {bookmarks.map((b, i) => (
+                  <div key={b.question_id} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"11px 13px",display:"flex",alignItems:"flex-start",gap:10}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:11,color:b.topic_color||"#A855F7",fontWeight:700,marginBottom:4}}>{b.topic_name} · {lang==="en"?LEVEL_CONFIG[b.level]?.labelEn:LEVEL_CONFIG[b.level]?.label}</div>
+                      <div style={{color:"#cbd5e1",fontSize:13,lineHeight:1.5}}>{b.question_text}</div>
+                    </div>
+                    <button onClick={()=>{
+                      setBookmarks(prev=>{const next=prev.filter((_,j)=>j!==i);try{localStorage.setItem("bookmarks_v1",JSON.stringify(next));}catch{}return next;});
+                    }} aria-label={t("removeBookmark")} style={{background:"none",border:"none",color:"#475569",fontSize:16,cursor:"pointer",padding:4,flexShrink:0,lineHeight:1}}
+                      onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="#475569"}>✕</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={startBookmarksQuiz}
+                style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.1))",border:"1px solid rgba(168,85,247,0.4)",borderRadius:12,color:"#A855F7",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                {t("startSavedQuiz")}
+              </button>
+            </>)}
+          </div>
+        </div>
+      )}
+
       {/* Dropdown menu — rendered outside <main> so CSS zoom never affects it */}
       {showMenu&&(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
@@ -1492,6 +1613,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>
           {/* Menu items */}
           <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}>{t("leaderboardBtn")}</button>
+          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+            <span>{t("savedQuestions")}</span>
+            {bookmarks.length > 0 && <span style={{background:"rgba(168,85,247,0.2)",color:"#A855F7",fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:10}}>{bookmarks.length}</span>}
+          </button>
           <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400}}>{t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginLeft:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}</button>
           <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#EF4444",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🗑</span>{t("resetProgress")}</button>
           <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#64748b",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,textDecoration:"none"}}><span>✉️</span>{lang==="en"?"Contact":"צור קשר"}</a>
@@ -1534,6 +1659,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {isGuest&&<span style={{color:"#475569",fontSize:12}}> · {t("playingAsGuest")}</span>}
             </p>
             {isInterviewMode&&<p style={{color:"#64748b",fontSize:11,margin:"-10px 0 14px",textAlign:"center",direction:dir}}>{t("interviewModeHint")}</p>}
+            {dailyStreak.streak > 0 && (
+              <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+                <div style={{background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:20,padding:"5px 16px",fontSize:13,color:"#F59E0B",fontWeight:700}}>
+                  🔥 {dailyStreak.streak} {t("dailyStreak")}
+                </div>
+              </div>
+            )}
           </div>
           {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13}}>{t("guestBanner")}</span><button onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>{t("signupNow")}</button></div>}
           <div style={{display:"flex",gap:6,marginBottom:16,background:"rgba(255,255,255,0.03)",borderRadius:10,padding:3,direction:"ltr"}}>
@@ -1703,8 +1835,16 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
 
               <div ref={questionRef} tabIndex={-1} aria-label={`${t("question")} ${questionIndex+1}: ${currentQuestions[questionIndex].q}`}
-                style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"20px 22px",marginBottom:14,outline:"none"}}>
+                style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"20px 22px",marginBottom:14,outline:"none",position:"relative"}}>
                 {renderQuestion(currentQuestions[questionIndex].q, lang)}
+                {!isInHistoryMode&&!tryAgainActive&&!isFreeMode(selectedTopic?.id)&&(
+                  <button onClick={toggleBookmark}
+                    aria-label={currentQBookmarked ? t("removeBookmark") : t("bookmark")}
+                    title={currentQBookmarked ? (lang==="en"?"Remove bookmark":"הסר סימניה") : (lang==="en"?"Save question":"שמור שאלה")}
+                    style={{position:"absolute",top:10,[dir==="rtl"?"left":"right"]:10,background:"none",border:"none",cursor:"pointer",fontSize:20,color:currentQBookmarked?"#F59E0B":"#475569",transition:"color 0.2s",padding:4,lineHeight:1}}>
+                    {currentQBookmarked ? "★" : "☆"}
+                  </button>
+                )}
               </div>
 
               {!dispSubmitted&&!isInHistoryMode&&!tryAgainActive&&!isInterviewMode&&(
