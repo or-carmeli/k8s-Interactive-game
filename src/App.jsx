@@ -102,7 +102,9 @@ const TRANSLATIONS = {
     goBackToTopic: "חזרי לנושא הזה",
     a11yTitle: "♿ נגישות", a11yFontSize: "גודל טקסט", a11yReduceMotion: "הפחת תנועה", a11yHighContrast: "ניגודיות גבוהה",
     readQuestion: "🔊 קראי שאלה", stopSpeech: "⏹ עצרי", autoRead: "קריאה אוטומטית",
+    hint: "💡 רמז", eliminate: "❌ הסרי תשובה שגויה",
     readQuestion_m: "🔊 קרא שאלה", stopSpeech_m: "⏹ עצור", autoRead_m: "קריאה אוטומטית",
+    hint_m: "💡 רמז", eliminate_m: "❌ הסר תשובה שגויה",
     // Male-form overrides (used when gender === "m")
     tagline_m: "למד Kubernetes בצורה כיפית ואינטראקטיבית",
     startPlaying_m: "⚡ התחל לשחק עכשיו",
@@ -215,6 +217,7 @@ const TRANSLATIONS = {
     dailyChallengeDesc: "5 mixed questions · resets every day",
     a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
     readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop", autoRead: "Auto Read",
+    hint: "💡 Hint", eliminate: "❌ Eliminate Wrong",
     resumeTitle: "Resume Quiz?",
     resumeBody: "You have an unfinished quiz. Continue where you left off?",
     resumeBtn: "Continue",
@@ -444,6 +447,8 @@ export default function K8sQuestApp() {
   const questionRef   = useRef(null); // focus target when question changes
   const nextBtnRef    = useRef(null); // focus target after submitting an answer
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [hintVisible, setHintVisible]         = useState(false);
+  const [eliminatedOption, setEliminatedOption] = useState(null);
   const [resumeData, setResumeData] = useState(null);
 
   // Shuffle answer options so the correct answer isn't predictably the longest/same position
@@ -1160,11 +1165,23 @@ export default function K8sQuestApp() {
     setScreen("topic");
   };
 
-  // Reset try-again state when navigating to a different question
+  // Reset per-question ephemeral state when navigating to a different question
   useEffect(() => {
     setTryAgainActive(false);
     setTryAgainSelected(null);
+    setHintVisible(false);
+    setEliminatedOption(null);
   }, [questionIndex]);
+
+  const handleEliminate = () => {
+    if (eliminatedOption !== null || submitted) return;
+    const q = currentQuestions[questionIndex];
+    const wrong = q.options
+      .map((_, i) => i)
+      .filter(i => i !== q.answer && (selectedAnswer === null || i !== selectedAnswer));
+    if (!wrong.length) return;
+    setEliminatedOption(wrong[Math.floor(Math.random() * wrong.length)]);
+  };
 
   // Keyboard shortcuts: 1-4 to pick answer, Enter to confirm/next
   useEffect(() => {
@@ -1673,12 +1690,40 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {renderQuestion(currentQuestions[questionIndex].q, lang)}
               </div>
 
+              {!dispSubmitted&&!isInHistoryMode&&!tryAgainActive&&!isInterviewMode&&(
+                <div style={{marginBottom:10}}>
+                  <div style={{display:"flex",gap:6,marginBottom:6}}>
+                    <button
+                      onClick={()=>setHintVisible(true)}
+                      disabled={hintVisible}
+                      aria-pressed={hintVisible}
+                      style={{flex:1,padding:"7px 10px",background:"rgba(245,158,11,0.07)",border:`1px solid ${hintVisible?"rgba(245,158,11,0.4)":"rgba(245,158,11,0.18)"}`,borderRadius:8,color:hintVisible?"#F59E0B":"#92400e",fontSize:12,cursor:hintVisible?"default":"pointer",fontWeight:hintVisible?700:400,transition:"all 0.15s"}}>
+                      {t("hint")}{hintVisible?" ✓":""}
+                    </button>
+                    <button
+                      onClick={handleEliminate}
+                      disabled={eliminatedOption!==null}
+                      aria-pressed={eliminatedOption!==null}
+                      style={{flex:1,padding:"7px 10px",background:"rgba(239,68,68,0.07)",border:`1px solid ${eliminatedOption!==null?"rgba(239,68,68,0.4)":"rgba(239,68,68,0.18)"}`,borderRadius:8,color:eliminatedOption!==null?"#EF4444":"#7f1d1d",fontSize:12,cursor:eliminatedOption!==null?"default":"pointer",fontWeight:eliminatedOption!==null?700:400,transition:"all 0.15s"}}>
+                      {t("eliminate")}{eliminatedOption!==null?" ✓":""}
+                    </button>
+                  </div>
+                  {hintVisible&&(
+                    <div role="note" style={{background:"rgba(245,158,11,0.07)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:9,padding:"9px 13px",fontSize:13,color:"#fbbf24",lineHeight:1.6,direction:dir,animation:"fadeIn 0.2s ease"}}>
+                      {renderBidi(currentQuestions[questionIndex].explanation.split(/\.\s+/)[0]+".", lang)}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
                 {currentQuestions[questionIndex].options.map((opt,i)=>{
                   const isCorrect = i===currentQuestions[questionIndex].answer;
                   const isChosen  = i===dispSelectedAnswer;
+                  const isEliminated = !dispSubmitted && eliminatedOption === i;
                   let borderColor = "rgba(255,255,255,0.09)", bg = "rgba(255,255,255,0.02)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
-                  if (isChosen && !dispSubmitted)  { borderColor = "#00D4FF66"; bg = "rgba(0,212,255,0.06)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.15)"; labelColor = "#00D4FF"; }
+                  if (isEliminated)                { borderColor = "rgba(255,255,255,0.04)"; bg = "rgba(255,255,255,0.01)"; color = "#334155"; labelBg = "rgba(255,255,255,0.03)"; labelColor = "#334155"; }
+                  else if (isChosen && !dispSubmitted) { borderColor = "#00D4FF66"; bg = "rgba(0,212,255,0.06)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.15)"; labelColor = "#00D4FF"; }
                   if (dispSubmitted) {
                     if (isCorrect)             { borderColor = "#10B981"; bg = "rgba(16,185,129,0.1)";  color = "#10B981"; labelBg = "rgba(16,185,129,0.2)";  labelColor = "#10B981"; }
                     else if (isChosen)          { borderColor = "#EF4444"; bg = "rgba(239,68,68,0.1)";   color = "#EF4444"; labelBg = "rgba(239,68,68,0.2)";   labelColor = "#EF4444"; }
@@ -1686,9 +1731,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   const optDir = (dir==="rtl" && !hasHebrew(opt)) ? "ltr" : dir;
                   return (
                     <button key={i} className="opt-btn"
-                      onClick={()=>{ if (tryAgainActive && tryAgainSelected===null) setTryAgainSelected(i); else if (!isInHistoryMode && !tryAgainActive) handleSelectAnswer(i); }}
+                      onClick={()=>{ if (isEliminated) return; if (tryAgainActive && tryAgainSelected===null) setTryAgainSelected(i); else if (!isInHistoryMode && !tryAgainActive) handleSelectAnswer(i); }}
                       aria-pressed={!dispSubmitted ? i === dispSelectedAnswer : undefined}
-                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
+                      aria-disabled={isEliminated}
+                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:isEliminated?"default":(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s",opacity:isEliminated?0.35:1,textDecoration:isEliminated?"line-through":"none"}}>
                       <span aria-hidden="true" style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
                       <span dir={optDir} style={{flex:1}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
                       {dispSubmitted&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:16}}>✓</span>}
