@@ -3,7 +3,7 @@
 An interactive Kubernetes learning game built with React and Supabase.
 Learn Kubernetes concepts through quizzes, earn points, track your progress, and compete on the leaderboard.
 
-🌐 **Live:** [Kube-Quest.vercel.app](https://Kube-Quest.vercel.app)
+🌐 **Live:** [kubequest.online](https://www.kubequest.online/)
 
 ---
 
