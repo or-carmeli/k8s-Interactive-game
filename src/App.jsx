@@ -419,6 +419,7 @@ export default function K8sQuestApp() {
   const [showLeaderboard, setShowLeaderboard]           = useState(false);
   const [quizHistory, setQuizHistory]                   = useState([]);
   const [showReview, setShowReview]                     = useState(false);
+  const [shareCopied, setShareCopied]                   = useState(false);
   const [timerEnabled, setTimerEnabled]                 = useState(true);
   const [timeLeft, setTimeLeft]                         = useState(TIMER_DURATIONS.easy);
   const [isInterviewMode, setIsInterviewMode]           = useState(() => localStorage.getItem("isInterviewMode_v1") === "true");
@@ -1906,16 +1907,29 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
-              <button onClick={()=>{
+              {(()=>{
                 const lvlLabel = lang==="en" ? LEVEL_CONFIG[selectedLevel].labelEn : LEVEL_CONFIG[selectedLevel].label;
+                const perfect = result?.correct === result?.total;
                 const msg = lang==="en"
-                  ? `I just scored ${result?.correct}/${result?.total} on the ${lvlLabel} Kubernetes quiz on KubeQuest! 🚀 Think you can beat it? https://kubequest.online`
-                  : `קיבלתי ${result?.correct}/${result?.total} בחידון Kubernetes ברמת ${lvlLabel} ב-KubeQuest! 🚀 תוכלו לנצח? https://kubequest.online`;
-                const url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent("https://kubequest.online")}&title=${encodeURIComponent("KubeQuest – Kubernetes Quiz")}&summary=${encodeURIComponent(msg)}`;
-                window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
-              }} style={{padding:13,background:"rgba(10,102,194,0.1)",border:"1px solid rgba(10,102,194,0.35)",borderRadius:12,color:"#4a9ede",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                {t("shareResult")}
-              </button>
+                  ? `🎯 I just scored ${result?.correct}/${result?.total} on the ${lvlLabel} Kubernetes quiz on KubeQuest!${perfect?" 🌟 Perfect score!":""}\nThink you can beat it? 💪\n\n#Kubernetes #DevOps #CloudNative #K8s\nhttps://kubequest.online`
+                  : `🎯 קיבלתי ${result?.correct}/${result?.total} בחידון Kubernetes ברמת ${lvlLabel} ב-KubeQuest!${perfect?" 🌟 ניקוד מושלם!":""}\nתוכלו לנצח? 💪\n\n#Kubernetes #DevOps #CloudNative #K8s\nhttps://kubequest.online`;
+                const handleShare = () => {
+                  navigator.clipboard?.writeText(msg).catch(()=>{});
+                  window.open("https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fkubequest.online","_blank","noopener,noreferrer,width=620,height=640");
+                  setShareCopied(true);
+                  setTimeout(()=>setShareCopied(false), 4000);
+                };
+                return(
+                  <div>
+                    <button onClick={handleShare} style={{width:"100%",padding:13,background:shareCopied?"rgba(10,102,194,0.18)":"rgba(10,102,194,0.1)",border:`1px solid ${shareCopied?"rgba(10,102,194,0.6)":"rgba(10,102,194,0.35)"}`,borderRadius:12,color:"#4a9ede",fontSize:14,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
+                      {shareCopied?(lang==="en"?"✓ Copied! Paste in LinkedIn":"✓ הועתק! הדבק ב-LinkedIn"):t("shareResult")}
+                    </button>
+                    {shareCopied&&<div style={{fontSize:11,color:"#64748b",textAlign:"center",marginTop:5,animation:"fadeIn 0.2s ease"}}>
+                      {lang==="en"?"Post text copied to clipboard — just paste it in the LinkedIn dialog":"טקסט הפוסט הועתק — הדבק אותו בחלון LinkedIn"}
+                    </div>}
+                  </div>
+                );
+              })()}
               <button onClick={()=>selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
               <button onClick={()=>setScreen("home")} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#e2e8f0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
