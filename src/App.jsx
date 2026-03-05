@@ -424,9 +424,13 @@ export default function K8sQuestApp() {
 
   // Derive total_score canonically from completedTopics so it can never be gamed.
   // Each topic/level key is "topicId_level" (e.g. "workloads_easy").
+  // Free-mode keys (mixed_mixed, daily_daily) are excluded — they are session-only.
   const computeScore = (completed) =>
     Object.entries(completed).reduce((sum, [key, res]) => {
-      const lvl = key.split("_").slice(-1)[0];
+      const parts = key.split("_");
+      const topicId = parts.slice(0, -1).join("_");
+      if (isFreeMode(topicId)) return sum;               // BUG-E fix: skip mixed/daily
+      const lvl = parts[parts.length - 1];
       return sum + (res.correct * (LEVEL_CONFIG[lvl]?.points ?? 0));
     }, 0);
   const currentLevelData = selectedTopic && selectedLevel && !isFreeMode(selectedTopic.id) && !retryMode ? getLevelData(selectedTopic, selectedLevel) : null;
@@ -512,17 +516,23 @@ export default function K8sQuestApp() {
   const loadUserData = async (userId, sessionUser) => {
     const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
 
-    // Merge any guest progress from localStorage
+    // Read guest localStorage but ALWAYS discard it once a real account is active.
+    // BUG-A fix: only merge guest data into brand-new accounts (no existing Supabase row).
+    // Merging into existing accounts causes cross-account contamination when users switch accounts.
     let guestSaved = null;
     try {
       const raw = localStorage.getItem("k8s_quest_guest");
       if (raw) guestSaved = JSON.parse(raw);
     } catch {}
+    // Always clear it immediately — prevents it leaking into whichever account logs in next
+    if (guestSaved) { try { localStorage.removeItem("k8s_quest_guest"); } catch {} }
 
     const base = data || {};
-    const gs = guestSaved?.stats || {};
-    const gc = guestSaved?.completedTopics || {};
-    const ga = guestSaved?.unlockedAchievements || [];
+    // Only perform merge for genuinely new accounts (no existing row in Supabase)
+    const shouldMerge = guestSaved && !data;
+    const gs = shouldMerge ? (guestSaved.stats || {}) : {};
+    const gc = shouldMerge ? (guestSaved.completedTopics || {}) : {};
+    const ga = shouldMerge ? (guestSaved.unlockedAchievements || []) : [];
 
     const mergedCompleted = { ...(base.completed_topics || {}) };
     Object.entries(gc).forEach(([key, val]) => {
@@ -535,7 +545,6 @@ export default function K8sQuestApp() {
     const mergedStats = {
       total_answered: (base.total_answered || 0) + (gs.total_answered || 0),
       total_correct:  (base.total_correct  || 0) + (gs.total_correct  || 0),
-      // Always recompute from mergedCompleted — single source of truth, fixes any legacy drift
       total_score:    computeScore(mergedCompleted),
       max_streak:     Math.max(base.max_streak || 0, gs.max_streak || 0),
       current_streak: Math.max(base.current_streak || 0, gs.current_streak || 0),
@@ -545,15 +554,17 @@ export default function K8sQuestApp() {
     setCompletedTopics(mergedCompleted);
     setUnlockedAchievements(mergedAch);
 
-    // Persist merged data to Supabase and clear guest localStorage
-    if (guestSaved) {
+    if (!data) {
+      // BUG-B fix: use INSERT (not upsert) for new accounts to guarantee one row per user
       const username = sessionUser?.user_metadata?.username || sessionUser?.email?.split("@")[0];
-      await supabase.from("user_stats").upsert({
+      const cleanNc = Object.fromEntries(
+        Object.entries(mergedCompleted).filter(([k]) => !isFreeMode(k.split("_")[0]))
+      );
+      await supabase.from("user_stats").insert({
         user_id: userId, username,
-        ...mergedStats, completed_topics: mergedCompleted, achievements: mergedAch,
+        ...mergedStats, completed_topics: cleanNc, achievements: mergedAch,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-      try { localStorage.removeItem("k8s_quest_guest"); } catch {}
+      });
     }
 
     achievementsLoaded.current = true;
@@ -562,12 +573,17 @@ export default function K8sQuestApp() {
   const saveUserData = async (ns, nc, na) => {
     if (!user || isGuest) return;
     setSaveError("");
-    const { error } = await supabase.from("user_stats").upsert({
-      user_id: user.id,
+    // BUG-E fix: strip free-mode entries — they are session-only and must not persist
+    const cleanNc = Object.fromEntries(
+      Object.entries(nc).filter(([k]) => !isFreeMode(k.split("_")[0]))
+    );
+    // BUG-B fix: use UPDATE (not upsert) — the row is always created by loadUserData,
+    // so upsert here was inserting duplicate rows when user_id had no UNIQUE constraint.
+    const { error } = await supabase.from("user_stats").update({
       username: user.user_metadata?.username || user.email?.split("@")[0] || "",
-      ...ns, completed_topics: nc, achievements: na,
+      ...ns, completed_topics: cleanNc, achievements: na,
       updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id" });
+    }).eq("user_id", user.id);
     if (error) {
       setSaveError(t("saveErrorText"));
     }
@@ -658,12 +674,12 @@ export default function K8sQuestApp() {
     if (isGuest) {
       try { localStorage.removeItem("k8s_quest_guest"); } catch {}
     } else if (user) {
-      await supabase.from("user_stats").upsert({
-        user_id: user.id,
+      // BUG-B fix: update, not upsert
+      await supabase.from("user_stats").update({
         username: user.user_metadata?.username || user.email?.split("@")[0] || "",
         ...emptyStats, completed_topics: {}, achievements: [],
         updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      }).eq("user_id", user.id);
     }
   };
 
@@ -676,12 +692,7 @@ export default function K8sQuestApp() {
     setCompletedTopics(newCompleted);
     setStats(newStats);
     if (!isGuest && user) {
-      await supabase.from("user_stats").upsert({
-        user_id: user.id,
-        username: user.user_metadata?.username || user.email?.split("@")[0] || "",
-        ...newStats, completed_topics: newCompleted, achievements: unlockedAchievements,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      await saveUserData(newStats, newCompleted, unlockedAchievements);
     }
   };
 
@@ -710,20 +721,21 @@ export default function K8sQuestApp() {
     }
     setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: q.answer, chosen: selectedAnswer, explanation: q.explanation }]);
     setStats(prev => {
+      // BUG-C fix: retries must never touch any stat
+      if (isRetryRef.current) return prev;
       const streak = correct ? prev.current_streak + 1 : 0;
-      const base = {
+      const isFree = isFreeMode(selectedTopic?.id);
+      return {
         ...prev,
-        // total_score is NOT updated here — it is derived from completedTopics at quiz end
+        // total_score is NOT updated here — derived from completedTopics at quiz end
         current_streak: streak,
         max_streak:     Math.max(prev.max_streak, streak),
+        // BUG-D fix: free-mode questions don't count toward persistent answered/correct
+        total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
+        total_correct:  isFree ? prev.total_correct  : (correct ? prev.total_correct + 1 : prev.total_correct),
       };
-      if (!isRetryRef.current) {
-        base.total_answered = prev.total_answered + 1;
-        base.total_correct  = correct ? prev.total_correct + 1 : prev.total_correct;
-      }
-      return base;
     });
-    if (!isRetryRef.current && !isFreeMode(selectedTopic.id)) {
+    if (!isRetryRef.current && !isFreeMode(selectedTopic?.id)) {
       setTopicStats(prev => {
         const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
         return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
@@ -891,7 +903,13 @@ export default function K8sQuestApp() {
     setShowExplanation(true);
     setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: q.answer, chosen: -1, explanation: q.explanation }]);
     if (!isRetryRef.current) {
-      setStats(prev => ({ ...prev, total_answered: prev.total_answered + 1, current_streak: 0 }));
+      const isFree = isFreeMode(selectedTopic?.id);
+      // BUG-D fix: don't count timed-out free-mode questions toward persistent totals
+      setStats(prev => ({
+        ...prev,
+        total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
+        current_streak: 0,
+      }));
     }
   }, [timeLeft]);
 
@@ -1148,7 +1166,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B"},
               {label:t("accuracy"),value:`${accuracy}%`,icon:"🎯",color:"#10B981"},
               {label:t("streak"),value:stats.current_streak,icon:"🔥",color:"#FF6B35"},
-              {label:t("completed"),value:Object.keys(completedTopics).length,icon:"📚",color:"#00D4FF"},
+              {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF"},
             ].map((s,i)=>(
               <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
                 <div style={{fontSize:18}}>{s.icon}</div>
@@ -1440,7 +1458,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   topicCorrectRef.current=0; lastSessionScoreRef.current=0;
                   setSessionScore(0);
                   setQuizHistory([]); setShowReview(false);
-                  setStats(prev=>({...prev,current_streak:0}));
+                  // BUG-C fix: retries must never reset streak
                   if (timerEnabled||isInterviewMode) setTimeLeft(isInterviewMode?(INTERVIEW_DURATIONS[selectedLevel]||25):(TIMER_DURATIONS[selectedLevel]||30));
                   setScreen("topic");
                 }}
