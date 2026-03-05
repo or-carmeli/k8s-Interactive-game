@@ -141,6 +141,11 @@ const TRANSLATIONS = {
     resumeDiscard: "התחילי מחדש", resumeDiscard_m: "התחל מחדש",
     prevQuestion: "קודמת ←", backToCurrent: "→ חזרי לחידון", backToCurrent_m: "→ חזור לחידון",
     reviewing: "📖 סקירה",
+    tryAgainBtn: "🔁 נסי שוב", tryAgainBtn_m: "🔁 נסה שוב",
+    tryAgainBadge: "לא נספר לניקוד",
+    tryAgainCorrect: "✅ נכון! כל הכבוד",
+    tryAgainWrong: "❌ לא נכון",
+    exitTryAgain: "חזרי לסקירה", exitTryAgain_m: "חזור לסקירה",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -213,6 +218,11 @@ const TRANSLATIONS = {
     resumeDiscard: "Start Fresh",
     prevQuestion: "← Prev", backToCurrent: "Back to Quiz →",
     reviewing: "📖 Review",
+    tryAgainBtn: "🔁 Try Again",
+    tryAgainBadge: "Won't count toward score",
+    tryAgainCorrect: "✅ Correct! Well done",
+    tryAgainWrong: "❌ Incorrect",
+    exitTryAgain: "Back to Review",
   },
 };
 
@@ -379,6 +389,8 @@ export default function K8sQuestApp() {
   const [submitted, setSubmitted]         = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [flash, setFlash]                 = useState(false);
+  const [tryAgainActive, setTryAgainActive]   = useState(false);
+  const [tryAgainSelected, setTryAgainSelected] = useState(null);
 
   const topicCorrectRef = useRef(0);
   const isRetryRef = useRef(false);
@@ -1048,6 +1060,12 @@ export default function K8sQuestApp() {
     setScreen("topic");
   };
 
+  // Reset try-again state when navigating to a different question
+  useEffect(() => {
+    setTryAgainActive(false);
+    setTryAgainSelected(null);
+  }, [questionIndex]);
+
   // Keyboard shortcuts: 1-4 to pick answer, Enter to confirm/next
   useEffect(() => {
     if (screen !== "topic" || topicScreen !== "quiz" || isInHistoryMode) return;
@@ -1130,10 +1148,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
   const fs = FONT_SCALES[a11y.fontSize] || 1;
 
   // History navigation: questionIndex can go below liveIndexRef.current to review past answers
-  const isInHistoryMode    = questionIndex < liveIndexRef.current;
-  const dispSubmitted      = isInHistoryMode ? true : submitted;
-  const dispSelectedAnswer = isInHistoryMode ? (quizHistory[questionIndex]?.chosen ?? -1) : selectedAnswer;
-  const dispShowExplanation = isInHistoryMode ? true : showExplanation;
+  const isInHistoryMode     = questionIndex < liveIndexRef.current;
+  const dispSubmitted       = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : submitted);
+  const dispSelectedAnswer  = tryAgainActive ? (tryAgainSelected ?? -1) : (isInHistoryMode ? (quizHistory[questionIndex]?.chosen ?? -1) : selectedAnswer);
+  const dispShowExplanation = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : showExplanation);
 
   if (!user) return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817,#0f172a)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,padding:"20px"}}>
@@ -1509,7 +1527,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     )}
                     <span style={{color:"#475569",fontSize:13}}>
                       {t("question")} {questionIndex+1} {t("of")} {currentQuestions.length}
-                      {isInHistoryMode && <span style={{marginInlineStart:6,fontSize:11,color:"#A855F7",fontWeight:700}}>{t("reviewing")}</span>}
+                      {isInHistoryMode && !tryAgainActive && <span style={{marginInlineStart:6,fontSize:11,color:"#A855F7",fontWeight:700}}>{t("reviewing")}</span>}
+                      {tryAgainActive && <span style={{marginInlineStart:6,fontSize:11,color:"#F59E0B",fontWeight:700}}>🔁 {t("tryAgainBadge")}</span>}
                     </span>
                   </div>
                   <div className="quiz-bar-right" style={{display:"flex",gap:10,alignItems:"center"}}>
@@ -1550,8 +1569,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   const optDir = (dir==="rtl" && !hasHebrew(opt)) ? "ltr" : dir;
                   return (
                     <button key={i} className="opt-btn"
-                      onClick={()=>!isInHistoryMode&&handleSelectAnswer(i)}
-                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:dispSubmitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
+                      onClick={()=>{ if (tryAgainActive && tryAgainSelected===null) setTryAgainSelected(i); else if (!isInHistoryMode && !tryAgainActive) handleSelectAnswer(i); }}
+                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${borderColor}`,borderRadius:10,color,fontSize:14,cursor:(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.55,display:"flex",alignItems:"center",gap:10,transition:"all 0.15s"}}>
                       <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
                       <span dir={optDir} style={{flex:1}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
                       {dispSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:16}}>✓</span>}
@@ -1561,7 +1580,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 })}
               </div>
 
-              {!dispSubmitted&&dispSelectedAnswer!==null&&!isInHistoryMode&&(
+              {!dispSubmitted&&dispSelectedAnswer!==null&&!isInHistoryMode&&!tryAgainActive&&(
                 <button onClick={handleSubmit}
                   style={{width:"100%",padding:"15px",background:`linear-gradient(135deg,${selectedTopic.color}dd,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:10,boxShadow:`0 4px 16px ${selectedTopic.color}44`}}>
                   {t("confirmAnswer")}
@@ -1578,10 +1597,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       <div role="status" aria-live="polite" style={{background:isCorrect?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",border:`1px solid ${isCorrect?"#10B98130":"#EF444430"}`,borderRadius:12,padding:"14px 16px",marginBottom:12}}>
                         <div style={{fontWeight:800,fontSize:13,marginBottom:6,color:isCorrect?"#10B981":"#EF4444"}}>
                           {isCorrect
-                            ?`${t("correct")}${isInHistoryMode?"":" +"+LEVEL_CONFIG[selectedLevel].points+" "+t("pts")}`
-                            :timedOut
-                              ?`${t("timeUp")} ${lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: ${q.options[q.answer]}`
-                              :t("incorrect")}
+                            ? (tryAgainActive ? t("tryAgainCorrect") : `${t("correct")}${isInHistoryMode?"":" +"+LEVEL_CONFIG[selectedLevel].points+" "+t("pts")}`)
+                            : timedOut
+                              ? `${t("timeUp")} ${lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: ${q.options[q.answer]}`
+                              : (tryAgainActive ? t("tryAgainWrong") : t("incorrect"))}
                         </div>
                         {!isInterviewMode&&<div style={{display:"flex",flexDirection:"column",gap:5}}>
                           {q.explanation.split(/\. /).map((s,idx,arr)=>(
@@ -1607,13 +1626,36 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       </div>
                     );
                   })()}
-                  <button
-                    onClick={isInHistoryMode ? ()=>setQuestionIndex(p=>p+1) : nextQuestion}
-                    style={{width:"100%",padding:15,background:`linear-gradient(135deg,${selectedTopic.color}cc,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                    {isInHistoryMode
-                      ? (questionIndex >= liveIndexRef.current - 1 ? t("backToCurrent") : t("nextQuestion"))
-                      : (questionIndex>=currentQuestions.length-1 ? t("finishTopic") : t("nextQuestion"))}
-                  </button>
+                  {/* Try Again button: shown in history mode for wrong answers */}
+                  {isInHistoryMode && !tryAgainActive && (()=>{
+                    const q = currentQuestions[questionIndex];
+                    const orig = quizHistory[questionIndex]?.chosen;
+                    const wasWrong = orig !== undefined && orig !== q.answer;
+                    if (!wasWrong) return null;
+                    return (
+                      <button
+                        onClick={() => setTryAgainActive(true)}
+                        style={{width:"100%",padding:"12px 15px",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.35)",borderRadius:12,color:"#F59E0B",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                        {t("tryAgainBtn")}
+                        <span style={{fontSize:11,color:"#94a3b8",fontWeight:500}}>{t("tryAgainBadge")}</span>
+                      </button>
+                    );
+                  })()}
+                  {tryAgainActive ? (
+                    <button
+                      onClick={() => { setTryAgainActive(false); setTryAgainSelected(null); }}
+                      style={{width:"100%",padding:15,background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.4)",borderRadius:12,color:"#F59E0B",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                      {t("exitTryAgain")}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={isInHistoryMode ? ()=>setQuestionIndex(p=>p+1) : nextQuestion}
+                      style={{width:"100%",padding:15,background:`linear-gradient(135deg,${selectedTopic.color}cc,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                      {isInHistoryMode
+                        ? (questionIndex >= liveIndexRef.current - 1 ? t("backToCurrent") : t("nextQuestion"))
+                        : (questionIndex>=currentQuestions.length-1 ? t("finishTopic") : t("nextQuestion"))}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
