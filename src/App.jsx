@@ -2309,7 +2309,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <span aria-hidden="true">{dir==="rtl"?"→":"←"}</span>
             </button>
             <div>
-              <h2 style={{margin:0,color:"#EF4444",fontSize:20,fontWeight:900}}>🚨 {t("incidentModeBtn")}</h2>
+              <h2 style={{margin:0,color:"#EF4444",fontSize:20,fontWeight:900}}>{t("incidentModeBtn")}</h2>
               <p style={{margin:0,color:"#64748b",fontSize:13}}>{t("incidentModeDesc")}</p>
             </div>
           </div>
@@ -2393,12 +2393,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
             {/* Prompt */}
             <div style={{background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"18px 20px",marginBottom:14}}>
-              {renderIncidentPrompt(step.prompt)}
+              {renderIncidentPrompt(lang === "he" ? (step.promptHe || step.prompt) : step.prompt)}
             </div>
 
             {/* Options */}
             <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
-              {step.options.map((opt,i)=>{
+              {(lang === "he" ? (step.optionsHe || step.options) : step.options).map((opt,i)=>{
                 const isCorrect  = i === step.answer;
                 const isChosen   = i === incidentAnswer;
                 let bg = "rgba(255,255,255,0.02)", border = "rgba(255,255,255,0.09)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
@@ -2437,7 +2437,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <div style={{fontWeight:800,fontSize:13,marginBottom:8,color:incidentAnswer===step.answer?"#10B981":"#EF4444"}}>
                     {incidentAnswer===step.answer?t("incidentCorrect"):t("incidentWrong")}
                   </div>
-                  <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.7,direction:"ltr"}}>{step.explanation}</div>
+                  <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.7,direction: lang === "he" ? "rtl" : "ltr"}}>{lang === "he" ? (step.explanationHe || step.explanation) : step.explanation}</div>
                 </div>
                 <button onClick={nextIncidentStep}
                   style={{width:"100%",padding:15,background:"linear-gradient(135deg,#EF4444cc,#F59E0B88)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
