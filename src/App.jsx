@@ -4,6 +4,7 @@ import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
 import { DAILY_QUESTIONS } from "./dailyQuestions";
 import { TOPICS, ACHIEVEMENTS } from "./topics";
+import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://knzawpdrpahilmohzpbl.supabase.co";
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuemF3cGRycGFoaWxtb2h6cGJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NDA2NzYsImV4cCI6MjA4ODExNjY3Nn0.Vh4vwQkSgIHkyr3LPVAvsktni_l5q1DhP3S3MT97KQ8";
@@ -133,6 +134,11 @@ const TRANSLATIONS = {
     roadmapContinueHere_m: "▶ המשך מכאן",
     weakAreaEmpty_m: "עדיין אין מספיק נתונים, התחל לענות כדי שנמליץ מה לחזק.",
     goBackToTopic_m: "חזור לנושא הזה",
+    resumeTitle: "המשך חידון?", resumeTitle_m: "המשך חידון?",
+    resumeBody: "נמצא חידון שלא הסתיים. רוצה להמשיך מהיכן שהפסקת?",
+    resumeBody_m: "נמצא חידון שלא הסתיים. רוצה להמשיך מהיכן שהפסקת?",
+    resumeBtn: "המשיכי", resumeBtn_m: "המשך",
+    resumeDiscard: "התחילי מחדש", resumeDiscard_m: "התחל מחדש",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -199,6 +205,10 @@ const TRANSLATIONS = {
     dailyChallengeTitle: "Daily Challenge", dailyChallengeNew: "NEW DAILY",
     dailyChallengeDesc: "5 mixed questions · resets every day",
     a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
+    resumeTitle: "Resume Quiz?",
+    resumeBody: "You have an unfinished quiz. Continue where you left off?",
+    resumeBtn: "Continue",
+    resumeDiscard: "Start Fresh",
   },
 };
 
@@ -401,6 +411,8 @@ export default function K8sQuestApp() {
 
   const isGuest = user?.id === "guest";
   const achievementsLoaded = useRef(false);
+  const quizRunIdRef = useRef(null);
+  const [resumeData, setResumeData] = useState(null);
 
   // Shuffle answer options so the correct answer isn't predictably the longest/same position
   const getLevelData = (topic, level) => ({
@@ -501,6 +513,9 @@ export default function K8sQuestApp() {
       }
     } catch {}
     achievementsLoaded.current = true;
+    // Check for a saved in-progress quiz for the guest session
+    const savedQuiz = loadQuizState();
+    if (savedQuiz && savedQuiz.userId === "guest") setResumeData(savedQuiz);
   }, [isGuest]);
 
   // Save guest progress to localStorage
@@ -514,6 +529,41 @@ export default function K8sQuestApp() {
   useEffect(() => {
     try { localStorage.setItem("topicStats_v1", JSON.stringify(topicStats)); } catch {}
   }, [topicStats]);
+
+  // Persist in-progress quiz state on every meaningful change so it survives refresh/navigation
+  useEffect(() => {
+    if (screen !== "topic" || topicScreen !== "quiz") return;
+    if (!selectedTopic || !selectedLevel || !quizRunIdRef.current) return;
+    const isFree = isFreeMode(selectedTopic.id);
+    const isRetry = isRetryRef.current;
+    saveQuizState({
+      quizRunId:     quizRunIdRef.current,
+      userId:        user?.id || "guest",
+      topicId:       selectedTopic.id,
+      topicName:     selectedTopic.name,
+      topicColor:    selectedTopic.color,
+      topicIcon:     selectedTopic.icon,
+      level:         selectedLevel,
+      questions:     currentQuestions,
+      questionIndex,
+      submitted,
+      selectedAnswer,
+      showExplanation,
+      quizHistory,
+      sessionScore,
+      topicCorrect:  topicCorrectRef.current,
+      retryMode,
+      isRetry,
+      timerEnabled,
+      timeLeft,
+      statsDelta: {
+        answered:       isFree || isRetry ? 0 : quizHistory.length,
+        correct:        isFree || isRetry ? 0 : quizHistory.filter(h => h.chosen === h.answer).length,
+        currentStreak:  stats.current_streak,
+        maxStreak:      stats.max_streak,
+      },
+    });
+  }, [screen, topicScreen, questionIndex, submitted, selectedAnswer, quizHistory]);
 
   useEffect(() => {
     localStorage.setItem("isInterviewMode_v1", isInterviewMode);
@@ -589,6 +639,10 @@ export default function K8sQuestApp() {
     }
 
     achievementsLoaded.current = true;
+
+    // Check for a saved in-progress quiz belonging to this user
+    const savedQuiz = loadQuizState();
+    if (savedQuiz && savedQuiz.userId === userId) setResumeData(savedQuiz);
   };
 
   const saveUserData = async (ns, nc, na) => {
@@ -733,6 +787,63 @@ export default function K8sQuestApp() {
   };
 
 
+  const handleResumeQuiz = () => {
+    const saved = resumeData;
+    if (!saved) return;
+
+    // Resolve topic object
+    let topic = null;
+    if (saved.topicId === "mixed")      topic = MIXED_TOPIC;
+    else if (saved.topicId === "daily") topic = DAILY_TOPIC;
+    else                                topic = TOPICS.find(tp => tp.id === saved.topicId);
+    if (!topic || !saved.questions?.length) { clearQuizState(); setResumeData(null); return; }
+
+    // Restore shuffled question list to the correct state slot
+    if (isFreeMode(topic.id) || saved.retryMode) setMixedQuestions(saved.questions);
+    else                                          setTopicQuestions(saved.questions);
+
+    setSelectedTopic(topic);
+    setSelectedLevel(saved.level);
+    setTopicScreen("quiz");
+    setQuestionIndex(saved.questionIndex ?? 0);
+    setSelectedAnswer(saved.selectedAnswer ?? null);
+    setSubmitted(saved.submitted ?? false);
+    setShowExplanation(saved.showExplanation ?? false);
+    setQuizHistory(saved.quizHistory || []);
+    setSessionScore(saved.sessionScore || 0);
+    setRetryMode(saved.retryMode || false);
+    isRetryRef.current  = saved.isRetry  || false;
+    topicCorrectRef.current = saved.topicCorrect || 0;
+    quizRunIdRef.current    = saved.quizRunId;
+
+    // Timer: if mid-question reset to full, if on explanation screen restore saved value
+    const fullTime = isInterviewMode
+      ? (INTERVIEW_DURATIONS[saved.level] || 25)
+      : (TIMER_DURATIONS[saved.level] || 30);
+    setTimeLeft(saved.submitted ? (saved.timeLeft ?? fullTime) : fullTime);
+
+    // Re-apply stats delta (questions already answered before the reload)
+    const delta = saved.statsDelta || {};
+    if ((delta.answered > 0 || delta.correct > 0) && !isFreeMode(topic.id) && !saved.isRetry) {
+      setStats(prev => ({
+        ...prev,
+        total_answered: prev.total_answered + (delta.answered || 0),
+        total_correct:  prev.total_correct  + (delta.correct  || 0),
+        current_streak: Math.max(prev.current_streak, delta.currentStreak || 0),
+        max_streak:     Math.max(prev.max_streak,     delta.maxStreak     || 0),
+      }));
+    }
+
+    setScreen("topic");
+    setResumeData(null);
+    // Keep saving state as user continues — do NOT clearQuizState() here
+  };
+
+  const handleDiscardResume = () => {
+    clearQuizState();
+    setResumeData(null);
+  };
+
   const updateA11y = (key, val) => setA11y(prev => {
     const next = { ...prev, [key]: val };
     try { localStorage.setItem("a11y_v1", JSON.stringify(next)); } catch {}
@@ -787,6 +898,7 @@ export default function K8sQuestApp() {
       // Retry-wrong-answers mode: if all retried questions answered correctly, mark level 100%
       if (retryMode) {
         setRetryMode(false);
+        clearQuizState();
         if (finalCorrect === currentQuestions.length) {
           // Upgrade stored result to 100% (score stays the same — only marks as complete)
           const key = `${selectedTopic.id}_${selectedLevel}`;
@@ -814,6 +926,7 @@ export default function K8sQuestApp() {
         ...unlockedAchievements,
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
       ];
+      clearQuizState();
       lastSessionScoreRef.current = sessionScore;
       setSessionScore(0);
       setCompletedTopics(newCompleted); setStats(newStats); setUnlockedAchievements(newAch);
@@ -836,6 +949,8 @@ export default function K8sQuestApp() {
   };
 
   const startTopic = (topic, level) => {
+    quizRunIdRef.current = Date.now().toString(36);
+    clearQuizState();
     const key = `${topic.id}_${level}`;
     isRetryRef.current = !!(completedTopics[key]);
     const rawQs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
@@ -853,6 +968,8 @@ export default function K8sQuestApp() {
   };
 
   const startMixedQuiz = () => {
+    quizRunIdRef.current = Date.now().toString(36);
+    clearQuizState();
     const all = [];
     TOPICS.forEach(topic => {
       LEVEL_ORDER.forEach(level => {
@@ -877,6 +994,8 @@ export default function K8sQuestApp() {
   };
 
   const startDailyChallenge = () => {
+    quizRunIdRef.current = Date.now().toString(36);
+    clearQuizState();
     const pool = lang === "en" ? DAILY_QUESTIONS.en : DAILY_QUESTIONS.he;
     // Shuffle once per year with a fixed annual seed (same order for all users)
     const annualSeed = new Date().getFullYear() * 31337;
@@ -1104,6 +1223,37 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {showConfetti&&!a11y.reduceMotion&&<Confetti/>}
       {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
       {saveError&&<div role="alert" aria-live="assertive" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
+
+      {resumeData&&(
+        <div onClick={handleDiscardResume} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+          <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} style={{background:"#0f172a",border:"1px solid rgba(0,212,255,0.25)",borderRadius:18,padding:"24px 22px",width:"min(380px,100%)",animation:"fadeIn 0.3s ease",direction:dir}}>
+            <div style={{fontSize:32,textAlign:"center",marginBottom:10}}>⏸️</div>
+            <div style={{fontWeight:800,color:"#e2e8f0",fontSize:18,marginBottom:8,textAlign:"center"}}>{t("resumeTitle")}</div>
+            <div style={{color:"#94a3b8",fontSize:13,marginBottom:16,textAlign:"center"}}>{t("resumeBody")}</div>
+            {/* Quiz info pill */}
+            <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,padding:"10px 14px",marginBottom:20,direction:"ltr"}}>
+              <span style={{fontSize:22}}>{resumeData.topicIcon}</span>
+              <div>
+                <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{resumeData.topicName}</div>
+                <div style={{color:"#64748b",fontSize:12}}>
+                  {lang==="en"?LEVEL_CONFIG[resumeData.level]?.labelEn:LEVEL_CONFIG[resumeData.level]?.label}
+                  {" · "}{t("question")} {(resumeData.questionIndex ?? 0) + 1} / {resumeData.questions?.length}
+                </div>
+              </div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <button onClick={handleResumeQuiz}
+                style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(0,212,255,0.15),rgba(168,85,247,0.15))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,color:"#00D4FF",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                ▶ {t("resumeBtn")}
+              </button>
+              <button onClick={handleDiscardResume}
+                style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#64748b",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                {t("resumeDiscard")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:20}}><h3 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><button onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"#475569",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"rgba(255,255,255,0.06)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{entry.username||t("anonymous")}</div><div style={{color:"#475569",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}</div></div>}
 
