@@ -101,6 +101,8 @@ const TRANSLATIONS = {
     accuracyLabel: "דיוק",
     goBackToTopic: "חזרי לנושא הזה",
     a11yTitle: "♿ נגישות", a11yFontSize: "גודל טקסט", a11yReduceMotion: "הפחת תנועה", a11yHighContrast: "ניגודיות גבוהה",
+    readQuestion: "🔊 קראי שאלה", stopSpeech: "⏹ עצרי",
+    readQuestion_m: "🔊 קרא שאלה", stopSpeech_m: "⏹ עצור",
     // Male-form overrides (used when gender === "m")
     tagline_m: "למד Kubernetes בצורה כיפית ואינטראקטיבית",
     startPlaying_m: "⚡ התחל לשחק עכשיו",
@@ -212,6 +214,7 @@ const TRANSLATIONS = {
     dailyChallengeTitle: "Daily Challenge", dailyChallengeNew: "NEW DAILY",
     dailyChallengeDesc: "5 mixed questions · resets every day",
     a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
+    readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop",
     resumeTitle: "Resume Quiz?",
     resumeBody: "You have an unfinished quiz. Continue where you left off?",
     resumeBtn: "Continue",
@@ -439,6 +442,7 @@ export default function K8sQuestApp() {
   const liveIndexRef  = useRef(0);   // highest question index reached; never decremented
   const questionRef   = useRef(null); // focus target when question changes
   const nextBtnRef    = useRef(null); // focus target after submitting an answer
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [resumeData, setResumeData] = useState(null);
 
   // Shuffle answer options so the correct answer isn't predictably the longest/same position
@@ -929,6 +933,26 @@ export default function K8sQuestApp() {
     return next;
   });
 
+  const speakQuestion = () => {
+    if (!window.speechSynthesis) return;
+    if (isSpeaking) { window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    const q = currentQuestions?.[questionIndex]?.q;
+    if (!q) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(q);
+    utt.lang = lang === "he" ? "he-IL" : "en-US";
+    utt.onend = () => setIsSpeaking(false);
+    utt.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utt);
+  };
+
+  useEffect(() => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  }, [questionIndex, screen, topicScreen]);
+
   const handleSelectAnswer = (idx) => {
     if (submitted) return;
     setSelectedAnswer(idx);
@@ -1398,6 +1422,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </button>
               ))}
             </div>
+            {screen==="topic"&&topicScreen==="quiz"&&window.speechSynthesis&&(
+              <button onClick={speakQuestion}
+                aria-pressed={isSpeaking}
+                style={{width:"100%",marginTop:7,padding:"6px 4px",background:isSpeaking?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${isSpeaking?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:isSpeaking?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:isSpeaking?700:400}}>
+                {isSpeaking?t("stopSpeech"):t("readQuestion")}
+              </button>
+            )}
           </div>
           {/* Menu items */}
           <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}>{t("leaderboardBtn")}</button>
