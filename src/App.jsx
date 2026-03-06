@@ -2095,14 +2095,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </svg>
               );
               const logoText=(
-                <div style={{textAlign:lang==="en"?"right":"left"}}>
+                <div style={{textAlign:"left"}}>
                   <h1 className="home-title-text" style={{fontSize:28,fontWeight:900,margin:0,lineHeight:1,letterSpacing:-0.5,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",whiteSpace:"nowrap"}}>KubeQuest</h1>
                   <div style={{fontSize:11,color:"#475569",letterSpacing:0.4,marginTop:3}}>Train Your Kubernetes Skills</div>
                 </div>
               );
               const logoGroup=(
                 <div style={{display:"flex",alignItems:"center",gap:14}}>
-                  {lang==="en" ? <>{logoText}{logoIcon}</> : <>{logoIcon}{logoText}</>}
+                  {logoIcon}{logoText}
                 </div>
               );
               const burgerBtn=(
@@ -2118,7 +2118,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               );
               return (
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",direction:"ltr"}}>
-                  {lang==="en" ? <>{burgerBtn}{logoGroup}</> : <>{logoGroup}{burgerBtn}</>}
+                  {logoGroup}{burgerBtn}
                 </div>
               );
             })()}
