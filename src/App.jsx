@@ -1777,15 +1777,50 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* Dropdown menu — rendered outside <main> so CSS zoom never affects it */}
       {showMenu&&(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:68,[lang==="en"?"left":"right"]:12,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:220,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr"}}>
+        <div style={{position:"fixed",top:68,[lang==="en"?"left":"right"]:12,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:220,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100vh - 90px)"}}>
           {/* Language + Gender */}
           <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
             {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
             <LangSwitcher lang={lang} setLang={setLang}/>
           </div>
-          {/* Accessibility */}
-          <div style={{padding:"10px 14px 12px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-            <div style={{fontSize:11,color:"#475569",fontWeight:700,marginBottom:8,letterSpacing:0.5}}>{t("a11yTitle")}</div>
+
+          {/* ── 1. Practice ── */}
+          <div style={{padding:"8px 16px 3px"}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1}}>{lang==="en"?"PRACTICE":"תרגול"}</span>
+          </div>
+          <button onClick={()=>{startMixedQuiz();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+            {t("mixedQuizBtn")}
+          </button>
+          <button onClick={()=>{startDailyChallenge();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+            🔥 {t("dailyChallengeTitle")}
+          </button>
+          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+            {t("weakAreaTitle")}
+          </button>
+          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400}}>
+            {t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginLeft:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}
+          </button>
+
+          {/* ── 2. Progress ── */}
+          <div style={{padding:"8px 16px 3px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:2}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
+          </div>
+          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+            {t("leaderboardBtn")}
+          </button>
+          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+            <span>{t("savedQuestions")}</span>
+            {bookmarks.length>0&&<span style={{background:"rgba(168,85,247,0.2)",color:"#A855F7",fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:10}}>{bookmarks.length}</span>}
+          </button>
+          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+            ⭐ {lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
+          </button>
+
+          {/* ── 3. Settings ── */}
+          <div style={{padding:"8px 16px 3px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:2}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1}}>{lang==="en"?"SETTINGS":"הגדרות"}</span>
+          </div>
+          <div style={{padding:"4px 14px 10px"}}>
             <div style={{marginBottom:7}}>
               <div style={{fontSize:11,color:"#64748b",marginBottom:5}}>{t("a11yFontSize")}</div>
               <div style={{display:"flex",gap:4}}>
@@ -1825,16 +1860,19 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             )}
           </div>
-          {/* Menu items */}
-          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}>{t("leaderboardBtn")}</button>
-          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-            <span>{t("savedQuestions")}</span>
-            {bookmarks.length > 0 && <span style={{background:"rgba(168,85,247,0.2)",color:"#A855F7",fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:10}}>{bookmarks.length}</span>}
-          </button>
-          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400}}>{t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginLeft:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}</button>
-          <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#EF4444",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🗑</span>{t("resetProgress")}</button>
-          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"11px 16px",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.05)",color:"#64748b",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10,textDecoration:"none"}}><span>✉️</span>{lang==="en"?"Contact":"צור קשר"}</a>
-          <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🚪</span>{t("logout")}</button>
+          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none"}}>
+            <span>✉️</span>{lang==="en"?"Contact":"צור קשר"}
+          </a>
+
+          {/* ── 4. System ── */}
+          <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:2,paddingTop:4}}>
+            <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#EF4444",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+              <span aria-hidden="true">🗑</span>{t("resetProgress")}
+            </button>
+            <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+              <span aria-hidden="true">🚪</span>{t("logout")}
+            </button>
+          </div>
         </div>
       </>)}
       <main id="main-content" style={fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : undefined}>
