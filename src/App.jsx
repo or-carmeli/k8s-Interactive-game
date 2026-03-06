@@ -675,7 +675,7 @@ export default function K8sQuestApp() {
       }
     } catch {}
     achievementsLoaded.current = true;
-    setDataLoaded(true);
+    setTimeout(() => setDataLoaded(true), 1000);
     // Check for a saved in-progress quiz for the guest session
     const savedQuiz = loadQuizState();
     if (savedQuiz && savedQuiz.userId === "guest") setResumeData(savedQuiz);
@@ -841,7 +841,7 @@ export default function K8sQuestApp() {
     }
 
     achievementsLoaded.current = true;
-    setDataLoaded(true);   // ← data is now in state; no more flash of 0%
+    setTimeout(() => setDataLoaded(true), 1000);   // ← data is now in state; no more flash of 0%
 
     // Check for a saved in-progress quiz belonging to this user
     const savedQuiz = loadQuizState();
