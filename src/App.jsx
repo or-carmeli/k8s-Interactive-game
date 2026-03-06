@@ -380,7 +380,7 @@ function renderQuestion(qText, lang) {
   if (paragraphs.length <= 1) {
     const qDir = hasHebrew(qText) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
     return (
-      <div dir={qDir} style={{color:"#e2e8f0",fontSize:18,fontWeight:700,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"plaintext"}}>
+      <div dir={qDir} style={{color:"#e2e8f0",fontSize:18,fontWeight:700,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right"}}>
         {renderBidi(qText, lang)}
       </div>
     );
@@ -430,7 +430,7 @@ function renderBidi(text, lang) {
   const parts = text.split(/((?:[A-Za-z][A-Za-z0-9\-_.:/]*(?:\s+(?=[A-Za-z]))?)+)/);
   if (parts.length <= 1) return text;
   return parts.map((part, i) => {
-    if (/^[A-Za-z]/.test(part)) return <span key={i} dir="ltr">{part}</span>;
+    if (/^[A-Za-z]/.test(part)) return <span key={i} dir="ltr" style={{unicodeBidi:"isolate"}}>{part}</span>;
     // Insert RLM (U+200F) before punctuation that immediately follows an LTR span so
     // the Unicode bidi algorithm places it at the visual end of the RTL sentence.
     if (i > 0 && /^[A-Za-z]/.test(parts[i - 1])) return "\u200F" + part;
