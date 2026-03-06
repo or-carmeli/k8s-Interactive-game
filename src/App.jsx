@@ -2331,52 +2331,129 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* ── GUIDE ── */}
       {screen==="guide"&&(()=>{
         const GUIDE=[
-          {id:"pod",icon:"🔄",title:lang==="en"?"Pod Lifecycle":"מחזור חיי Pod",items:[
-            {k:"Pending",v:lang==="en"?"Waiting to be scheduled onto a node":"ממתין לתזמון על Node"},
-            {k:"Running",v:lang==="en"?"At least one container is running":"לפחות קונטיינר אחד רץ"},
-            {k:"Succeeded",v:lang==="en"?"All containers exited with code 0":"כל הקונטיינרים סיימו בקוד 0"},
-            {k:"Failed",v:lang==="en"?"At least one container exited non-zero":"לפחות קונטיינר אחד יצא עם שגיאה"},
-            {k:"Unknown",v:lang==="en"?"Node cannot report Pod state":"ה-Node לא יכול לדווח על מצב ה-Pod"},
+          {id:"pod",icon:"🔄",color:"#00D4FF",title:lang==="en"?"Pod Lifecycle":"מחזור חיי Pod",items:[
+            {sect:lang==="en"?"Phases":"שלבים"},
+            {k:"Pending",   v:lang==="en"?"Waiting to be scheduled onto a node":"ממתין לתזמון על Node"},
+            {k:"Running",   v:lang==="en"?"At least one container is running":"לפחות קונטיינר אחד רץ"},
+            {k:"Succeeded", v:lang==="en"?"All containers exited with code 0":"כל הקונטיינרים סיימו בקוד 0"},
+            {k:"Failed",    v:lang==="en"?"At least one container exited non-zero":"לפחות קונטיינר אחד נכשל"},
+            {k:"Unknown",   v:lang==="en"?"Node can't report state (node down)":"ה-Node לא יכול לדווח על מצב"},
+            {sect:lang==="en"?"Restart Policies":"מדיניות הפעלה מחדש"},
+            {k:"Always",    v:lang==="en"?"Restart on any exit — default for Deployments":"הפעל מחדש תמיד (ברירת מחדל ב-Deployment)"},
+            {k:"OnFailure", v:lang==="en"?"Restart only on non-zero exit code":"הפעל מחדש רק על שגיאה"},
+            {k:"Never",     v:lang==="en"?"Never restart the container":"לא להפעיל מחדש"},
+            {sect:lang==="en"?"Common Error States":"מצבי שגיאה נפוצים"},
+            {k:"CrashLoopBackOff",  v:lang==="en"?"Container keeps crashing; exponential backoff applied":"הקונטיינר קורס שוב ושוב; השהייה גדלה בין ניסיונות"},
+            {k:"OOMKilled",         v:lang==="en"?"Container exceeded its memory limit":"הקונטיינר חרג ממגבלת הזיכרון"},
+            {k:"ImagePullBackOff",  v:lang==="en"?"Image can't be pulled — bad name or missing auth":"לא ניתן למשוך image – שם שגוי או חוסר הרשאה"},
+            {k:"ContainerCreating", v:lang==="en"?"Waiting for PVC, Secret, or CNI network setup":"ממתין ל-PVC, Secret, או הגדרת רשת"},
+            {k:"Terminating",       v:lang==="en"?"Stuck? Check finalizers; use --force to unblock":"תקוע? בדוק finalizers או השתמש ב-force"},
           ],code:null},
-          {id:"services",icon:"🌐",title:lang==="en"?"Service Types":"סוגי Service",items:[
-            {k:"ClusterIP",v:lang==="en"?"Internal-only access (default)":"גישה פנימית בלבד (ברירת מחדל)"},
-            {k:"NodePort",v:lang==="en"?"Exposes on node IP, ports 30000–32767":"חושף על ה-Node, פורטים 30000–32767"},
-            {k:"LoadBalancer",v:lang==="en"?"External LB via cloud provider":"LB חיצוני דרך ספק ענן"},
-            {k:"ExternalName",v:lang==="en"?"Maps to an external DNS name":"מפנה לשם DNS חיצוני"},
+          {id:"services",icon:"🌐",color:"#10B981",title:lang==="en"?"Services":"Services",items:[
+            {sect:lang==="en"?"Service Types":"סוגי Service"},
+            {k:"ClusterIP",    v:lang==="en"?"Internal-only access (default)":"גישה פנימית בלבד (ברירת מחדל)"},
+            {k:"NodePort",     v:lang==="en"?"Exposes on every node's IP, ports 30000–32767":"חשיפה על כל Node, פורט 30000–32767"},
+            {k:"LoadBalancer", v:lang==="en"?"External LB provisioned by the cloud provider":"LB חיצוני דרך ספק הענן"},
+            {k:"ExternalName", v:lang==="en"?"CNAME alias to an external DNS name":"CNAME לשם DNS חיצוני"},
+            {k:"Headless",     v:lang==="en"?"clusterIP: None — DNS returns Pod IPs directly":"clusterIP: None – DNS מחזיר IPs של Pods ישירות"},
+            {sect:lang==="en"?"Port Fields":"שדות פורטים"},
+            {k:"port",       v:lang==="en"?"Port the Service listens on inside the cluster":"פורט שה-Service מאזין עליו (בתוך הקלאסטר)"},
+            {k:"targetPort", v:lang==="en"?"Port on the Pod container":"פורט בתוך הקונטיינר"},
+            {k:"nodePort",   v:lang==="en"?"External port on the Node (NodePort type only)":"פורט חיצוני על ה-Node (רק בסוג NodePort)"},
           ],code:null},
-          {id:"dns",icon:"🕸️",title:lang==="en"?"Networking & DNS":"רשת ו-DNS",items:[
-            {k:"FQDN",v:"<svc>.<ns>.svc.cluster.local"},
-            {k:"Short name",v:lang==="en"?"<svc> (same namespace only)":"<svc> (אותו namespace בלבד)"},
-            {k:"NetworkPolicy",v:lang==="en"?"Controls Pod traffic (default: allow all)":"שולט בתעבורה (ברירת מחדל: הכל מותר)"},
-            {k:"CNI",v:lang==="en"?"Plugin that handles pod networking":"פלאגין לניהול רשת ה-Pods"},
+          {id:"dns",icon:"🕸️",color:"#A855F7",title:lang==="en"?"Networking & DNS":"רשת ו-DNS",items:[
+            {sect:"DNS"},
+            {k:"FQDN",      v:"<svc>.<ns>.svc.cluster.local"},
+            {k:"Same NS",   v:lang==="en"?"<svc>  — short name, same namespace only":"<svc>  — שם קצר, אותו namespace בלבד"},
+            {k:"Cross-NS",  v:lang==="en"?"<svc>.<ns>  — explicit namespace required":"<svc>.<ns>  — namespace מפורש נדרש"},
+            {sect:"NetworkPolicy"},
+            {k:"Default",   v:lang==="en"?"No policy = allow all traffic in both directions":"ללא policy = הכל מותר בשני הכיוונים"},
+            {k:"ingress",   v:lang==="en"?"Controls traffic coming INTO the Pod":"שולט בתעבורה שנכנסת ל-Pod"},
+            {k:"egress",    v:lang==="en"?"Controls traffic going OUT of the Pod":"שולט בתעבורה שיוצאת מה-Pod"},
+            {k:"podSelector",v:lang==="en"?"Selects target Pods by label":"בוחר Pods לפי labels"},
+            {sect:lang==="en"?"CNI / kube-proxy":"CNI / kube-proxy"},
+            {k:"CNI",       v:lang==="en"?"Plugin handling Pod network setup (Calico, Flannel…)":"פלאגין לניהול רשת Pods (Calico, Flannel…)"},
+            {k:"kube-proxy",v:lang==="en"?"Manages iptables/IPVS rules for Service routing":"מנהל כללי iptables/IPVS לניתוב Services"},
           ],code:null},
-          {id:"kubectl",icon:"⌨️",title:"kubectl Quick Reference",items:[],code:`kubectl get pods -n <namespace>\nkubectl describe pod <name>\nkubectl logs <pod> [-c <container>]\nkubectl exec -it <pod> -- sh\nkubectl apply -f <file.yaml>\nkubectl delete pod <name> [--grace-period=0 --force]\nkubectl port-forward <pod> 8080:80\nkubectl rollout restart deploy/<name>\nkubectl top pod`},
+          {id:"rbac",icon:"🔒",color:"#F59E0B",title:"RBAC",items:[
+            {sect:lang==="en"?"Objects":"אובייקטים"},
+            {k:"Role",               v:lang==="en"?"Grants permissions within one namespace":"מעניק הרשאות בתוך namespace אחד"},
+            {k:"ClusterRole",        v:lang==="en"?"Grants cluster-wide or cross-namespace permissions":"הרשאות ברמת הקלאסטר כולו"},
+            {k:"RoleBinding",        v:lang==="en"?"Binds a Role to a subject inside a namespace":"מקשר Role לנושא בתוך namespace"},
+            {k:"ClusterRoleBinding", v:lang==="en"?"Binds a ClusterRole to a subject cluster-wide":"מקשר ClusterRole בכל הקלאסטר"},
+            {k:"ServiceAccount",     v:lang==="en"?"Identity for Pods; auto-mounted as default":"זהות ל-Pods; מוגדר אוטומטית כ-default"},
+            {sect:lang==="en"?"Common Verbs":"פעלים נפוצים"},
+            {k:"get / list / watch",       v:lang==="en"?"Read-only access":"גישת קריאה בלבד"},
+            {k:"create / update / patch",  v:lang==="en"?"Write access":"גישת כתיבה"},
+            {k:"delete",                   v:lang==="en"?"Delete a resource":"מחיקת משאב"},
+            {k:"* (wildcard)",             v:lang==="en"?"All verbs — avoid in production":"כל הפעלים – יש להימנע ב-Production"},
+          ],code:null},
+          {id:"storage",icon:"💾",color:"#6366F1",title:lang==="en"?"Storage":"אחסון",items:[
+            {sect:lang==="en"?"Objects":"אובייקטים"},
+            {k:"PersistentVolume",      v:lang==="en"?"Cluster-level storage resource (provisioned by admin)":"משאב אחסון ברמת הקלאסטר (מוקצה על ידי Admin)"},
+            {k:"PersistentVolumeClaim", v:lang==="en"?"Pod's request for a piece of storage":"בקשת אחסון של ה-Pod"},
+            {k:"StorageClass",          v:lang==="en"?"Defines provisioner and reclaim policy":"מגדיר ספק ואופן שחרור אחסון"},
+            {k:"emptyDir",              v:lang==="en"?"Ephemeral volume — deleted when Pod is deleted":"volume זמני – נמחק עם מחיקת ה-Pod"},
+            {k:"configMap / secret",    v:lang==="en"?"Mounted as files or env vars inside Pod":"מוגדרים כקבצים או משתני סביבה ב-Pod"},
+            {sect:lang==="en"?"Access Modes":"מצבי גישה"},
+            {k:"ReadWriteOnce (RWO)", v:lang==="en"?"One node at a time, read+write":"node אחד בלבד, קריאה וכתיבה"},
+            {k:"ReadOnlyMany (ROX)",  v:lang==="en"?"Many nodes, read-only":"מספר nodes, קריאה בלבד"},
+            {k:"ReadWriteMany (RWX)", v:lang==="en"?"Many nodes, read+write":"מספר nodes, קריאה וכתיבה"},
+            {sect:lang==="en"?"Reclaim Policies":"מדיניות שחרור"},
+            {k:"Retain", v:lang==="en"?"Keep data after PVC is deleted":"שמור נתונים לאחר מחיקת PVC"},
+            {k:"Delete", v:lang==="en"?"Delete the underlying storage with the PVC":"מחק את האחסון עם מחיקת PVC"},
+          ],code:null},
+          {id:"resources",icon:"📊",color:"#FF6B35",title:lang==="en"?"Resources & Scheduling":"משאבים ותזמון",items:[
+            {sect:lang==="en"?"Resource Fields":"שדות משאבים"},
+            {k:"requests", v:lang==="en"?"Minimum guaranteed; used by scheduler to place Pod":"מינימום מובטח; בסיס לתזמון ה-Pod על Node"},
+            {k:"limits",   v:lang==="en"?"Maximum allowed; OOMKilled if memory exceeded":"מקסימום; OOMKilled אם חורג מהזיכרון"},
+            {sect:lang==="en"?"QoS Classes":"מחלקות QoS"},
+            {k:"Guaranteed", v:lang==="en"?"requests === limits on all containers":"requests === limits בכל הקונטיינרים"},
+            {k:"Burstable",  v:lang==="en"?"At least one container has requests < limits":"לפחות קונטיינר אחד עם requests < limits"},
+            {k:"BestEffort", v:lang==="en"?"No requests or limits defined — evicted first":"ללא requests/limits – יפונה ראשון בעת לחץ"},
+            {sect:lang==="en"?"Health Probes":"Probes בריאות"},
+            {k:"livenessProbe",  v:lang==="en"?"Fail → restart the container":"כשלון → הפעלה מחדש של הקונטיינר"},
+            {k:"readinessProbe", v:lang==="en"?"Fail → remove from Service endpoints":"כשלון → הסרה מנקודות קצה של Service"},
+            {k:"startupProbe",   v:lang==="en"?"Disables liveness/readiness until startup succeeds":"משבית liveness/readiness עד שהאפליקציה עולה"},
+          ],code:null},
+          {id:"kubectl",icon:"⌨️",color:"#7dd3fc",title:"kubectl Quick Reference",items:[],
+           code:`# Inspect\nkubectl get pods -n <ns>               # list pods in namespace\nkubectl get pods -A                    # all namespaces\nkubectl describe pod <name>            # detailed events & spec\nkubectl logs <pod> -c <container>      # container logs\nkubectl logs <pod> -f                  # follow / stream\n\n# Exec & Debug\nkubectl exec -it <pod> -- sh           # shell into running pod\nkubectl port-forward <pod> 8080:80     # local → pod tunnel\nkubectl top pod                        # live CPU / memory\nkubectl top node\n\n# Apply / Delete\nkubectl apply -f <file.yaml>           # create or update\nkubectl delete pod <name>              # graceful\nkubectl delete pod <name> --force --grace-period=0\n\n# Rollouts\nkubectl rollout restart deploy/<name>  # rolling restart\nkubectl rollout status  deploy/<name>  # watch rollout\nkubectl rollout undo    deploy/<name>  # rollback\n\n# Contexts\nkubectl config get-contexts\nkubectl config use-context <name>`},
         ];
+        const isOpen = id => expandedGuideSection===id;
         return (
           <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
             <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
               {dir==="rtl"?"→ חזרה":"← Back"}
             </button>
             <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("guideBtn")}</h2>
-            <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>{lang==="en"?"Quick reference for key Kubernetes concepts":"סיכום מהיר של מושגי Kubernetes מרכזיים"}</p>
+            <p style={{color:"#64748b",fontSize:13,marginBottom:20,direction:dir}}>{lang==="en"?"Quick reference for key Kubernetes concepts — tap a section to expand":"סיכום מהיר של מושגי Kubernetes מרכזיים – לחצו על נושא לפתיחה"}</p>
             {GUIDE.map(section=>(
-              <div key={section.id} style={{marginBottom:10}}>
+              <div key={section.id} style={{marginBottom:8}}>
+                {/* Section header */}
                 <button onClick={()=>setExpandedGuideSection(s=>s===section.id?null:section.id)}
-                  style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:expandedGuideSection===section.id?"12px 12px 0 0":12,padding:"13px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,color:"#e2e8f0",fontSize:14,fontWeight:700,direction:"ltr"}}>
-                  <span style={{fontSize:18}}>{section.icon}</span>
-                  <span style={{flex:1,textAlign:"left"}}>{section.title}</span>
-                  <span style={{color:"#475569",fontSize:11}}>{expandedGuideSection===section.id?"▲":"▼"}</span>
+                  style={{width:"100%",background:isOpen(section.id)?`${section.color}10`:"rgba(255,255,255,0.03)",
+                    border:`1px solid ${isOpen(section.id)?section.color+"40":"rgba(255,255,255,0.08)"}`,
+                    borderLeft:`3px solid ${section.color}`,
+                    borderRadius:isOpen(section.id)?"10px 10px 0 0":10,
+                    padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,direction:"ltr",
+                    transition:"background 0.2s,border-color 0.2s"}}>
+                  <span style={{fontSize:20,flexShrink:0}}>{section.icon}</span>
+                  <span style={{flex:1,textAlign:"left",color:"#e2e8f0",fontSize:14,fontWeight:700}}>{section.title}</span>
+                  <span style={{color:isOpen(section.id)?section.color:"#475569",fontSize:10,fontWeight:700}}>{isOpen(section.id)?"▲":"▼"}</span>
                 </button>
-                {expandedGuideSection===section.id&&(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderTop:"none",borderRadius:"0 0 12px 12px",padding:"14px 16px"}}>
-                    {section.items.map(({k,v},i)=>(
-                      <div key={i} style={{display:"flex",gap:12,marginBottom:8,alignItems:"baseline"}}>
-                        <span style={{color:"#00D4FF",fontWeight:700,fontSize:12,whiteSpace:"nowrap",fontFamily:"monospace",minWidth:96,flexShrink:0,direction:"ltr"}}>{k}</span>
-                        <span style={{color:"#94a3b8",fontSize:13,direction:dir,lineHeight:1.5}}>{v}</span>
-                      </div>
-                    ))}
+                {/* Expanded content */}
+                {isOpen(section.id)&&(
+                  <div style={{background:"rgba(0,0,0,0.2)",border:`1px solid ${section.color}25`,borderTop:"none",borderRadius:"0 0 10px 10px",padding:"14px 16px"}}>
+                    {section.items.map((item,i)=>
+                      item.sect
+                        ? <div key={i} style={{fontSize:10,color:"#475569",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:i>0?14:2,marginBottom:8,paddingBottom:5,borderBottom:"1px solid rgba(255,255,255,0.05)",direction:"ltr"}}>{item.sect}</div>
+                        : <div key={i} style={{display:"flex",gap:10,marginBottom:7,alignItems:"flex-start",direction:"ltr"}}>
+                            <span style={{background:`${section.color}15`,color:section.color,fontWeight:700,fontSize:11,padding:"2px 7px",borderRadius:4,whiteSpace:"nowrap",fontFamily:"monospace",flexShrink:0,lineHeight:1.6}}>{item.k}</span>
+                            <span style={{color:"#94a3b8",fontSize:13,direction:dir,lineHeight:1.55,flex:1}}>{item.v}</span>
+                          </div>
+                    )}
                     {section.code&&(
-                      <pre style={{margin:"8px 0 0",background:"rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"12px 14px",fontFamily:"monospace",fontSize:12,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",direction:"ltr",lineHeight:1.7}}>
+                      <pre style={{marginTop:section.items.length?12:0,background:"rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"12px 14px",fontFamily:"monospace",fontSize:12,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",direction:"ltr",lineHeight:1.75}}>
                         {section.code}
                       </pre>
                     )}
