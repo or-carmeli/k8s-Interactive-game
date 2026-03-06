@@ -1126,6 +1126,15 @@ export default function K8sQuestApp() {
         const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
         return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
       });
+      // Mark question as scored so Mixed/Daily Quiz can't award points for it again
+      if (correct) {
+        try {
+          const freeKey = currentQuestions[questionIndex].q.slice(0, 100);
+          const scored = new Set(JSON.parse(localStorage.getItem("scoredFreeKeys_v1")) || []);
+          scored.add(freeKey);
+          localStorage.setItem("scoredFreeKeys_v1", JSON.stringify([...scored]));
+        } catch {}
+      }
     }
     // Free mode: award points per unique correct answer (deduped by question text)
     if (!isRetryRef.current && isFreeMode(selectedTopic?.id) && correct) {
