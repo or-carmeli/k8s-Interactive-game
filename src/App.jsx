@@ -2372,93 +2372,306 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* ── GUIDE ── */}
       {screen==="guide"&&(()=>{
         const GUIDE=[
-          {id:"pod",icon:"🔄",color:"#00D4FF",title:lang==="en"?"Pod Lifecycle":"מחזור חיי Pod",items:[
-            {sect:lang==="en"?"Phases":"שלבים"},
-            {k:"Pending",   v:lang==="en"?"Waiting to be scheduled onto a node":"ממתין לתזמון על Node"},
-            {k:"Running",   v:lang==="en"?"At least one container is running":"לפחות קונטיינר אחד רץ"},
-            {k:"Succeeded", v:lang==="en"?"All containers exited with code 0":"כל הקונטיינרים סיימו בקוד 0"},
-            {k:"Failed",    v:lang==="en"?"At least one container exited non-zero":"לפחות קונטיינר אחד נכשל"},
-            {k:"Unknown",   v:lang==="en"?"Node can't report state (node down)":"ה-Node לא יכול לדווח על מצב"},
-            {sect:lang==="en"?"Restart Policies":"מדיניות הפעלה מחדש"},
-            {k:"Always",    v:lang==="en"?"Restart on any exit — default for Deployments":"הפעל מחדש תמיד (ברירת מחדל ב-Deployment)"},
-            {k:"OnFailure", v:lang==="en"?"Restart only on non-zero exit code":"הפעל מחדש רק על שגיאה"},
-            {k:"Never",     v:lang==="en"?"Never restart the container":"לא להפעיל מחדש"},
-            {sect:lang==="en"?"Common Error States":"מצבי שגיאה נפוצים"},
-            {k:"CrashLoopBackOff",  v:lang==="en"?"Container keeps crashing; exponential backoff applied":"הקונטיינר קורס שוב ושוב; השהייה גדלה בין ניסיונות"},
-            {k:"OOMKilled",         v:lang==="en"?"Container exceeded its memory limit":"הקונטיינר חרג ממגבלת הזיכרון"},
-            {k:"ImagePullBackOff",  v:lang==="en"?"Image can't be pulled — bad name or missing auth":"לא ניתן למשוך image – שם שגוי או חוסר הרשאה"},
-            {k:"ContainerCreating", v:lang==="en"?"Waiting for PVC, Secret, or CNI network setup":"ממתין ל-PVC, Secret, או הגדרת רשת"},
-            {k:"Terminating",       v:lang==="en"?"Stuck? Check finalizers; use --force to unblock":"תקוע? בדוק finalizers או השתמש ב-force"},
-          ],code:null},
-          {id:"services",icon:"🌐",color:"#10B981",title:lang==="en"?"Services":"Services",items:[
-            {sect:lang==="en"?"Service Types":"סוגי Service"},
-            {k:"ClusterIP",    v:lang==="en"?"Internal-only access (default)":"גישה פנימית בלבד (ברירת מחדל)"},
-            {k:"NodePort",     v:lang==="en"?"Exposes on every node's IP, ports 30000–32767":"חשיפה על כל Node, פורט 30000–32767"},
-            {k:"LoadBalancer", v:lang==="en"?"External LB provisioned by the cloud provider":"LB חיצוני דרך ספק הענן"},
-            {k:"ExternalName", v:lang==="en"?"CNAME alias to an external DNS name":"CNAME לשם DNS חיצוני"},
-            {k:"Headless",     v:lang==="en"?"clusterIP: None — DNS returns Pod IPs directly":"clusterIP: None – DNS מחזיר IPs של Pods ישירות"},
-            {sect:lang==="en"?"Port Fields":"שדות פורטים"},
-            {k:"port",       v:lang==="en"?"Port the Service listens on inside the cluster":"פורט שה-Service מאזין עליו (בתוך הקלאסטר)"},
-            {k:"targetPort", v:lang==="en"?"Port on the Pod container":"פורט בתוך הקונטיינר"},
-            {k:"nodePort",   v:lang==="en"?"External port on the Node (NodePort type only)":"פורט חיצוני על ה-Node (רק בסוג NodePort)"},
-          ],code:null},
-          {id:"dns",icon:"🕸️",color:"#A855F7",title:lang==="en"?"Networking & DNS":"רשת ו-DNS",items:[
-            {sect:"DNS"},
-            {k:"FQDN",      v:"<svc>.<ns>.svc.cluster.local"},
-            {k:"Same NS",   v:lang==="en"?"<svc>  — short name, same namespace only":"<svc>  — שם קצר, אותו namespace בלבד"},
-            {k:"Cross-NS",  v:lang==="en"?"<svc>.<ns>  — explicit namespace required":"<svc>.<ns>  — namespace מפורש נדרש"},
+          // ── 1. Core Objects ──────────────────────────────────────────────
+          {id:"core",icon:"🧩",color:"#00D4FF",title:lang==="en"?"Core Objects":"אובייקטים מרכזיים",items:[
+            {sect:"Pod"},
+            {k:"Pod",         v:lang==="en"?"Smallest deployable unit. Contains 1+ containers sharing network and storage. Gets a new IP on every restart.":"היחידה הקטנה ביותר. מכיל 1+ קונטיינרים. מקבל IP חדש בכל restart."},
+            {k:"restartPolicy",v:lang==="en"?"Always (default) / OnFailure (Jobs) / Never":"Always (ברירת מחדל) / OnFailure / Never"},
+            {sect:"Deployment"},
+            {k:"Deployment",  v:lang==="en"?"Manages identical Pods. Handles rolling updates and rollbacks automatically. Use for stateless apps.":"מנהל Pods זהים. מטפל ב-rolling update ו-rollback. לאפליקציות stateless."},
+            {sect:"StatefulSet"},
+            {k:"StatefulSet", v:lang==="en"?"Like Deployment but each Pod gets a stable identity (pod-0, pod-1) and its own persistent PVC. Use for databases.":"כמו Deployment אך עם זהות יציבה (pod-0, pod-1) ו-PVC ייחודי. לבסיסי נתונים."},
+            {sect:"DaemonSet"},
+            {k:"DaemonSet",   v:lang==="en"?"Runs exactly one Pod copy on every Node. Used for: log collectors, monitoring agents, CNI plugins.":"Pod אחד בדיוק על כל Node. לניטור, לוגים, CNI."},
+            {sect:"Job / CronJob"},
+            {k:"Job",         v:lang==="en"?"Runs a task to completion (exit 0). Retries on failure up to backoffLimit.":"מריץ משימה עד סיום. לעבודות batch ו-one-off."},
+            {k:"CronJob",     v:lang==="en"?"Creates Jobs on a cron schedule.  e.g. '0 * * * *' = every hour.":"יוצר Jobs לפי לוח זמנים. למשל: '0 * * * *' = כל שעה."},
+          ],code:
+`# Pods
+kubectl get pods                        # current namespace
+kubectl get pods -A                     # all namespaces
+kubectl describe pod <name>             # events, conditions, spec
+kubectl logs <pod>                      # stdout/stderr
+kubectl logs <pod> --previous           # logs before last crash
+
+# Deployments
+kubectl get deployments
+kubectl rollout status  deploy/<name>   # watch rolling update
+kubectl rollout undo    deploy/<name>   # rollback to previous version
+kubectl rollout restart deploy/<name>   # rolling restart (zero downtime)
+kubectl scale deploy/<name> --replicas=3
+
+# StatefulSets / DaemonSets / Jobs
+kubectl get statefulsets
+kubectl get daemonsets
+kubectl get jobs && kubectl get cronjobs`},
+
+          // ── 2. Networking ─────────────────────────────────────────────────
+          {id:"networking",icon:"🌐",color:"#10B981",title:lang==="en"?"Networking":"רשת",items:[
+            {sect:lang==="en"?"Services":"Services"},
+            {k:"ClusterIP",    v:lang==="en"?"Internal-only. Default type. Not reachable from outside the cluster.":"גישה פנימית בלבד. סוג ברירת מחדל."},
+            {k:"NodePort",     v:lang==="en"?"External access via <NodeIP>:<30000–32767>. Good for dev/testing.":"גישה חיצונית דרך פורט קבוע. לפיתוח ובדיקות."},
+            {k:"LoadBalancer", v:lang==="en"?"Cloud provider creates an external load balancer. Standard for production.":"ספק ענן יוצר LB חיצוני. סטנדרט לפרודקשן."},
+            {k:"Headless",     v:lang==="en"?"clusterIP: None — DNS returns individual Pod IPs. Used by StatefulSets.":"clusterIP: None – DNS מחזיר IPs של Pods ישירות."},
+            {sect:lang==="en"?"Port fields":"שדות פורטים"},
+            {k:"port",       v:lang==="en"?"Port the Service listens on inside the cluster":"פורט שה-Service מאזין עליו בתוך הקלאסטר"},
+            {k:"targetPort", v:lang==="en"?"Port on the Pod container (where your app listens)":"פורט בתוך הקונטיינר"},
+            {k:"nodePort",   v:lang==="en"?"External port on the Node (NodePort type only, 30000–32767)":"פורט חיצוני על ה-Node (NodePort בלבד)"},
+            {sect:lang==="en"?"Cluster DNS":"DNS פנימי"},
+            {k:"Same namespace",  v:lang==="en"?"Short name works:  http://my-svc":"שם קצר עובד:  http://my-svc"},
+            {k:"Cross-namespace", v:lang==="en"?"http://my-svc.my-ns  or full FQDN: my-svc.my-ns.svc.cluster.local":"http://my-svc.my-ns  או FQDN מלא"},
+            {sect:"Ingress"},
+            {k:"Ingress",    v:lang==="en"?"Routes HTTP/S traffic from outside the cluster to Services. Requires an Ingress Controller (nginx, traefik…).":"מנתב HTTP/S חיצוני ל-Services. דורש Ingress Controller."},
             {sect:"NetworkPolicy"},
-            {k:"Default",   v:lang==="en"?"No policy = allow all traffic in both directions":"ללא policy = הכל מותר בשני הכיוונים"},
-            {k:"ingress",   v:lang==="en"?"Controls traffic coming INTO the Pod":"שולט בתעבורה שנכנסת ל-Pod"},
-            {k:"egress",    v:lang==="en"?"Controls traffic going OUT of the Pod":"שולט בתעבורה שיוצאת מה-Pod"},
-            {k:"podSelector",v:lang==="en"?"Selects target Pods by label":"בוחר Pods לפי labels"},
-            {sect:lang==="en"?"CNI / kube-proxy":"CNI / kube-proxy"},
-            {k:"CNI",       v:lang==="en"?"Plugin handling Pod network setup (Calico, Flannel…)":"פלאגין לניהול רשת Pods (Calico, Flannel…)"},
-            {k:"kube-proxy",v:lang==="en"?"Manages iptables/IPVS rules for Service routing":"מנהל כללי iptables/IPVS לניתוב Services"},
-          ],code:null},
-          {id:"rbac",icon:"🔒",color:"#F59E0B",title:"RBAC",items:[
-            {sect:lang==="en"?"Objects":"אובייקטים"},
-            {k:"Role",               v:lang==="en"?"Grants permissions within one namespace":"מעניק הרשאות בתוך namespace אחד"},
-            {k:"ClusterRole",        v:lang==="en"?"Grants cluster-wide or cross-namespace permissions":"הרשאות ברמת הקלאסטר כולו"},
-            {k:"RoleBinding",        v:lang==="en"?"Binds a Role to a subject inside a namespace":"מקשר Role לנושא בתוך namespace"},
-            {k:"ClusterRoleBinding", v:lang==="en"?"Binds a ClusterRole to a subject cluster-wide":"מקשר ClusterRole בכל הקלאסטר"},
-            {k:"ServiceAccount",     v:lang==="en"?"Identity for Pods; auto-mounted as default":"זהות ל-Pods; מוגדר אוטומטית כ-default"},
-            {sect:lang==="en"?"Common Verbs":"פעלים נפוצים"},
-            {k:"get / list / watch",       v:lang==="en"?"Read-only access":"גישת קריאה בלבד"},
-            {k:"create / update / patch",  v:lang==="en"?"Write access":"גישת כתיבה"},
-            {k:"delete",                   v:lang==="en"?"Delete a resource":"מחיקת משאב"},
-            {k:"* (wildcard)",             v:lang==="en"?"All verbs — avoid in production":"כל הפעלים – יש להימנע ב-Production"},
-          ],code:null},
-          {id:"storage",icon:"💾",color:"#6366F1",title:lang==="en"?"Storage":"אחסון",items:[
-            {sect:lang==="en"?"Objects":"אובייקטים"},
-            {k:"PersistentVolume",      v:lang==="en"?"Cluster-level storage resource (provisioned by admin)":"משאב אחסון ברמת הקלאסטר (מוקצה על ידי Admin)"},
-            {k:"PersistentVolumeClaim", v:lang==="en"?"Pod's request for a piece of storage":"בקשת אחסון של ה-Pod"},
-            {k:"StorageClass",          v:lang==="en"?"Defines provisioner and reclaim policy":"מגדיר ספק ואופן שחרור אחסון"},
-            {k:"emptyDir",              v:lang==="en"?"Ephemeral volume — deleted when Pod is deleted":"volume זמני – נמחק עם מחיקת ה-Pod"},
-            {k:"configMap / secret",    v:lang==="en"?"Mounted as files or env vars inside Pod":"מוגדרים כקבצים או משתני סביבה ב-Pod"},
-            {sect:lang==="en"?"Access Modes":"מצבי גישה"},
-            {k:"ReadWriteOnce (RWO)", v:lang==="en"?"One node at a time, read+write":"node אחד בלבד, קריאה וכתיבה"},
-            {k:"ReadOnlyMany (ROX)",  v:lang==="en"?"Many nodes, read-only":"מספר nodes, קריאה בלבד"},
-            {k:"ReadWriteMany (RWX)", v:lang==="en"?"Many nodes, read+write":"מספר nodes, קריאה וכתיבה"},
-            {sect:lang==="en"?"Reclaim Policies":"מדיניות שחרור"},
-            {k:"Retain", v:lang==="en"?"Keep data after PVC is deleted":"שמור נתונים לאחר מחיקת PVC"},
-            {k:"Delete", v:lang==="en"?"Delete the underlying storage with the PVC":"מחק את האחסון עם מחיקת PVC"},
-          ],code:null},
-          {id:"resources",icon:"📊",color:"#FF6B35",title:lang==="en"?"Resources & Scheduling":"משאבים ותזמון",items:[
-            {sect:lang==="en"?"Resource Fields":"שדות משאבים"},
-            {k:"requests", v:lang==="en"?"Minimum guaranteed; used by scheduler to place Pod":"מינימום מובטח; בסיס לתזמון ה-Pod על Node"},
-            {k:"limits",   v:lang==="en"?"Maximum allowed; OOMKilled if memory exceeded":"מקסימום; OOMKilled אם חורג מהזיכרון"},
-            {sect:lang==="en"?"QoS Classes":"מחלקות QoS"},
-            {k:"Guaranteed", v:lang==="en"?"requests === limits on all containers":"requests === limits בכל הקונטיינרים"},
-            {k:"Burstable",  v:lang==="en"?"At least one container has requests < limits":"לפחות קונטיינר אחד עם requests < limits"},
-            {k:"BestEffort", v:lang==="en"?"No requests or limits defined — evicted first":"ללא requests/limits – יפונה ראשון בעת לחץ"},
+            {k:"Default",    v:lang==="en"?"No policy = all traffic allowed. Best practice: apply deny-all first, then explicit allow rules.":"ללא policy = הכל מותר. שיטה טובה: deny-all ואז allows ספציפיים."},
+            {k:"ingress",    v:lang==="en"?"Controls traffic coming INTO the selected Pods":"שולט בתעבורה שנכנסת ל-Pods"},
+            {k:"egress",     v:lang==="en"?"Controls traffic going OUT from the selected Pods":"שולט בתעבורה שיוצאת מ-Pods"},
+          ],code:
+`# Services
+kubectl get svc
+kubectl describe svc <name>             # see selector, ports, type
+kubectl get endpoints <svc>             # Pods the Service is routing to
+                                        # empty list = selector label mismatch
+
+# Ingress
+kubectl get ingress
+kubectl describe ingress <name>
+
+# NetworkPolicy
+kubectl get networkpolicies -n <ns>
+kubectl describe networkpolicy <name>   # read rules in human format
+
+# 💡 Test connectivity from inside the cluster:
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl http://my-svc.my-ns/health`},
+
+          // ── 3. Scheduling ─────────────────────────────────────────────────
+          {id:"scheduling",icon:"⚙️",color:"#F59E0B",title:lang==="en"?"Scheduling":"תזמון",items:[
+            {sect:lang==="en"?"Node Selection":"בחירת Node"},
+            {k:"nodeSelector",  v:lang==="en"?"Simple label match. Pod only runs on Nodes with that label.":"התאמת label פשוטה. Pod ירוץ רק על Node עם ה-label."},
+            {k:"nodeAffinity",  v:lang==="en"?"Like nodeSelector but with required / preferred rules and richer expressions (In, NotIn, Exists).":"כמו nodeSelector עם כללים required/preferred ורחבים יותר."},
+            {sect:lang==="en"?"Taints & Tolerations":"Taints ו-Tolerations"},
+            {k:"Taint",       v:lang==="en"?"Marks a Node to repel Pods. Effects: NoSchedule / PreferNoSchedule / NoExecute.":"מסמן Node לדחיית Pods. אפקטים: NoSchedule / PreferNoSchedule / NoExecute."},
+            {k:"Toleration",  v:lang==="en"?"Added to a Pod spec to allow scheduling onto a tainted Node.":"מתווסף ל-Pod spec לאפשר תזמון על Node עם Taint."},
+            {sect:lang==="en"?"Resource Requests & Limits":"בקשות ומגבלות משאבים"},
+            {k:"requests",    v:lang==="en"?"Minimum reserved for the Pod. The Scheduler uses this to pick a Node with enough capacity.":"מינימום שמור. הבסיס שבו Scheduler בוחר Node."},
+            {k:"limits",      v:lang==="en"?"Maximum allowed. Exceeding memory → OOMKilled (exit 137). Exceeding CPU → throttled (not killed).":"מקסימום. חריגת זיכרון → OOMKilled. חריגת CPU → throttling."},
             {sect:lang==="en"?"Health Probes":"Probes בריאות"},
-            {k:"livenessProbe",  v:lang==="en"?"Fail → restart the container":"כשלון → הפעלה מחדש של הקונטיינר"},
-            {k:"readinessProbe", v:lang==="en"?"Fail → remove from Service endpoints":"כשלון → הסרה מנקודות קצה של Service"},
-            {k:"startupProbe",   v:lang==="en"?"Disables liveness/readiness until startup succeeds":"משבית liveness/readiness עד שהאפליקציה עולה"},
-          ],code:null},
-          {id:"kubectl",icon:"⌨️",color:"#7dd3fc",title:"kubectl Quick Reference",items:[],
-           code:`# Inspect\nkubectl get pods -n <ns>               # list pods in namespace\nkubectl get pods -A                    # all namespaces\nkubectl describe pod <name>            # detailed events & spec\nkubectl logs <pod> -c <container>      # container logs\nkubectl logs <pod> -f                  # follow / stream\n\n# Exec & Debug\nkubectl exec -it <pod> -- sh           # shell into running pod\nkubectl port-forward <pod> 8080:80     # local → pod tunnel\nkubectl top pod                        # live CPU / memory\nkubectl top node\n\n# Apply / Delete\nkubectl apply -f <file.yaml>           # create or update\nkubectl delete pod <name>              # graceful\nkubectl delete pod <name> --force --grace-period=0\n\n# Rollouts\nkubectl rollout restart deploy/<name>  # rolling restart\nkubectl rollout status  deploy/<name>  # watch rollout\nkubectl rollout undo    deploy/<name>  # rollback\n\n# Contexts\nkubectl config get-contexts\nkubectl config use-context <name>`},
+            {k:"livenessProbe",  v:lang==="en"?"Fail → Kubernetes restarts the container":"כשלון → Kubernetes מאתחל את הקונטיינר"},
+            {k:"readinessProbe", v:lang==="en"?"Fail → Pod removed from Service endpoints (no traffic sent to it)":"כשלון → Pod מוסר מה-Service (ללא traffic)"},
+            {k:"startupProbe",   v:lang==="en"?"Delays liveness/readiness checks until the app finishes starting up":"עוצר liveness/readiness עד שהאפליקציה סיימה לעלות"},
+            {sect:lang==="en"?"QoS Classes":"מחלקות QoS"},
+            {k:"Guaranteed",  v:lang==="en"?"requests == limits on all containers. Last to be evicted under memory pressure.":"requests == limits. אחרון לפינוי בלחץ זיכרון."},
+            {k:"Burstable",   v:lang==="en"?"At least one container has requests < limits. Middle eviction priority.":"requests < limits. עדיפות ביניים."},
+            {k:"BestEffort",  v:lang==="en"?"No requests or limits set. First to be evicted when a Node is under pressure.":"ללא requests/limits. הראשון לפינוי."},
+          ],code:
+`# Why is my Pod Pending? → read Events
+kubectl describe pod <name>             # scroll to Events at the bottom
+
+# Node labels and capacity
+kubectl get nodes --show-labels
+kubectl describe node <name>            # Capacity, Allocatable, Taints
+
+# Taints
+kubectl taint nodes <node> key=val:NoSchedule
+kubectl taint nodes <node> key=val:NoSchedule-  # remove taint (trailing dash)
+
+# Live resource usage (requires metrics-server)
+kubectl top pods
+kubectl top pods --sort-by=memory
+kubectl top nodes
+
+# 💡 requests too high  → Pod stays Pending forever
+#    limits too low     → Pod gets OOMKilled`},
+
+          // ── 4. Configuration ──────────────────────────────────────────────
+          {id:"configuration",icon:"🔧",color:"#A855F7",title:lang==="en"?"Configuration":"קונפיגורציה",items:[
+            {sect:"ConfigMap"},
+            {k:"ConfigMap",  v:lang==="en"?"Stores non-sensitive key-value config. Mount as a volume (auto-updates in ~1 min) or inject as env vars (requires Pod restart to update).":"קונפיגורציה non-sensitive. כvolume מתעדכן אוטומטית; כenv var דורש restart."},
+            {sect:"Secret"},
+            {k:"Secret",     v:lang==="en"?"Like ConfigMap but for sensitive data. Values are base64-encoded — NOT encrypted by default. Use Sealed Secrets or External Secrets Operator for production GitOps.":"לנתונים רגישים. מקודד base64, לא מוצפן כברירת מחדל."},
+            {sect:lang==="en"?"Injecting config into Pods":"הזרקת קונפיגורציה ל-Pods"},
+            {k:"env.value",                      v:lang==="en"?"Hardcoded value directly in the Pod spec.":"ערך קבוע ב-spec."},
+            {k:"env.valueFrom.configMapKeyRef",  v:lang==="en"?"Pull one key from a ConfigMap as an env var.":"env var ממפתח ספציפי ב-ConfigMap."},
+            {k:"env.valueFrom.secretKeyRef",     v:lang==="en"?"Pull one key from a Secret as an env var.":"env var ממפתח ספציפי ב-Secret."},
+            {k:"envFrom.configMapRef",           v:lang==="en"?"Inject ALL keys from a ConfigMap as env vars.":"כל המפתחות מ-ConfigMap כ-env vars."},
+            {k:"volumeMount (ConfigMap/Secret)", v:lang==="en"?"Each key becomes a file at mountPath. ConfigMap volumes auto-update, env vars do not.":"כל מפתח = קובץ. ConfigMap כvolume מתעדכן אוטומטית."},
+          ],code:
+`# ConfigMaps
+kubectl get configmap -n <ns>
+kubectl describe cm <name>
+kubectl create cm <name> --from-literal=key=value
+kubectl create cm <name> --from-file=config.properties
+
+# Secrets
+kubectl get secret -n <ns>
+kubectl describe secret <name>           # shows key names, NOT values
+kubectl create secret generic <name> --from-literal=password=mypass
+
+# Decode a secret value
+kubectl get secret <name> -o jsonpath='{.data.password}' | base64 --decode
+
+# 💡 Env vars from ConfigMap/Secret are frozen at Pod creation.
+#    Edit the ConfigMap, then restart Pods:
+kubectl rollout restart deploy/<name>`},
+
+          // ── 5. Storage ────────────────────────────────────────────────────
+          {id:"storage",icon:"💾",color:"#6366F1",title:lang==="en"?"Storage":"אחסון",items:[
+            {sect:lang==="en"?"Ephemeral Volumes":"Volumes זמניים"},
+            {k:"emptyDir",  v:lang==="en"?"Created with the Pod, deleted with the Pod. Survives container restarts. Shared by all containers in the same Pod.":"נוצר עם ה-Pod, נמחק איתו. שורד container restart. משותף לכל הקונטיינרים."},
+            {k:"hostPath",  v:lang==="en"?"Mounts a Node directory into the Pod. Avoid in production — breaks portability.":"תיקיה מה-Node לתוך ה-Pod. יש להימנע ב-production."},
+            {sect:"PersistentVolume (PV)"},
+            {k:"PV",        v:lang==="en"?"A piece of real storage in the cluster (cloud disk, NFS…). Provisioned by admin or auto-created by a StorageClass.":"אחסון אמיתי בקלאסטר. נוצר על ידי Admin או אוטומטית על ידי StorageClass."},
+            {sect:"PersistentVolumeClaim (PVC)"},
+            {k:"PVC",       v:lang==="en"?"A Pod's request for storage. Kubernetes binds it to a PV matching size, accessMode, and storageClass.":"בקשת Pod לאחסון. Kubernetes מוצא PV מתאים ומחבר ביניהם."},
+            {sect:"StorageClass"},
+            {k:"StorageClass",v:lang==="en"?"Blueprint for dynamic provisioning. Names the provisioner plugin (AWS EBS CSI, GCP PD, Ceph…) that creates real disks on demand.":"תבנית ל-dynamic provisioning. מגדיר provisioner שיוצר דיסקים אוטומטית."},
+            {sect:lang==="en"?"Access Modes":"מצבי גישה"},
+            {k:"ReadWriteOnce (RWO)",v:lang==="en"?"One Node — read + write. Default for most cloud disks.":"Node אחד – קריאה וכתיבה. ברירת מחדל."},
+            {k:"ReadWriteMany (RWX)",v:lang==="en"?"Many Nodes — read + write. Requires NFS, AWS EFS, or Ceph.":"מספר Nodes – קריאה וכתיבה. דורש NFS/EFS."},
+            {k:"ReadOnlyMany  (ROX)",v:lang==="en"?"Many Nodes — read only.":"מספר Nodes – קריאה בלבד."},
+            {sect:lang==="en"?"Reclaim Policy":"מדיניות שחרור"},
+            {k:"Retain", v:lang==="en"?"Data preserved after PVC deletion. Admin must clean up manually. Recommended for databases.":"נתונים נשמרים לאחר מחיקת PVC. Admin מנקה ידנית. לבסיסי נתונים."},
+            {k:"Delete", v:lang==="en"?"PV and the underlying cloud disk are deleted when PVC is deleted. Default for dynamic provisioning.":"PV ודיסק פיזי נמחקים עם מחיקת PVC. ברירת מחדל לdynamic."},
+          ],code:
+`kubectl get pv                           # cluster-level (no namespace needed)
+kubectl get pvc -n <ns>
+kubectl describe pvc <name>              # check status + Events
+                                         # Pending = no matching PV found
+
+kubectl get storageclass
+
+# ⚠️  StatefulSet PVCs survive helm uninstall (intentional data protection)
+# Delete manually AFTER confirming backups:
+kubectl delete pvc -l app=<name> -n <ns>`},
+
+          // ── 6. Security ───────────────────────────────────────────────────
+          {id:"security",icon:"🔒",color:"#EF4444",title:lang==="en"?"Security":"אבטחה",items:[
+            {sect:"RBAC"},
+            {k:"Role",               v:lang==="en"?"Grants permissions within one namespace.":"הרשאות בתוך namespace אחד."},
+            {k:"ClusterRole",        v:lang==="en"?"Grants cluster-wide permissions. Can be reused across namespaces via RoleBinding.":"הרשאות ברמת הקלאסטר. ניתן לשימוש חוזר בכל namespace."},
+            {k:"RoleBinding",        v:lang==="en"?"Attaches a Role (or ClusterRole) to a User, Group, or ServiceAccount in a namespace.":"מקשר Role לנושא בתוך namespace."},
+            {k:"ClusterRoleBinding", v:lang==="en"?"Attaches a ClusterRole to a subject cluster-wide.":"מקשר ClusterRole בכל הקלאסטר."},
+            {sect:lang==="en"?"ServiceAccounts":"ServiceAccounts"},
+            {k:"ServiceAccount",     v:lang==="en"?"Identity for Pods when calling the Kubernetes API. Every namespace has a 'default' SA auto-mounted into Pods.":"זהות ל-Pods מול ה-API. ה-SA 'default' מוזרק אוטומטית לכל Pod."},
+            {sect:lang==="en"?"Pod Security":"אבטחת Pod"},
+            {k:"runAsNonRoot: true",             v:lang==="en"?"Container must not run as root (UID 0). Reduces blast radius if compromised.":"קונטיינר לא ירוץ כ-root. מצמצם נזק אפשרי."},
+            {k:"readOnlyRootFilesystem: true",   v:lang==="en"?"Container filesystem is read-only. Prevents writing malicious files.":"filesystem לקריאה בלבד. מונע כתיבת קבצים זדוניים."},
+            {k:"allowPrivilegeEscalation: false",v:lang==="en"?"Process cannot gain more privileges than its parent.":"מונע הסלמת הרשאות."},
+            {sect:lang==="en"?"Common Verbs":"פעלים נפוצים"},
+            {k:"get / list / watch",      v:lang==="en"?"Read-only access":"גישת קריאה בלבד"},
+            {k:"create / update / patch", v:lang==="en"?"Write access":"גישת כתיבה"},
+            {k:"delete",                  v:lang==="en"?"Remove a resource":"מחיקת משאב"},
+            {k:"* (wildcard)",            v:lang==="en"?"All verbs — avoid in production":"כל הפעלים – יש להימנע ב-production"},
+          ],code:
+`# RBAC
+kubectl get role,rolebinding -n <ns>
+kubectl get clusterrole,clusterrolebinding
+kubectl describe rolebinding <name> -n <ns>
+
+# Check what a ServiceAccount can do
+kubectl auth can-i get pods --as=system:serviceaccount:<ns>:<sa-name>
+kubectl auth can-i '*' '*'              # check your own full access
+
+# ServiceAccounts
+kubectl get serviceaccounts -n <ns>
+kubectl describe sa <name> -n <ns>
+
+# 💡 Principle of least privilege: grant only the verbs your app actually needs.
+#    Use 'kubectl auth can-i' in CI to verify permissions before deploying.`},
+
+          // ── 7. Troubleshooting ────────────────────────────────────────────
+          {id:"troubleshooting",icon:"🔍",color:"#FF6B35",title:lang==="en"?"Troubleshooting":"פתרון בעיות",items:[
+            {sect:"CrashLoopBackOff"},
+            {k:"Cause", v:lang==="en"?"Container starts, crashes immediately, Kubernetes keeps restarting with exponential delay.":"הקונטיינר קורס שוב ושוב עם השהייה גדלה."},
+            {k:"Fix",   v:lang==="en"?"kubectl logs <pod> --previous  →  read the crash output before it restarted":"kubectl logs <pod> --previous – קרא את ה-crash output"},
+            {sect:"ImagePullBackOff"},
+            {k:"Cause", v:lang==="en"?"Kubernetes can't pull the image — typo in name/tag, or missing imagePullSecret for a private registry.":"לא ניתן למשוך image – שם/tag שגוי, או imagePullSecret חסר."},
+            {k:"Fix",   v:lang==="en"?"kubectl describe pod <name>  →  read the exact error in Events":"kubectl describe pod – קרא את השגיאה המדויקת ב-Events"},
+            {sect:lang==="en"?"Pending Pod":"Pod תקוע"},
+            {k:"Cause", v:lang==="en"?"No Node can accept it — CPU/memory insufficient, wrong nodeSelector, missing toleration, or unbound PVC.":"אין Node פנוי – CPU/memory, nodeSelector, toleration, או PVC לא bound."},
+            {k:"Fix",   v:lang==="en"?"kubectl describe pod <name>  →  read the FailedScheduling event":"kubectl describe pod – קרא FailedScheduling event"},
+            {sect:"OOMKilled"},
+            {k:"Cause", v:lang==="en"?"Container exceeded its memory limit. Linux kernel terminates it with exit code 137.":"חריגת מגבלת זיכרון. Linux ממית עם קוד יציאה 137."},
+            {k:"Fix",   v:lang==="en"?"Increase limits.memory in Pod spec. Measure actual usage with kubectl top pod.":"הגדל limits.memory. מדוד שימוש בפועל עם kubectl top pod."},
+            {sect:"Node NotReady"},
+            {k:"Cause", v:lang==="en"?"kubelet stopped reporting — process crashed, TLS cert expired, or disk/memory pressure.":"kubelet הפסיק לדווח – קרסה, TLS פג, לחץ disk/memory."},
+            {k:"Fix",   v:lang==="en"?"kubectl describe node  →  SSH into the Node  →  systemctl status kubelet":"kubectl describe node, ואז SSH: systemctl status kubelet"},
+          ],code:
+`# Universal first step — read the Events
+kubectl describe pod <name>             # scroll down to Events section
+
+# Logs
+kubectl logs <pod>                      # current container
+kubectl logs <pod> --previous           # ← logs from the crashed instance
+kubectl logs <pod> -c <container>       # specific container in a multi-container Pod
+kubectl logs <pod> -f                   # follow / stream in real time
+
+# Node issues
+kubectl describe node <name>            # Conditions + recent Events
+# Then SSH into the Node:
+# systemctl status kubelet
+# journalctl -u kubelet --since "10 min ago"
+
+# Resource pressure
+kubectl top pods --sort-by=memory
+kubectl top nodes
+
+# Service not reachable?
+kubectl get endpoints <svc>             # empty = selector label mismatch`},
+
+          // ── 8. kubectl Quick Reference ────────────────────────────────────
+          {id:"kubectl",icon:"⌨️",color:"#7dd3fc",title:"kubectl Quick Reference",items:[
+            {sect:lang==="en"?"Useful flags":"דגלים שימושיים"},
+            {k:"-n <ns>",              v:lang==="en"?"Target a specific namespace":"Namespace ספציפי"},
+            {k:"-A  (--all-namespaces)",v:lang==="en"?"Resources across all namespaces":"כל ה-namespaces"},
+            {k:"-o wide",              v:lang==="en"?"Extra columns: Node name, Pod IP":"עמודות נוספות: Node, IP"},
+            {k:"-o yaml",              v:lang==="en"?"Full resource spec as YAML":"spec מלא כ-YAML"},
+            {k:"-o jsonpath='...'",    v:lang==="en"?"Extract a specific field from output":"חילוץ שדה ספציפי מה-output"},
+            {k:"--dry-run=client",     v:lang==="en"?"Preview what would happen without applying":"סימולציה ללא שינוי"},
+            {k:"-w  (--watch)",        v:lang==="en"?"Stream updates in real time":"עדכונים בזמן אמת"},
+            {k:"--previous",           v:lang==="en"?"(kubectl logs) Show the last crashed container's logs":"לוגים מה-crash האחרון"},
+          ],code:
+`# Inspect
+kubectl get pods -n <ns>
+kubectl get pods -A
+kubectl get all -n <ns>                 # pods, svcs, deploys, ...
+kubectl describe pod <name>
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+# Logs & Debug
+kubectl logs <pod>
+kubectl logs <pod> --previous           # last crashed instance
+kubectl logs <pod> -f                   # stream
+kubectl exec -it <pod> -- sh
+kubectl port-forward <pod> 8080:80      # local → pod tunnel
+kubectl port-forward svc/<name> 8080:80
+
+# Apply / Delete
+kubectl apply -f <file.yaml>
+kubectl diff  -f <file.yaml>            # preview changes before applying
+kubectl apply --dry-run=client -f <file.yaml>
+kubectl delete pod <name>
+kubectl delete pod <name> --grace-period=0 --force
+
+# Rollouts
+kubectl rollout restart deploy/<name>   # rolling restart (zero downtime)
+kubectl rollout status  deploy/<name>   # watch progress
+kubectl rollout undo    deploy/<name>   # rollback to previous version
+kubectl rollout history deploy/<name>   # list all revisions
+
+# Resources
+kubectl top pod --sort-by=memory
+kubectl top node
+
+# Contexts & Namespaces
+kubectl config get-contexts
+kubectl config use-context <name>
+kubectl config set-context --current --namespace=<ns>
+
+# Output formats
+kubectl get pod <name> -o yaml
+kubectl get pod <name> -o wide
+kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
         ];
         const isOpen = id => expandedGuideSection===id;
         return (
