@@ -58,10 +58,10 @@ export const INCIDENTS = [
           "OOMKilled is caused by a bad Docker image — re-pull the image",
         ],
         optionsHe: [
-          "OOMKilled הוא כשל של liveness probe — בדוק הגדרות probe עם kubectl edit deployment",
-          "OOMKilled אומר שהקונטיינר עבר את מגבלת הזיכרון — הרץ kubectl describe pod api-server-xyz -n production",
-          "OOMKilled פירושו timeout ברשת — בדוק כללי NetworkPolicy",
-          "OOMKilled נגרם מ-image פגום — משוך מחדש את ה-image",
+          "OOMKilled = כשל liveness probe — בדוק probe עם kubectl edit deployment",
+          "OOMKilled = קונטיינר עבר מגבלת זיכרון — kubectl describe pod api-server-xyz -n production",
+          "OOMKilled = timeout ברשת — בדוק NetworkPolicy",
+          "OOMKilled = image פגום — משוך מחדש",
         ],
         answer: 1,
         explanation:
@@ -88,9 +88,9 @@ export const INCIDENTS = [
         ],
         answer: 0,
         explanation:
-          "`kubectl top pod` shows real-time memory consumption. You need to compare actual usage against the 256Mi limit to set a realistic new limit. Logs help find leaks but not current memory levels. Node capacity and HPA are secondary concerns.",
+          "`kubectl top pod` shows real-time memory consumption. You need to compare actual usage against the 256Mi limit to set a realistic new limit. Logs help find leaks but not current memory levels. `kubectl get node` shows total node capacity — not per-pod usage. `kubectl get hpa` controls replica count — it has nothing to do with per-pod memory allocation.",
         explanationHe:
-          "`kubectl top pod` מציג צריכת זיכרון בזמן אמת. יש להשוות שימוש בפועל מול מגבלת 256Mi כדי לקבוע מגבלה ריאלית חדשה. לוגים עוזרים לזהות דליפות אך לא את רמות הזיכרון הנוכחיות. קיבולת Node ו-HPA הם שיקולים משניים.",
+          "`kubectl top pod` מציג צריכת זיכרון בזמן אמת. יש להשוות שימוש בפועל מול מגבלת 256Mi כדי לקבוע מגבלה ריאלית חדשה. לוגים עוזרים לזהות דליפות אך לא את רמות הזיכרון הנוכחיות. `kubectl get node` מציג קיבולת Node כוללת — לא שימוש זיכרון לכל Pod. `kubectl get hpa` שולט במספר הרפליקות — הוא לא קשור להקצאת זיכרון לכל Pod.",
       },
       {
         prompt:
@@ -104,7 +104,7 @@ export const INCIDENTS = [
           "Restart the kubelet on the affected node",
         ],
         optionsHe: [
-          "למחוק את ה-Pod — Kubernetes ייצור אותו מחדש ובאיזשהו אופן בעיית הזיכרון תיעלם",
+          "למחוק את ה-Pod — Kubernetes ייצור מחדש, הבעיה תיפתר מאליה",
           "להגדיל את מגבלת הזיכרון ל-512Mi ולהגדיר request ל-256Mi ב-Deployment spec",
           "להוסיף NetworkPolicy לצמצום בקשות נכנסות",
           "לאתחל את ה-kubelet ב-Node המושפע",
@@ -567,7 +567,7 @@ export const INCIDENTS = [
         ],
         optionsHe: [
           "לבדוק ידנית selectors של Service אחרי כל דיפלוימנט",
-          "להשתמש ב-Helm/Kustomize כדי לגזור גם את ה-selector של ה-Service וגם ה-labels של Pod מ-Deployment ממשתנה משותף יחיד, ולהתריע על kube_endpoint_ready == 0",
+          "Helm/Kustomize: גזור labels ו-selector מאותו משתנה, והתרע על kube_endpoint_ready == 0",
           "לעבור עם כל ה-Services מ-ClusterIP ל-NodePort",
           "להוסיף הערה ב-YAML שמזכירה למהנדסים לעדכן את ה-selector",
         ],
@@ -675,7 +675,7 @@ export const INCIDENTS = [
         ],
         optionsHe: [
           "דליפת זיכרון בבינארי של CoreDNS — שדרג CoreDNS מיידית",
-          "הקלאסטר גדל משמעותית; CoreDNS שומר רשומות DNS עבור הרבה יותר Services ו-Pods כעת, מה שדורש יותר זיכרון",
+          "הקלאסטר גדל פי 4 — CoreDNS צריך יותר זיכרון לשמירת רשומות עבור Services ו-Pods הנוספים",
           "ה-ConfigMap של CoreDNS פגום — שחזר מגיבוי",
           "ה-Node הבסיסי עמוס ומחליף זיכרון (swapping)",
         ],
@@ -852,7 +852,7 @@ export const INCIDENTS = [
         ],
         optionsHe: [
           "kubectl label pod <כל-pod-פרונטאנד> role=frontend  (תייג מחדש Pods בודדים)",
-          "kubectl patch networkpolicy allow-frontend -n production -p לעדכן את from-selector ל-`app=frontend`",
+          "kubectl patch networkpolicy allow-frontend -n production  (עדכן from-selector ל-`app=frontend`)",
           "kubectl delete networkpolicy deny-all-ingress  (הסר את ה-default-deny)",
           "הוסף `role=frontend` ל-labels של pod template של Deployment הפרונטאנד",
         ],
@@ -898,7 +898,7 @@ export const INCIDENTS = [
         ],
         optionsHe: [
           "לבקש ממהנדסים לאמת ידנית selectors של NetworkPolicy אחרי כל דיפלוימנט",
-          "לאחסן NetworkPolicies ב-Git (GitOps), להריץ linter מדיניות (למשל Kube-linter) ב-CI, ולאמת ב-staging לפני production",
+          "GitOps לניהול NetworkPolicies, linter (Kube-linter) ב-CI, ואימות ב-staging לפני production",
           "להשבית NetworkPolicy על הקלאסטר",
           "להחיל NetworkPolicies רק במהלך חלונות תחזוקה",
         ],
@@ -922,7 +922,7 @@ export const INCIDENTS = [
         optionsHe: [
           "להחיל ב-production ולנטר; לבצע rollback אם מופיעות בעיות",
           "לקרוא את ה-YAML בקפידה ולבטוח שהוא נכון",
-          "ב-staging: להחיל deny-all כבסיס, להוסיף כל כלל allow בצורה מצטברת, ולאמת שרק התעבורה המיועדת עוברת אחרי כל כלל",
+          "ב-staging: deny-all כבסיס ← הוסף כל כלל allow ← אמת שרק התעבורה המיועדת עוברת",
           "להשתמש ב-kubectl dry-run לתצוגה מקדימה של שינויים",
         ],
         answer: 2,
