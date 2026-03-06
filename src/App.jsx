@@ -1584,7 +1584,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
           </svg>
           <div style={{textAlign:"left"}}>
-            <div style={{fontSize:28,fontWeight:900,lineHeight:1,letterSpacing:-0.5,
+            <div style={{fontSize:32,fontWeight:900,lineHeight:1,letterSpacing:-0.5,
               background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",
               WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
               backgroundClip:"text",backgroundSize:"300% auto",
