@@ -1734,6 +1734,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#64748b",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {t("resumeDiscard")}
               </button>
+              <button onClick={()=>setResumeData(null)}
+                style={{width:"100%",padding:"10px",background:"none",border:"none",borderRadius:12,color:"#475569",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                {dir==="rtl"?"→":"←"} {t("back")}
+              </button>
             </div>
           </div>
         </div>
