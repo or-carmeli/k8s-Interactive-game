@@ -171,7 +171,7 @@ export default function RoadmapView({
                   aria-expanded={!locked ? isExpanded : undefined}
                   aria-disabled={locked}
                   className="roadmap-card-header"
-                  style={{cursor:locked?"default":"pointer",display:"flex",flexDirection:rowDir,alignItems:"center",gap:8,marginBottom:8,width:"100%",background:"none",border:"none",padding:0,textAlign:dir==="rtl"?"right":"left"}}>
+                  style={{cursor:locked?"default":"pointer",display:"flex",flexDirection:rowDir,alignItems:"center",gap:8,marginBottom:8,width:"100%",background:"none",border:"none",padding:0,textAlign:"center"}}>
 
                   {/* Icon */}
                   <div className="roadmap-icon" style={{fontSize:18,width:32,height:32,borderRadius:8,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>
@@ -179,12 +179,12 @@ export default function RoadmapView({
                   </div>
 
                   {/* Text — takes remaining space, clips instead of wrapping */}
-                  <div style={{flex:1,minWidth:0,direction:"ltr",textAlign:"left"}}>
-                    <div className="roadmap-title" style={{fontWeight:700,color:"#e2e8f0",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>
+                  <div style={{flex:1,minWidth:0,direction:"ltr",textAlign:"center"}}>
+                    <div className="roadmap-title" style={{fontWeight:700,color:"#e2e8f0",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
                       <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{topic.name}</span>
                       {completed&&<span style={{flexShrink:0}}>✅</span>}
                     </div>
-                    <div className="roadmap-subtitle" style={{color:"#64748b",fontSize:11,marginTop:1,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",lineHeight:1.4,textAlign:"left"}}>
+                    <div className="roadmap-subtitle" style={{color:"#64748b",fontSize:11,marginTop:1,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",lineHeight:1.4,textAlign:"center"}}>
                       {STAGE_SUBTITLES[topic.id]}
                     </div>
                   </div>
