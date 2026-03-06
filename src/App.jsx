@@ -2016,17 +2016,16 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{width:Math.round(44/fs),flexShrink:0}}/>
             </div>
             {/* Welcome section — compact */}
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 12px 12px",textAlign:"center",direction:dir}}>
-              <p style={{color:"#64748b",fontSize:12,margin:0}}>{t("greeting")},</p>
-              <h2 style={{margin:0,color:"#e2e8f0",fontSize:19,fontWeight:700,maxWidth:"90%",lineHeight:1.25,wordBreak:"break-word",overflowWrap:"anywhere"}}>
-                {displayName}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"10px 16px 14px",textAlign:"center",direction:dir,marginBottom:4}}>
+              <h2 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:700,maxWidth:"90%",lineHeight:1.3,wordBreak:"break-word",overflowWrap:"anywhere"}}>
+                {t("greeting")} {displayName}
               </h2>
               {isGuest&&<p style={{color:"#475569",fontSize:11,margin:0}}>{t("playingAsGuest")}</p>}
-              <p style={{color:"#64748b",fontSize:12,margin:0,maxWidth:"90%",lineHeight:1.4}}>
+              <p style={{color:"#64748b",fontSize:13,margin:0,maxWidth:"90%",lineHeight:1.4}}>
                 {isInterviewMode?t("interviewModeHint"):t("tagline")}
               </p>
               {dailyStreak.streak > 0 && (
-                <div style={{background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:20,padding:"4px 14px",fontSize:12,color:"#F59E0B",fontWeight:700,marginTop:2}}>
+                <div style={{background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:14,padding:"5px 14px",fontSize:13,color:"#F59E0B",fontWeight:700}}>
                   🔥 {dailyStreak.streak} {t("dailyStreak")}
                 </div>
               )}
