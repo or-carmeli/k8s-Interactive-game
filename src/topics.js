@@ -1819,12 +1819,12 @@ export const TOPICS = [
           {
             q: "What is a headless Service?",
             options: [
-              "A Service without a selector that allows manual management of the Endpoints object",
               "A Service with clusterIP: None — returns Pod IPs directly instead of a single load-balanced IP",
+              "A regular Service with ClusterIP that provides internal load balancing",
               "A Service defined without a port that is used for tunneling between Namespaces",
               "A Service that supports only IPv6 and rejects IPv4 connections",
             ],
-            answer: 1,
+            answer: 0,
             explanation:
               "A headless Service is created by setting clusterIP: None. Unlike a normal Service, it has no shared virtual IP. Instead, DNS returns the individual IP addresses of each Pod directly. This is mainly used with StatefulSets — workloads like databases (e.g., MySQL, Cassandra) where each Pod has its own identity and needs to be addressable individually, rather than through a shared load-balanced IP.",
           },

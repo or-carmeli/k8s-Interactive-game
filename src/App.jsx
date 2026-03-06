@@ -2309,10 +2309,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           if(r.wrongIndices&&r.wrongIndices.length>0){
             const rawQs=lang==="en"?topic.levels[lvl].questionsEn:topic.levels[lvl].questions;
             r.wrongIndices.forEach(idx=>{const q=rawQs?.[idx];if(q) wrongItems.push({topic,level:lvl,q});});
-          } else if(!r.wrongIndices&&r.correct<r.total&&!r.retryComplete){
+          } else if((!r.wrongIndices||(Array.isArray(r.wrongIndices)&&r.wrongIndices.length===0&&!r.retryComplete))&&r.correct<r.total){
             wrongItems.push({topic,level:lvl,legacy:true,correct:r.correct,total:r.total});
           }
         }));
+        const anyTopicCompleted=TOPICS.some(topic=>(['easy','medium','hard']).some(lvl=>completedTopics[`${topic.id}_${lvl}`]));
         return (
           <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
             <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
@@ -2320,6 +2321,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </button>
             <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("mistakesBtn")}</h2>
             <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>{t("mistakesHint")}</p>
+            {!anyTopicCompleted&&<div style={{background:"rgba(0,212,255,0.06)",border:"1px solid rgba(0,212,255,0.2)",borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:13,color:"#94a3b8",direction:dir}}>
+              {lang==="en"?"💡 Mistakes are only tracked for individual topic quizzes (Easy / Medium / Hard). Mixed Quiz and Daily Challenge are not tracked here.":"💡 טעויות נשמרות רק בחידוני נושא רגילים (קל / בינוני / קשה). חידון מיקס ואתגר יומי לא נשמרים כאן."}
+            </div>}
             {wrongItems.length===0
               ? <div style={{textAlign:"center",padding:"40px 0",color:"#10B981",fontSize:16,fontWeight:700}}>{t("mistakesEmpty")}</div>
               : wrongItems.map(({topic,level,q,legacy,correct,total},i)=>
