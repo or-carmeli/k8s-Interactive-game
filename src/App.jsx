@@ -3082,7 +3082,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         return(
           <div style={{maxWidth:480,margin:"30px auto",padding:"0 18px",textAlign:"center",animation:"fadeIn 0.5s ease",direction:dir}}>
             <div style={{fontSize:56,marginBottom:10}}>{perfect?"🏆":goodRun?"🎯":"💪"}</div>
-            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 6px",color:"#EF4444"}}>{t("incidentResolved")}</h2>
+            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 6px",color:"#22C55E"}}>{t("incidentResolved")}</h2>
             <p style={{color:"#64748b",fontSize:13,margin:"0 0 20px"}}>{lang==="he"?selectedIncident.titleHe:selectedIncident.title}</p>
 
             {/* Stats grid */}
