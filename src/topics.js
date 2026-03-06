@@ -1750,13 +1750,13 @@ export const TOPICS = [
             q: "Why do we need a Service?",
             options: [
               "To reduce cloud costs by sharing one IP address across multiple Pods in the cluster",
-              "Pod IP changes, Service gives a stable IP",
+              "A Pod's IP address changes every time it restarts; a Service provides a stable IP that always routes to healthy Pods",
               "To encrypt traffic between Pods running in different Namespaces",
               "To back up Pod configuration before the Pod is deleted",
             ],
             answer: 1,
             explanation:
-              "When a Pod dies and is recreated it gets a new IP. A Service provides a permanent address.",
+              "A Pod is the smallest unit running your application in Kubernetes. Every time a Pod restarts, it gets a brand-new IP address — so you can't reliably connect to it directly. A Service provides a permanent, stable IP address (called ClusterIP) that never changes. Kubernetes automatically routes traffic from the Service to whichever Pods are currently healthy and running.",
           },
           {
             q: "Which Service type is for cloud external access?",
@@ -1768,7 +1768,7 @@ export const TOPICS = [
             ],
             answer: 2,
             explanation:
-              "LoadBalancer creates a Load Balancer in the cloud and assigns an external IP.",
+              "A LoadBalancer Service asks your cloud provider (AWS, GCP, Azure) to automatically create a managed load balancer with a public IP address. Traffic from the internet hits that IP, and the cloud load balancer forwards it into your cluster. This is the standard production approach for external access, though each LoadBalancer Service provisions one cloud load balancer (which incurs additional cost).",
           },
           {
             q: "What is a ClusterIP Service?",
@@ -2227,7 +2227,7 @@ export const TOPICS = [
             q: "What is the DNS name of service 'api' in namespace 'prod'?",
             options: ["api.prod", "api.prod.svc", "api.prod.svc.cluster.local", "prod.api.local"],
             answer: 2,
-            explanation: "The full FQDN is service.namespace.svc.cluster.local. CoreDNS resolves this to the Service's ClusterIP. Within the same Namespace you can use the short name (api.prod) — CoreDNS automatically appends the suffix.",
+            explanation: "The full FQDN is service.namespace.svc.cluster.local. CoreDNS resolves this to the Service's ClusterIP. Within the same Namespace ('prod') you can use just the short name 'api' — CoreDNS automatically appends the namespace and domain suffix. From a different Namespace, use at least 'api.prod' or the full FQDN 'api.prod.svc.cluster.local'.",
           },
           {
             q: "What is the advantage of Ingress over LoadBalancer?",

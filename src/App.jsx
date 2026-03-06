@@ -323,8 +323,8 @@ const TRANSLATIONS = {
 };
 
 const year = new Date().getFullYear();
-const TIMER_DURATIONS    = { easy: 30, medium: 45, hard: 60, mixed: 45, daily: 45 };
-const INTERVIEW_DURATIONS = { easy: 20, medium: 30, hard: 40, mixed: 25, daily: 25 };
+const TIMER_DURATIONS    = { easy: 45, medium: 60, hard: 75, mixed: 60, daily: 60 };
+const INTERVIEW_DURATIONS = { easy: 30, medium: 45, hard: 55, mixed: 35, daily: 35 };
 
 function Confetti() {
   const colors = ["#00D4FF","#A855F7","#FF6B35","#10B981","#F59E0B","#EC4899"];
