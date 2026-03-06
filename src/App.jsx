@@ -2333,10 +2333,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {(()=>{
                 const lvlLabel = lang==="en" ? LEVEL_CONFIG[selectedLevel].labelEn : LEVEL_CONFIG[selectedLevel].label;
                 const perfect = result?.correct === result?.total;
+                const isDaily = selectedTopic.id === "daily";
+                const dateStr = new Date().toLocaleDateString(lang==="en"?"en-US":"he-IL",{month:"short",day:"numeric"});
                 const msg = lang==="en"
-                  ? `🎯 I just scored ${result?.correct}/${result?.total} on the ${lvlLabel} Kubernetes quiz on KubeQuest!${perfect?" 🌟 Perfect score!":""}\nThink you can beat it? 💪\n\n#Kubernetes #DevOps #CloudNative #K8s\nhttps://kubequest.online`
-                  : `🎯 קיבלתי ${result?.correct}/${result?.total} בחידון Kubernetes ברמת ${lvlLabel} ב-KubeQuest!${perfect?" 🌟 ניקוד מושלם!":""}\nתוכלו לנצח? 💪\n\n#Kubernetes #DevOps #CloudNative #K8s\nhttps://kubequest.online`;
-                const handleShare = () => {
+                  ? `🎯 I scored ${result?.correct}/${result?.total} on${isDaily?` the KubeQuest Daily Challenge (${dateStr})!`:` the ${lvlLabel} Kubernetes quiz on KubeQuest!`}${perfect?" 🌟 Perfect score!":""}\nThink you can beat it? 💪\n\nhttps://kubequest.online\n#Kubernetes #DevOps #CloudNative #K8s`
+                  : `🎯 קיבלתי ${result?.correct}/${result?.total}${isDaily?` באתגר היומי של KubeQuest (${dateStr})!`:` בחידון Kubernetes ברמת ${lvlLabel} ב-KubeQuest!`}${perfect?" 🌟 ניקוד מושלם!":""}\nתוכלו לנצח? 💪\n\nhttps://kubequest.online\n#Kubernetes #DevOps #CloudNative #K8s`;
+                const handleShare = async () => {
+                  // Mobile: use native share sheet (works with LinkedIn, WhatsApp, etc.)
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ title: "KubeQuest", text: msg, url: "https://kubequest.online" });
+                      return;
+                    } catch(e) {
+                      if (e.name === "AbortError") return; // user dismissed — do nothing
+                      // fall through to desktop fallback
+                    }
+                  }
+                  // Desktop fallback: copy text + open LinkedIn
                   navigator.clipboard?.writeText(msg).catch(()=>{});
                   window.open("https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fkubequest.online","_blank","noopener,noreferrer,width=620,height=640");
                   setShareCopied(true);
