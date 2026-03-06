@@ -1810,7 +1810,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
       {saveError&&<div role="alert" aria-live="assertive" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
 
-      {resumeData&&(
+      {resumeData&&!(screen==="topic"&&topicScreen==="quiz")&&screen!=="incident"&&(
         <div onClick={()=>setResumeData(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
           <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"#0f172a",border:"1px solid rgba(0,212,255,0.25)",borderRadius:18,padding:"24px 22px",width:"min(380px,100%)",animation:"fadeIn 0.3s ease",direction:dir,position:"relative"}}>
             <button onClick={()=>setResumeData(null)} aria-label={lang==="en"?"Close":"סגור"} style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
@@ -2955,10 +2955,10 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     return (
                       <div style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:12,padding:"16px 18px",marginBottom:16,direction:"rtl",animation:"fadeIn 0.3s ease"}}>
                         <div style={{fontSize:11,fontWeight:700,color:"#A855F7",marginBottom:8,letterSpacing:0.5}}>תשובה אידיאלית</div>
-                        <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14,marginBottom:8,wordBreak:"break-word",overflowWrap:"anywhere"}}>{q.options[q.answer]}</div>
+                        <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,marginBottom:8,wordBreak:"break-word",overflowWrap:"anywhere"}}>{q.options[q.answer]}</div>
                         <div style={{display:"flex",flexDirection:"column",gap:8}}>
                           {q.explanation.split(/\. /).map((s,idx,arr)=>(
-                            <div key={idx} style={{color:"#94a3b8",fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere"}}>{s+(idx<arr.length-1?".":"")}</div>
+                            <div key={idx} dir="auto" style={{color:"#94a3b8",fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere"}}>{s+(idx<arr.length-1?".":"")}</div>
                           ))}
                         </div>
                       </div>
