@@ -2087,48 +2087,40 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* HOME */}
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
-          <div style={{marginBottom:16}}>
-            {/* Header: brand left-aligned, burger is fixed outside <main> on the right */}
-            <div className="home-header-row" style={{display:"flex",alignItems:"center",marginBottom:6,direction:"ltr"}}>
-              {/* Brand: title first, logo to its right */}
-              <div style={{display:"flex",alignItems:"center",gap:+(10/fs).toFixed(1)}}>
-                <h1 className="home-title-text" style={{fontSize:+(24/fs).toFixed(1),fontWeight:900,margin:0,lineHeight:1,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",whiteSpace:"nowrap"}}>KubeQuest</h1>
-                <svg className="home-logo" width={Math.round(46/fs)} height={Math.round(46/fs)} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0,filter:"drop-shadow(0 0 12px rgba(0,212,255,0.4))"}}>
-                  <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
-                  <circle cx="50" cy="50" r="50" fill="url(#hbg)"/>
-                  <circle cx="50" cy="50" r="44" fill="none" stroke="url(#hgr)" strokeWidth="4" opacity="0.9"/>
-                  <g transform="translate(50,50)" stroke="url(#hgr)" strokeWidth="2.8" strokeLinecap="round">
-                    {[0,51.4,102.8,154.2,205.7,257.1,308.5].map((deg,i)=><line key={i} x1="0" y1="-18" x2="0" y2="-34" transform={`rotate(${deg})`}/>)}
-                  </g>
-                  <circle cx="50" cy="50" r="10" fill="none" stroke="url(#hgr)" strokeWidth="3"/>
-                  <circle cx="50" cy="50" r="5" fill="#00D4FF"/>
-                  {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
-                </svg>
+          {/* ── Hero — centered, matches loading screen composition ── */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:14}}>
+            {/* Brand row: logo left, title+subtitle right — same order as loading screen */}
+            <div style={{display:"flex",alignItems:"center",gap:14,direction:"ltr"}}>
+              <svg className="home-logo" width={46} height={46} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0,filter:"drop-shadow(0 0 14px rgba(0,212,255,0.45))"}}>
+                <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
+                <circle cx="50" cy="50" r="50" fill="url(#hbg)"/>
+                <circle cx="50" cy="50" r="44" fill="none" stroke="url(#hgr)" strokeWidth="4" opacity="0.9"/>
+                <g transform="translate(50,50)" stroke="url(#hgr)" strokeWidth="2.8" strokeLinecap="round">
+                  {[0,51.4,102.8,154.2,205.7,257.1,308.5].map((deg,i)=><line key={i} x1="0" y1="-18" x2="0" y2="-34" transform={`rotate(${deg})`}/>)}
+                </g>
+                <circle cx="50" cy="50" r="10" fill="none" stroke="url(#hgr)" strokeWidth="3"/>
+                <circle cx="50" cy="50" r="5" fill="#00D4FF"/>
+                {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
+              </svg>
+              <div style={{textAlign:"left"}}>
+                <h1 className="home-title-text" style={{fontSize:28,fontWeight:900,margin:0,lineHeight:1,letterSpacing:-0.5,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",whiteSpace:"nowrap"}}>KubeQuest</h1>
+                <div style={{fontSize:11,color:"#475569",letterSpacing:0.4,marginTop:3}}>Train Your Kubernetes Skills</div>
               </div>
-              {/* Spacer — keeps content clear of the fixed burger button */}
-              <div style={{width:Math.round(44/fs),flexShrink:0,marginLeft:"auto"}}/>
             </div>
-            {/* Subtitle + separator */}
-            <div style={{paddingBottom:12,borderBottom:"1px solid rgba(255,255,255,0.06)",direction:"ltr"}}>
-              <span style={{fontSize:+(12/fs).toFixed(1),color:"#475569",fontWeight:400,opacity:0.6,letterSpacing:0.3}}>Train Your Kubernetes Skills</span>
-            </div>
-            {/* Welcome section — compact with precise per-element spacing */}
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"12px 16px 0",textAlign:"center",marginBottom:16}}>
-              {/* Greeting — 12px below subtitle (via paddingTop above) */}
-              <div style={{color:"#64748b",fontSize:13,lineHeight:1,direction:dir}}>
-                {t("greeting")}
-              </div>
-              {/* Username — 4px below greeting; always LTR so emoji renders correctly */}
-              <div style={{color:"#e2e8f0",fontSize:18,fontWeight:700,lineHeight:1.2,maxWidth:"90%",wordBreak:"break-word",overflowWrap:"anywhere",marginTop:4}}>
+            {/* Separator */}
+            <div style={{width:"100%",borderBottom:"1px solid rgba(255,255,255,0.06)",margin:"10px 0"}}/>
+            {/* Greeting block */}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <div style={{color:"#64748b",fontSize:13,lineHeight:1,direction:dir}}>{t("greeting")}</div>
+              <div style={{color:"#e2e8f0",fontSize:18,fontWeight:700,lineHeight:1.2,maxWidth:"90%",wordBreak:"break-word",overflowWrap:"anywhere"}}>
                 <span dir="ltr">{displayName}</span>
               </div>
-              {isGuest&&<p style={{color:"#475569",fontSize:11,margin:"6px 0 0"}}>{t("playingAsGuest")}</p>}
-              <p style={{color:"#64748b",fontSize:12,margin:"6px 0 0",maxWidth:"90%",lineHeight:1.4,direction:dir}}>
+              {isGuest&&<p style={{color:"#475569",fontSize:11,margin:"2px 0 0"}}>{t("playingAsGuest")}</p>}
+              <p style={{color:"#64748b",fontSize:12,margin:"2px 0 0",maxWidth:"90%",lineHeight:1.4,direction:dir}}>
                 {isInterviewMode?t("interviewModeHint"):t("tagline")}
               </p>
-              {/* Streak badge — 10px below username block */}
               {dailyStreak.streak > 0 && (
-                <div style={{background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:14,padding:"5px 14px",fontSize:13,color:"#F59E0B",fontWeight:700,marginTop:10}}>
+                <div style={{background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:14,padding:"5px 14px",fontSize:13,color:"#F59E0B",fontWeight:700,marginTop:6}}>
                   🔥 {dailyStreak.streak} {t("dailyStreak")}
                 </div>
               )}
