@@ -1959,7 +1959,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* Dropdown menu — rendered outside <main> so CSS zoom never affects it */}
       {showMenu&&(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:82,[lang==="en"?"left":"right"]:8,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100vh - 110px)"}}>
+        <div style={{position:"fixed",top:82,right:8,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100vh - 110px)"}}>
 
           {/* Language + Gender */}
           <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
@@ -2612,7 +2612,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     </span>}
                   </div>
                 </div>
-                <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:4,transform:lang==="he"?"scaleX(-1)":undefined}}>
+                <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
                   <div style={{height:"100%",borderRadius:4,
                     width:`${((liveIndexRef.current+(submitted&&!isInHistoryMode?1:0))/currentQuestions.length)*100}%`,
                     background:`linear-gradient(90deg,${selectedTopic.color},${selectedTopic.color}88)`,
@@ -3005,7 +3005,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
 
             {/* Progress bar */}
-            <div style={{height:4,background:"rgba(255,255,255,0.06)",borderRadius:4,marginBottom:16,transform:lang==="he"?"scaleX(-1)":undefined}}>
+            <div style={{height:4,background:"rgba(255,255,255,0.06)",borderRadius:4,marginBottom:16,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
               <div style={{height:"100%",borderRadius:4,width:`${progress}%`,background:"linear-gradient(90deg,#EF4444,#F59E0B)",transition:"width 0.4s ease"}}/>
             </div>
 

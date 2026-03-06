@@ -80,7 +80,7 @@ export default function RoadmapView({
             ? t("roadmapAllDone")
             : `${t("roadmapStage")} ${currentStageNum} ${t("roadmapStageOf")} ${topics.length}`}
         </div>
-        <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:4,marginBottom:6,transform:dir==="rtl"?"scaleX(-1)":undefined}}>
+        <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:4,marginBottom:6,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
           <div style={{height:"100%",borderRadius:4,width:`${overallProgress}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",transition:"width 0.5s ease"}}/>
         </div>
         <div style={{fontSize:12,color:"#94a3b8",textAlign:"center"}}>{overallProgress}% {t("roadmapCompletedPct")}</div>
@@ -200,7 +200,7 @@ export default function RoadmapView({
 
                 {/* Progress bar */}
                 {!locked&&(
-                  <div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:10,transform:dir==="rtl"?"scaleX(-1)":undefined}}>
+                  <div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:10,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
                     <div style={{height:"100%",borderRadius:2,width:`${progress}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/>
                   </div>
                 )}
