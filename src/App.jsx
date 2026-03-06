@@ -1508,7 +1508,7 @@ export default function K8sQuestApp() {
       if (terminalPat.test(line)) {
         return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre-wrap"}}>{line}</div>;
       }
-      return <div key={i} style={{color:"#e2e8f0",fontSize:14,lineHeight:1.75,marginBottom:2}}>{line}</div>;
+      return <div key={i} style={{color:"#e2e8f0",fontSize:14,lineHeight:1.75,marginBottom:2,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{line}</div>;
     });
   };
 
@@ -2328,7 +2328,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <span style={{fontSize:18}}>⏸️</span>
                 <div>
-                  <div style={{color:"#e2e8f0",fontWeight:700,fontSize:13}}>{t("incidentResumeBanner")}: {incidentResume.incident.title}</div>
+                  <div style={{color:"#e2e8f0",fontWeight:700,fontSize:13}}>{t("incidentResumeBanner")}: {lang==="he"?incidentResume.incident.titleHe:incidentResume.incident.title}</div>
                   <div style={{color:"#64748b",fontSize:12}}>{t("incidentStep")} {incidentResume.stepIndex+1}/{incidentResume.incident.steps.length} · ⭐ {incidentResume.score} · ⏱ {formatIncidentTime(incidentResume.elapsed)}</div>
                 </div>
               </div>
@@ -2372,12 +2372,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const maxScore = totalSteps * 10;
         const progress = ((incidentStepIndex + (incidentSubmitted ? 1 : 0)) / totalSteps) * 100;
         return(
-          <div style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease",direction:"ltr"}}>
+          <div style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease",direction:dir}}>
             {/* Top bar */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8,direction:"ltr"}}>
               <button onClick={()=>{saveIncidentProgress(selectedIncident,incidentStepIndex,incidentScore,incidentMistakes,incidentElapsed,incidentHistory);setScreen("incidentList");}}
                 style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13}}>
-                ← {lang==="he"?"חזרה":"Back"}
+                {dir==="rtl"?"→":"←"} {lang==="he"?"חזרה":"Back"}
               </button>
               <div style={{display:"flex",gap:14,alignItems:"center",fontSize:13,fontWeight:700}}>
                 <span style={{color:"#94a3b8"}}>{t("incidentStep")} <span style={{color:"#e2e8f0"}}>{incidentStepIndex+1}/{totalSteps}</span></span>
@@ -2418,11 +2418,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 return(
                   <button key={i} onClick={()=>{ if (!incidentSubmitted) setIncidentAnswer(i); }}
                     aria-pressed={!incidentSubmitted ? i===incidentAnswer : undefined}
-                    style={{width:"100%",textAlign:"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s"}}>
-                    <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1}}>
+                    style={{width:"100%",textAlign:dir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s",direction:dir}}>
+                    <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1,direction:"ltr"}}>
                       {["A","B","C","D"][i]}
                     </span>
-                    <span style={{flex:1,direction:"ltr"}}>{opt}</span>
+                    <span style={{flex:1,direction:dir}}>{opt}</span>
                     {incidentSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✓</span>}
                     {incidentSubmitted&&isChosen&&!isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✗</span>}
                   </button>
