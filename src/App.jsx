@@ -2077,7 +2077,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             background:showMenu?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",
             border:`1px solid ${showMenu?"rgba(0,212,255,0.3)":"rgba(255,255,255,0.1)"}`,
             borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:5,
-            zIndex:201,transition:"all 0.2s"}}>
+            zIndex:201,transition:"all 0.2s",
+            boxShadow:showMenu?"0 0 12px rgba(0,212,255,0.5), 0 0 24px rgba(0,212,255,0.2)":"0 0 8px rgba(0,212,255,0.15)"}}>
           {[0,1,2].map(i=><span key={i} aria-hidden="true" style={{display:"block",width:18,height:2,borderRadius:2,background:showMenu?"#00D4FF":"#94a3b8",transition:"background 0.2s"}}/>)}
         </button>
       )}
