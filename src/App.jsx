@@ -2305,19 +2305,24 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               ? <div style={{textAlign:"center",padding:"40px 0",color:"#10B981",fontSize:16,fontWeight:700}}>{t("mistakesEmpty")}</div>
               : wrongItems.map(({topic,level,q,legacy,correct,total},i)=>
                   legacy?(
-                    <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(239,68,68,0.15)",borderRadius:12,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:14}}>
-                      <span style={{fontSize:26,flexShrink:0}}>{topic.icon}</span>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{topic.name}</div>
-                        <div style={{color:"#64748b",fontSize:12,marginTop:2,display:"flex",alignItems:"center",gap:8,direction:"ltr"}}>
-                          <span style={{color:LEVEL_CONFIG[level]?.color,fontWeight:600}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
-                          <span>·</span>
-                          <span style={{color:"#EF4444"}}>{correct}/{total} {lang==="en"?"correct":"נכון"}</span>
+                    <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(239,68,68,0.15)",borderRadius:12,padding:"14px 16px",marginBottom:10}}>
+                      <div style={{display:"flex",alignItems:"center",gap:14}}>
+                        <span style={{fontSize:26,flexShrink:0}}>{topic.icon}</span>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{topic.name}</div>
+                          <div style={{color:"#64748b",fontSize:12,marginTop:2,display:"flex",alignItems:"center",gap:8,direction:"ltr"}}>
+                            <span style={{color:LEVEL_CONFIG[level]?.color,fontWeight:600}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
+                            <span>·</span>
+                            <span style={{color:"#EF4444"}}>{correct}/{total} {lang==="en"?"correct":"נכון"}</span>
+                          </div>
                         </div>
+                        <button onClick={()=>startTopic(topic,level)} style={{flexShrink:0,padding:"8px 14px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                          {lang==="en"?"Retry":"נסה שוב"}
+                        </button>
                       </div>
-                      <button onClick={()=>startTopic(topic,level)} style={{flexShrink:0,padding:"8px 14px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                        {lang==="en"?"Retry":"נסה שוב"}
-                      </button>
+                      <div style={{color:"#64748b",fontSize:11,marginTop:8,direction:dir}}>
+                        {lang==="en"?"Retake this quiz to track your specific wrong questions":"שחק שוב כדי לראות את השאלות הספציפיות שטעית בהן"}
+                      </div>
                     </div>
                   ):(
                     <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(239,68,68,0.12)",borderRadius:12,padding:"14px 16px",marginBottom:10}}>
