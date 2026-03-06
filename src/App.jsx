@@ -1654,6 +1654,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .home-screen{padding:12px 14px!important}
 .home-header{flex-direction:column!important;gap:10px!important;min-height:auto!important}
 .home-controls{position:static!important;transform:none!important;margin-bottom:4px!important}
+.roadmap-row{gap:8px!important}
+.roadmap-node-col{width:28px!important}
+.roadmap-node-circle{width:28px!important;height:28px!important;font-size:11px!important}
+.roadmap-card{padding:10px 12px!important}
+.roadmap-icon{width:26px!important;height:26px!important;font-size:14px!important}
+.roadmap-title{font-size:12px!important}
+.roadmap-pct{min-width:30px!important}
+.roadmap-card-header{gap:6px!important}
 }`}</style>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}

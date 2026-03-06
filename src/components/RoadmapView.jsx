@@ -184,7 +184,7 @@ export default function RoadmapView({
                       <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{topic.name}</span>
                       {completed&&<span style={{flexShrink:0}}>✅</span>}
                     </div>
-                    <div className="roadmap-subtitle" style={{color:"#64748b",fontSize:11,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    <div className="roadmap-subtitle" style={{color:"#64748b",fontSize:11,marginTop:1,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",lineHeight:1.4}}>
                       {STAGE_SUBTITLES[topic.id]}
                     </div>
                   </div>
