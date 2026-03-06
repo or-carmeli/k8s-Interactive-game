@@ -145,6 +145,12 @@ src/
 
 ---
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full release history.
+
+---
+
 ## Contributing
 
 Contributions are welcome — new questions, bug fixes, UI improvements.
