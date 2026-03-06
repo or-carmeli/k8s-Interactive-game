@@ -1662,6 +1662,45 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .roadmap-title{font-size:12px!important}
 .roadmap-pct{min-width:30px!important}
 .roadmap-card-header{gap:6px!important}
+}
+@media(max-width:430px){
+.home-logo{width:36px!important;height:36px!important}
+.home-title-text{font-size:25px!important}
+.home-header-row{padding-inline-end:52px!important}
+.guest-banner{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+.guest-banner-btn{width:100%!important;text-align:center!important}
+.action-card{padding:13px 14px!important}
+.action-card-inner{gap:8px!important;min-width:0}
+.action-emoji{font-size:22px!important;flex-shrink:0}
+.action-text{min-width:0}
+.topic-card-section{padding:13px 14px!important}
+.stats-grid{gap:7px!important}
+.stats-cell{padding:11px 6px!important}
+}
+@media(max-width:390px){
+.home-logo{width:32px!important;height:32px!important}
+.home-title-text{font-size:22px!important}
+.home-screen{padding:10px 10px!important}
+.page-pad{padding:10px 12px!important}
+.topic-card-section{padding:11px 12px!important}
+.stats-cell{padding:10px 4px!important;font-size:11px}
+.stats-icon{font-size:15px!important}
+.stats-value{font-size:17px!important}
+.action-card{padding:12px 12px!important}
+.action-emoji{font-size:20px!important}
+.roadmap-card{padding:8px 10px!important}
+.roadmap-node-col{width:24px!important}
+.roadmap-node-circle{width:24px!important;height:24px!important;font-size:10px!important}
+}
+@media(max-width:360px){
+.home-logo{width:28px!important;height:28px!important}
+.home-title-text{font-size:19px!important}
+.home-screen{padding:8px 8px!important}
+.page-pad{padding:8px 10px!important}
+.topic-card-section{padding:10px 10px!important}
+.stats-grid{gap:5px!important}
+.stats-cell{padding:9px 3px!important}
+.action-card{padding:11px 10px!important}
 }`}</style>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
@@ -1805,9 +1844,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
           <div style={{marginBottom:24}}>
             {/* Row 1: Title centered + burger button */}
-            <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,minHeight:48,direction:"ltr"}}>
-              <h1 style={{fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:10,zIndex:1,filter:"drop-shadow(0 0 18px rgba(0,212,255,0.35))"}}>
-                <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
+            <div className="home-header-row" style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,minHeight:48,direction:"ltr"}}>
+              <h1 style={{fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",gap:10,zIndex:1,filter:"drop-shadow(0 0 18px rgba(0,212,255,0.35))",minWidth:0}}>
+                <svg className="home-logo" width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
                   <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
                   <circle cx="50" cy="50" r="50" fill="url(#hbg)"/>
                   <circle cx="50" cy="50" r="44" fill="none" stroke="url(#hgr)" strokeWidth="4" opacity="0.9"/>
@@ -1818,7 +1857,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <circle cx="50" cy="50" r="5" fill="#00D4FF"/>
                   {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
                 </svg>
-                <span style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite"}}>KubeQuest</span>
+                <span className="home-title-text" style={{background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",whiteSpace:"nowrap"}}>KubeQuest</span>
               </h1>
               {/* Burger button */}
               <button onClick={()=>setShowMenu(p=>!p)}
@@ -1843,7 +1882,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             )}
           </div>
-          {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13}}>{t("guestBanner")}</span><button onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>{t("signupNow")}</button></div>}
+          {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{t("signupNow")}</button></div>}
           <div style={{display:"flex",gap:6,marginBottom:16,background:"rgba(255,255,255,0.03)",borderRadius:10,padding:3,direction:"ltr"}}>
             {[{key:"categories",label:t("tabTopics")},{key:"roadmap",label:t("tabRoadmap")}].map(tab=>(
               <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"#475569",transition:"all 0.2s"}}>{tab.label}</button>
@@ -1857,9 +1896,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {label:t("streak"),value:stats.current_streak,icon:"🔥",color:"#FF6B35"},
               {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF"},
             ].map((s,i)=>(
-              <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
-                <div style={{fontSize:18}}>{s.icon}</div>
-                <div style={{fontSize:20,fontWeight:800,color:s.color}}>{s.value}</div>
+              <div key={i} className="stats-cell" style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+                <div className="stats-icon" style={{fontSize:18}}>{s.icon}</div>
+                <div className="stats-value" style={{fontSize:20,fontWeight:800,color:s.color}}>{s.value}</div>
                 <div style={{fontSize:12,color:"#475569"}}>{s.label}</div>
               </div>
             ))}
@@ -1868,50 +1907,50 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const el = document.getElementById(`topic-card-${id}`);
             if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
           }}/>
-          <button onClick={startDailyChallenge} style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={startDailyChallenge} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <span style={{fontSize:28}}>🔥</span>
-              <div style={{textAlign:"start"}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
+              <span className="action-emoji" style={{fontSize:28,flexShrink:0}}>🔥</span>
+              <div className="action-text" style={{textAlign:"start",minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{color:"#F59E0B",fontWeight:800,fontSize:15}}>{t("dailyChallengeTitle")}</span>
-                  <span style={{background:"rgba(245,158,11,0.2)",color:"#F59E0B",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>{t("dailyChallengeNew")}</span>
+                  <span style={{background:"rgba(245,158,11,0.2)",color:"#F59E0B",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5,flexShrink:0}}>{t("dailyChallengeNew")}</span>
                 </div>
                 <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("dailyChallengeDesc")}</div>
               </div>
             </div>
-            <span style={{color:"#F59E0B",fontSize:20}}>{dir==="rtl"?"←":"→"}</span>
+            <span style={{color:"#F59E0B",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
           </button>
-          <button onClick={startMixedQuiz} style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={startMixedQuiz} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{textAlign:"start"}}>
+            <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
+              <div className="action-text" style={{textAlign:"start",minWidth:0}}>
                 <div style={{color:"#A855F7",fontWeight:800,fontSize:15}}>{t("mixedQuizBtn")}</div>
                 <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("mixedQuizDesc")}</div>
               </div>
             </div>
-            <span style={{color:"#A855F7",fontSize:20}}>{dir==="rtl"?"←":"→"}</span>
+            <span style={{color:"#A855F7",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
           </button>
 
           {/* Incident Mode entry */}
-          <button onClick={()=>setScreen("incidentList")}
+          <button onClick={()=>setScreen("incidentList")} className="action-card"
             style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.05))",border:"1px solid rgba(239,68,68,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <span style={{fontSize:28}}>🚨</span>
-              <div style={{textAlign:"start"}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
+              <span className="action-emoji" style={{fontSize:28,flexShrink:0}}>🚨</span>
+              <div className="action-text" style={{textAlign:"start",minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{color:"#EF4444",fontWeight:800,fontSize:15}}>{t("incidentModeBtn")}</span>
-                  <span style={{background:"rgba(239,68,68,0.15)",color:"#EF4444",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5}}>NEW</span>
+                  <span style={{background:"rgba(239,68,68,0.15)",color:"#EF4444",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5,flexShrink:0}}>NEW</span>
                 </div>
                 <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("incidentModeDesc")}</div>
               </div>
             </div>
-            <span style={{color:"#EF4444",fontSize:20}}>{dir==="rtl"?"←":"→"}</span>
+            <span style={{color:"#EF4444",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
           </button>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {TOPICS.map(topic=>(
-              <section key={topic.id} id={`topic-card-${topic.id}`} aria-label={topic.name} className={highlightTopic===topic.id?"pulseHighlight":undefined} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px"}}>
+              <section key={topic.id} id={`topic-card-${topic.id}`} aria-label={topic.name} className={`topic-card-section${highlightTopic===topic.id?" pulseHighlight":""}`} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
                   <div aria-hidden="true" style={{fontSize:24,width:44,height:44,borderRadius:10,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>{topic.icon}</div>
                   <div style={{flex:1}}>
