@@ -204,6 +204,10 @@ const TRANSLATIONS = {
     removeBookmark: "הסרי", removeBookmark_m: "הסר",
     bookmark: "☆ שמרי", bookmarkActive: "★ שמורה",
     bookmark_m: "☆ שמור", bookmarkActive_m: "★ שמור",
+    searchBtn: "🔎 חיפוש שאלה", searchPlaceholder: "חפשי לפי מילת מפתח...", searchNoResults: "לא נמצאו תוצאות",
+    mistakesBtn: "❌ טעויות שלי", mistakesEmpty: "אין טעויות! כל הכבוד 🎉", mistakesHint: "נושאים שלא הושלמו ב-100%",
+    guideBtn: "📘 מדריך Kubernetes", aboutBtn: "ℹ️ אודות האפליקציה",
+    shareBtn: "📤 שתפי עם חבר", shareBtn_m: "📤 שתף עם חבר",
     dailyStreak: "ימים ברצף",
   },
   en: {
@@ -310,6 +314,10 @@ const TRANSLATIONS = {
     startSavedQuiz: "▶ Practice Saved Questions",
     removeBookmark: "Remove",
     bookmark: "☆ Save", bookmarkActive: "★ Saved",
+    searchBtn: "🔎 Search Question", searchPlaceholder: "Search by keyword...", searchNoResults: "No results found",
+    mistakesBtn: "❌ My Mistakes", mistakesEmpty: "No mistakes! Great job 🎉", mistakesHint: "Topics not yet completed at 100%",
+    guideBtn: "📘 Kubernetes Guide", aboutBtn: "ℹ️ About",
+    shareBtn: "📤 Share",
     dailyStreak: "day streak",
   },
 };
@@ -511,6 +519,8 @@ export default function K8sQuestApp() {
   const [topicQuestions, setTopicQuestions]             = useState([]);
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
   const [showMenu, setShowMenu]                         = useState(false);
+  const [searchQuery, setSearchQuery]                   = useState("");
+  const [expandedGuideSection, setExpandedGuideSection] = useState(null);
   const [a11y, setA11y] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("a11y_v1"));
@@ -1948,7 +1958,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* Dropdown menu — rendered outside <main> so CSS zoom never affects it */}
       {showMenu&&(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:62,[lang==="en"?"left":"right"]:8,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:220,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100vh - 90px)"}}>
+        <div style={{position:"fixed",top:62,[lang==="en"?"left":"right"]:8,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100vh - 90px)"}}>
+
           {/* Language + Gender */}
           <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
             {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
@@ -1956,43 +1967,53 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>
 
           {/* ── 1. Practice ── */}
-          <div style={{padding:"8px 16px 3px"}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1}}>{lang==="en"?"PRACTICE":"תרגול"}</span>
+          <div style={{padding:"10px 16px 4px"}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PRACTICE":"תרגול"}</span>
           </div>
-          <button onClick={()=>{startMixedQuiz();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>{startMixedQuiz();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("mixedQuizBtn")}
           </button>
-          <button onClick={()=>{startDailyChallenge();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>{startDailyChallenge();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🔥 {t("dailyChallengeTitle")}
           </button>
-          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
-            {t("weakAreaTitle")}
+          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400,direction:dir}}>
+            {t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginInlineStart:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}
           </button>
-          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400}}>
-            {t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginLeft:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}
+          <button onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("mistakesBtn")}
+          </button>
+          <button onClick={()=>{setSearchQuery("");setScreen("search");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("searchBtn")}
           </button>
 
           {/* ── 2. Progress ── */}
-          <div style={{padding:"8px 16px 3px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:2}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
           </div>
-          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("leaderboardBtn")}
           </button>
-          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,direction:dir}}>
             <span>{t("savedQuestions")}</span>
             {bookmarks.length>0&&<span style={{background:"rgba(168,85,247,0.2)",color:"#A855F7",fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:10}}>{bookmarks.length}</span>}
           </button>
-          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             ⭐ {lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
           </button>
 
-          {/* ── 3. Settings ── */}
-          <div style={{padding:"8px 16px 3px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:2}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1}}>{lang==="en"?"SETTINGS":"הגדרות"}</span>
+          {/* ── 3. Learning ── */}
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"LEARNING":"למידה"}</span>
+          </div>
+          <button onClick={()=>{setExpandedGuideSection(null);setScreen("guide");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("guideBtn")}
+          </button>
+
+          {/* ── 4. Settings ── */}
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"SETTINGS":"הגדרות"}</span>
           </div>
           <div style={{padding:"4px 14px 10px"}}>
-            {/* Font size buttons removed — fixed at 1.1× zoom */}
             <div style={{display:"flex",gap:4}}>
               {(["reduceMotion","highContrast"]).map((key,i)=>(
                 <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
@@ -2019,12 +2040,29 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             )}
           </div>
-          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none"}}>
+          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
             <span>✉️</span>{lang==="en"?"Contact":"צור קשר"}
           </a>
 
-          {/* ── 4. System ── */}
-          <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:2,paddingTop:4}}>
+          {/* ── 5. App ── */}
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APP":"אפליקציה"}</span>
+          </div>
+          <button onClick={()=>{setScreen("about");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("aboutBtn")}
+          </button>
+          <button onClick={()=>{
+            const url="https://kubequest.online";
+            const text=lang==="en"?"Training Kubernetes with KubeQuest – give it a try! 🚀":"מתאמן/ת על Kubernetes עם KubeQuest – שווה לנסות! 🚀";
+            if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
+            else{navigator.clipboard?.writeText(url);}
+            setShowMenu(false);
+          }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("shareBtn")}
+          </button>
+
+          {/* ── System ── */}
+          <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4,paddingTop:4}}>
             <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#EF4444",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
               <span aria-hidden="true">🗑</span>{t("resetProgress")}
             </button>
@@ -2210,6 +2248,194 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </>)}
           {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={startTopic} startMixedQuiz={startMixedQuiz} lang={lang} t={t} dir={dir}/>}
           <Footer lang={lang}/>
+        </div>
+      )}
+
+      {/* ── SEARCH ── */}
+      {screen==="search"&&(
+        <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
+          <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
+            {dir==="rtl"?"→ חזרה":"← Back"}
+          </button>
+          <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:16}}>{t("searchBtn")}</h2>
+          <input type="search" autoFocus value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
+            placeholder={t("searchPlaceholder")} dir={dir}
+            style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,color:"#e2e8f0",fontSize:14,marginBottom:20,outline:"none",fontFamily:"inherit"}}
+          />
+          {searchQuery.trim().length>=2&&(()=>{
+            const q=searchQuery.toLowerCase();
+            const results=[];
+            TOPICS.forEach(topic=>(['easy','medium','hard']).forEach(lvl=>{
+              (topic.levels?.[lvl]?.questions||[]).forEach(question=>{
+                const text=lang==="en"?(question.qEn||question.q):question.q;
+                if(text.toLowerCase().includes(q)) results.push({topic,level:lvl,question});
+              });
+            }));
+            const capped=results.slice(0,25);
+            if(capped.length===0) return <div style={{color:"#475569",fontSize:14,textAlign:"center",padding:"30px 0"}}>{t("searchNoResults")}</div>;
+            return (<>
+              <div style={{color:"#64748b",fontSize:12,marginBottom:12}}>{capped.length} {lang==="en"?"results":"תוצאות"}</div>
+              {capped.map(({topic,level,question},i)=>(
+                <div key={i} style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${topic.color}22`,borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,direction:"ltr"}}>
+                    <span style={{fontSize:16}}>{topic.icon}</span>
+                    <span style={{color:topic.color,fontSize:12,fontWeight:700}}>{topic.name}</span>
+                    <span style={{marginLeft:"auto",background:`${LEVEL_CONFIG[level]?.color}22`,color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
+                  </div>
+                  <div dir={dir} style={{color:"#cbd5e1",fontSize:13,lineHeight:1.5,marginBottom:10}}>{lang==="en"?(question.qEn||question.q):question.q}</div>
+                  <button onClick={()=>startTopic(topic,level)} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                    {lang==="en"?"Go to Topic →":"עבור לנושא →"}
+                  </button>
+                </div>
+              ))}
+            </>);
+          })()}
+        </div>
+      )}
+
+      {/* ── MISTAKES ── */}
+      {screen==="mistakes"&&(()=>{
+        const items=[];
+        TOPICS.forEach(topic=>(['easy','medium','hard']).forEach(lvl=>{
+          const r=completedTopics[`${topic.id}_${lvl}`];
+          if(r&&r.correct<r.total&&!r.retryComplete) items.push({topic,level:lvl,correct:r.correct,total:r.total});
+        }));
+        return (
+          <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
+            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
+              {dir==="rtl"?"→ חזרה":"← Back"}
+            </button>
+            <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("mistakesBtn")}</h2>
+            <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>{t("mistakesHint")}</p>
+            {items.length===0
+              ? <div style={{textAlign:"center",padding:"40px 0",color:"#10B981",fontSize:16,fontWeight:700}}>{t("mistakesEmpty")}</div>
+              : items.map(({topic,level,correct,total},i)=>(
+                  <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(239,68,68,0.15)",borderRadius:12,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:14}}>
+                    <span style={{fontSize:26,flexShrink:0}}>{topic.icon}</span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{topic.name}</div>
+                      <div style={{color:"#64748b",fontSize:12,marginTop:2,display:"flex",alignItems:"center",gap:8,direction:"ltr"}}>
+                        <span style={{color:LEVEL_CONFIG[level]?.color,fontWeight:600}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
+                        <span>·</span>
+                        <span style={{color:"#EF4444"}}>{correct}/{total} {lang==="en"?"correct":"נכון"}</span>
+                      </div>
+                    </div>
+                    <button onClick={()=>startTopic(topic,level)} style={{flexShrink:0,padding:"8px 14px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                      {lang==="en"?"Retry":"נסה שוב"}
+                    </button>
+                  </div>
+                ))
+            }
+          </div>
+        );
+      })()}
+
+      {/* ── GUIDE ── */}
+      {screen==="guide"&&(()=>{
+        const GUIDE=[
+          {id:"pod",icon:"🔄",title:lang==="en"?"Pod Lifecycle":"מחזור חיי Pod",items:[
+            {k:"Pending",v:lang==="en"?"Waiting to be scheduled onto a node":"ממתין לתזמון על Node"},
+            {k:"Running",v:lang==="en"?"At least one container is running":"לפחות קונטיינר אחד רץ"},
+            {k:"Succeeded",v:lang==="en"?"All containers exited with code 0":"כל הקונטיינרים סיימו בקוד 0"},
+            {k:"Failed",v:lang==="en"?"At least one container exited non-zero":"לפחות קונטיינר אחד יצא עם שגיאה"},
+            {k:"Unknown",v:lang==="en"?"Node cannot report Pod state":"ה-Node לא יכול לדווח על מצב ה-Pod"},
+          ],code:null},
+          {id:"services",icon:"🌐",title:lang==="en"?"Service Types":"סוגי Service",items:[
+            {k:"ClusterIP",v:lang==="en"?"Internal-only access (default)":"גישה פנימית בלבד (ברירת מחדל)"},
+            {k:"NodePort",v:lang==="en"?"Exposes on node IP, ports 30000–32767":"חושף על ה-Node, פורטים 30000–32767"},
+            {k:"LoadBalancer",v:lang==="en"?"External LB via cloud provider":"LB חיצוני דרך ספק ענן"},
+            {k:"ExternalName",v:lang==="en"?"Maps to an external DNS name":"מפנה לשם DNS חיצוני"},
+          ],code:null},
+          {id:"dns",icon:"🕸️",title:lang==="en"?"Networking & DNS":"רשת ו-DNS",items:[
+            {k:"FQDN",v:"<svc>.<ns>.svc.cluster.local"},
+            {k:"Short name",v:lang==="en"?"<svc> (same namespace only)":"<svc> (אותו namespace בלבד)"},
+            {k:"NetworkPolicy",v:lang==="en"?"Controls Pod traffic (default: allow all)":"שולט בתעבורה (ברירת מחדל: הכל מותר)"},
+            {k:"CNI",v:lang==="en"?"Plugin that handles pod networking":"פלאגין לניהול רשת ה-Pods"},
+          ],code:null},
+          {id:"kubectl",icon:"⌨️",title:"kubectl Quick Reference",items:[],code:`kubectl get pods -n <namespace>\nkubectl describe pod <name>\nkubectl logs <pod> [-c <container>]\nkubectl exec -it <pod> -- sh\nkubectl apply -f <file.yaml>\nkubectl delete pod <name> [--grace-period=0 --force]\nkubectl port-forward <pod> 8080:80\nkubectl rollout restart deploy/<name>\nkubectl top pod`},
+        ];
+        return (
+          <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
+            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
+              {dir==="rtl"?"→ חזרה":"← Back"}
+            </button>
+            <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("guideBtn")}</h2>
+            <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>{lang==="en"?"Quick reference for key Kubernetes concepts":"סיכום מהיר של מושגי Kubernetes מרכזיים"}</p>
+            {GUIDE.map(section=>(
+              <div key={section.id} style={{marginBottom:10}}>
+                <button onClick={()=>setExpandedGuideSection(s=>s===section.id?null:section.id)}
+                  style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:expandedGuideSection===section.id?"12px 12px 0 0":12,padding:"13px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,color:"#e2e8f0",fontSize:14,fontWeight:700,direction:"ltr"}}>
+                  <span style={{fontSize:18}}>{section.icon}</span>
+                  <span style={{flex:1,textAlign:"left"}}>{section.title}</span>
+                  <span style={{color:"#475569",fontSize:11}}>{expandedGuideSection===section.id?"▲":"▼"}</span>
+                </button>
+                {expandedGuideSection===section.id&&(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderTop:"none",borderRadius:"0 0 12px 12px",padding:"14px 16px"}}>
+                    {section.items.map(({k,v},i)=>(
+                      <div key={i} style={{display:"flex",gap:12,marginBottom:8,alignItems:"baseline"}}>
+                        <span style={{color:"#00D4FF",fontWeight:700,fontSize:12,whiteSpace:"nowrap",fontFamily:"monospace",minWidth:96,flexShrink:0,direction:"ltr"}}>{k}</span>
+                        <span style={{color:"#94a3b8",fontSize:13,direction:dir,lineHeight:1.5}}>{v}</span>
+                      </div>
+                    ))}
+                    {section.code&&(
+                      <pre style={{margin:"8px 0 0",background:"rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"12px 14px",fontFamily:"monospace",fontSize:12,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",direction:"ltr",lineHeight:1.7}}>
+                        {section.code}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── ABOUT ── */}
+      {screen==="about"&&(
+        <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
+          <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>
+            {dir==="rtl"?"→ חזרה":"← Back"}
+          </button>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,marginBottom:28}}>
+            <svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 0 14px rgba(0,212,255,0.4))"}}>
+              <defs><radialGradient id="abg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="agr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
+              <circle cx="50" cy="50" r="50" fill="url(#abg)"/>
+              <circle cx="50" cy="50" r="44" fill="none" stroke="url(#agr)" strokeWidth="4" opacity="0.9"/>
+              <g transform="translate(50,50)" stroke="url(#agr)" strokeWidth="2.8" strokeLinecap="round">
+                {[0,51.4,102.8,154.2,205.7,257.1,308.5].map((deg,i)=><line key={i} x1="0" y1="-18" x2="0" y2="-34" transform={`rotate(${deg})`}/>)}
+              </g>
+              <circle cx="50" cy="50" r="10" fill="none" stroke="url(#agr)" strokeWidth="3"/>
+              <circle cx="50" cy="50" r="5" fill="#00D4FF"/>
+              {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
+            </svg>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:28,fontWeight:900,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",backgroundSize:"300% auto",animation:"shine 9s linear infinite",letterSpacing:-0.5}}>KubeQuest</div>
+              <div style={{color:"#475569",fontSize:12,marginTop:3}}>Train Your Kubernetes Skills</div>
+            </div>
+          </div>
+          {[
+            {icon:"🎯",title:lang==="en"?"What is this?":"מה זה?",body:lang==="en"?"An interactive Kubernetes training app. Practice real interview questions across 5 topic areas at 3 difficulty levels.":"אפליקציית אימון Kubernetes אינטראקטיבית. תרגלי שאלות ראיון אמיתיות ב-5 נושאים ו-3 רמות קושי."},
+            {icon:"🚀",title:lang==="en"?"Goal":"המטרה",body:lang==="en"?"Help developers prepare confidently for Kubernetes interviews and CKA/CKAD exams.":"לעזור למפתחים להתכונן לראיונות Kubernetes ולבחינות CKA/CKAD."},
+            {icon:"👨‍💻",title:lang==="en"?"Built by":"נבנה על ידי",body:<span>{lang==="en"?"Or Carmeli · ":"Or Carmeli · "}<a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>LinkedIn</a></span>},
+          ].map(({icon,title,body},i)=>(
+            <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:12,display:"flex",gap:14,alignItems:"flex-start"}}>
+              <span style={{fontSize:22,flexShrink:0,marginTop:1}}>{icon}</span>
+              <div>
+                <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14,marginBottom:4}}>{title}</div>
+                <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.6,direction:dir}}>{body}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{marginTop:16,textAlign:"center"}}>
+            <button onClick={()=>{
+              const url="https://kubequest.online";
+              const text=lang==="en"?"Training Kubernetes with KubeQuest – give it a try! 🚀":"מתאמן/ת על Kubernetes עם KubeQuest – שווה לנסות! 🚀";
+              if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
+              else{navigator.clipboard?.writeText(url);}
+            }} style={{padding:"10px 24px",background:"linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1))",border:"1px solid rgba(0,212,255,0.25)",borderRadius:10,color:"#00D4FF",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              {t("shareBtn")}
+            </button>
+          </div>
         </div>
       )}
 
