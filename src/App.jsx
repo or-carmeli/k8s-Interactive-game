@@ -501,7 +501,7 @@ export default function K8sQuestApp() {
       if (saved) return saved;
     } catch {}
     return {
-      fontSize: "normal",
+      fontSize: "large",
       reduceMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
       highContrast: window.matchMedia?.("(prefers-contrast: more)").matches ?? false,
       autoRead: false,
@@ -1837,7 +1837,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"11px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,textAlign:"right",display:"flex",alignItems:"center",gap:10}}><span aria-hidden="true">🚪</span>{t("logout")}</button>
         </div>
       </>)}
-      <main id="main-content" style={a11y.fontSize !== "normal" ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`, margin: "0 auto"} : undefined}>
+      <main id="main-content" style={fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : undefined}>
       {/* HOME */}
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
@@ -1851,7 +1851,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </button>
                 : <div style={{width:40,flexShrink:0}}/>}
               {/* Center: title */}
-              <h1 style={{flex:1,fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",justifyContent:"center",gap:10,filter:"drop-shadow(0 0 18px rgba(0,212,255,0.35))",overflow:"hidden",minWidth:0}}>
+              <h1 style={{flex:1,fontSize:32,fontWeight:900,margin:0,display:"flex",alignItems:"center",justifyContent:"center",gap:10,filter:"drop-shadow(0 0 18px rgba(0,212,255,0.35))",minWidth:0}}>
                 <svg className="home-logo" width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
                   <defs><radialGradient id="hbg" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0f172a"/><stop offset="100%" stopColor="#020817"/></radialGradient><linearGradient id="hgr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00D4FF"/><stop offset="50%" stopColor="#A855F7"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
                   <circle cx="50" cy="50" r="50" fill="url(#hbg)"/>
