@@ -2107,7 +2107,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               );
               const burgerBtn=(
                 <button onClick={()=>setShowMenu(p=>!p)} aria-label={lang==="en"?"Open menu":"פתח תפריט"} aria-expanded={showMenu} aria-haspopup="menu"
-                  style={{flexShrink:0,width:54,height:54,
+                  style={{flexShrink:0,width:46,height:46,
                     background:showMenu?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",
                     border:`1px solid ${showMenu?"rgba(0,212,255,0.3)":"rgba(255,255,255,0.1)"}`,
                     borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:5,
