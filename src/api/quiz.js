@@ -121,3 +121,27 @@ export async function checkIncidentAnswer(supabase, stepId, selectedIndex) {
   if (error) throw error;
   return data;
 }
+
+/**
+ * Fetch leaderboard (top N players).
+ * Returns: [{ username, total_score, max_streak }]
+ */
+export async function fetchLeaderboard(supabase, limit = 10) {
+  const { data, error } = await supabase.rpc("get_leaderboard", {
+    p_limit: limit,
+  });
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Fetch the current user's rank.
+ * Returns: { rank: number, score: number }
+ */
+export async function fetchUserRank(supabase, userId) {
+  const { data, error } = await supabase.rpc("get_user_rank", {
+    p_user_id: userId,
+  });
+  if (error) throw error;
+  return data;
+}

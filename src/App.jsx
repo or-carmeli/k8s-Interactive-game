@@ -7,7 +7,7 @@ import { TOPICS } from "./content/topics";
 import { DAILY_QUESTIONS } from "./content/dailyQuestions";
 import { INCIDENTS } from "./content/incidents";
 import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
-import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer } from "./api/quiz";
+import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -949,19 +949,18 @@ export default function K8sQuestApp() {
 
   const loadLeaderboard = async () => {
     if (!supabase) return;
-    const { data } = await supabase.from("user_stats")
-      .select("username,total_score,max_streak,total_answered")
-      .order("total_score", { ascending: false }).limit(10);
-    if (data) setLeaderboard(data);
+    try {
+      const data = await fetchLeaderboard(supabase, 10);
+      if (data) setLeaderboard(data);
+    } catch {}
 
     if (!isGuest && user?.id && user.id !== "guest") {
-      const userScore = stats.total_score;
-      const { count } = await supabase
-        .from("user_stats")
-        .select("user_id", { count: "exact", head: true })
-        .gt("total_score", userScore);
-      const rank = (count ?? 0) + 1;
-      setUserRank(rank > 10 ? { rank, score: userScore } : null);
+      try {
+        const rankData = await fetchUserRank(supabase, user.id);
+        if (rankData) {
+          setUserRank(rankData.rank > 10 ? { rank: rankData.rank, score: rankData.score } : null);
+        }
+      } catch { setUserRank(null); }
     } else {
       setUserRank(null);
     }
@@ -1806,7 +1805,7 @@ export default function K8sQuestApp() {
     const parts = text.split(/(`[^`]+`)/g);
     return parts.map((part, i) =>
       part.startsWith("`") && part.endsWith("`") && part.length > 2
-        ? <code key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",background:"rgba(125,211,252,0.08)",borderRadius:3,padding:"1px 5px"}}>{part.slice(1,-1)}</code>
+        ? <code key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:"0.88em",color:"#7dd3fc",background:"rgba(125,211,252,0.06)",borderRadius:4,padding:"1px 5px",direction:"ltr",unicodeBidi:"isolate"}}>{part.slice(1,-1)}</code>
         : part
     );
   };
@@ -2061,11 +2060,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .page-pad{padding:12px 14px!important}
 .quiz-bar-right{gap:8px!important}
 .quiz-bar-right span,.quiz-bar-right button{font-size:11px!important}
-.opt-btn{padding:12px 14px!important;font-size:14px!important;gap:10px!important;min-height:48px!important}
+.opt-btn{padding:13px 14px!important;font-size:14px!important;gap:10px!important;min-height:52px!important;line-height:1.7!important}
 .explanation-card{border-radius:12px!important}
-.explanation-card>div:last-child{padding:14px 16px!important}
-.explanation-card ul{padding-inline-start:16px!important;gap:6px!important}
-.explanation-card li{font-size:13px!important;line-height:1.75!important}
+.explanation-card>div:first-child{padding:12px 16px!important}
+.explanation-card>div:last-child{padding:16px!important}
+.explanation-card ul{padding-inline-start:18px!important;gap:8px!important}
+.explanation-card li{font-size:13px!important;line-height:1.8!important}
 .home-actions{gap:5px!important}
 .home-actions>button{font-size:11px!important;padding:5px 8px!important}
 .home-screen{padding:12px 14px!important}
@@ -2091,7 +2091,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .topic-card-section{padding:13px 14px!important}
 .stats-grid{gap:7px!important}
 .stats-cell{padding:11px 6px!important}
-.opt-btn{padding:11px 12px!important;font-size:13px!important;gap:8px!important;border-radius:10px!important}
+.opt-btn{padding:12px 12px!important;font-size:13px!important;gap:8px!important;border-radius:10px!important;min-height:48px!important}
 }
 @media(max-width:390px){
 .home-logo{width:40px!important;height:40px!important}
@@ -3396,7 +3396,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                 </div>
               )}
 
-              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+              <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
                 {currentQuestions[questionIndex].options.map((opt,i)=>{
                   const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof currentQuestions[questionIndex].answer === "number" ? i === currentQuestions[questionIndex].answer : false);
                   const isChosen  = i===dispSelectedAnswer;
@@ -3415,9 +3415,9 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                       aria-pressed={!dispSubmitted ? i === dispSelectedAnswer : undefined}
                       aria-disabled={isEliminated}
                       dir={dir}
-                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"14px 16px",background:bg,border:`1px solid ${borderColor}`,borderRadius:12,color,fontSize:15,cursor:isEliminated?"default":(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.6,display:"flex",alignItems:dir==="rtl"?"center":"center",flexDirection:dir==="rtl"?"row-reverse":"row",gap:12,transition:"all 0.15s",opacity:isEliminated?0.35:1,textDecoration:isEliminated?"line-through":"none",minHeight:52}}>
-                      <span aria-hidden="true" style={{flexShrink:0,width:28,height:28,borderRadius:8,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
-                      <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left"}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
+                      style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"14px 16px",background:bg,border:`1px solid ${borderColor}`,borderRadius:12,color,fontSize:15,cursor:isEliminated?"default":(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.7,display:"flex",alignItems:"center",flexDirection:dir==="rtl"?"row-reverse":"row",gap:12,transition:"all 0.15s",opacity:isEliminated?0.35:1,textDecoration:isEliminated?"line-through":"none",minHeight:56}}>
+                      <span aria-hidden="true" style={{flexShrink:0,width:30,height:30,borderRadius:8,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
+                      <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
                       {dispSubmitted&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✓</span>}
                       {dispSubmitted&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✗</span>}
                     </button>
@@ -3455,7 +3455,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     const mainExplanation = explanationParts[0] + (explanationParts.length > 1 ? "." : "");
                     const bulletPoints = explanationParts.slice(1);
                     return (
-                      <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:16,overflow:"hidden"}}>
+                      <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:18,overflow:"hidden"}}>
                         {/* Status banner */}
                         <div style={{background:isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.10)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:dir==="rtl"?"flex-end":"flex-start",gap:8,borderBottom:`1px solid ${isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.12)"}`,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
                           <span style={{fontWeight:900,fontSize:15,color:isCorrect?"#10B981":"#EF4444",letterSpacing:0.3}}>
@@ -3467,16 +3467,16 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                           </span>
                         </div>
                         {/* Explanation body */}
-                        {!isInterviewMode&&<div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:14}}>
+                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:16}}>
                           {/* Main explanation sentence */}
-                          <div style={{color:"#c8d2de",fontSize:14,lineHeight:1.8,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere"}}>
+                          <div style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch"}}>
                             {renderBidi(mainExplanation,lang)}
                           </div>
                           {/* Supporting bullet points */}
                           {bulletPoints.length > 0 && (
-                            <ul dir={dir} style={{margin:0,paddingInlineStart:20,display:"flex",flexDirection:"column",gap:8,listStyleType:"disc",listStylePosition:"outside"}}>
+                            <ul dir={dir} style={{margin:0,paddingInlineStart:22,display:"flex",flexDirection:"column",gap:10,listStyleType:"disc",listStylePosition:"outside",textAlign:dir==="rtl"?"right":"left"}}>
                               {bulletPoints.map((s,idx,arr)=>(
-                                <li key={idx} style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,wordBreak:"break-word",overflowWrap:"anywhere",paddingInlineStart:4}}>
+                                <li key={idx} style={{color:"#94a3b8",fontSize:13,lineHeight:1.85,wordBreak:"break-word",overflowWrap:"anywhere",paddingInlineStart:4}}>
                                   {renderBidi(s+(idx<arr.length-1?".":""),lang)}
                                 </li>
                               ))}
@@ -3494,17 +3494,17 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     const iMain = iParts[0] + (iParts.length > 1 ? "." : "");
                     const iBullets = iParts.slice(1);
                     return (
-                      <div dir={dir} style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:14,padding:0,marginBottom:16,direction:dir,animation:"fadeIn 0.3s ease",overflow:"hidden"}}>
-                        <div style={{background:"rgba(168,85,247,0.10)",padding:"12px 20px",borderBottom:"1px solid rgba(168,85,247,0.12)"}}>
-                          <span style={{fontSize:12,fontWeight:800,color:"#A855F7",letterSpacing:0.5}}>תשובה אידיאלית</span>
+                      <div dir={dir} style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:14,padding:0,marginBottom:18,direction:dir,animation:"fadeIn 0.3s ease",overflow:"hidden"}}>
+                        <div style={{background:"rgba(168,85,247,0.10)",padding:"13px 20px",borderBottom:"1px solid rgba(168,85,247,0.12)",textAlign:dir==="rtl"?"right":"left"}}>
+                          <span style={{fontSize:12,fontWeight:800,color:"#A855F7",letterSpacing:0.5}}>{lang==="he"?"תשובה אידיאלית":"Ideal Answer"}</span>
                         </div>
-                        <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:12}}>
-                          <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,wordBreak:"break-word",overflowWrap:"anywhere"}}>{q.options[iCorrectIdx]}</div>
-                          <div style={{color:"#c8d2de",fontSize:14,lineHeight:1.8,wordBreak:"break-word",overflowWrap:"anywhere"}}>{renderBidi(iMain,lang)}</div>
+                        <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:14}}>
+                          <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left"}}>{q.options[iCorrectIdx]}</div>
+                          <div style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left",maxWidth:"65ch"}}>{renderBidi(iMain,lang)}</div>
                           {iBullets.length > 0 && (
-                            <ul dir={dir} style={{margin:0,paddingInlineStart:20,display:"flex",flexDirection:"column",gap:8,listStyleType:"disc",listStylePosition:"outside"}}>
+                            <ul dir={dir} style={{margin:0,paddingInlineStart:22,display:"flex",flexDirection:"column",gap:10,listStyleType:"disc",listStylePosition:"outside",textAlign:dir==="rtl"?"right":"left"}}>
                               {iBullets.map((s,idx,arr)=>(
-                                <li key={idx} dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,wordBreak:"break-word",overflowWrap:"anywhere",paddingInlineStart:4}}>{renderBidi(s+(idx<arr.length-1?".":""),lang)}</li>
+                                <li key={idx} dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.85,wordBreak:"break-word",overflowWrap:"anywhere",paddingInlineStart:4}}>{renderBidi(s+(idx<arr.length-1?".":""),lang)}</li>
                               ))}
                             </ul>
                           )}
