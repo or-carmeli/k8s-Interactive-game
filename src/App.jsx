@@ -7,7 +7,7 @@ import { TOPICS } from "./content/topics";
 import { DAILY_QUESTIONS } from "./content/dailyQuestions";
 import { INCIDENTS } from "./content/incidents";
 import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
-import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer } from "./api/quiz";
+import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -948,19 +948,18 @@ export default function K8sQuestApp() {
 
   const loadLeaderboard = async () => {
     if (!supabase) return;
-    const { data } = await supabase.from("user_stats")
-      .select("username,total_score,max_streak,total_answered")
-      .order("total_score", { ascending: false }).limit(10);
-    if (data) setLeaderboard(data);
+    try {
+      const data = await fetchLeaderboard(supabase, 10);
+      if (data) setLeaderboard(data);
+    } catch {}
 
     if (!isGuest && user?.id && user.id !== "guest") {
-      const userScore = stats.total_score;
-      const { count } = await supabase
-        .from("user_stats")
-        .select("user_id", { count: "exact", head: true })
-        .gt("total_score", userScore);
-      const rank = (count ?? 0) + 1;
-      setUserRank(rank > 10 ? { rank, score: userScore } : null);
+      try {
+        const rankData = await fetchUserRank(supabase, user.id);
+        if (rankData) {
+          setUserRank(rankData.rank > 10 ? { rank: rankData.rank, score: rankData.score } : null);
+        }
+      } catch { setUserRank(null); }
     } else {
       setUserRank(null);
     }
