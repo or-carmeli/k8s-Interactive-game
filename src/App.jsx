@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
-import { DAILY_QUESTIONS } from "./dailyQuestions";
-import { TOPICS, ACHIEVEMENTS } from "./topics";
-import { INCIDENTS } from "./incidents";
+import { ACHIEVEMENTS } from "./topicMeta";
+import { TOPICS } from "./content/topics";
+import { DAILY_QUESTIONS } from "./content/dailyQuestions";
+import { INCIDENTS } from "./content/incidents";
 import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://knzawpdrpahilmohzpbl.supabase.co";
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuemF3cGRycGFoaWxtb2h6cGJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NDA2NzYsImV4cCI6MjA4ODExNjY3Nn0.Vh4vwQkSgIHkyr3LPVAvsktni_l5q1DhP3S3MT97KQ8";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 const GUEST_USER = { id: "guest", email: "guest", user_metadata: { username: "Guest" } };
 
@@ -31,8 +32,8 @@ const INCIDENT_DIFFICULTY_CONFIG = {
 };
 
 const INCIDENT_SAVE_KEY = "incident_progress_v1";
-// v1.6.1 — patch: resume modal UX refactor (less intrusive, cooldown, session flag)
-const APP_VERSION  = "1.6.1";
+// v2.0.0 — major: portfolio repo refactor (BSL 1.1, proprietary content extracted)
+const APP_VERSION  = "2.0.0";
 const SESSION_START = new Date();
 
 // Resume modal behaviour constants
@@ -665,6 +666,13 @@ export default function K8sQuestApp() {
       window.history.replaceState(null, "", window.location.pathname);
     }
 
+    // If Supabase is not configured, go straight to guest mode
+    if (!supabase) {
+      setAuthChecked(true);
+      setDataLoaded(true);
+      return;
+    }
+
     // Fallback: if Supabase never responds, unblock the UI after 10 s
     const authTimeout = setTimeout(() => { setAuthChecked(true); setDataLoaded(true); }, 10000);
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -813,6 +821,7 @@ export default function K8sQuestApp() {
   useEffect(() => {
     if (screen !== "status") return;
     setDbStatus(null);
+    if (!supabase) { setDbStatus("error"); return; }
     supabase.from("user_stats").select("user_id").limit(1)
       .then(({ error }) => setDbStatus(error ? "error" : "ok"))
       .catch(() => setDbStatus("error"));
@@ -832,6 +841,7 @@ export default function K8sQuestApp() {
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadUserData = async (userId, sessionUser) => {
+    if (!supabase) { setDataLoaded(true); return; }
     const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
 
     // Read guest localStorage but ALWAYS discard it once a real account is active.
@@ -906,7 +916,7 @@ export default function K8sQuestApp() {
   };
 
   const saveUserData = async (ns, nc, na) => {
-    if (!user || isGuest) return;
+    if (!user || isGuest || !supabase) return;
     setSaveError("");
     // BUG-E fix: strip free-mode entries - they are session-only and must not persist
     const cleanNc = Object.fromEntries(
@@ -926,6 +936,7 @@ export default function K8sQuestApp() {
   };
 
   const loadLeaderboard = async () => {
+    if (!supabase) return;
     const { data } = await supabase.from("user_stats")
       .select("username,total_score,max_streak,total_answered")
       .order("total_score", { ascending: false }).limit(10);
@@ -956,6 +967,7 @@ export default function K8sQuestApp() {
   const handleSignUp = async () => {
     setAuthLoading(true); setAuthError("");
     const { emailVal, passwordVal, usernameVal } = getFormValues();
+    if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
     const { error } = await supabase.auth.signUp({
       email: emailVal, password: passwordVal, options: {
         data: { username: usernameVal || emailVal.split("@")[0] },
@@ -975,6 +987,7 @@ export default function K8sQuestApp() {
   const handleLogin = async () => {
     setAuthLoading(true); setAuthError("");
     const { emailVal, passwordVal } = getFormValues();
+    if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
     const { error } = await supabase.auth.signInWithPassword({ email: emailVal, password: passwordVal });
     if (error) {
       setAuthError(t("wrongCredentials"));
@@ -990,6 +1003,7 @@ export default function K8sQuestApp() {
   const handleResend = async () => {
     setAuthLoading(true);
     const { emailVal } = getFormValues();
+    if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: emailVal,
@@ -1009,7 +1023,7 @@ export default function K8sQuestApp() {
       setDataLoaded(true); // guest has no async load
       return;
     }
-    await supabase.auth.signOut(); setUser(null);
+    if (supabase) await supabase.auth.signOut(); setUser(null);
     achievementsLoaded.current = false;
   };
 
@@ -1026,7 +1040,7 @@ export default function K8sQuestApp() {
       try { localStorage.removeItem("k8s_quest_guest"); } catch {}
     } else if (user) {
       // BUG-B fix: update, not upsert
-      await supabase.from("user_stats").update({
+      if (supabase) await supabase.from("user_stats").update({
         username: user.user_metadata?.username || user.email?.split("@")[0] || "",
         ...emptyStats, completed_topics: {}, achievements: [], topic_stats: {},
         updated_at: new Date().toISOString(),
@@ -2024,7 +2038,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     if (!reportType) return;
                     setReportSending(true);
                     try {
-                      await supabase.from("question_reports").insert({
+                      if (supabase) await supabase.from("question_reports").insert({
                         question_text: reportDialog.qText.slice(0,300),
                         report_type: reportType,
                         note: reportNote||null,
