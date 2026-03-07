@@ -2052,7 +2052,7 @@ export const TOPICS = [
             ],
             answer: 1,
             explanation:
-              "path-based routing מאפשר /api → service-api, /web → service-web דרך Ingress אחד.",
+              "ניתוב מבוסס path מאפשר להגדיר ב-Ingress אחד כללי ניתוב לפי הנתיב ב-URL. לדוגמה, בקשות לנתיב /api יופנו ל-service-api ובקשות לנתיב /web יופנו ל-service-web. כך אפשר לחשוף מספר Services תחת דומיין אחד.",
           },
           {
             q: "מה egress NetworkPolicy?",
