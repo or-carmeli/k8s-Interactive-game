@@ -12,6 +12,7 @@ import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+if (!supabase) console.warn("[KubeQuest] Supabase not configured — VITE_SUPABASE_URL:", !!SUPABASE_URL, "VITE_SUPABASE_ANON_KEY:", !!SUPABASE_KEY);
 
 const GUEST_USER = { id: "guest", email: "guest", user_metadata: { username: "Guest" } };
 
@@ -82,6 +83,7 @@ const TRANSLATIONS = {
     emailSent: "✅ נשלח אימייל אימות! בדקי את תיבת הדואר.",
     otpExpired: "❌ קישור האימות פג תוקף. אנא הירשמי שוב כדי לקבל קישור חדש.",
     wrongCredentials: "אימייל או סיסמה שגויים",
+    serviceUnavailable: "השירות אינו זמין כרגע. נסו שוב מאוחר יותר.",
     didntReceive: "לא קיבלת את המייל?", resendBtn: "שלח שוב",
     resendSuccess: "✅ אימייל חדש נשלח! בדקי את תיבת הדואר.",
     resendError: "❌ שגיאה בשליחה מחדש. נסי שוב.",
@@ -233,6 +235,7 @@ const TRANSLATIONS = {
     emailSent: "✅ Verification email sent! Check your inbox.",
     otpExpired: "❌ Verification link has expired. Please sign up again to receive a new link.",
     wrongCredentials: "Incorrect email or password",
+    serviceUnavailable: "Service temporarily unavailable. Please try again later.",
     didntReceive: "Didn't receive the email?", resendBtn: "Resend",
     resendSuccess: "✅ New email sent! Check your inbox.",
     resendError: "❌ Failed to resend. Please try again.",
@@ -976,10 +979,10 @@ export default function K8sQuestApp() {
   };
 
   const handleSignUp = async () => {
-    if (!supabase) { setAuthError("Supabase not configured"); return; }
+    if (!supabase) { setAuthError(t("serviceUnavailable") || "Service temporarily unavailable"); return; }
     setAuthLoading(true); setAuthError("");
     const { emailVal, passwordVal, usernameVal } = getFormValues();
-    if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
+    if (!supabase) { setAuthError(t("serviceUnavailable") || "Service temporarily unavailable"); setAuthLoading(false); return; }
     const { error } = await supabase.auth.signUp({
       email: emailVal, password: passwordVal, options: {
         data: { username: usernameVal || emailVal.split("@")[0] },
@@ -997,10 +1000,10 @@ export default function K8sQuestApp() {
   };
 
   const handleLogin = async () => {
-    if (!supabase) { setAuthError("Supabase not configured"); return; }
+    if (!supabase) { setAuthError(t("serviceUnavailable") || "Service temporarily unavailable"); return; }
     setAuthLoading(true); setAuthError("");
     const { emailVal, passwordVal } = getFormValues();
-    if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
+    if (!supabase) { setAuthError(t("serviceUnavailable") || "Service temporarily unavailable"); setAuthLoading(false); return; }
     const { error } = await supabase.auth.signInWithPassword({ email: emailVal, password: passwordVal });
     if (error) {
       setAuthError(t("wrongCredentials"));
@@ -1016,7 +1019,7 @@ export default function K8sQuestApp() {
   const handleResend = async () => {
     setAuthLoading(true);
     const { emailVal } = getFormValues();
-    if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
+    if (!supabase) { setAuthError(t("serviceUnavailable") || "Service temporarily unavailable"); setAuthLoading(false); return; }
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: emailVal,
