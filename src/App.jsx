@@ -477,7 +477,7 @@ export default function K8sQuestApp() {
   const [authError, setAuthError]         = useState("");
   const [saveError, setSaveError]         = useState("");
 
-  const [screen, setScreen]               = useState("home");
+  const [screen, setScreen]               = useState(()=>window.location.pathname==="/status"?"status":"home");
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [topicScreen, setTopicScreen]     = useState("theory");
