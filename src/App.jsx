@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
-import SupportSection from "./components/SupportSection";
 import { ACHIEVEMENTS } from "./topicMeta";
 import { TOPICS } from "./content/topics";
 import { DAILY_QUESTIONS } from "./content/dailyQuestions";
@@ -485,6 +484,12 @@ function Footer({ lang }) {
   const txt = TRANSLATIONS[lang] || TRANSLATIONS.he;
   return (
     <div style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+      <a href="https://buymeacoffee.com/ocarmeli7n" target="_blank" rel="noopener noreferrer"
+        style={{color:"#475569",fontSize:11,textDecoration:"none",display:"block",marginBottom:8,transition:"color 0.2s"}}
+        onMouseEnter={e=>{e.currentTarget.style.color="#64748b";}}
+        onMouseLeave={e=>{e.currentTarget.style.color="#475569";}}>
+        Enjoying KubeQuest?<br/>Support the project ☕
+      </a>
       <p style={{color:"#475569",fontSize:12,margin:"0 0 8px 0"}}>
         © {year} {txt.allRightsReserved}{" "}
         <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer"
@@ -2593,7 +2598,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"#94a3b8",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.04)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"#94a3b8"}}><span>{a.icon}</span>{lang==="en"?a.nameEn:a.name}</div>)}</div></div>}
           </>)}
           {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={startTopic} startMixedQuiz={startMixedQuiz} lang={lang} t={t} dir={dir}/>}
-          <SupportSection/>
           <Footer lang={lang}/>
         </div>
       )}
