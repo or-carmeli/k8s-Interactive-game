@@ -7,6 +7,7 @@ import { TOPICS } from "./content/topics";
 import { DAILY_QUESTIONS } from "./content/dailyQuestions";
 import { INCIDENTS } from "./content/incidents";
 import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
+import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer } from "./api/quiz";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -418,16 +419,20 @@ function renderQuestion(qText, lang) {
   );
 }
 
-// Shuffle quiz options while remapping the answer index
+// Shuffle quiz options while tracking the index mapping.
+// _optionMap[shuffledIdx] = originalIdx — used to translate back for server-side validation.
+// When q.answer exists (offline mode), it is also remapped to the shuffled position.
 function shuffleOptions(questions) {
   return questions.map(q => {
-    if (!q.options || q.options.length <= 1) return q;
+    if (!q.options || q.options.length <= 1) return { ...q, _optionMap: q.options?.map((_, i) => i) || [] };
     const indices = q.options.map((_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    return { ...q, options: indices.map(i => q.options[i]), answer: indices.indexOf(q.answer) };
+    const result = { ...q, options: indices.map(i => q.options[i]), _optionMap: indices };
+    if (typeof q.answer === "number") result.answer = indices.indexOf(q.answer);
+    return result;
   });
 }
 
@@ -555,6 +560,12 @@ export default function K8sQuestApp() {
   const [dbStatus, setDbStatus]                         = useState(null); // null | "ok" | "error"
   const [searchQuery, setSearchQuery]                   = useState("");
   const [expandedGuideSection, setExpandedGuideSection] = useState(null);
+  const [answerResult, setAnswerResult]                 = useState(null); // { correct, correctIndex, explanation } — set after server-side validation
+  const [checkingAnswer, setCheckingAnswer]             = useState(false);
+  const [theoryContent, setTheoryContent]               = useState(null);
+  const [loadingQuestions, setLoadingQuestions]          = useState(false);
+  const [incidentSteps, setIncidentSteps]               = useState(null); // fetched steps for online mode
+  const [incidentAnswerResult, setIncidentAnswerResult] = useState(null); // { correct, correctIndex, explanation, explanationHe }
   const [a11y, setA11y] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("a11y_v1"));
@@ -965,6 +976,7 @@ export default function K8sQuestApp() {
   };
 
   const handleSignUp = async () => {
+    if (!supabase) { setAuthError("Supabase not configured"); return; }
     setAuthLoading(true); setAuthError("");
     const { emailVal, passwordVal, usernameVal } = getFormValues();
     if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
@@ -985,6 +997,7 @@ export default function K8sQuestApp() {
   };
 
   const handleLogin = async () => {
+    if (!supabase) { setAuthError("Supabase not configured"); return; }
     setAuthLoading(true); setAuthError("");
     const { emailVal, passwordVal } = getFormValues();
     if (!supabase) { setAuthError("Supabase not configured"); setAuthLoading(false); return; }
@@ -1229,18 +1242,41 @@ export default function K8sQuestApp() {
     setSelectedAnswer(idx);
   };
 
-  const handleSubmit = () => {
-    if (selectedAnswer === null || submitted) return;
+  const handleSubmit = async () => {
+    if (selectedAnswer === null || submitted || checkingAnswer) return;
     setSubmitted(true);
-    setShowExplanation(true);
+    setCheckingAnswer(true);
     const q = currentQuestions[questionIndex];
-    const correct = selectedAnswer === q.answer;
+
+    // Resolve answer via server RPC (online) or local field (offline)
+    let result;
+    if (supabase && q.id) {
+      const originalIndex = q._optionMap ? q._optionMap[selectedAnswer] : selectedAnswer;
+      try {
+        const isDaily = selectedTopic?.id === "daily";
+        const rpcResult = isDaily
+          ? await checkDailyAnswer(supabase, q.id, originalIndex)
+          : await checkQuizAnswer(supabase, q.id, originalIndex);
+        const correctIndex = q._optionMap ? q._optionMap.indexOf(rpcResult.correct_answer) : rpcResult.correct_answer;
+        result = { correct: rpcResult.correct, correctIndex, explanation: rpcResult.explanation };
+      } catch {
+        result = { correct: selectedAnswer === q.answer, correctIndex: q.answer, explanation: q.explanation };
+      }
+    } else {
+      result = { correct: selectedAnswer === q.answer, correctIndex: q.answer, explanation: q.explanation };
+    }
+
+    setAnswerResult(result);
+    setCheckingAnswer(false);
+    setShowExplanation(true);
+
+    const correct = result.correct;
     if (correct) {
       topicCorrectRef.current += 1;
       setFlash(true); setTimeout(() => setFlash(false), 600);
       if (!isRetryRef.current) setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel]?.points ?? 0));
     }
-    setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: q.answer, chosen: selectedAnswer, explanation: q.explanation }]);
+    setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: result.correctIndex, chosen: selectedAnswer, explanation: result.explanation }]);
     setStats(prev => {
       // BUG-C fix: retries must never touch any stat
       if (isRetryRef.current) return prev;
@@ -1345,18 +1381,37 @@ export default function K8sQuestApp() {
       setSelectedAnswer(null);
       setSubmitted(false);
       setShowExplanation(false);
+      setAnswerResult(null);
       if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[selectedLevel] || 25) : (TIMER_DURATIONS[selectedLevel] || 30));
     }
   };
 
-  const startTopic = (topic, level) => {
+  const startTopic = async (topic, level) => {
     quizRunIdRef.current = Date.now().toString(36);
     liveIndexRef.current = 0;
     clearQuizState();
     const key = `${topic.id}_${level}`;
     isRetryRef.current = !!(completedTopics[key]);
-    const rawQs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+    setAnswerResult(null);
+    let rawQs, theory;
+    if (supabase) {
+      setLoadingQuestions(true);
+      try {
+        [rawQs, theory] = await Promise.all([
+          fetchQuizQuestions(supabase, topic.id, level, lang),
+          fetchTheory(supabase, topic.id, level, lang),
+        ]);
+      } catch {
+        rawQs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+        theory = lang === "en" ? topic.levels[level].theoryEn : topic.levels[level].theory;
+      }
+      setLoadingQuestions(false);
+    } else {
+      rawQs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+      theory = lang === "en" ? topic.levels[level].theoryEn : topic.levels[level].theory;
+    }
     setTopicQuestions(shuffleOptions(rawQs || []));
+    setTheoryContent(theory);
     setSelectedTopic(topic); setSelectedLevel(level); setTopicScreen("theory");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);
@@ -1369,22 +1424,46 @@ export default function K8sQuestApp() {
     if (isGuest) achievementsLoaded.current = true;
   };
 
-  const startMixedQuiz = () => {
+  const startMixedQuiz = async () => {
     quizRunIdRef.current = Date.now().toString(36);
     liveIndexRef.current = 0;
     clearQuizState();
-    const all = [];
-    TOPICS.forEach(topic => {
-      LEVEL_ORDER.forEach(level => {
-        const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
-        qs.forEach(q => all.push(q));
+    setAnswerResult(null);
+    let rawQs;
+    if (supabase) {
+      setLoadingQuestions(true);
+      try {
+        rawQs = await fetchMixedQuestions(supabase, lang, 10);
+      } catch {
+        const all = [];
+        TOPICS.forEach(topic => {
+          LEVEL_ORDER.forEach(level => {
+            const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+            qs.forEach(q => all.push(q));
+          });
+        });
+        for (let i = all.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [all[i], all[j]] = [all[j], all[i]];
+        }
+        rawQs = all.slice(0, 10);
+      }
+      setLoadingQuestions(false);
+    } else {
+      const all = [];
+      TOPICS.forEach(topic => {
+        LEVEL_ORDER.forEach(level => {
+          const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+          qs.forEach(q => all.push(q));
+        });
       });
-    });
-    for (let i = all.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [all[i], all[j]] = [all[j], all[i]];
+      for (let i = all.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [all[i], all[j]] = [all[j], all[i]];
+      }
+      rawQs = all.slice(0, 10);
     }
-    setMixedQuestions(shuffleOptions(all.slice(0, 10)));
+    setMixedQuestions(shuffleOptions(rawQs));
     isRetryRef.current = false;
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
@@ -1396,25 +1475,38 @@ export default function K8sQuestApp() {
     setScreen("topic");
   };
 
-  const startDailyChallenge = () => {
+  const startDailyChallenge = async () => {
     quizRunIdRef.current = Date.now().toString(36);
     liveIndexRef.current = 0;
     clearQuizState();
-    const pool = lang === "en" ? DAILY_QUESTIONS.en : DAILY_QUESTIONS.he;
-    // Shuffle once per year with a fixed annual seed (same order for all users)
-    const annualSeed = new Date().getFullYear() * 31337;
-    const annualRng = mulberry32(annualSeed);
-    const shuffled = [...pool];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(annualRng() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    setAnswerResult(null);
+    let dailyQs;
+    if (supabase) {
+      setLoadingQuestions(true);
+      try {
+        dailyQs = await fetchDailyQuestions(supabase, lang, 5);
+      } catch {
+        dailyQs = null;
+      }
+      setLoadingQuestions(false);
     }
-    // Pick a non-overlapping window by day-of-year - no repeats until full pool cycles
-    const now = new Date();
-    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    const numWindows = Math.floor(shuffled.length / 5);
-    const startIdx = (dayOfYear % numWindows) * 5;
-    setMixedQuestions(shuffleOptions(shuffled.slice(startIdx, startIdx + 5)));
+    if (!dailyQs) {
+      // Offline fallback — annual-seeded shuffle + daily window
+      const pool = lang === "en" ? DAILY_QUESTIONS.en : DAILY_QUESTIONS.he;
+      const annualSeed = new Date().getFullYear() * 31337;
+      const annualRng = mulberry32(annualSeed);
+      const shuffled = [...pool];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(annualRng() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const now = new Date();
+      const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+      const numWindows = Math.floor(shuffled.length / 5);
+      const startIdx = (dayOfYear % numWindows) * 5;
+      dailyQs = shuffled.slice(startIdx, startIdx + 5);
+    }
+    setMixedQuestions(shuffleOptions(dailyQs));
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
@@ -1437,6 +1529,7 @@ export default function K8sQuestApp() {
   const handleEliminate = () => {
     if (eliminatedOption !== null || submitted) return;
     const q = currentQuestions[questionIndex];
+    if (typeof q.answer !== "number") return; // Not available in online mode
     const wrong = q.options
       .map((_, i) => i)
       .filter(i => i !== q.answer && (selectedAnswer === null || i !== selectedAnswer));
@@ -1471,7 +1564,7 @@ export default function K8sQuestApp() {
         : [...prev, {
             question_id: qid, topic_id: selectedTopic.id, topic_name: selectedTopic.name,
             topic_color: selectedTopic.color, level: selectedLevel, question_index: questionIndex,
-            question_text: q.q, options: q.options, answer: q.answer, explanation: q.explanation,
+            question_text: q.q, options: q.options, answer: answerResult?.correctIndex ?? q.answer, explanation: answerResult?.explanation ?? q.explanation,
           }];
       try { localStorage.setItem("bookmarks_v1", JSON.stringify(next)); } catch {}
       return next;
@@ -1508,8 +1601,14 @@ export default function K8sQuestApp() {
   const clearIncidentProgress = () => { try { localStorage.removeItem(INCIDENT_SAVE_KEY); } catch {} };
 
   // ── Incident Mode: action functions ──────────────────────────────────────
-  const startIncident = (incident) => {
+  const startIncident = async (incident) => {
     clearIncidentProgress();
+    setIncidentAnswerResult(null);
+    let steps = null;
+    if (supabase) {
+      try { steps = await fetchIncidentSteps(supabase, incident.id); } catch { steps = null; }
+    }
+    setIncidentSteps(steps);
     setSelectedIncident(incident);
     setIncidentStepIndex(0);
     setIncidentScore(0);
@@ -1521,24 +1620,54 @@ export default function K8sQuestApp() {
     setScreen("incident");
   };
 
-  const submitIncidentStep = (forcedAnswer) => {
+  // Get the active step data, preferring server-fetched steps when available.
+  // Normalizes server column names (prompt_he → promptHe) to match offline format.
+  const getIncidentStep = (idx) => {
+    if (incidentSteps && incidentSteps[idx]) {
+      const s = incidentSteps[idx];
+      return { ...s, promptHe: s.prompt_he ?? s.promptHe, optionsHe: s.options_he ?? s.optionsHe };
+    }
+    return selectedIncident?.steps?.[idx];
+  };
+
+  const submitIncidentStep = async (forcedAnswer) => {
     const ans = forcedAnswer !== undefined ? forcedAnswer : incidentAnswer;
     if (ans === null || incidentSubmitted || !selectedIncident) return;
     setIncidentAnswer(ans);
-    const step = selectedIncident.steps[incidentStepIndex];
-    const correct = ans === step.answer;
+    setIncidentSubmitted(true);
+
+    const step = getIncidentStep(incidentStepIndex);
+    let correct, correctAnswer;
+
+    if (supabase && step?.id) {
+      try {
+        const rpcResult = await checkIncidentAnswer(supabase, step.id, ans);
+        correct = rpcResult.correct;
+        correctAnswer = rpcResult.correct_answer;
+        setIncidentAnswerResult({ correct, correctIndex: correctAnswer, explanation: rpcResult.explanation, explanationHe: rpcResult.explanation_he });
+      } catch {
+        correct = ans === step.answer;
+        correctAnswer = step.answer;
+        setIncidentAnswerResult({ correct, correctIndex: correctAnswer, explanation: step.explanation, explanationHe: step.explanationHe || step.explanation_he });
+      }
+    } else {
+      correct = ans === step.answer;
+      correctAnswer = step.answer;
+      setIncidentAnswerResult({ correct, correctIndex: correctAnswer, explanation: step.explanation, explanationHe: step.explanationHe || step.explanation_he });
+    }
+
     const newScore    = incidentScore    + (correct ? 10 : 0);
     const newMistakes = incidentMistakes + (correct ? 0 : 1);
-    const newHistory  = [...incidentHistory, { chosen: ans, correct, answer: step.answer }];
+    const newHistory  = [...incidentHistory, { chosen: ans, correct, answer: correctAnswer }];
     setIncidentScore(newScore);
     setIncidentMistakes(newMistakes);
     setIncidentHistory(newHistory);
-    setIncidentSubmitted(true);
     saveIncidentProgress(selectedIncident, incidentStepIndex, newScore, newMistakes, incidentElapsed, newHistory);
   };
 
   const nextIncidentStep = () => {
-    const isLast = incidentStepIndex >= selectedIncident.steps.length - 1;
+    const totalSteps = incidentSteps ? incidentSteps.length : selectedIncident.steps.length;
+    const isLast = incidentStepIndex >= totalSteps - 1;
     if (isLast) {
       clearIncidentProgress();
       setScreen("incidentComplete");
@@ -1547,6 +1676,7 @@ export default function K8sQuestApp() {
       setIncidentStepIndex(nextIdx);
       setIncidentAnswer(null);
       setIncidentSubmitted(false);
+      setIncidentAnswerResult(null);
       saveIncidentProgress(selectedIncident, nextIdx, incidentScore, incidentMistakes, incidentElapsed, incidentHistory);
     }
   };
@@ -1612,8 +1742,29 @@ export default function K8sQuestApp() {
     if (timeLeft !== 0 || submitted || screen !== "topic" || topicScreen !== "quiz" || (!timerEnabled && !isInterviewMode) || isInHistoryMode || tryAgainActive) return;
     const q = currentQuestions[questionIndex];
     setSubmitted(true);
-    setShowExplanation(true);
-    setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: q.answer, chosen: -1, explanation: q.explanation }]);
+
+    // Fetch correct answer from server (online) or use local field (offline)
+    (async () => {
+      let result;
+      if (supabase && q.id) {
+        try {
+          const isDaily = selectedTopic?.id === "daily";
+          const rpcResult = isDaily
+            ? await checkDailyAnswer(supabase, q.id, 0)
+            : await checkQuizAnswer(supabase, q.id, 0);
+          const correctIndex = q._optionMap ? q._optionMap.indexOf(rpcResult.correct_answer) : rpcResult.correct_answer;
+          result = { correct: false, correctIndex, explanation: rpcResult.explanation };
+        } catch {
+          result = { correct: false, correctIndex: q.answer ?? 0, explanation: q.explanation || "" };
+        }
+      } else {
+        result = { correct: false, correctIndex: q.answer ?? 0, explanation: q.explanation || "" };
+      }
+      setAnswerResult(result);
+      setShowExplanation(true);
+      setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: result.correctIndex, chosen: -1, explanation: result.explanation }]);
+    })();
+
     if (!isRetryRef.current) {
       const isFree = isFreeMode(selectedTopic?.id);
       // BUG-D fix: don't count timed-out free-mode questions toward persistent totals
@@ -1783,6 +1934,25 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
   const dispSubmitted       = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : submitted);
   const dispSelectedAnswer  = tryAgainActive ? (tryAgainSelected ?? -1) : (isInHistoryMode ? (quizHistory[questionIndex]?.chosen ?? -1) : selectedAnswer);
   const dispShowExplanation = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : showExplanation);
+
+  // Unified answer result for display — works across live, history, try-again, and offline modes
+  const dispAnswerResult = (() => {
+    const q = currentQuestions[questionIndex];
+    if (tryAgainActive) {
+      if (tryAgainSelected === null) return null;
+      const hist = quizHistory[questionIndex];
+      if (hist) return { correct: tryAgainSelected === hist.answer, correctIndex: hist.answer, explanation: hist.explanation };
+      if (typeof q?.answer === "number") return { correct: tryAgainSelected === q.answer, correctIndex: q.answer, explanation: q.explanation };
+      return null;
+    }
+    if (isInHistoryMode) {
+      const hist = quizHistory[questionIndex];
+      if (hist) return { correct: hist.chosen === hist.answer, correctIndex: hist.answer, explanation: hist.explanation };
+      if (typeof q?.answer === "number") return { correct: false, correctIndex: q.answer, explanation: q.explanation };
+      return null;
+    }
+    return answerResult;
+  })();
 
   if (!user) return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817,#0f172a)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,padding:"20px"}}>
@@ -3129,7 +3299,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             <div>
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:22,marginBottom:18}}>
                 <div style={{fontSize:11,color:selectedTopic.color,fontWeight:800,marginBottom:16,letterSpacing:1}}>{t("theory")}</div>
-                <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:"16px 20px"}}>{renderTheory(currentLevelData.theory)}</div>
+                <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:"16px 20px"}}>{renderTheory(theoryContent || currentLevelData?.theory)}</div>
               </div>
               <div style={{display:"flex",gap:8,marginBottom:0}}>
                 <button onClick={()=>{setTopicScreen("quiz");if(timerEnabled||isInterviewMode)setTimeLeft(isInterviewMode?(INTERVIEW_DURATIONS[selectedLevel]||25):(TIMER_DURATIONS[selectedLevel]||30));}} style={{flex:1,padding:15,background:`linear-gradient(135deg,${selectedTopic.color}dd,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontWeight:800,cursor:"pointer",boxShadow:`0 6px 24px ${selectedTopic.color}44`,lineHeight:1.4}}>
@@ -3195,7 +3365,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                 )}
               </div>
 
-              {!dispSubmitted&&!isInHistoryMode&&!tryAgainActive&&!isInterviewMode&&(
+              {!dispSubmitted&&!isInHistoryMode&&!tryAgainActive&&!isInterviewMode&&typeof currentQuestions[questionIndex]?.answer==="number"&&(
                 <div style={{marginBottom:10}}>
                   <div style={{display:"flex",gap:6,marginBottom:6}}>
                     <button
@@ -3223,7 +3393,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
               <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
                 {currentQuestions[questionIndex].options.map((opt,i)=>{
-                  const isCorrect = i===currentQuestions[questionIndex].answer;
+                  const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof currentQuestions[questionIndex].answer === "number" ? i === currentQuestions[questionIndex].answer : false);
                   const isChosen  = i===dispSelectedAnswer;
                   const isEliminated = !dispSubmitted && eliminatedOption === i;
                   let borderColor = "rgba(255,255,255,0.09)", bg = "rgba(255,255,255,0.02)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
@@ -3262,9 +3432,9 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
               )}
 
               {!dispSubmitted&&dispSelectedAnswer!==null&&!isInHistoryMode&&!tryAgainActive&&(
-                <button onClick={handleSubmit}
-                  style={{width:"100%",padding:"15px",background:`linear-gradient(135deg,${selectedTopic.color}dd,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:10,boxShadow:`0 4px 16px ${selectedTopic.color}44`}}>
-                  {t("confirmAnswer")}
+                <button onClick={handleSubmit} disabled={checkingAnswer}
+                  style={{width:"100%",padding:"15px",background:`linear-gradient(135deg,${selectedTopic.color}dd,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:checkingAnswer?"wait":"pointer",marginBottom:10,boxShadow:`0 4px 16px ${selectedTopic.color}44`,opacity:checkingAnswer?0.6:1,transition:"opacity 0.15s"}}>
+                  {checkingAnswer ? "..." : t("confirmAnswer")}
                 </button>
               )}
 
@@ -3273,8 +3443,10 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   {(()=>{
                     const q = currentQuestions[questionIndex];
                     const timedOut = dispSelectedAnswer === null || dispSelectedAnswer === -1;
-                    const isCorrect = !timedOut && dispSelectedAnswer === q.answer;
-                    const explanationParts = q.explanation.split(/\. /);
+                    const isCorrect = dispAnswerResult ? dispAnswerResult.correct : (!timedOut && dispSelectedAnswer === q.answer);
+                    const explanationText = dispAnswerResult?.explanation || q.explanation || "";
+                    const correctIdx = dispAnswerResult?.correctIndex ?? q.answer;
+                    const explanationParts = explanationText.split(/\. /);
                     const mainExplanation = explanationParts[0] + (explanationParts.length > 1 ? "." : "");
                     const bulletPoints = explanationParts.slice(1);
                     return (
@@ -3285,7 +3457,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                             {isCorrect
                               ? (tryAgainActive ? t("tryAgainCorrect") : `${t("correct")}${isInHistoryMode?"":" +"+LEVEL_CONFIG[selectedLevel].points+" "+t("pts")}`)
                               : timedOut
-                                ? `${t("timeUp")} ${lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: ${q.options[q.answer]}`
+                                ? `${t("timeUp")} ${lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: ${q.options[correctIdx]}`
                                 : (tryAgainActive ? t("tryAgainWrong") : t("incorrect"))}
                           </span>
                         </div>
@@ -3311,7 +3483,9 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   })()}
                   {isInterviewMode&&(()=>{
                     const q = currentQuestions[questionIndex];
-                    const iParts = q.explanation.split(/\. /);
+                    const iExplanation = dispAnswerResult?.explanation || q.explanation || "";
+                    const iCorrectIdx = dispAnswerResult?.correctIndex ?? q.answer;
+                    const iParts = iExplanation.split(/\. /);
                     const iMain = iParts[0] + (iParts.length > 1 ? "." : "");
                     const iBullets = iParts.slice(1);
                     return (
@@ -3320,7 +3494,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                           <span style={{fontSize:12,fontWeight:800,color:"#A855F7",letterSpacing:0.5}}>תשובה אידיאלית</span>
                         </div>
                         <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:12}}>
-                          <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,wordBreak:"break-word",overflowWrap:"anywhere"}}>{q.options[q.answer]}</div>
+                          <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,wordBreak:"break-word",overflowWrap:"anywhere"}}>{q.options[iCorrectIdx]}</div>
                           <div style={{color:"#c8d2de",fontSize:14,lineHeight:1.8,wordBreak:"break-word",overflowWrap:"anywhere"}}>{renderBidi(iMain,lang)}</div>
                           {iBullets.length > 0 && (
                             <ul dir={dir} style={{margin:0,paddingInlineStart:20,display:"flex",flexDirection:"column",gap:8,listStyleType:"disc",listStylePosition:"outside"}}>
@@ -3335,9 +3509,9 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   })()}
                   {/* Try Again button: shown in history mode for wrong answers */}
                   {isInHistoryMode && !tryAgainActive && (()=>{
-                    const q = currentQuestions[questionIndex];
                     const orig = quizHistory[questionIndex]?.chosen;
-                    const wasWrong = orig !== undefined && orig !== q.answer;
+                    const correctIdx = dispAnswerResult?.correctIndex ?? currentQuestions[questionIndex]?.answer;
+                    const wasWrong = orig !== undefined && correctIdx !== undefined && orig !== correctIdx;
                     if (!wasWrong) return null;
                     return (
                       <button
@@ -3557,8 +3731,8 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
       {/* ── INCIDENT PLAYING ──────────────────────────────────────────────── */}
       {screen==="incident"&&selectedIncident&&(()=>{
-        const step = selectedIncident.steps[incidentStepIndex];
-        const totalSteps = selectedIncident.steps.length;
+        const step = getIncidentStep(incidentStepIndex);
+        const totalSteps = incidentSteps ? incidentSteps.length : selectedIncident.steps.length;
         const maxScore = totalSteps * 10;
         const progress = ((incidentStepIndex + (incidentSubmitted ? 1 : 0)) / totalSteps) * 100;
         return(
@@ -3597,7 +3771,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             {/* Options */}
             <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
               {(lang === "he" ? (step.optionsHe || step.options) : step.options).map((opt,i)=>{
-                const isCorrect  = i === step.answer;
+                const isCorrect  = incidentAnswerResult ? i === incidentAnswerResult.correctIndex : i === step.answer;
                 const isChosen   = i === incidentAnswer;
                 let bg = "rgba(255,255,255,0.02)", border = "rgba(255,255,255,0.09)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
                 if (!incidentSubmitted && isChosen) { bg="rgba(239,68,68,0.08)"; border="#EF444466"; color="#fca5a5"; labelBg="rgba(239,68,68,0.2)"; labelColor="#EF4444"; }
@@ -3623,16 +3797,26 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             {/* Result + explanation */}
             {incidentSubmitted&&(
               <div style={{animation:"fadeIn 0.3s ease"}}>
-                <div style={{background:incidentAnswer===step.answer?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",border:`1px solid ${incidentAnswer===step.answer?"#10B98130":"#EF444430"}`,borderRadius:12,padding:"14px 16px",marginBottom:12}}>
-                  <div style={{fontWeight:800,fontSize:13,marginBottom:8,color:incidentAnswer===step.answer?"#10B981":"#EF4444"}}>
-                    {incidentAnswer===step.answer?t("incidentCorrect"):t("incidentWrong")}
-                  </div>
-                  {renderIncidentExplanation(lang === "he" ? (step.explanationHe || step.explanation) : step.explanation)}
-                </div>
-                <button onClick={nextIncidentStep}
-                  style={{width:"100%",padding:15,background:"linear-gradient(135deg,#EF4444cc,#F59E0B88)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                  {incidentStepIndex>=selectedIncident.steps.length-1?t("incidentFinish"):t("incidentNext")}
-                </button>
+                {(()=>{
+                  const incCorrect = incidentAnswerResult ? incidentAnswerResult.correct : incidentAnswer === step.answer;
+                  const incExplanation = incidentAnswerResult
+                    ? (lang === "he" ? (incidentAnswerResult.explanationHe || incidentAnswerResult.explanation) : incidentAnswerResult.explanation)
+                    : (lang === "he" ? (step.explanationHe || step.explanation) : step.explanation);
+                  return (
+                    <>
+                      <div style={{background:incCorrect?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",border:`1px solid ${incCorrect?"#10B98130":"#EF444430"}`,borderRadius:12,padding:"14px 16px",marginBottom:12}}>
+                        <div style={{fontWeight:800,fontSize:13,marginBottom:8,color:incCorrect?"#10B981":"#EF4444"}}>
+                          {incCorrect?t("incidentCorrect"):t("incidentWrong")}
+                        </div>
+                        {renderIncidentExplanation(incExplanation)}
+                      </div>
+                      <button onClick={nextIncidentStep}
+                        style={{width:"100%",padding:15,background:"linear-gradient(135deg,#EF4444cc,#F59E0B88)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                        {incidentStepIndex>=totalSteps-1?t("incidentFinish"):t("incidentNext")}
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -3641,7 +3825,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
       {/* ── INCIDENT COMPLETE ─────────────────────────────────────────────── */}
       {screen==="incidentComplete"&&selectedIncident&&(()=>{
-        const maxScore = selectedIncident.steps.length * 10;
+        const maxScore = (incidentSteps ? incidentSteps.length : selectedIncident.steps.length) * 10;
         const perfect  = incidentScore === maxScore;
         const goodRun  = incidentMistakes <= 1;
         return(
