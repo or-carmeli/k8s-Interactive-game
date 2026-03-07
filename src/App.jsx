@@ -1557,16 +1557,46 @@ export default function K8sQuestApp() {
     });
   };
 
-// Renders incident step prompt: detects terminal/kubectl lines and styles them in monospace
+  // Renders inline backtick code spans: `command` → <code>command</code>
+  const renderInline = (text) => {
+    const parts = text.split(/(`[^`]+`)/g);
+    return parts.map((part, i) =>
+      part.startsWith("`") && part.endsWith("`") && part.length > 2
+        ? <code key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",background:"rgba(125,211,252,0.08)",borderRadius:3,padding:"1px 5px"}}>{part.slice(1,-1)}</code>
+        : part
+    );
+  };
+
+  // Renders incident explanation as numbered sentences for readability
+  const renderIncidentExplanation = (text) => {
+    if (!text) return null;
+    const sentences = text.split(/\.\s+(?=[A-Z\u0590-\u05FFa-z`])/).filter(s => s.trim());
+    if (sentences.length <= 1) {
+      return <div dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>{renderInline(text)}</div>;
+    }
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {sentences.map((s, i) => (
+          <div key={i} dir="auto" style={{display:"flex",alignItems:"flex-start",gap:9}}>
+            <span style={{flexShrink:0,width:20,height:20,borderRadius:"50%",background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#EF4444",marginTop:2}}>{i+1}</span>
+            <span style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,flex:1}}>{renderInline(s.replace(/\.+$/, ""))}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Renders incident step prompt: terminal lines in monospace, Hebrew lines as normal text with inline code
   const renderIncidentPrompt = (text) => {
     if (!text) return null;
     const terminalPat = /^(kubectl|NAME\s|READY|STATUS\s|\s{2,}|[a-z0-9]+(-[a-z0-9]+)+\s|FATAL|Error|Failed|rpc error|unauthorized|  [A-Za-z])/;
+    const hasHebrew = (s) => /[\u0590-\u05FF]/.test(s);
     return text.split("\n").map((line, i) => {
-      if (!line.trim()) return <div key={i} style={{height:5}}/>;
-      if (terminalPat.test(line)) {
+      if (!line.trim()) return <div key={i} style={{height:6}}/>;
+      if (!hasHebrew(line) && terminalPat.test(line)) {
         return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre"}}>{line}</div>;
       }
-      return <div key={i} style={{color:"#e2e8f0",fontSize:14,lineHeight:1.75,marginBottom:2,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{line}</div>;
+      return <div key={i} dir="auto" style={{color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4}}>{renderInline(line)}</div>;
     });
   };
 
@@ -3474,7 +3504,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   <div style={{fontWeight:800,fontSize:13,marginBottom:8,color:incidentAnswer===step.answer?"#10B981":"#EF4444"}}>
                     {incidentAnswer===step.answer?t("incidentCorrect"):t("incidentWrong")}
                   </div>
-                  <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.7,direction: lang === "he" ? "rtl" : "ltr"}}>{lang === "he" ? (step.explanationHe || step.explanation) : step.explanation}</div>
+                  {renderIncidentExplanation(lang === "he" ? (step.explanationHe || step.explanation) : step.explanation)}
                 </div>
                 <button onClick={nextIncidentStep}
                   style={{width:"100%",padding:15,background:"linear-gradient(135deg,#EF4444cc,#F59E0B88)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
