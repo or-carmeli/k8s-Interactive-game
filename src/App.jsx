@@ -1452,7 +1452,7 @@ export default function K8sQuestApp() {
     const isLast = incidentStepIndex >= selectedIncident.steps.length - 1;
     if (isLast) {
       clearIncidentProgress();
-      setScreen("incidentList");
+      setScreen("incidentComplete");
     } else {
       const nextIdx = incidentStepIndex + 1;
       setIncidentStepIndex(nextIdx);
@@ -3360,22 +3360,6 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
           </div>
 
           {/* Resume banner */}
-          {incidentResume&&(
-            <div style={{background:"rgba(239,68,68,0.07)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:18}}>⏸️</span>
-                <div>
-                  <div style={{color:"#e2e8f0",fontWeight:700,fontSize:13}}>{t("incidentResumeBanner")}: {lang==="he"?incidentResume.incident.titleHe:incidentResume.incident.title}</div>
-                  <div style={{color:"#64748b",fontSize:12}}>{t("incidentStep")} {incidentResume.stepIndex+1}/{incidentResume.incident.steps.length} · ⭐ {incidentResume.score} · ⏱ {formatIncidentTime(incidentResume.elapsed)}</div>
-                </div>
-              </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={resumeIncident} style={{padding:"7px 14px",background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:8,color:"#EF4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>▶ {t("incidentResumeBanner")}</button>
-                <button onClick={()=>{clearIncidentProgress();setIncidentResume(null);}} style={{padding:"7px 10px",background:"none",border:"1px solid rgba(255,255,255,0.09)",borderRadius:8,color:"#475569",fontSize:13,cursor:"pointer"}}>{t("incidentDiscard")}</button>
-              </div>
-            </div>
-          )}
-
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {INCIDENTS.map(incident=>{
               const diff = INCIDENT_DIFFICULTY_CONFIG[incident.difficulty] || INCIDENT_DIFFICULTY_CONFIG.medium;
