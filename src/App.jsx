@@ -1580,9 +1580,9 @@ export default function K8sQuestApp() {
     return (
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {sentences.map((s, i) => (
-          <div key={i} dir="auto" style={{display:"flex",alignItems:"flex-start",gap:8}}>
+          <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{display:"flex",alignItems:"flex-start",gap:8}}>
             <span style={{flexShrink:0,color:"#EF4444",fontSize:14,lineHeight:1,marginTop:3}}>·</span>
-            <span style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,flex:1}}>{renderInline(s.replace(/\.+$/, ""))}</span>
+            <span dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,flex:1}}>{renderInline(s.replace(/\.+$/, ""))}</span>
           </div>
         ))}
       </div>
