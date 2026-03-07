@@ -2059,8 +2059,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
-.quiz-bar{flex-wrap:wrap!important;row-gap:6px!important}
-.quiz-bar-right{width:100%!important;justify-content:flex-start!important;gap:8px!important}
+.quiz-bar-right{gap:8px!important}
 .quiz-bar-right span,.quiz-bar-right button{font-size:11px!important}
 .opt-btn{padding:12px 14px!important;font-size:14px!important;gap:10px!important;min-height:48px!important}
 .explanation-card{border-radius:12px!important}
@@ -3317,33 +3316,38 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
           ):(
             <div>
               <div style={{marginBottom:18}}>
-                <div className="quiz-bar" style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13}}>{t("back")}</button>
+                {/* Row 1: progress indicator — prominent and centered */}
+                <div className="quiz-bar" style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,direction:dir}}>
+                  <button onClick={()=>setScreen("home")} aria-label={t("back")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",width:34,height:34,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <span aria-hidden="true">{dir==="rtl"?"→":"←"}</span>
+                  </button>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flex:1,justifyContent:"center"}}>
                     {questionIndex > 0 && (
                       <button onClick={()=>setQuestionIndex(p=>p-1)}
-                        style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"7px 10px",borderRadius:7,cursor:"pointer",fontSize:13}}>
+                        style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"5px 10px",borderRadius:7,cursor:"pointer",fontSize:12}}>
                         {t("prevQuestion")}
                       </button>
                     )}
-                    <span aria-live="polite" aria-atomic="true" style={{color:"#475569",fontSize:13}}>
+                    <span aria-live="polite" aria-atomic="true" style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>
                       {t("question")} {questionIndex+1} {t("of")} {currentQuestions.length}
-                      {isInHistoryMode && !tryAgainActive && <span style={{marginInlineStart:6,fontSize:11,color:"#A855F7",fontWeight:700}}>{t("reviewing")}</span>}
-                      {tryAgainActive && <span style={{marginInlineStart:6,fontSize:11,color:"#F59E0B",fontWeight:700}}>{t("tryAgainBadge")}</span>}
                     </span>
+                    {isInHistoryMode && !tryAgainActive && <span style={{fontSize:11,color:"#A855F7",fontWeight:700,background:"rgba(168,85,247,0.12)",padding:"2px 8px",borderRadius:6}}>{t("reviewing")}</span>}
+                    {tryAgainActive && <span style={{fontSize:11,color:"#F59E0B",fontWeight:700,background:"rgba(245,158,11,0.12)",padding:"2px 8px",borderRadius:6}}>{t("tryAgainBadge")}</span>}
                   </div>
-                  <div className="quiz-bar-right" style={{display:"flex",gap:10,alignItems:"center"}}>
-                    {!isInHistoryMode&&(timerEnabled||isInterviewMode)&&<span aria-live="off" aria-label={`${timeLeft} ${lang==="en"?"seconds":"שניות"}`} style={{display:"inline-block",color:(!isInterviewMode&&timeLeft<=10)?"#EF4444":"#F59E0B",fontSize:13,fontWeight:(isInterviewMode&&timeLeft<=5)?900:800,transform:(isInterviewMode&&timeLeft<=5)?"scale(1.05)":"none",transition:"transform 0.3s ease",minWidth:28,textAlign:"center",direction:"ltr"}}><span aria-hidden="true">⏱ {timeLeft}</span></span>}
-                    {!isInHistoryMode&&!isInterviewMode&&<button onClick={()=>setTimerEnabled(p=>!p)} aria-pressed={timerEnabled} style={{background:"none",border:"none",color:timerEnabled?"#F59E0B":"#475569",fontSize:12,cursor:"pointer",fontWeight:timerEnabled?700:400,padding:0}}>
-                      {timerEnabled?t("timerOn"):t("timerOff")}
-                    </button>}
-                    {!isInHistoryMode&&<span aria-label={`${stats.current_streak} ${t("streakLabel")}`} style={{color:stats.current_streak>0?"#FF6B35":"#475569",fontSize:12,fontWeight:700}}>
-                      <span aria-hidden="true">🔥 {stats.current_streak} {t("streakLabel")}</span>
-                    </span>}
-                    {!isInHistoryMode&&<span aria-label={`${stats.total_score + sessionScore} ${t("pts")}`} style={{color:"#A855F7",fontSize:12,fontWeight:700,direction:"ltr"}}>
-                      <span aria-hidden="true">⭐ {stats.total_score + sessionScore} {t("pts")}</span>
-                    </span>}
-                  </div>
+                  <div style={{width:34,flexShrink:0}}/>
+                </div>
+                {/* Row 2: stats bar — timer, streak, score */}
+                <div className="quiz-bar-right" style={{display:"flex",gap:10,alignItems:"center",justifyContent:"center",marginBottom:8,direction:"ltr"}}>
+                  {!isInHistoryMode&&(timerEnabled||isInterviewMode)&&<span aria-live="off" aria-label={`${timeLeft} ${lang==="en"?"seconds":"שניות"}`} style={{display:"inline-block",color:(!isInterviewMode&&timeLeft<=10)?"#EF4444":"#F59E0B",fontSize:13,fontWeight:(isInterviewMode&&timeLeft<=5)?900:800,transform:(isInterviewMode&&timeLeft<=5)?"scale(1.05)":"none",transition:"transform 0.3s ease",minWidth:28,textAlign:"center",direction:"ltr"}}><span aria-hidden="true">⏱ {timeLeft}</span></span>}
+                  {!isInHistoryMode&&!isInterviewMode&&<button onClick={()=>setTimerEnabled(p=>!p)} aria-pressed={timerEnabled} style={{background:"none",border:"none",color:timerEnabled?"#F59E0B":"#475569",fontSize:12,cursor:"pointer",fontWeight:timerEnabled?700:400,padding:0}}>
+                    {timerEnabled?t("timerOn"):t("timerOff")}
+                  </button>}
+                  {!isInHistoryMode&&<span aria-label={`${stats.current_streak} ${t("streakLabel")}`} style={{color:stats.current_streak>0?"#FF6B35":"#475569",fontSize:12,fontWeight:700}}>
+                    <span aria-hidden="true">🔥 {stats.current_streak} {t("streakLabel")}</span>
+                  </span>}
+                  {!isInHistoryMode&&<span aria-label={`${stats.total_score + sessionScore} ${t("pts")}`} style={{color:"#A855F7",fontSize:12,fontWeight:700,direction:"ltr"}}>
+                    <span aria-hidden="true">⭐ {stats.total_score + sessionScore} {t("pts")}</span>
+                  </span>}
                 </div>
                 <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
                   <div style={{height:"100%",borderRadius:4,
