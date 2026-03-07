@@ -272,4 +272,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and question forma
 
 ## License
 
-[BSL 1.1](LICENSE) © 2026 Or Carmeli — source-available, converts to MIT on 2030-03-07.
+[BSL 1.1](LICENSE) © 2026 Or Carmeli
