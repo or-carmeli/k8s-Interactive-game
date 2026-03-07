@@ -506,18 +506,20 @@ function Footer({ lang }) {
 }
 
 const welcomeMessagesHe = [
+  "בוא נתרגל קצת Kubernetes",
+  "מוכן לשאלה הבאה?",
+  "בוא נראה מה קורה ב-cluster",
+  "עוד שאלה קטנה מהשטח",
+  "מוכן לאתגר קטן?",
   "נראה אם היית עובר ראיון DevOps",
-  "בוא נראה איך היית עונה על זה",
-  "נראה איך אתה חושב",
-  "בוא נראה מה היית עושה פה",
-  "מוכן לשאלה מהשטח?",
 ];
 const welcomeMessagesEn = [
+  "Let's practice some Kubernetes",
+  "Ready for the next question?",
+  "Let's see what's happening in the cluster",
+  "Another quick scenario from the field",
+  "Ready for a small challenge?",
   "Let's see if you would pass a DevOps interview",
-  "Let's see how you would answer this",
-  "Let's see how you think",
-  "What would you do here?",
-  "Ready for a real-world question?",
 ];
 
 export default function K8sQuestApp() {
