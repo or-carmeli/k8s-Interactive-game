@@ -34,17 +34,21 @@ $$;
 -- Ensure RLS is enabled (idempotent)
 ALTER TABLE user_stats ENABLE ROW LEVEL SECURITY;
 
--- Users can read only their own row
+-- Policies are created idempotently (drop if exists, then create)
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "users_read_own_stats" ON user_stats;
+  DROP POLICY IF EXISTS "users_insert_own_stats" ON user_stats;
+  DROP POLICY IF EXISTS "users_update_own_stats" ON user_stats;
+END $$;
+
 CREATE POLICY "users_read_own_stats"
   ON user_stats FOR SELECT
   USING (auth.uid() = user_id);
 
--- Users can insert their own row
 CREATE POLICY "users_insert_own_stats"
   ON user_stats FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Users can update only their own row
 CREATE POLICY "users_update_own_stats"
   ON user_stats FOR UPDATE
   USING (auth.uid() = user_id)
