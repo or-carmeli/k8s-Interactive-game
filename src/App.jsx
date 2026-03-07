@@ -505,8 +505,24 @@ function Footer({ lang }) {
   );
 }
 
+const welcomeMessagesHe = [
+  "נראה אם היית עובר ראיון DevOps",
+  "בוא נראה איך היית עונה על זה",
+  "נראה איך אתה חושב",
+  "בוא נראה מה היית עושה פה",
+  "מוכן לשאלה מהשטח?",
+];
+const welcomeMessagesEn = [
+  "Let's see if you would pass a DevOps interview",
+  "Let's see how you would answer this",
+  "Let's see how you think",
+  "What would you do here?",
+  "Ready for a real-world question?",
+];
+
 export default function K8sQuestApp() {
   const [lang, setLang]                   = useState("he");
+  const [welcomeIdx] = useState(() => Math.floor(Math.random() * welcomeMessagesHe.length));
   const [gender, setGender]               = useState(() => localStorage.getItem("gender_v1") || "m");
   const handleSetGender = (g) => { setGender(g); localStorage.setItem("gender_v1", g); };
   const t = (key) => {
@@ -2477,7 +2493,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
               {/* Row 2: tagline / mode hint - smaller and dimmer */}
               <p style={{color:"#64748b",fontSize:11,margin:0,lineHeight:1.3,textAlign:"center",direction:dir}}>
-                {isInterviewMode?t("interviewModeHint"):t("tagline")}
+                {isInterviewMode?t("interviewModeHint"):(lang==="he"?welcomeMessagesHe:welcomeMessagesEn)[welcomeIdx]}
               </p>
               {/* Row 3: streak */}
               {dailyStreak.streak > 0 && (
