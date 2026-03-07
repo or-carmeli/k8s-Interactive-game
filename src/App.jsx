@@ -31,7 +31,7 @@ const INCIDENT_DIFFICULTY_CONFIG = {
 };
 
 const INCIDENT_SAVE_KEY = "incident_progress_v1";
-const APP_VERSION  = "1.5.0";
+const APP_VERSION  = "1.6.0";
 const SESSION_START = new Date();
 
 const MIXED_TOPIC     = { id: "mixed",     icon: "🎲", name: "Mixed Quiz",        color: "#A855F7", levels: {} };

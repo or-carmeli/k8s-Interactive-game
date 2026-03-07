@@ -4,7 +4,29 @@ All notable changes to KubeQuest are documented here.
 
 ---
 
-## [1.1.0] - 2026-03
+## [1.6.0] - 2026-03
+
+### Added
+- **System Status screen** (`/status`) — live environment, build time, DB health check, stack info
+- **Version badge** (`v1.6.0`) in header and About screen
+- **GitHub repo link** in About screen
+- **Incident Mode** added to burger menu for quick access
+
+### Fixed
+- Hebrew explanation text rendering — `dir="auto"` on mixed RTL/LTR content prevents bidi display issues
+
+### DevOps
+- `Dockerfile` — multi-stage build (Node 20 → nginx:alpine), ~25MB final image
+- `nginx.conf` — SPA routing, static asset caching, security headers
+- `vercel.json` — SPA rewrites + HTTP security headers
+- `k8s/` — production Kubernetes manifests: Namespace, Deployment, Service, Ingress, HPA
+- GitHub Actions: CI build check, Docker build & push to GHCR, Security scan (npm audit + Trivy + CodeQL)
+- Dependabot: weekly dependency and GitHub Actions version updates
+- Mermaid architecture diagram in README
+
+---
+
+## [1.5.0] - 2026-03
 
 ### Added
 - **Incident Mode** — multi-step real-world Kubernetes failure scenarios with step-by-step diagnosis, scoring, and timer
