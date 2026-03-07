@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubequest
+  namespace: kubequest
+  labels:
+    app: kubequest
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kubequest
+  template:
+    metadata:
+      labels:
+        app: kubequest
+    spec:
+      containers:
+        - name: kubequest
+          image: ghcr.io/or-carmeli/kubequest:latest
+          ports:
+            - containerPort: 80
+
+          # Resource requests and limits prevent OOMKilled and noisy-neighbour issues
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+          # Liveness probe: restart the container if nginx stops responding
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 15
+
+          # Readiness probe: only send traffic once nginx is ready
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+
+          # Security: run as non-root, read-only root filesystem
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false   # nginx needs to write tmp files
+            runAsNonRoot: false             # nginx requires root to bind port 80
+
+      # Graceful shutdown: wait for in-flight requests before terminating
+      terminationGracePeriodSeconds: 30

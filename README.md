@@ -128,6 +128,28 @@ using (auth.uid() = user_id);
 
 ---
 
+## Kubernetes Deployment
+
+The `k8s/` directory contains production-ready manifests to deploy KubeQuest on any Kubernetes cluster.
+
+```
+k8s/
+  namespace.yaml    # Isolated namespace: kubequest
+  deployment.yaml   # 2 replicas, resource limits, liveness & readiness probes
+  service.yaml      # ClusterIP service (internal traffic only)
+  ingress.yaml      # Nginx Ingress with TLS via cert-manager + HTTP→HTTPS redirect
+  hpa.yaml          # HorizontalPodAutoscaler: scale 2→10 pods at 70% CPU
+```
+
+```bash
+# Deploy to a cluster
+kubectl apply -f k8s/
+```
+
+> Requires: nginx ingress controller + cert-manager installed in the cluster.
+
+---
+
 ## Project Structure
 
 ```

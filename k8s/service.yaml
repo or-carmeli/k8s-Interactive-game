@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubequest
+  namespace: kubequest
+  labels:
+    app: kubequest
+spec:
+  type: ClusterIP        # Internal only — traffic enters via the Ingress below
+  selector:
+    app: kubequest       # Must match Deployment pod labels
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
