@@ -71,66 +71,60 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ## Architecture
 
+### CI/CD Pipeline
+
 ```mermaid
-flowchart TD
+flowchart LR
     DEV(["👩‍💻 Developer"])
 
     subgraph GH["GitHub"]
-        REPO[("Repository\nmain / dev / feat/*")]
-        CI["CI Workflow\nbuild check on every PR"]
-        SEC["Security Workflow\nnpm audit · Trivy · CodeQL"]
-        DOCKER["Docker Workflow\nbuild & push on merge to main"]
-        DEP["Dependabot\nweekly dependency updates"]
+        REPO[("main / dev / feat/*")]
+        CI["CI\nBuild Check"]
+        DOCK["Docker\nBuild & Push"]
+        SEC["Security Scan\nnpm audit · Trivy · CodeQL"]
+        BOT["Dependabot\nweekly updates"]
     end
 
-    subgraph REGISTRY["GitHub Container Registry"]
-        IMG["ghcr.io/or-carmeli/kubequest\n:latest · :sha-xxxx · :v1.5.0"]
-    end
+    GHCR["📦 GHCR\nghcr.io/or-carmeli/kubequest"]
+    VERCEL["🚀 Vercel\nAuto Deploy"]
 
-    subgraph PROD["Production — Vercel"]
-        EDGE["Edge Network\nGlobal CDN"]
-        SPA["React SPA\n(static build)"]
-    end
-
-    subgraph SUPABASE["Supabase (Backend)"]
-        AUTH["Auth Service\nJWT sessions"]
-        DB[("PostgreSQL\nuser_stats")]
-    end
-
-    subgraph K8S["Kubernetes — Optional Deployment"]
-        ING["Ingress\nnginx + TLS cert-manager"]
-        SVC["Service\nClusterIP"]
-        POD["Pods  ×2 → ×10\nnginx:alpine"]
-        HPA["HPA\nscale on CPU 70%"]
-    end
-
-    USER(["👤 User"])
-
-    %% Developer flow
     DEV -->|git push| REPO
-    REPO -->|pull_request| CI
-    REPO -->|push to main| DOCKER
+    REPO -->|on PR| CI
+    REPO -->|push to main| DOCK
     REPO -->|push to main| SEC
-    DEP -->|opens PRs| REPO
-
-    %% Deployment flow
-    REPO -->|push to main| EDGE
-    DOCKER --> IMG
-    IMG -.->|kubectl apply| ING
-
-    %% Kubernetes internal
-    ING --> SVC --> POD
-    HPA -->|autoscales| POD
-
-    %% User flow
-    USER -->|HTTPS| EDGE
-    EDGE --> SPA
-    SPA -->|login / signup| AUTH
-    SPA -->|read / write stats| DB
+    REPO -->|push to main| VERCEL
+    BOT -.->|opens PRs| REPO
+    DOCK --> GHCR
 ```
 
-> **Production** runs on Vercel (static SPA + Supabase backend).
-> **Kubernetes manifests** in `k8s/` show how to self-host on any cluster using the Docker image published to GHCR.
+### Runtime Architecture
+
+```mermaid
+flowchart TD
+    USER(["👤 User"])
+
+    subgraph VERCEL["Vercel Edge Network"]
+        SPA["React SPA"]
+    end
+
+    subgraph SB["Supabase"]
+        AUTH["Auth Service"]
+        DB[("PostgreSQL")]
+    end
+
+    subgraph K8S["Kubernetes — Optional"]
+        ING["Ingress + TLS"] --> SVC["ClusterIP Service"] --> PODS["Pods ×2-10"]
+        HPA["HPA"] -.->|autoscales| PODS
+    end
+
+    GHCR["📦 GHCR"] -.->|kubectl apply| K8S
+
+    USER -->|HTTPS| SPA
+    SPA -->|auth| AUTH
+    SPA -->|read / write| DB
+```
+
+> **Production** runs on Vercel + Supabase. The `k8s/` manifests and Docker image on GHCR enable self-hosting on any Kubernetes cluster.
 
 ---
 
