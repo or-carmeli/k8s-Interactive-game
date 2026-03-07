@@ -459,12 +459,13 @@ function renderBidi(text, lang) {
   if (!text || lang !== "he") return text;
   if (!/[A-Za-z]/.test(text)) return text;
   // Do NOT capture trailing punctuation inside the LTR span - leave ?!.,; in the RTL flow.
-  const parts = text.split(/((?:[A-Za-z][A-Za-z0-9\-_.:/]*(?:\s+(?=[A-Za-z]))?)+)/);
+  // Note: the character class excludes . so "Kubernetes." splits into "Kubernetes" + "."
+  const parts = text.split(/((?:[A-Za-z][A-Za-z0-9\-_:/]*(?:\s+(?=[A-Za-z]))?)+)/);
   if (parts.length <= 1) return text;
   return parts.map((part, i) => {
     if (/^[A-Za-z]/.test(part)) {
       const codeStyle = isCodeTerm(part)
-        ? {background:"rgba(0,212,255,0.08)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:4,padding:"1px 5px",fontSize:"0.9em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"#7dd3fc",whiteSpace:"nowrap"}
+        ? {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"#7dd3fc",whiteSpace:"nowrap"}
         : undefined;
       return <span key={i} dir="ltr" style={{unicodeBidi:"isolate",...codeStyle}}>{part}</span>;
     }
@@ -3452,7 +3453,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     return (
                       <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:16,overflow:"hidden"}}>
                         {/* Status banner */}
-                        <div style={{background:isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.10)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:dir==="rtl"?"flex-end":"flex-start",gap:8,borderBottom:`1px solid ${isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.12)"}`}}>
+                        <div style={{background:isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.10)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:dir==="rtl"?"flex-end":"flex-start",gap:8,borderBottom:`1px solid ${isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.12)"}`,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
                           <span style={{fontWeight:900,fontSize:15,color:isCorrect?"#10B981":"#EF4444",letterSpacing:0.3}}>
                             {isCorrect
                               ? (tryAgainActive ? t("tryAgainCorrect") : `${t("correct")}${isInHistoryMode?"":" +"+LEVEL_CONFIG[selectedLevel].points+" "+t("pts")}`)
