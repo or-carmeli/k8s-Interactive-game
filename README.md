@@ -18,6 +18,10 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ---
 
+## Demo
+
+![KubeQuest Demo](public/demo.gif)
+
 ## Screenshots
 
 ![KubeQuest preview](public/preview.png)
