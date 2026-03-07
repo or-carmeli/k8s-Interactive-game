@@ -62,6 +62,71 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TD
+    DEV(["👩‍💻 Developer"])
+
+    subgraph GH["GitHub"]
+        REPO[("Repository\nmain / dev / feat/*")]
+        CI["CI Workflow\nbuild check on every PR"]
+        SEC["Security Workflow\nnpm audit · Trivy · CodeQL"]
+        DOCKER["Docker Workflow\nbuild & push on merge to main"]
+        DEP["Dependabot\nweekly dependency updates"]
+    end
+
+    subgraph REGISTRY["GitHub Container Registry"]
+        IMG["ghcr.io/or-carmeli/kubequest\n:latest · :sha-xxxx · :v1.5.0"]
+    end
+
+    subgraph PROD["Production — Vercel"]
+        EDGE["Edge Network\nGlobal CDN"]
+        SPA["React SPA\n(static build)"]
+    end
+
+    subgraph SUPABASE["Supabase (Backend)"]
+        AUTH["Auth Service\nJWT sessions"]
+        DB[("PostgreSQL\nuser_stats")]
+    end
+
+    subgraph K8S["Kubernetes — Optional Deployment"]
+        ING["Ingress\nnginx + TLS cert-manager"]
+        SVC["Service\nClusterIP"]
+        POD["Pods  ×2 → ×10\nnginx:alpine"]
+        HPA["HPA\nscale on CPU 70%"]
+    end
+
+    USER(["👤 User"])
+
+    %% Developer flow
+    DEV -->|git push| REPO
+    REPO -->|pull_request| CI
+    REPO -->|push to main| DOCKER
+    REPO -->|push to main| SEC
+    DEP -->|opens PRs| REPO
+
+    %% Deployment flow
+    REPO -->|push to main| EDGE
+    DOCKER --> IMG
+    IMG -.->|kubectl apply| ING
+
+    %% Kubernetes internal
+    ING --> SVC --> POD
+    HPA -->|autoscales| POD
+
+    %% User flow
+    USER -->|HTTPS| EDGE
+    EDGE --> SPA
+    SPA -->|login / signup| AUTH
+    SPA -->|read / write stats| DB
+```
+
+> **Production** runs on Vercel (static SPA + Supabase backend).
+> **Kubernetes manifests** in `k8s/` show how to self-host on any cluster using the Docker image published to GHCR.
+
+---
+
 ## Local Development
 
 ### Prerequisites
