@@ -44,7 +44,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl get pods` gives you the current state without causing any disruption. Deleting the pod or scaling to 0 worsens the outage. Rebooting a node is far too drastic without even knowing the cause.",
         explanationHe:
-          "`kubectl get pods` מציג את המצב הנוכחי מבלי לגרום להפרעה כלשהי. מחיקת ה-Pod או הקטנה ל-0 תחמיר את הנפילה. אתחול Node הוא צעד קיצוני בהרבה לפני שמבינים את הסיבה.",
+          "הפקודה `kubectl get pods` מציגה את המצב הנוכחי מבלי לגרום להפרעה כלשהי. מחיקת ה-Pod או הקטנה ל-0 תחמיר את הנפילה. אתחול Node הוא צעד קיצוני בהרבה לפני שמבינים את הסיבה.",
       },
       {
         prompt:
@@ -67,7 +67,7 @@ export const INCIDENTS = [
         explanation:
           "OOMKilled (Out Of Memory Killed) is set by the Linux kernel when a container breaches its memory limit. `kubectl describe pod` reveals the exact memory limit, the OOMKilled termination reason, and recent events - everything needed for diagnosis.",
         explanationHe:
-          "OOMKilled (Out Of Memory Killed) מוגדר על ידי ליבת לינוקס כאשר קונטיינר עובר את מגבלת הזיכרון שלו. `kubectl describe pod` מציג את מגבלת הזיכרון המדויקת, סיבת הסיום OOMKilled ואירועים אחרונים - כל מה שנדרש לאבחון.",
+          "מצב OOMKilled (Out Of Memory Killed) מוגדר על ידי ליבת לינוקס כאשר קונטיינר עובר את מגבלת הזיכרון שלו. הפקודה `kubectl describe pod` מציגה את מגבלת הזיכרון המדויקת, סיבת הסיום OOMKilled ואירועים אחרונים - כל מה שנדרש לאבחון.",
       },
       {
         prompt:
@@ -90,7 +90,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl top pod` shows real-time memory consumption. You need to compare actual usage against the 256Mi limit to set a realistic new limit. Logs help find leaks but not current memory levels. `kubectl get node` shows total node capacity - not per-pod usage. `kubectl get hpa` controls replica count - it has nothing to do with per-pod memory allocation.",
         explanationHe:
-          "`kubectl top pod` מציג צריכת זיכרון בזמן אמת. יש להשוות שימוש בפועל מול מגבלת 256Mi כדי לקבוע מגבלה ריאלית חדשה. לוגים עוזרים לזהות דליפות אך לא את רמות הזיכרון הנוכחיות. `kubectl get node` מציג קיבולת Node כוללת - לא שימוש זיכרון לכל Pod. `kubectl get hpa` שולט במספר הרפליקות - הוא לא קשור להקצאת זיכרון לכל Pod.",
+          "הפקודה `kubectl top pod` מציגה צריכת זיכרון בזמן אמת. יש להשוות שימוש בפועל מול מגבלת 256Mi כדי לקבוע מגבלה ריאלית חדשה. לוגים עוזרים לזהות דליפות אך לא את רמות הזיכרון הנוכחיות. הפקודה `kubectl get node` מציגה קיבולת Node כוללת - לא שימוש זיכרון לכל Pod. הפקודה `kubectl get hpa` שולטת במספר הרפליקות - היא לא קשורה להקצאת זיכרון לכל Pod.",
       },
       {
         prompt:
@@ -136,7 +136,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl rollout status` confirms the rollout completes. Watching pods shows the new pod becomes Ready. Events reveal any scheduling or startup issues. Using all three gives full confidence the fix worked.",
         explanationHe:
-          "`kubectl rollout status` מאשר שה-rollout הושלם. מעקב ה-Pods מציג שה-Pod החדש הפך ל-Ready. Events חושפים כל בעיית תזמון או הפעלה. שימוש בשלושתם יחד מספק ביטחון מלא שהתיקון עבד.",
+          "הפקודה `kubectl rollout status` מאשרת שה-rollout הושלם. מעקב ה-Pods מציג שה-Pod החדש הפך ל-Ready. Events חושפים כל בעיית תזמון או הפעלה. שימוש בשלושתם יחד מספק ביטחון מלא שהתיקון עבד.",
       },
       {
         prompt:
@@ -221,7 +221,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl logs --previous` shows logs from the last crashed container - exactly what you need to see the startup error. `exec` doesn't work on a CrashLoopBackOff pod (it exits too fast). `describe` shows events but not application-level log output. Events are useful but secondary.",
         explanationHe:
-          "`kubectl logs --previous` מציג לוגים מהקונטיינר שקרס לאחרונה - בדיוק מה שצריך לראות שגיאת ההפעלה. `exec` לא עובד על Pod ב-CrashLoopBackOff (הוא יוצא מהר מדי). `describe` מציג Events אך לא פלט לוגים ברמת האפליקציה. Events שימושיים אך משניים.",
+          "הפקודה `kubectl logs --previous` מציגה לוגים מהקונטיינר שקרס לאחרונה - בדיוק מה שצריך לראות שגיאת ההפעלה. הפקודה `exec` לא עובדת על Pod ב-CrashLoopBackOff (הוא יוצא מהר מדי). הפקודה `describe` מציגה Events אך לא פלט לוגים ברמת האפליקציה. Events שימושיים אך משניים.",
       },
       {
         prompt:
@@ -267,7 +267,7 @@ export const INCIDENTS = [
         explanation:
           "ConfigMaps are namespace-scoped. The ConfigMap can be absent because it only exists in another namespace, was accidentally deleted, or was never created for this environment. All three are equally valid root causes; the fix is the same: create it in staging.",
         explanationHe:
-          "ConfigMaps מוגדרים לפי namespace. ה-ConfigMap יכול להיות חסר כי הוא קיים רק ב-namespace אחר, נמחק בטעות, או מעולם לא נוצר לסביבה זו. שלושתם סיבות שורשיות תקפות באותה מידה; התיקון זהה: ליצור אותו ב-staging.",
+          "משאבי ConfigMaps מוגדרים לפי namespace. ה-ConfigMap יכול להיות חסר כי הוא קיים רק ב-namespace אחר, נמחק בטעות, או מעולם לא נוצר לסביבה זו. שלושתם סיבות שורשיות תקפות באותה מידה; התיקון זהה: ליצור אותו ב-staging.",
       },
       {
         prompt:
@@ -329,7 +329,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl describe pod` shows the Events section which contains the exact pull failure message - whether it's a missing tag, auth failure, or unreachable registry. Checking nodes is unlikely to help since only one deployment is affected. Rebuilding without knowing the cause wastes time.",
         explanationHe:
-          "`kubectl describe pod` מציג את חלק ה-Events שמכיל את הודעת כשל המשיכה המדויקת - בין אם זה tag חסר, כשל אימות, או registry לא נגיש. בדיקת Nodes לא צפויה לעזור מכיוון שרק Deployment אחד מושפע. בנייה מחדש ללא ידיעת הסיבה מבזבזת זמן.",
+          "הפקודה `kubectl describe pod` מציגה את חלק ה-Events שמכיל את הודעת כשל המשיכה המדויקת - בין אם זה tag חסר, כשל אימות, או registry לא נגיש. בדיקת Nodes לא צפויה לעזור מכיוון שרק Deployment אחד מושפע. בנייה מחדש ללא ידיעת הסיבה מבזבזת זמן.",
       },
       {
         prompt:
@@ -398,7 +398,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl create secret docker-registry` creates a Secret with the correct type and `.dockerconfigjson` format. Never store credentials in plain ConfigMaps or env vars - they're not encrypted at rest. Secrets are namespace-scoped; you can't reference one from kube-system in default namespace.",
         explanationHe:
-          "`kubectl create secret docker-registry` יוצר Secret עם הסוג הנכון ופורמט `.dockerconfigjson`. לעולם אל תאחסן אישורים ב-ConfigMaps פשוטים או ב-env vars - הם אינם מוצפנים במנוחה. Secrets מוגדרים לפי namespace; לא ניתן להפנות לאחד מ-kube-system ב-default namespace.",
+          "הפקודה `kubectl create secret docker-registry` יוצרת Secret עם הסוג הנכון ופורמט `.dockerconfigjson`. לעולם אל תאחסנו אישורים ב-ConfigMaps פשוטים או ב-env vars - הם אינם מוצפנים במנוחה. משאבי Secrets מוגדרים לפי namespace; לא ניתן להפנות לאחד מ-kube-system ב-default namespace.",
       },
       {
         prompt:
@@ -421,7 +421,7 @@ export const INCIDENTS = [
         explanation:
           "Kubernetes does NOT automatically use available pull Secrets. You must explicitly reference the Secret in the Deployment under `spec.template.spec.imagePullSecrets: [{name: regcred}]`. Without this reference the pod will never use the credential, even if the Secret exists in the same namespace.",
         explanationHe:
-          "Kubernetes אינו משתמש אוטומטית ב-pull Secrets זמינים. יש להפנות מפורשות ל-Secret ב-Deployment תחת `spec.template.spec.imagePullSecrets: [{name: regcred}]`. ללא הפניה זו ה-Pod לעולם לא ישתמש באישור, גם אם ה-Secret קיים באותו namespace.",
+          "מערכת Kubernetes אינה משתמשת אוטומטית ב-pull Secrets זמינים. יש להפנות מפורשות ל-Secret ב-Deployment תחת `spec.template.spec.imagePullSecrets: [{name: regcred}]`. ללא הפניה זו ה-Pod לעולם לא ישתמש באישור, גם אם ה-Secret קיים באותו namespace.",
       },
     ],
   },
@@ -483,7 +483,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl get endpoints` tells you whether the Service has successfully matched any pods. If ENDPOINTS shows `<none>`, no pods match the Service selector - the most common cause of 'connection refused' when pods are healthy.",
         explanationHe:
-          "`kubectl get endpoints` מציין אם ה-Service התאים בהצלחה ל-Pods כלשהם. אם ENDPOINTS מציג `<none>`, אף Pod לא תואם ל-selector של ה-Service - הסיבה הנפוצה ביותר ל-'connection refused' כאשר ה-Pods תקינים.",
+          "הפקודה `kubectl get endpoints` מראה אם ה-Service התאים בהצלחה ל-Pods כלשהם. אם ENDPOINTS מציג `<none>`, אף Pod לא תואם ל-selector של ה-Service - הסיבה הנפוצה ביותר ל-'connection refused' כאשר ה-Pods תקינים.",
       },
       {
         prompt:
@@ -529,7 +529,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl patch svc` atomically updates the selector with zero downtime. Labelling individual pods is fragile - new pods from the Deployment won't have it. Deleting and recreating the Service causes unnecessary downtime. Annotations don't influence selector-based routing.",
         explanationHe:
-          "`kubectl patch svc` מעדכן אטומית את ה-selector ללא זמן השבתה. הוספת labels ל-Pods בודדים שברירית - Pods חדשים מה-Deployment לא יכילו אותם. מחיקה ויצירה מחדש של ה-Service גורמת להשבתה מיותרת. Annotations לא משפיעים על ניתוב מבוסס-selector.",
+          "הפקודה `kubectl patch svc` מעדכנת אטומית את ה-selector ללא זמן השבתה. הוספת labels ל-Pods בודדים שברירית - Pods חדשים מה-Deployment לא יכילו אותם. מחיקה ויצירה מחדש של ה-Service גורמת להשבתה מיותרת. Annotations לא משפיעים על ניתוב מבוסס-selector.",
       },
       {
         prompt:
@@ -614,7 +614,7 @@ export const INCIDENTS = [
         explanation:
           "A quick `nslookup kubernetes.default` from inside the cluster tests the most fundamental in-cluster DNS entry. This confirms the problem is DNS and not individual app configs. Cloud DNS (Route53) handles external names, not internal Kubernetes service discovery. Restarting all pods causes massive downtime without confirming root cause.",
         explanationHe:
-          "`nslookup kubernetes.default` מהיר מתוך הקלאסטר בודק את רשומת ה-DNS הפנימית הבסיסית ביותר. זה מאשר שהבעיה היא DNS ולא הגדרות אפליקציות בודדות. Cloud DNS (Route53) מטפל בשמות חיצוניים, לא בגילוי שירותים פנימי של Kubernetes. אתחול כל ה-Pods גורם להשבתה מסיבית ללא אישור הסיבה השורשית.",
+          "הפקודה `nslookup kubernetes.default` בודקת במהירות מתוך הקלאסטר את רשומת ה-DNS הפנימית הבסיסית ביותר. זה מאשר שהבעיה היא DNS ולא הגדרות אפליקציות בודדות. Cloud DNS (Route53) מטפל בשמות חיצוניים, לא בגילוי שירותים פנימי של Kubernetes. אתחול כל ה-Pods גורם להשבתה מסיבית ללא אישור הסיבה השורשית.",
       },
       {
         prompt:
@@ -637,7 +637,7 @@ export const INCIDENTS = [
         explanation:
           "Kubernetes cluster DNS is served by CoreDNS pods in the `kube-system` namespace. These pods handle all in-cluster service discovery via the cluster domain (e.g., `svc.cluster.local`). If they're unhealthy, all DNS resolution fails cluster-wide.",
         explanationHe:
-          "DNS של קלאסטר Kubernetes מסופק על ידי Pods של CoreDNS ב-namespace של `kube-system`. Pods אלה מטפלים בכל גילוי השירותים הפנימי באמצעות דומיין הקלאסטר (למשל `svc.cluster.local`). אם הם לא תקינים, כל פתרון ה-DNS נכשל בכל הקלאסטר.",
+          "שירות ה-DNS של קלאסטר Kubernetes מסופק על ידי Pods של CoreDNS ב-namespace של `kube-system`. Pods אלה מטפלים בכל גילוי השירותים הפנימי באמצעות דומיין הקלאסטר (למשל `svc.cluster.local`). אם הם לא תקינים, כל פתרון ה-DNS נכשל בכל הקלאסטר.",
       },
       {
         prompt:
@@ -706,7 +706,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl edit deployment coredns -n kube-system` triggers a rolling update - only one CoreDNS pod restarts at a time, keeping DNS available throughout. Deleting the deployment creates a total DNS outage during recreation. Adding nodes doesn't address the per-pod memory limit.",
         explanationHe:
-          "`kubectl edit deployment coredns -n kube-system` מפעיל rolling update - רק Pod אחד של CoreDNS מתאפס בכל פעם, תוך שמירת DNS זמין לאורך כל התהליך. מחיקת ה-Deployment יוצרת השבתת DNS מוחלטת במהלך היצירה מחדש. הוספת Nodes לא פותרת את מגבלת הזיכרון לכל Pod.",
+          "הפקודה `kubectl edit deployment coredns -n kube-system` מפעילה rolling update - רק Pod אחד של CoreDNS מתאפס בכל פעם, תוך שמירת DNS זמין לאורך כל התהליך. מחיקת ה-Deployment יוצרת השבתת DNS מוחלטת במהלך היצירה מחדש. הוספת Nodes לא פותרת את מגבלת הזיכרון לכל Pod.",
       },
       {
         prompt:
@@ -814,7 +814,7 @@ export const INCIDENTS = [
         explanation:
           "`kubectl describe networkpolicy -n production` prints each policy's podSelector and ingress/egress rules in readable format. NetworkPolicy controllers don't expose user-accessible logs. Events won't show policy rule details. iptables inspection requires node root access and is complex to interpret.",
         explanationHe:
-          "`kubectl describe networkpolicy -n production` מדפיס את ה-podSelector וכללי ingress/egress של כל מדיניות בפורמט קריא. בקרי NetworkPolicy אינם חושפים לוגים נגישים למשתמש. Events לא יציגו פרטי כללי מדיניות. בדיקת iptables דורשת גישת root ל-Node ומורכבת לפרשנות.",
+          "הפקודה `kubectl describe networkpolicy -n production` מדפיסה את ה-podSelector וכללי ingress/egress של כל מדיניות בפורמט קריא. בקרי NetworkPolicy אינם חושפים לוגים נגישים למשתמש. Events לא יציגו פרטי כללי מדיניות. בדיקת iptables דורשת גישת root ל-Node ומורכבת לפרשנות.",
       },
       {
         prompt:
@@ -837,7 +837,7 @@ export const INCIDENTS = [
         explanation:
           "NetworkPolicies match pods by their labels. If frontend pods don't carry the label `role=frontend`, the allow-frontend policy won't select them - their traffic is blocked by deny-all. You must verify actual pod labels before modifying any policy.",
         explanationHe:
-          "NetworkPolicies מתאימות Pods לפי ה-labels שלהם. אם Pods של פרונטאנד לא נושאות את ה-label `role=frontend`, מדיניות allow-frontend לא תבחר בהם - התעבורה שלהם חסומה על ידי deny-all. חובה לאמת labels בפועל של Pods לפני שינוי מדיניות כלשהי.",
+          "כללי NetworkPolicies מתאימים Pods לפי ה-labels שלהם. אם Pods של פרונטאנד לא נושאים את ה-label `role=frontend`, מדיניות allow-frontend לא תבחר בהם - התעבורה שלהם חסומה על ידי deny-all. חובה לאמת labels בפועל של Pods לפני שינוי מדיניות כלשהי.",
       },
       {
         prompt:
@@ -883,7 +883,7 @@ export const INCIDENTS = [
         explanation:
           "A temporary curl pod inside the same namespace sends actual traffic along the exact path that was broken. This is the only true end-to-end test. Waiting for user traffic risks continued impact. Endpoints check and policy describe are read-only - they can't prove traffic actually flows.",
         explanationHe:
-          "Pod curl זמני בתוך אותו namespace שולח תעבורה בפועל לאורך הנתיב המדויק שהיה שבור. זוהי הבדיקה היחידה מקצה לקצה האמיתית. המתנה לתעבורת משתמשים מסכנת המשך השפעה. בדיקת endpoints ותיאור מדיניות הם לקריאה בלבד - הם לא יכולים להוכיח שהתעבורה אכן זורמת.",
+          "הרצת Pod curl זמני בתוך אותו namespace שולחת תעבורה בפועל לאורך הנתיב המדויק שהיה שבור. זוהי הבדיקה היחידה מקצה לקצה האמיתית. המתנה לתעבורת משתמשים מסכנת המשך השפעה. בדיקת endpoints ותיאור מדיניות הם לקריאה בלבד - הם לא יכולים להוכיח שהתעבורה אכן זורמת.",
       },
       {
         prompt:
@@ -906,7 +906,7 @@ export const INCIDENTS = [
         explanation:
           "GitOps ensures policies are version-controlled and auditable. A CI linter catches selector mismatches before merging. Staging validation catches runtime issues. Manual checks, disabling NetworkPolicy, or limiting application windows all trade reliability and security for convenience.",
         explanationHe:
-          "GitOps מבטיח שמדיניות מנוהלות בגרסאות וניתנות לביקורת. linter ב-CI מאתר אי-התאמות selector לפני מיזוג. אימות ב-staging מאתר בעיות runtime. בדיקות ידניות, השבתת NetworkPolicy, או הגבלת חלונות יישום כולם מסחרים אמינות ואבטחה לנוחות.",
+          "גישת GitOps מבטיחה שמדיניות מנוהלות בגרסאות וניתנות לביקורת. linter ב-CI מאתר אי-התאמות selector לפני מיזוג. אימות ב-staging מאתר בעיות runtime. בדיקות ידניות, השבתת NetworkPolicy, או הגבלת חלונות יישום כולם מסחרים אמינות ואבטחה לנוחות.",
       },
       {
         prompt:
