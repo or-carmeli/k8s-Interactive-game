@@ -488,12 +488,12 @@ function Footer({ lang }) {
         style={{color:"#475569",fontSize:11,textDecoration:"none",display:"block",marginBottom:8,transition:"color 0.2s",direction:lang==="en"?"ltr":"rtl"}}
         onMouseEnter={e=>{e.currentTarget.style.color="#64748b";}}
         onMouseLeave={e=>{e.currentTarget.style.color="#475569";}}>
-        {lang==="en"?"Enjoying KubeQuest?":"?נהנים מ-KubeQuest"}<br/>{lang==="en"?"Support the project ☕":"☕ תמכו בפרויקט"}
+        {lang==="en"?"Enjoying KubeQuest?":"נהנים מ-KubeQuest\u200F?"}<br/>{lang==="en"?"Support the project ☕":"☕ תמכו בפרויקט"}
       </a>
-      <p style={{color:"#475569",fontSize:12,margin:"0 0 8px 0"}}>
-        © {year} {txt.allRightsReserved}{" "}
+      <p style={{color:"#475569",fontSize:12,margin:"0 0 8px 0",direction:lang==="he"?"rtl":"ltr"}}>
+        {lang==="en" && `© ${year} `}{txt.allRightsReserved}{" "}
         <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer"
-          style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>
+          style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>{lang==="he" && ` \u200F© ${year}`}
       </p>
       <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback"
         style={{display:"inline-flex",alignItems:"center",gap:5,color:"#64748b",fontSize:11,textDecoration:"none",padding:"5px 12px",border:"1px solid rgba(255,255,255,0.07)",borderRadius:20,transition:"color 0.2s,border-color 0.2s"}}
