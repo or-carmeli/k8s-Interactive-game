@@ -488,7 +488,7 @@ function Footer({ lang }) {
         style={{color:"#475569",fontSize:11,textDecoration:"none",display:"block",marginBottom:8,transition:"color 0.2s",direction:lang==="en"?"ltr":"rtl"}}
         onMouseEnter={e=>{e.currentTarget.style.color="#64748b";}}
         onMouseLeave={e=>{e.currentTarget.style.color="#475569";}}>
-        {lang==="en"?"Enjoying KubeQuest?":"נהנים מ-KubeQuest\u200F?"}<br/>{lang==="en"?"Support the project ☕":"☕ תמכו בפרויקט"}
+        {lang==="en"?"Enjoying KubeQuest?":"נהנים מ-KubeQuest\u200F?"}<br/>{lang==="en"?"Support the project ☕":"תמכו בפרויקט ☕"}
       </a>
       <p style={{color:"#475569",fontSize:12,margin:"0 0 8px 0",direction:lang==="he"?"rtl":"ltr"}}>
         {lang==="en" && `© ${year} `}{txt.allRightsReserved}{" "}
