@@ -465,12 +465,13 @@ function renderBidi(text, lang) {
   // Note: the character class excludes . so "Kubernetes." splits into "Kubernetes" + "."
   const parts = text.split(/((?:[A-Za-z][A-Za-z0-9\-_:/]*(?:\s+(?=[A-Za-z]))?)+)/);
   if (parts.length <= 1) return text;
+  const startsWithLatin = /^[A-Za-z]/.test(text);
   return parts.map((part, i) => {
     if (/^[A-Za-z]/.test(part)) {
       const codeStyle = isCodeTerm(part)
         ? {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"#7dd3fc",whiteSpace:"nowrap"}
         : undefined;
-      return <span key={i} dir="ltr" style={{unicodeBidi:"isolate",...codeStyle}}>{part}</span>;
+      return <span key={i} dir="ltr" style={{unicodeBidi:"isolate",...codeStyle}}>{(i === 0 && startsWithLatin ? "\u200F" : "")}{part}</span>;
     }
     // Insert RLM (U+200F) before punctuation that immediately follows an LTR span so
     // the Unicode bidi algorithm places it at the visual end of the RTL sentence.
@@ -1813,7 +1814,7 @@ export default function K8sQuestApp() {
     );
   };
 
-  // Renders incident explanation as numbered sentences for readability
+  // Renders incident explanation as short paragraphs for readability
   const renderIncidentExplanation = (text) => {
     if (!text) return null;
     const sentences = text.split(/\.\s+(?=[A-Z\u0590-\u05FFa-z`])/).filter(s => s.trim());
@@ -1821,11 +1822,10 @@ export default function K8sQuestApp() {
       return <div dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>{renderInline(text)}</div>;
     }
     return (
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {sentences.map((s, i) => (
-          <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{display:"flex",alignItems:"flex-start",gap:8}}>
-            <span style={{flexShrink:0,color:"#EF4444",fontSize:14,lineHeight:1,marginTop:3}}>·</span>
-            <span dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,flex:1}}>{renderInline(s.replace(/\.+$/, ""))}</span>
+          <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,textAlign:lang==="he"?"right":"left"}}>
+            {renderInline(s.replace(/\.+$/, "") + ".")}
           </div>
         ))}
       </div>
@@ -3454,9 +3454,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     const isCorrect = dispAnswerResult ? dispAnswerResult.correct : (!timedOut && dispSelectedAnswer === q.answer);
                     const explanationText = dispAnswerResult?.explanation || q.explanation || "";
                     const correctIdx = dispAnswerResult?.correctIndex ?? q.answer;
-                    const explanationParts = explanationText.split(/\. /);
-                    const mainExplanation = explanationParts[0] + (explanationParts.length > 1 ? "." : "");
-                    const bulletPoints = explanationParts.slice(1);
+                    const paragraphs = explanationText.split(/\. /).filter(s => s.trim());
                     return (
                       <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:18,overflow:"hidden"}}>
                         {/* Status banner */}
@@ -3469,22 +3467,13 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                                 : (tryAgainActive ? t("tryAgainWrong") : t("incorrect"))}
                           </span>
                         </div>
-                        {/* Explanation body */}
-                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:16}}>
-                          {/* Main explanation sentence */}
-                          <div style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch"}}>
-                            {renderBidi(mainExplanation,lang)}
-                          </div>
-                          {/* Supporting bullet points */}
-                          {bulletPoints.length > 0 && (
-                            <ul dir={dir} style={{margin:0,paddingInlineStart:22,display:"flex",flexDirection:"column",gap:10,listStyleType:"disc",listStylePosition:"outside",textAlign:dir==="rtl"?"right":"left"}}>
-                              {bulletPoints.map((s,idx,arr)=>(
-                                <li key={idx} style={{color:"#94a3b8",fontSize:13,lineHeight:1.85,wordBreak:"break-word",overflowWrap:"anywhere",paddingInlineStart:4}}>
-                                  {renderBidi(s+(idx<arr.length-1?".":""),lang)}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                        {/* Explanation body — paragraphs, no bullets */}
+                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:14}}>
+                          {paragraphs.map((s,idx,arr)=>(
+                            <div key={idx} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch"}}>
+                              {renderBidi(s+(idx<arr.length-1?".":""),lang)}
+                            </div>
+                          ))}
                         </div>}
                       </div>
                     );
@@ -3493,9 +3482,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     const q = currentQuestions[questionIndex];
                     const iExplanation = dispAnswerResult?.explanation || q.explanation || "";
                     const iCorrectIdx = dispAnswerResult?.correctIndex ?? q.answer;
-                    const iParts = iExplanation.split(/\. /);
-                    const iMain = iParts[0] + (iParts.length > 1 ? "." : "");
-                    const iBullets = iParts.slice(1);
+                    const iParagraphs = iExplanation.split(/\. /).filter(s => s.trim());
                     return (
                       <div dir={dir} style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:14,padding:0,marginBottom:18,direction:dir,animation:"fadeIn 0.3s ease",overflow:"hidden"}}>
                         <div style={{background:"rgba(168,85,247,0.10)",padding:"13px 20px",borderBottom:"1px solid rgba(168,85,247,0.12)",textAlign:dir==="rtl"?"right":"left"}}>
@@ -3503,14 +3490,11 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                         </div>
                         <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:14}}>
                           <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left"}}>{q.options[iCorrectIdx]}</div>
-                          <div style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left",maxWidth:"65ch"}}>{renderBidi(iMain,lang)}</div>
-                          {iBullets.length > 0 && (
-                            <ul dir={dir} style={{margin:0,paddingInlineStart:22,display:"flex",flexDirection:"column",gap:10,listStyleType:"disc",listStylePosition:"outside",textAlign:dir==="rtl"?"right":"left"}}>
-                              {iBullets.map((s,idx,arr)=>(
-                                <li key={idx} dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.85,wordBreak:"break-word",overflowWrap:"anywhere",paddingInlineStart:4}}>{renderBidi(s+(idx<arr.length-1?".":""),lang)}</li>
-                              ))}
-                            </ul>
-                          )}
+                          {iParagraphs.map((s,idx,arr)=>(
+                            <div key={idx} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch"}}>
+                              {renderBidi(s+(idx<arr.length-1?".":""),lang)}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     );
