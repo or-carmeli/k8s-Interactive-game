@@ -12,6 +12,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const GUEST_USER = { id: "guest", email: "guest", user_metadata: { username: "Guest" } };
+const APP_VERSION = "1.5.0";
 
 const LEVEL_CONFIG = {
   easy:   { label: "קל",        labelEn: "Easy",             icon: "🌱", color: "#10B981", points: 10 },
@@ -2100,7 +2101,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               const logoText=(
                 <div style={{textAlign:"left"}}>
                   <h1 className="home-title-text" style={{fontSize:28,fontWeight:900,margin:0,lineHeight:1,letterSpacing:-0.5,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",whiteSpace:"nowrap"}}>KubeQuest</h1>
-                  <div style={{fontSize:11,color:"#475569",letterSpacing:0.4,marginTop:3}}>Train Your Kubernetes Skills</div>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
+                    <span style={{fontSize:11,color:"#475569",letterSpacing:0.4}}>Train Your Kubernetes Skills</span>
+                    <span style={{fontSize:10,color:"#00D4FF",background:"rgba(0,212,255,0.1)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:4,padding:"1px 5px",fontWeight:700,letterSpacing:0.3}}>v{APP_VERSION}</span>
+                  </div>
                 </div>
               );
               const logoGroup=(
@@ -2742,7 +2746,10 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             </svg>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:28,fontWeight:900,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",backgroundSize:"300% auto",animation:"shine 9s linear infinite",letterSpacing:-0.5}}>KubeQuest</div>
-              <div style={{color:"#475569",fontSize:12,marginTop:3}}>Train Your Kubernetes Skills</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:3}}>
+                <span style={{color:"#475569",fontSize:12}}>Train Your Kubernetes Skills</span>
+                <span style={{fontSize:10,color:"#00D4FF",background:"rgba(0,212,255,0.1)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:4,padding:"1px 5px",fontWeight:700,letterSpacing:0.3}}>v{APP_VERSION}</span>
+              </div>
             </div>
           </div>
           {[
