@@ -32,6 +32,8 @@ const INCIDENT_DIFFICULTY_CONFIG = {
 };
 
 const INCIDENT_SAVE_KEY = "incident_progress_v1";
+const APP_VERSION  = "1.5.0";
+const SESSION_START = new Date();
 
 const MIXED_TOPIC     = { id: "mixed",     icon: "🎲", name: "Mixed Quiz",        color: "#A855F7", levels: {} };
 const DAILY_TOPIC     = { id: "daily",     icon: "🔥", name: "Daily Challenge",    color: "#F59E0B", levels: {} };
@@ -521,6 +523,7 @@ export default function K8sQuestApp() {
   const [topicQuestions, setTopicQuestions]             = useState([]);
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
   const [showMenu, setShowMenu]                         = useState(false);
+  const [dbStatus, setDbStatus]                         = useState(null); // null | "ok" | "error"
   const [searchQuery, setSearchQuery]                   = useState("");
   const [expandedGuideSection, setExpandedGuideSection] = useState(null);
   const [a11y, setA11y] = useState(() => {
@@ -773,6 +776,15 @@ export default function K8sQuestApp() {
     if (screen !== "home" || !user) return;
     const saved = loadQuizState();
     if (saved && saved.userId === (user.id || "guest")) setResumeData(saved);
+  }, [screen]);
+
+  // Ping Supabase when status screen opens
+  useEffect(() => {
+    if (screen !== "status") return;
+    setDbStatus(null);
+    supabase.from("user_stats").select("user_id").limit(1)
+      .then(({ error }) => setDbStatus(error ? "error" : "ok"))
+      .catch(() => setDbStatus("error"));
   }, [screen]);
 
   // Check for a saved in-progress incident whenever we land on home or incident list
@@ -2056,6 +2068,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <button onClick={()=>{setScreen("about");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("aboutBtn")}
           </button>
+          <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            🟢 {lang==="en"?"System Status":"סטטוס מערכת"}
+          </button>
           <button onClick={()=>{
             const url="https://kubequest.online";
             const text=lang==="en"?"Training Kubernetes with KubeQuest – give it a try! 🚀":"מתאמן/ת על Kubernetes עם KubeQuest – שווה לנסות! 🚀";
@@ -2777,6 +2792,48 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
           </div>
         </div>
       )}
+
+      {/* STATUS */}
+      {screen==="status"&&(()=>{
+        const env = import.meta.env.MODE === "production" ? "PRODUCTION" : "DEVELOPMENT";
+        const envColor = import.meta.env.MODE === "production" ? "#10B981" : "#F59E0B";
+        const buildTime = typeof __BUILD_TIME__ !== "undefined" ? new Date(__BUILD_TIME__) : null;
+        const sessionMins = Math.floor((new Date() - SESSION_START) / 60000);
+        const rows = [
+          { label: "Version",         value: `v${APP_VERSION}`,                                    color: "#00D4FF" },
+          { label: "Environment",     value: env,                                                   color: envColor  },
+          { label: "Build",           value: buildTime ? buildTime.toUTCString() : "—",             color: "#94a3b8" },
+          { label: "Session started", value: `${sessionMins}m ago (${SESSION_START.toLocaleTimeString()})`, color: "#94a3b8" },
+          { label: "Database",        value: dbStatus === null ? "Checking…" : dbStatus === "ok" ? "✓ Connected" : "✗ Unavailable",
+                                      color: dbStatus === null ? "#F59E0B" : dbStatus === "ok" ? "#10B981" : "#EF4444" },
+          { label: "Stack",           value: "React 18 · Vite 5 · Supabase",                       color: "#94a3b8" },
+          { label: "Hosting",         value: "Vercel Edge Network",                                 color: "#94a3b8" },
+          { label: "Repo",            value: "github.com/or-carmeli/KubeQuest",                    color: "#7dd3fc",
+            href: "https://github.com/or-carmeli/KubeQuest" },
+        ];
+        return (
+          <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease"}}>
+            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>
+              ← {lang==="en"?"Back":"חזרה"}
+            </button>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:20,fontWeight:800,color:"#e2e8f0",marginBottom:4}}>🟢 System Status</div>
+              <div style={{fontSize:13,color:"#475569"}}>KubeQuest · {lang==="en"?"Real-time service information":"מידע שירות בזמן אמת"}</div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:2,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,overflow:"hidden"}}>
+              {rows.map(({label,value,color,href},i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:i<rows.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
+                  <span style={{fontSize:13,color:"#64748b",fontWeight:500}}>{label}</span>
+                  {href
+                    ? <a href={href} target="_blank" rel="noopener noreferrer" style={{fontSize:13,color,fontWeight:600,textDecoration:"none",fontFamily:"'Fira Code','Courier New',monospace"}}>{value}</a>
+                    : <span style={{fontSize:13,color,fontWeight:600,fontFamily:label==="Stack"||label==="Build"||label==="Repo"||label==="Hosting"?"'Fira Code','Courier New',monospace":"inherit"}}>{value}</span>
+                  }
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* TOPIC */}
       {screen==="topic"&&selectedTopic&&selectedLevel&&(
