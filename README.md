@@ -98,13 +98,27 @@ npm run preview  # preview production build locally
 
 ### Docker
 
+KubeQuest is a **Single Page Application (SPA)** — React handles all navigation client-side from a single `index.html` file. The web server must serve `index.html` for every URL so React can take over routing.
+
+The Dockerfile uses a **multi-stage build** to keep the production image small and clean:
+
+```
+Stage 1 — Builder  (node:20-alpine)
+  npm ci              → install dependencies
+  npm run build       → compile React source → static HTML/CSS/JS in /dist
+
+Stage 2 — Runner   (nginx:alpine)
+  copies /dist        → only the built output (no Node.js, no source code)
+  serves via nginx    → fast, lightweight web server with SPA routing
+```
+
+Final image size: ~25MB (vs ~500MB if Node.js were included).
+
 ```bash
 docker build -t kubequest .
 docker run -p 8080:80 kubequest
 # → http://localhost:8080
 ```
-
-The Docker image uses a multi-stage build (Node 20 → nginx:alpine) and serves the static build via nginx with SPA routing and cache headers.
 
 ---
 
