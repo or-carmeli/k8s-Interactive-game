@@ -50,5 +50,8 @@ vite.config.js.timestamp-*
 # Testing
 coverage/
 
+# Proprietary content (not for public distribution)
+src/content/
+
 # Misc
 *.local
