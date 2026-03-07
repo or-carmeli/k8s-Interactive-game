@@ -182,7 +182,7 @@ const TRANSLATIONS = {
     incidentListTitle: "בחר אירוע",
     incidentDifficulty: "רמה", incidentSteps: "שלבים", incidentEstTime: "זמן משוער",
     incidentStep: "שלב", incidentScore: "ניקוד", incidentMistakes: "שגיאות", incidentTime: "זמן",
-    incidentConfirm: "✔ אשר פעולה", incidentNext: "שלב הבא →", incidentFinish: "סיים אירוע →",
+    incidentConfirm: "✔ אשר פעולה", incidentNext: "→ שלב הבא", incidentFinish: "→ סיים אירוע",
     incidentResolved: "🎉 האירוע נפתר!",
     incidentResolved_m: "🎉 האירוע נפתר!",
     incidentCorrect: "✅ נכון!", incidentWrong: "❌ לא נכון",
@@ -1432,13 +1432,15 @@ export default function K8sQuestApp() {
     setScreen("incident");
   };
 
-  const submitIncidentStep = () => {
-    if (incidentAnswer === null || incidentSubmitted || !selectedIncident) return;
+  const submitIncidentStep = (forcedAnswer) => {
+    const ans = forcedAnswer !== undefined ? forcedAnswer : incidentAnswer;
+    if (ans === null || incidentSubmitted || !selectedIncident) return;
+    setIncidentAnswer(ans);
     const step = selectedIncident.steps[incidentStepIndex];
-    const correct = incidentAnswer === step.answer;
+    const correct = ans === step.answer;
     const newScore    = incidentScore    + (correct ? 10 : 0);
     const newMistakes = incidentMistakes + (correct ? 0 : 1);
-    const newHistory  = [...incidentHistory, { chosen: incidentAnswer, correct, answer: step.answer }];
+    const newHistory  = [...incidentHistory, { chosen: ans, correct, answer: step.answer }];
     setIncidentScore(newScore);
     setIncidentMistakes(newMistakes);
     setIncidentHistory(newHistory);
@@ -1450,7 +1452,7 @@ export default function K8sQuestApp() {
     const isLast = incidentStepIndex >= selectedIncident.steps.length - 1;
     if (isLast) {
       clearIncidentProgress();
-      setScreen("incidentComplete");
+      setScreen("incidentList");
     } else {
       const nextIdx = incidentStepIndex + 1;
       setIncidentStepIndex(nextIdx);
@@ -1562,7 +1564,7 @@ export default function K8sQuestApp() {
     return text.split("\n").map((line, i) => {
       if (!line.trim()) return <div key={i} style={{height:5}}/>;
       if (terminalPat.test(line)) {
-        return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre-wrap"}}>{line}</div>;
+        return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre"}}>{line}</div>;
       }
       return <div key={i} style={{color:"#e2e8f0",fontSize:14,lineHeight:1.75,marginBottom:2,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{line}</div>;
     });
@@ -3412,7 +3414,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8,direction:"ltr"}}>
               <button onClick={()=>{saveIncidentProgress(selectedIncident,incidentStepIndex,incidentScore,incidentMistakes,incidentElapsed,incidentHistory);setScreen("incidentList");}}
                 style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13}}>
-                {dir==="rtl"?"→":"←"} {lang==="he"?"חזרה":"Back"}
+                ← {lang==="he"?"חזרה":"Back"}
               </button>
               <div style={{display:"flex",gap:14,alignItems:"center",fontSize:13,fontWeight:700}}>
                 <span style={{color:"#94a3b8"}}>{t("incidentStep")} <span style={{color:"#e2e8f0"}}>{incidentStepIndex+1}/{totalSteps}</span></span>
@@ -3435,7 +3437,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             </div>
 
             {/* Prompt */}
-            <div style={{background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"18px 20px",marginBottom:14}}>
+            <div style={{background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"18px 20px",marginBottom:14,overflowX:"auto"}}>
               {renderIncidentPrompt(lang === "he" ? (step.promptHe || step.prompt) : step.prompt)}
             </div>
 
@@ -3451,7 +3453,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   else if (isChosen)   { bg="rgba(239,68,68,0.1)";  border="#EF4444"; color="#EF4444"; labelBg="rgba(239,68,68,0.2)";  labelColor="#EF4444"; }
                 }
                 return(
-                  <button key={i} onClick={()=>{ if (!incidentSubmitted) setIncidentAnswer(i); }}
+                  <button key={i} onClick={()=>{ if (!incidentSubmitted) submitIncidentStep(i); }}
                     aria-pressed={!incidentSubmitted ? i===incidentAnswer : undefined}
                     style={{width:"100%",textAlign:dir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s",direction:dir}}>
                     <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1,direction:"ltr"}}>
@@ -3464,14 +3466,6 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                 );
               })}
             </div>
-
-            {/* Confirm button */}
-            {!incidentSubmitted&&incidentAnswer!==null&&(
-              <button onClick={submitIncidentStep}
-                style={{width:"100%",padding:"15px",background:"linear-gradient(135deg,#EF4444dd,#F59E0Baa)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:10,boxShadow:"0 4px 16px rgba(239,68,68,0.3)"}}>
-                {t("incidentConfirm")}
-              </button>
-            )}
 
             {/* Result + explanation */}
             {incidentSubmitted&&(
