@@ -117,26 +117,26 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You patch the Deployment with the new memory limits. How do you verify the rolling update succeeds and the pod no longer OOMKills?",
+          "You patch the Deployment with the new memory limits. What is the best workflow to confirm the rollout completed and that OOMKilled is no longer occurring?",
         promptHe:
-          "עדכנת את ה-Deployment עם מגבלות הזיכרון החדשות. כיצד מאמתים שה-rolling update הצליח וה-Pod אינו עוד מקבל OOMKill?",
+          "עדכנת את ה-Deployment עם מגבלות הזיכרון המתוקנות. מהו תהליך העבודה הטוב ביותר לאשר שה-rollout הושלם ושה-OOMKilled כבר לא מתרחש?",
         options: [
-          "kubectl rollout status deployment/api-server -n production",
-          "kubectl get pods -n production -w  (watch pod restarts)",
-          "kubectl get events -n production --sort-by=.metadata.creationTimestamp",
-          "All of the above - rollout status + watching pods + events together",
+          "Run kubectl rollout status deployment/api-server -n production — once it reports success, the fix is confirmed",
+          "Run kubectl rollout status, then kubectl get pods -n production -w to verify Pods stay Running without restarts",
+          "Run kubectl rollout status, then kubectl get pods -n production -w to verify stability, and kubectl get events --sort-by=.metadata.creationTimestamp to confirm no new OOMKilled events",
+          "Run kubectl get events -n production and search for OOMKilled — if none appear, the rollout succeeded",
         ],
         optionsHe: [
-          "kubectl rollout status deployment/api-server -n production",
-          "kubectl get pods -n production -w  (עקוב אחר אתחולי Pod)",
-          "kubectl get events -n production --sort-by=.metadata.creationTimestamp",
-          "כל האמור לעיל - סטטוס rollout + מעקב Pods + Events יחד",
+          "הרצת kubectl rollout status deployment/api-server -n production — ברגע שמדווח הצלחה, התיקון מאושר",
+          "הרצת kubectl rollout status, ואז kubectl get pods -n production -w כדי לוודא שה-Pods נשארים Running ללא אתחולים",
+          "הרצת kubectl rollout status, אחר כך kubectl get pods -n production -w לאימות יציבות, ו-kubectl get events --sort-by=.metadata.creationTimestamp לאישור שאין אירועי OOMKilled חדשים",
+          "הרצת kubectl get events -n production וחיפוש OOMKilled — אם לא מופיעים, ה-rollout הצליח",
         ],
-        answer: 3,
+        answer: 2,
         explanation:
-          "`kubectl rollout status` confirms the rollout completes. Watching pods shows the new pod becomes Ready. Events reveal any scheduling or startup issues. Using all three gives full confidence the fix worked.",
+          "kubectl rollout status confirms all new Pods were deployed but does not prove they are stable. Watching Pods with -w reveals whether the new containers keep running without restarts. Checking events confirms whether the kernel is still OOMKilling the process. All three steps together provide complete verification: rollout completion, Pod stability, and absence of the original failure cause. Relying on rollout status alone or events alone leaves blind spots.",
         explanationHe:
-          "הפקודה `kubectl rollout status` מאשרת שה-rollout הושלם. מעקב ה-Pods מציג שה-Pod החדש הפך ל-Ready. Events חושפים כל בעיית תזמון או הפעלה. שימוש בשלושתם יחד מספק ביטחון מלא שהתיקון עבד.",
+          "הפקודה kubectl rollout status מאשרת שכל ה-Pods החדשים נפרסו, אך לא מוכיחה שהם יציבים. מעקב אחרי Pods עם -w חושף אם הקונטיינרים החדשים ממשיכים לרוץ ללא אתחולים מחדש. בדיקת ה-Events מאשרת אם ה-kernel עדיין שולח OOMKilled. שלושת השלבים יחד מספקים אימות מלא: השלמת הפריסה, יציבות ה-Pod, והיעדר סיבת הכשל המקורית. הסתמכות על rollout status בלבד או events בלבד משאירה נקודות עיוורות.",
       },
       {
         prompt:
