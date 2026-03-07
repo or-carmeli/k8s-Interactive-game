@@ -5,7 +5,7 @@
 Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, and prepare for CKA-level interviews — through interactive quizzes, incident simulations, and daily challenges.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-kubequest.online-00D4FF?style=flat-square&logo=vercel)](https://www.kubequest.online/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-yellow?style=flat-square)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/or-carmeli/KubeQuest/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/or-carmeli/KubeQuest/actions/workflows/ci.yml)
 [![Security](https://img.shields.io/github/actions/workflow/status/or-carmeli/KubeQuest/security.yml?branch=main&style=flat-square&label=security)](https://github.com/or-carmeli/KubeQuest/actions/workflows/security.yml)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://react.dev)
@@ -272,4 +272,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and question forma
 
 ## License
 
-[MIT](LICENSE) © 2026 Or Carmeli
+[BSL 1.1](LICENSE) © 2026 Or Carmeli — source-available, converts to MIT on 2030-03-07.
