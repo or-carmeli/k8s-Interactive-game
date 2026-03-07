@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubequest
+  namespace: kubequest
+  annotations:
+    # Automatically provision and renew a TLS certificate via cert-manager
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Redirect all HTTP traffic to HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - kubequest.online
+      secretName: kubequest-tls    # cert-manager stores the certificate here
+  rules:
+    - host: kubequest.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kubequest
+                port:
+                  number: 80
