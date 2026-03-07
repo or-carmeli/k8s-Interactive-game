@@ -73,56 +73,11 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ### CI/CD Pipeline
 
-```mermaid
-flowchart LR
-    DEV(["👩‍💻 Developer"])
-
-    subgraph GH["GitHub"]
-        REPO[("main / dev / feat/*")]
-        CI["CI\nBuild Check"]
-        DOCK["Docker\nBuild & Push"]
-        SEC["Security Scan\nnpm audit · Trivy · CodeQL"]
-        BOT["Dependabot\nweekly updates"]
-    end
-
-    GHCR["📦 GHCR\nghcr.io/or-carmeli/kubequest"]
-    VERCEL["🚀 Vercel\nAuto Deploy"]
-
-    DEV -->|git push| REPO
-    REPO -->|on PR| CI
-    REPO -->|push to main| DOCK
-    REPO -->|push to main| SEC
-    REPO -->|push to main| VERCEL
-    BOT -.->|opens PRs| REPO
-    DOCK --> GHCR
-```
+![CI/CD Architecture](public/ci-cd-architecture.png)
 
 ### Runtime Architecture
 
-```mermaid
-flowchart TD
-    USER(["👤 User"])
-
-    subgraph VERCEL["Vercel Edge Network"]
-        SPA["React SPA"]
-    end
-
-    subgraph SB["Supabase"]
-        AUTH["Auth Service"]
-        DB[("PostgreSQL")]
-    end
-
-    subgraph K8S["Kubernetes — Optional"]
-        ING["Ingress + TLS"] --> SVC["ClusterIP Service"] --> PODS["Pods ×2-10"]
-        HPA["HPA"] -.->|autoscales| PODS
-    end
-
-    GHCR["📦 GHCR"] -.->|kubectl apply| K8S
-
-    USER -->|HTTPS| SPA
-    SPA -->|auth| AUTH
-    SPA -->|read / write| DB
-```
+![Runtime Architecture](public/Runtime-Architecture.png)
 
 > **Production** runs on Vercel + Supabase. The `k8s/` manifests and Docker image on GHCR enable self-hosting on any Kubernetes cluster.
 
