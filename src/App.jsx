@@ -31,8 +31,15 @@ const INCIDENT_DIFFICULTY_CONFIG = {
 };
 
 const INCIDENT_SAVE_KEY = "incident_progress_v1";
-const APP_VERSION  = "1.6.0";
+// v1.6.1 — patch: resume modal UX refactor (less intrusive, cooldown, session flag)
+const APP_VERSION  = "1.6.1";
 const SESSION_START = new Date();
+
+// Resume modal behaviour constants
+const RESUME_SESSION_KEY  = "resumeModalSeen";       // sessionStorage: shown once per tab
+const RESUME_DISMISS_KEY  = "resumeDismissedAt";     // localStorage: cooldown timestamp
+const RESUME_COOLDOWN_MS  = 10 * 60 * 1000;         // 10-minute cooldown after dismiss
+const RESUME_MIN_PROGRESS = 0.2;                     // <20% answered → skip modal, start fresh
 
 const MIXED_TOPIC     = { id: "mixed",     icon: "🎲", name: "Mixed Quiz",        color: "#A855F7", levels: {} };
 const DAILY_TOPIC     = { id: "daily",     icon: "🔥", name: "Daily Challenge",    color: "#F59E0B", levels: {} };
@@ -548,6 +555,8 @@ export default function K8sQuestApp() {
   const [hintVisible, setHintVisible]         = useState(false);
   const [eliminatedOption, setEliminatedOption] = useState(null);
   const [resumeData, setResumeData] = useState(null);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const pendingQuizStartRef = useRef(null); // stores the quiz-start fn while modal is open
   const [dailyStreak, setDailyStreak] = useState(() => {
     try { return JSON.parse(localStorage.getItem("daily_streak_v1")) || { date: null, streak: 0 }; } catch { return { date: null, streak: 0 }; }
   });
@@ -660,11 +669,11 @@ export default function K8sQuestApp() {
       if (e.key !== "Escape") return;
       if (showMenu)        { setShowMenu(false);       return; }
       if (showLeaderboard) { setShowLeaderboard(false); return; }
-      if (resumeData)      { clearQuizState(); setResumeData(null); }
+      if (showResumeModal) { handleResumeDismiss(); }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [showMenu, showLeaderboard, resumeData]);
+  }, [showMenu, showLeaderboard, showResumeModal]);
 
   useEffect(() => {
     if (!achievementsLoaded.current) return;
@@ -770,11 +779,12 @@ export default function K8sQuestApp() {
     document.documentElement.dir  = lang === "he" ? "rtl" : "ltr";
   }, [lang]);
 
-  // When navigating back to home, show resume modal if there's a saved in-progress quiz
+  // Pre-load saved quiz data when returning home (modal is NOT shown here — only when starting a quiz)
   useEffect(() => {
     if (screen !== "home" || !user) return;
     const saved = loadQuizState();
     if (saved && saved.userId === (user.id || "guest")) setResumeData(saved);
+    // Do NOT call setShowResumeModal(true) here — req 2
   }, [screen]);
 
   // Ping Supabase when status screen opens
@@ -1085,12 +1095,55 @@ export default function K8sQuestApp() {
 
     setScreen("topic");
     setResumeData(null);
+    setShowResumeModal(false);
+    pendingQuizStartRef.current = null;
+    try { sessionStorage.setItem(RESUME_SESSION_KEY, "true"); } catch {}
     // Keep saving state as user continues - do NOT clearQuizState() here
   };
 
   const handleDiscardResume = () => {
     clearQuizState();
     setResumeData(null);
+    setShowResumeModal(false);
+    try { sessionStorage.setItem(RESUME_SESSION_KEY, "true"); } catch {}
+    const startFn = pendingQuizStartRef.current;
+    pendingQuizStartRef.current = null;
+    if (startFn) startFn();
+  };
+
+  // Returns true if the resume modal should be shown for the given saved quiz data
+  const shouldShowResumeModal = (saved) => {
+    if (!saved) return false;
+    const answered = saved.questionIndex ?? 0;
+    const total    = saved.questions?.length ?? 0;
+    if (answered <= 0 || answered >= total) return false;          // req 1
+    if (answered / total < RESUME_MIN_PROGRESS) return false;      // req 5: <20% → skip
+    try {
+      if (sessionStorage.getItem(RESUME_SESSION_KEY)) return false; // req 3: once per session
+      const dismissedAt = localStorage.getItem(RESUME_DISMISS_KEY);
+      if (dismissedAt && Date.now() - parseInt(dismissedAt) < RESUME_COOLDOWN_MS) return false; // req 4
+    } catch {}
+    return true;
+  };
+
+  // Wraps a quiz-start function: shows resume modal when applicable, otherwise starts immediately
+  const tryStartQuiz = (startFn) => {
+    const userId = isGuest ? "guest" : user?.id;
+    const saved  = loadQuizState();
+    if (saved && saved.userId === userId && shouldShowResumeModal(saved)) {
+      setResumeData(saved);
+      setShowResumeModal(true);
+      pendingQuizStartRef.current = startFn;
+    } else {
+      startFn();
+    }
+  };
+
+  // Called when user closes modal without choosing (X, Back, Overlay click)
+  const handleResumeDismiss = () => {
+    setShowResumeModal(false);
+    pendingQuizStartRef.current = null;
+    try { localStorage.setItem(RESUME_DISMISS_KEY, Date.now().toString()); } catch {}
   };
 
   const updateA11y = (key, val) => setA11y(prev => {
@@ -1857,22 +1910,35 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
       {saveError&&<div role="alert" aria-live="assertive" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
 
-      {resumeData&&!(screen==="topic"&&topicScreen==="quiz")&&screen!=="incident"&&(
-        <div onClick={()=>setResumeData(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+      {showResumeModal&&resumeData&&(()=>{
+        const answered = resumeData.questionIndex ?? 0;
+        const total    = resumeData.questions?.length ?? 0;
+        const pct      = total > 0 ? Math.round((answered / total) * 100) : 0;
+        return (
+        <div onClick={handleResumeDismiss} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
           <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"#0f172a",border:"1px solid rgba(0,212,255,0.25)",borderRadius:18,padding:"24px 22px",width:"min(380px,100%)",animation:"fadeIn 0.3s ease",direction:dir,position:"relative"}}>
-            <button onClick={()=>setResumeData(null)} aria-label={lang==="en"?"Close":"סגור"} style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
+            <button onClick={handleResumeDismiss} aria-label={lang==="en"?"Close":"סגור"} style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
             <div style={{fontSize:32,textAlign:"center",marginBottom:10}}>⏸️</div>
             <div style={{fontWeight:800,color:"#e2e8f0",fontSize:18,marginBottom:8,textAlign:"center"}}>{t("resumeTitle")}</div>
             <div style={{color:"#94a3b8",fontSize:13,marginBottom:16,textAlign:"center"}}>{t("resumeBody")}</div>
             {/* Quiz info pill */}
-            <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,padding:"10px 14px",marginBottom:20,direction:"ltr"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,padding:"10px 14px",marginBottom:8,direction:"ltr"}}>
               <span style={{fontSize:22}}>{resumeData.topicIcon}</span>
-              <div>
+              <div style={{flex:1}}>
                 <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{resumeData.topicName}</div>
                 <div style={{color:"#64748b",fontSize:12}}>
                   {lang==="en"?LEVEL_CONFIG[resumeData.level]?.labelEn:LEVEL_CONFIG[resumeData.level]?.label}
-                  {" · "}{t("question")} {(resumeData.questionIndex ?? 0) + 1} / {resumeData.questions?.length}
                 </div>
+              </div>
+            </div>
+            {/* Progress display — req 6 */}
+            <div style={{marginBottom:16}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#64748b",marginBottom:4}}>
+                <span>{lang==="en"?"Progress":"התקדמות"}</span>
+                <span style={{color:"#00D4FF",fontWeight:700}}>{answered} / {total} {lang==="en"?"questions answered":"שאלות נענו"}</span>
+              </div>
+              <div style={{height:6,background:"rgba(255,255,255,0.07)",borderRadius:4,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",borderRadius:4,transition:"width 0.3s ease"}}/>
               </div>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1884,14 +1950,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#64748b",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {t("resumeDiscard")}
               </button>
-              <button onClick={()=>setResumeData(null)}
+              <button onClick={handleResumeDismiss}
                 style={{width:"100%",padding:"10px",background:"none",border:"none",borderRadius:12,color:"#475569",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                 {t("back")}
               </button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ── REPORT DIALOG ─────────────────────────────────── */}
       {reportDialog&&(
@@ -1994,7 +2061,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </div>
                 ))}
               </div>
-              <button onClick={startBookmarksQuiz}
+              <button onClick={()=>tryStartQuiz(startBookmarksQuiz)}
                 style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.1))",border:"1px solid rgba(168,85,247,0.4)",borderRadius:12,color:"#A855F7",fontSize:15,fontWeight:800,cursor:"pointer"}}>
                 {t("startSavedQuiz")}
               </button>
@@ -2021,10 +2088,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <button onClick={()=>{setScreen("incidentList");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🚨 {lang==="en"?"Incident Mode":"מצב אירוע"}
           </button>
-          <button onClick={()=>{startMixedQuiz();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{tryStartQuiz(startMixedQuiz);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("mixedQuizBtn")}
           </button>
-          <button onClick={()=>{startDailyChallenge();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{tryStartQuiz(startDailyChallenge);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🔥 {t("dailyChallengeTitle")}
           </button>
           <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400,direction:dir}}>
@@ -2224,7 +2291,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const el = document.getElementById(`topic-card-${id}`);
             if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
           }}/>
-          <button onClick={startDailyChallenge} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={()=>tryStartQuiz(startDailyChallenge)} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <span className="action-emoji" style={{fontSize:28,flexShrink:0}}>🔥</span>
@@ -2238,7 +2305,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
             <span style={{color:"#F59E0B",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
           </button>
-          <button onClick={startMixedQuiz} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={()=>tryStartQuiz(startMixedQuiz)} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <div className="action-text" style={{textAlign:"start",minWidth:0}}>
@@ -2287,7 +2354,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     const locked=isLevelLocked(topic.id,lvl);
                     return(
                       <button key={lvl} className={locked?"":"card-hover"}
-                        onClick={()=>startTopic(topic,lvl)}
+                        onClick={()=>tryStartQuiz(()=>startTopic(topic,lvl))}
                         disabled={locked}
                         aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` – ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
                         style={{padding:"10px 8px",
@@ -2346,7 +2413,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     <span style={{marginLeft:"auto",background:`${LEVEL_CONFIG[level]?.color}22`,color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
                   </div>
                   <div dir={dir} style={{color:"#cbd5e1",fontSize:13,lineHeight:1.5,marginBottom:10}}>{lang==="en"?(question.qEn||question.q):question.q}</div>
-                  <button onClick={()=>startTopic(topic,level)} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
                     {lang==="en"?"Go to Topic →":"עבור לנושא →"}
                   </button>
                 </div>
@@ -2395,7 +2462,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                             <span style={{color:"#EF4444"}}>{correct}/{total} {lang==="en"?"correct":"נכון"}</span>
                           </div>
                         </div>
-                        <button onClick={()=>startTopic(topic,level)} style={{flexShrink:0,padding:"8px 14px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                        <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{flexShrink:0,padding:"8px 14px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                           {lang==="en"?"Retry":"נסה שוב"}
                         </button>
                       </div>
