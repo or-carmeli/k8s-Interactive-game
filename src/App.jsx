@@ -550,7 +550,7 @@ export default function K8sQuestApp() {
   const [quizHistory, setQuizHistory]                   = useState([]);
   const [showReview, setShowReview]                     = useState(false);
   const [shareCopied, setShareCopied]                   = useState(false);
-  const [timerEnabled, setTimerEnabled]                 = useState(true);
+  const [timerEnabled, setTimerEnabled]                 = useState(false);
   const [timeLeft, setTimeLeft]                         = useState(TIMER_DURATIONS.easy);
   const [isInterviewMode, setIsInterviewMode]           = useState(() => localStorage.getItem("isInterviewMode_v1") === "true");
   const [homeTab, setHomeTab]                           = useState("roadmap");
