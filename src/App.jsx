@@ -557,6 +557,14 @@ export default function K8sQuestApp() {
   const isRetryRef = useRef(false);
   const lastSessionScoreRef = useRef(0);
 
+  // Refs for browser back-button handler (avoids stale closures)
+  const screenRef = useRef(screen);
+  screenRef.current = screen;
+  const topicScreenRef = useRef(topicScreen);
+  topicScreenRef.current = topicScreen;
+  const showExplanationRef = useRef(showExplanation);
+  showExplanationRef.current = showExplanation;
+
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0,
   });
@@ -742,6 +750,22 @@ export default function K8sQuestApp() {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [showMenu, showLeaderboard, showResumeModal]);
+
+  // Guard browser back button during active quiz/incident sessions
+  useEffect(() => {
+    if (screen !== "topic" && screen !== "incident") return;
+    window.history.pushState({ quiz: true }, "");
+    const handlePopState = () => {
+      // If explanation is showing, dismiss it and stay in quiz
+      if (screenRef.current === "topic" && topicScreenRef.current === "quiz" && showExplanationRef.current) {
+        setShowExplanation(false);
+      }
+      // Re-push so the next back press is also caught
+      window.history.pushState({ quiz: true }, "");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [screen]);
 
   useEffect(() => {
     if (!achievementsLoaded.current) return;
