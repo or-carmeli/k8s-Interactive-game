@@ -2116,14 +2116,14 @@ export const TOPICS = [
           {
             q: "כיצד Ingress מנתב לפי hostname?",
             options: [
-              "לפי port שעליו מגיעה הבקשה, ממופה ב-spec.ports של ה-Ingress",
-              "spec.rules[].host: api.example.com – מנתב תנועה לhostname ספציפי לService",
-              "spec.host בשורש ה-Ingress spec מגדיר hostname בודד לכל ה-rules",
-              "דרך ConfigMap שמגדיר מיפוי של hostnames לServices",
+              "לפי port שעליו מגיעה הבקשה, ממופה בשדה ports בהגדרת ה-Ingress",
+              "בשדה host בתוך כל rule מגדירים hostname ספציפי שמנתב ל-Service מתאים",
+              "שדה host בשורש ה-Ingress מגדיר hostname בודד לכל ה-rules",
+              "דרך ConfigMap שמגדיר מיפוי של hostnames ל-Services",
             ],
             answer: 1,
             explanation:
-              "בIngress spec: rules: [{host: 'api.example.com', http: {paths: [{backend: ...}]}}] מנתב בקשות לhostname זה לService המוגדר.",
+              "כל rule ב-Ingress מכיל שדה host שמגדיר את ה-hostname. לדוגמה, אפשר להגדיר שבקשות ל-api.example.com ינותבו ל-Service אחד ובקשות ל-web.example.com ינותבו ל-Service אחר. כך Ingress אחד יכול לשרת מספר דומיינים.",
           },
           {
             q: "מה Service ללא selector (manual Endpoints)?",
@@ -2352,14 +2352,14 @@ export const TOPICS = [
           {
             q: "How does Ingress route by hostname?",
             options: [
-              "By the port on which the request arrives, mapped in spec.ports of the Ingress",
-              "spec.rules[].host: api.example.com - routes traffic for that hostname to the Service",
-              "spec.host at the root of the Ingress spec defines a single hostname for all rules",
+              "By the port on which the request arrives, mapped in the ports field of the Ingress",
+              "Each rule defines a host field with a specific hostname that routes to the matching Service",
+              "A single host field at the root of the Ingress spec applies one hostname to all rules",
               "Via a ConfigMap that maps hostname entries to backend Service names",
             ],
             answer: 1,
             explanation:
-              "In Ingress spec: rules: [{host: 'api.example.com', http: {paths: [{backend: ...}]}}] routes requests matching that hostname to the configured Service.",
+              "Each rule in an Ingress contains a host field that specifies the hostname. For example, requests to api.example.com can route to one Service while requests to web.example.com route to another. This lets a single Ingress serve multiple domains.",
           },
           {
             q: "What is a Service without a selector (manual Endpoints)?",
