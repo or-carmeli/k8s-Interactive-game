@@ -992,6 +992,16 @@ export default function K8sQuestApp() {
     });
   }, [screen, topicScreen, questionIndex, submitted, selectedAnswer, quizHistory]);
 
+  // Persist in-progress incident state on screen entry and step changes
+  useEffect(() => {
+    if (screen !== "incident" || !selectedIncident) return;
+    saveIncidentProgress(
+      selectedIncident, incidentStepIndex, incidentScore,
+      incidentMistakes, incidentElapsed, incidentHistory
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, incidentStepIndex, incidentSubmitted]);
+
   useEffect(() => {
     localStorage.setItem("isInterviewMode_v1", isInterviewMode);
   }, [isInterviewMode]);
@@ -1009,18 +1019,47 @@ export default function K8sQuestApp() {
     // Do NOT call setShowResumeModal(true) here — req 2
   }, [screen]);
 
-  // Auto-restore quiz session on page load (refresh resilience)
+  // Auto-restore quiz or incident session on page load (refresh resilience)
   useEffect(() => {
     if (autoResumeAttempted.current) return;
     if (!dataLoaded || !user) return;
     autoResumeAttempted.current = true;
-    if (!resumeData) return;
-    const answered = resumeData.questionIndex ?? 0;
-    const total = resumeData.questions?.length ?? 0;
-    if (answered <= 0 || answered >= total) return;
-    handleResumeQuiz();
-    setResumeToast(true);
-    setTimeout(() => setResumeToast(false), 3500);
+
+    // Priority 1: Resume quiz
+    if (resumeData) {
+      const answered = resumeData.questionIndex ?? 0;
+      const total = resumeData.questions?.length ?? 0;
+      if (answered < total) {
+        handleResumeQuiz();
+        setResumeToast(true);
+        setTimeout(() => setResumeToast(false), 3500);
+        return;
+      }
+    }
+
+    // Priority 2: Resume incident
+    try {
+      const saved = JSON.parse(localStorage.getItem(INCIDENT_SAVE_KEY));
+      if (saved?.incidentId) {
+        const incident = INCIDENTS.find(i => i.id === saved.incidentId);
+        if (incident) {
+          setSelectedIncident(incident);
+          setIncidentStepIndex(saved.stepIndex ?? 0);
+          setIncidentScore(saved.score ?? 0);
+          setIncidentMistakes(saved.mistakes ?? 0);
+          setIncidentElapsed(saved.elapsed ?? 0);
+          setIncidentAnswer(null);
+          setIncidentSubmitted(false);
+          setIncidentAnswerResult(null);
+          incidentCheckingRef.current = false;
+          setIncidentHistory(saved.history || []);
+          setScreen("incident");
+          setResumeToast(true);
+          setTimeout(() => setResumeToast(false), 3500);
+          return;
+        }
+      }
+    } catch {}
   }, [dataLoaded, user, resumeData]);
 
   // Fetch real monitoring data when status screen opens, poll every 30s
@@ -2050,6 +2089,16 @@ export default function K8sQuestApp() {
       }
     }
   }, [timeLeft]);
+
+  // Fetch online incident steps after auto-resume (incidentSteps is null on page load)
+  useEffect(() => {
+    if (screen !== "incident" || !selectedIncident || incidentSteps) return;
+    if (!supabase) return;
+    fetchIncidentSteps(supabase, selectedIncident.id)
+      .then(steps => { if (steps) setIncidentSteps(steps); })
+      .catch(() => {}); // silently fall back to offline steps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, selectedIncident]);
 
   // ── Incident Mode: count-up timer (only runs while on the incident screen) ─
   useEffect(() => {
