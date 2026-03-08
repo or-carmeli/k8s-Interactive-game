@@ -3326,6 +3326,21 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
             {/* ── INCIDENT HISTORY ── */}
             {sectionTitle(lang==="en"?"Incident History":"היסטוריית אירועים")}
+            <div dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px",textAlign:"left",marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>Quiz Submission Blocked After Session Return</div>
+                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>Mar 8, 2026 · Duration: ~2 hrs · Severity: Medium</div>
+                </div>
+                <span style={{fontSize:11,color:"#10B981",fontWeight:700,background:"rgba(16,185,129,0.1)",padding:"3px 8px",borderRadius:6}}>Resolved</span>
+              </div>
+              <div style={{padding:"12px 0",fontSize:12,color:"#94a3b8",lineHeight:1.7}}>
+                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Impact: </span>Users who completed a quiz and started a new session were unable to submit answers. Additionally, a visual glitch caused the selected answer to briefly flash red before turning green during server-side validation.</div>
+                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Root Cause: </span>A synchronous mutex ref (submittingRef) introduced to prevent double-submission was not reset on quiz start, quiz resume, or retry-mode completion. It remained locked from the previous session, silently blocking all future submissions. The visual flash was caused by rendering answer styling before the async RPC response arrived.</div>
+                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Resolution: </span>Added submittingRef reset to startTopic, handleResumeQuiz, and retry-mode completion paths. Gated answer color styling on the checkingAnswer flag to prevent premature rendering.</div>
+                <div><span style={{color:"#e2e8f0",fontWeight:600}}>Prevention: </span>All ref-based mutex guards must be reset in every code path that initializes a new quiz session. No user data was lost.</div>
+              </div>
+            </div>
             <div dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px",textAlign:"left"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
                 <div>
