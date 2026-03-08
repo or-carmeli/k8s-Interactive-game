@@ -2,7 +2,7 @@
 // Supabase Edge Function that performs real service-specific health checks
 // and writes results to system_status_current + system_status_history.
 //
-// Designed to run on a cron schedule (every 60 seconds).
+// Designed to run on a cron schedule (every 5 minutes).
 // Each check validates the actual production path used by the app.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";

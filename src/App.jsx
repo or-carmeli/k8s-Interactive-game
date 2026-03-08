@@ -958,7 +958,7 @@ export default function K8sQuestApp() {
     // Do NOT call setShowResumeModal(true) here — req 2
   }, [screen]);
 
-  // Fetch real monitoring data when status screen opens, poll every 30s
+  // Fetch real monitoring data when status screen opens, poll every 60s
   useEffect(() => {
     if (screen !== "status") return;
     setDbStatus(null);
@@ -986,7 +986,7 @@ export default function K8sQuestApp() {
     };
 
     load();
-    const interval = setInterval(load, 30_000);
+    const interval = setInterval(load, 60_000);
     return () => clearInterval(interval);
   }, [screen]);
 

@@ -115,6 +115,10 @@ $$;
 -- ══════════════════════════════════════════════════════════════════════════════
 
 -- Upsert service status (called by Edge Function health worker)
+-- Writes to system_status_current on every run.
+-- Only appends to system_status_history when:
+--   • the status changed from the previous value, OR
+--   • 30 minutes have elapsed since the last history row for this service
 CREATE OR REPLACE FUNCTION upsert_service_status(
   p_service_name TEXT,
   p_status TEXT,
@@ -124,7 +128,11 @@ CREATE OR REPLACE FUNCTION upsert_service_status(
 RETURNS VOID
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
 AS $$
+DECLARE
+  v_prev_status TEXT;
+  v_last_history TIMESTAMPTZ;
 BEGIN
+  -- Always update the live current-status row
   INSERT INTO system_status_current (service_name, status, latency_ms, last_checked, details)
   VALUES (p_service_name, p_status, p_latency_ms, now(), p_details)
   ON CONFLICT (service_name)
@@ -132,10 +140,22 @@ BEGIN
     status = EXCLUDED.status,
     latency_ms = EXCLUDED.latency_ms,
     last_checked = EXCLUDED.last_checked,
-    details = EXCLUDED.details;
+    details = EXCLUDED.details
+  RETURNING (SELECT sc.status FROM system_status_current sc WHERE sc.service_name = p_service_name) INTO v_prev_status;
 
-  INSERT INTO system_status_history (service_name, status, latency_ms, checked_at)
-  VALUES (p_service_name, p_status, p_latency_ms, now());
+  -- Find when we last wrote a history row for this service
+  SELECT MAX(checked_at) INTO v_last_history
+  FROM system_status_history
+  WHERE service_name = p_service_name;
+
+  -- Append to history only on status change or every 30 minutes
+  IF v_prev_status IS DISTINCT FROM p_status
+     OR v_last_history IS NULL
+     OR now() - v_last_history >= INTERVAL '30 minutes'
+  THEN
+    INSERT INTO system_status_history (service_name, status, latency_ms, checked_at)
+    VALUES (p_service_name, p_status, p_latency_ms, now());
+  END IF;
 END;
 $$;
 
