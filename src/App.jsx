@@ -556,14 +556,17 @@ export default function K8sQuestApp() {
   const topicCorrectRef = useRef(0);
   const isRetryRef = useRef(false);
   const lastSessionScoreRef = useRef(0);
+  const submittingRef = useRef(false);
 
-  // Refs for browser back-button handler (avoids stale closures)
+  // Refs for browser back-button handler and keyboard shortcuts (avoids stale closures)
   const screenRef = useRef(screen);
   screenRef.current = screen;
   const topicScreenRef = useRef(topicScreen);
   topicScreenRef.current = topicScreen;
   const showExplanationRef = useRef(showExplanation);
   showExplanationRef.current = showExplanation;
+  const handleSubmitRef = useRef(null);
+  const nextQuestionRef = useRef(null);
 
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0,
@@ -1293,7 +1296,8 @@ export default function K8sQuestApp() {
   };
 
   const handleSubmit = async () => {
-    if (selectedAnswer === null || submitted || checkingAnswer) return;
+    if (selectedAnswer === null || submitted || checkingAnswer || submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitted(true);
     setCheckingAnswer(true);
     const q = currentQuestions[questionIndex];
@@ -1326,28 +1330,42 @@ export default function K8sQuestApp() {
       setFlash(true); setTimeout(() => setFlash(false), 600);
       if (!isRetryRef.current) setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel]?.points ?? 0));
     }
-    setQuizHistory(prev => [...prev, { q: q.q, options: q.options, answer: result.correctIndex, chosen: selectedAnswer, explanation: result.explanation }]);
+    setQuizHistory(prev => {
+      if (prev.length > questionIndex) return prev; // guard against double-submit
+      return [...prev, { q: q.q, options: q.options, answer: result.correctIndex, chosen: selectedAnswer, explanation: result.explanation }];
+    });
+    // Single atomic setStats call — prevents React batching from clobbering streak
+    const isFree = isFreeMode(selectedTopic?.id);
+    let freeScoreAdd = 0;
+    if (!isRetryRef.current && isFree && correct) {
+      const freeKey = currentQuestions[questionIndex].q.slice(0, 100);
+      try {
+        const scored = new Set(JSON.parse(localStorage.getItem("scoredFreeKeys_v1")) || []);
+        if (!scored.has(freeKey)) {
+          scored.add(freeKey);
+          localStorage.setItem("scoredFreeKeys_v1", JSON.stringify([...scored]));
+          freeScoreAdd = LEVEL_CONFIG[selectedLevel]?.points ?? 15;
+        }
+      } catch {}
+    }
     setStats(prev => {
-      // BUG-C fix: retries must never touch any stat
       if (isRetryRef.current) return prev;
       const streak = correct ? prev.current_streak + 1 : 0;
-      const isFree = isFreeMode(selectedTopic?.id);
       return {
         ...prev,
-        // total_score is NOT updated here - derived from completedTopics at quiz end
-        current_streak: streak,
-        max_streak:     Math.max(prev.max_streak, streak),
-        // BUG-D fix: free-mode questions don't count toward persistent answered/correct
+        total_score:    prev.total_score + freeScoreAdd,
+        // Free-mode quizzes must NOT modify persistent streak
+        current_streak: isFree ? prev.current_streak : streak,
+        max_streak:     isFree ? prev.max_streak     : Math.max(prev.max_streak, streak),
         total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
         total_correct:  isFree ? prev.total_correct  : (correct ? prev.total_correct + 1 : prev.total_correct),
       };
     });
-    if (!isRetryRef.current && !isFreeMode(selectedTopic?.id)) {
+    if (!isRetryRef.current && !isFree) {
       setTopicStats(prev => {
         const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
         return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct + (correct ? 1 : 0) } };
       });
-      // Mark question as scored so Mixed/Daily Quiz can't award points for it again
       if (correct) {
         try {
           const freeKey = currentQuestions[questionIndex].q.slice(0, 100);
@@ -1356,19 +1374,6 @@ export default function K8sQuestApp() {
           localStorage.setItem("scoredFreeKeys_v1", JSON.stringify([...scored]));
         } catch {}
       }
-    }
-    // Free mode: award points per unique correct answer (deduped by question text)
-    if (!isRetryRef.current && isFreeMode(selectedTopic?.id) && correct) {
-      const freeKey = currentQuestions[questionIndex].q.slice(0, 100);
-      try {
-        const scored = new Set(JSON.parse(localStorage.getItem("scoredFreeKeys_v1")) || []);
-        if (!scored.has(freeKey)) {
-          scored.add(freeKey);
-          localStorage.setItem("scoredFreeKeys_v1", JSON.stringify([...scored]));
-          const pts = LEVEL_CONFIG[selectedLevel]?.points ?? 15;
-          setStats(prev => ({ ...prev, total_score: prev.total_score + pts }));
-        }
-      } catch {}
     }
   };
 
@@ -1412,6 +1417,7 @@ export default function K8sQuestApp() {
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
       ];
       clearQuizState();
+      submittingRef.current = false;
       lastSessionScoreRef.current = sessionScore;
       setSessionScore(0);
       setCompletedTopics(newCompleted); setStats(newStats); setUnlockedAchievements(newAch);
@@ -1426,6 +1432,7 @@ export default function K8sQuestApp() {
       updateDailyStreak();
       setScreen("topicComplete");
     } else {
+      submittingRef.current = false;
       liveIndexRef.current = questionIndex + 1;
       setQuestionIndex(p => p + 1);
       setSelectedAnswer(null);
@@ -1435,13 +1442,14 @@ export default function K8sQuestApp() {
       if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[selectedLevel] || 25) : (TIMER_DURATIONS[selectedLevel] || 30));
     }
   };
+  handleSubmitRef.current = handleSubmit;
+  nextQuestionRef.current = nextQuestion;
 
   const startTopic = async (topic, level) => {
     quizRunIdRef.current = Date.now().toString(36);
     liveIndexRef.current = 0;
     clearQuizState();
-    const key = `${topic.id}_${level}`;
-    isRetryRef.current = !!(completedTopics[key]);
+    isRetryRef.current = false; // Only the explicit "retry wrong answers" flow sets this true
     setAnswerResult(null);
     let rawQs, theory;
     if (supabase) {
@@ -1768,7 +1776,7 @@ export default function K8sQuestApp() {
     const handler = (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        if (!submitted) { handleSubmit(); } else { nextQuestion(); }
+        if (!submitted) { handleSubmitRef.current(); } else { nextQuestionRef.current(); }
         return;
       }
       const idx = ["1","2","3","4"].indexOf(e.key);
@@ -1790,6 +1798,8 @@ export default function K8sQuestApp() {
   // Timer expired – force-submit as missed
   useEffect(() => {
     if (timeLeft !== 0 || submitted || screen !== "topic" || topicScreen !== "quiz" || (!timerEnabled && !isInterviewMode) || isInHistoryMode || tryAgainActive) return;
+    if (submittingRef.current) return; // guard against race with manual submit
+    submittingRef.current = true;
     const q = currentQuestions[questionIndex];
     setSubmitted(true);
 
@@ -1817,12 +1827,18 @@ export default function K8sQuestApp() {
 
     if (!isRetryRef.current) {
       const isFree = isFreeMode(selectedTopic?.id);
-      // BUG-D fix: don't count timed-out free-mode questions toward persistent totals
       setStats(prev => ({
         ...prev,
         total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
-        current_streak: 0,
+        // Free-mode timer expiry must NOT reset persistent streak
+        current_streak: isFree ? prev.current_streak : 0,
       }));
+      if (!isFree) {
+        setTopicStats(prev => {
+          const curr = prev[selectedTopic.id] || { answered: 0, correct: 0 };
+          return { ...prev, [selectedTopic.id]: { answered: curr.answered + 1, correct: curr.correct } };
+        });
+      }
     }
   }, [timeLeft]);
 
