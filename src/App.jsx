@@ -462,9 +462,9 @@ function isCodeTerm(token) {
 function renderBidi(text, lang) {
   if (!text || lang !== "he") return text;
   if (!/[A-Za-z]/.test(text)) return text;
-  // Capture LTR runs including dots (for DNS names like api.prod.svc.cluster.local).
-  // Trailing dot followed by space/Hebrew is stripped via the split boundary.
-  const parts = text.split(/((?:[A-Za-z][A-Za-z0-9\-_.:/]*(?:\s+(?=[A-Za-z]))?)+)/);
+  // Capture LTR runs including internal dots (DNS names like api.prod.svc.cluster.local)
+  // but NOT trailing dots so punctuation stays in RTL flow for correct bidi placement.
+  const parts = text.split(/((?:[A-Za-z](?:[A-Za-z0-9\-_:/]|\.[A-Za-z0-9])*(?:\s+(?=[A-Za-z]))?)+)/);
   if (parts.length <= 1) return text;
   const startsWithLatin = /^[A-Za-z]/.test(text);
   return parts.map((part, i) => {
