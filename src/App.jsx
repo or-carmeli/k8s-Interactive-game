@@ -1513,7 +1513,7 @@ export default function K8sQuestApp() {
           const key = `${selectedTopic.id}_${selectedLevel}`;
           const prevResult = completedTopics[key];
           if (prevResult) {
-            const newCompleted = { ...completedTopics, [key]: { ...prevResult, retryComplete: true, wrongIndices: [] } };
+            const newCompleted = { ...completedTopics, [key]: { ...prevResult, retryComplete: true, wrongIndices: [], wrongQuestions: [] } };
             setCompletedTopics(newCompleted);
             if (!isFreeMode(selectedTopic.id)) saveUserData(stats, newCompleted, unlockedAchievements);
           }
@@ -1533,7 +1533,11 @@ export default function K8sQuestApp() {
       // Preserve retryComplete so replaying doesn't re-lock the next level
       const keepRetryComplete = prevResult?.retryComplete || bestCorrect === currentQuestions.length;
       const wrongIdx = !isFreeMode(selectedTopic.id) ? quizHistory.map((h,i)=>h.chosen!==h.answer?i:null).filter(v=>v!==null) : (completedTopics[key]?.wrongIndices??[]);
-      const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, wrongIndices: wrongIdx, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
+      // Store full wrong-question data so the Mistakes screen doesn't depend on local content order
+      const wrongQuestions = !isFreeMode(selectedTopic.id)
+        ? quizHistory.filter(h=>h.chosen!==h.answer).map(h=>({q:h.q,options:h.options,answer:h.answer}))
+        : (completedTopics[key]?.wrongQuestions??[]);
+      const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, wrongIndices: wrongIdx, wrongQuestions, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
       // Recompute topic score; add any free-mode bonus accumulated on top
       const freeBonus = Math.max(0, stats.total_score - computeScore(completedTopics));
       const newStats = { ...stats, total_score: computeScore(newCompleted) + freeBonus };
@@ -1902,7 +1906,7 @@ export default function K8sQuestApp() {
     const handler = (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        if (!submitted) { handleSubmitRef.current(); } else { nextQuestionRef.current(); }
+        if (!submitted) { handleSubmitRef.current(); } else if (showExplanation) { nextQuestionRef.current(); }
         return;
       }
       const idx = ["1","2","3","4"].indexOf(e.key);
@@ -1912,7 +1916,7 @@ export default function K8sQuestApp() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [screen, topicScreen, submitted, selectedAnswer, questionIndex]);
+  }, [screen, topicScreen, submitted, selectedAnswer, questionIndex, showExplanation]);
 
   // Timer countdown
   useEffect(() => {
@@ -2843,7 +2847,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         TOPICS.forEach(topic=>(['easy','medium','hard']).forEach(lvl=>{
           const r=completedTopics[`${topic.id}_${lvl}`];
           if(!r) return;
-          if(r.wrongIndices&&r.wrongIndices.length>0){
+          if(r.wrongQuestions&&r.wrongQuestions.length>0){
+            r.wrongQuestions.forEach(q=>{wrongItems.push({topic,level:lvl,q});});
+          } else if(r.wrongIndices&&r.wrongIndices.length>0){
             const rawQs=lang==="en"?topic.levels[lvl].questionsEn:topic.levels[lvl].questions;
             r.wrongIndices.forEach(idx=>{const q=rawQs?.[idx];if(q) wrongItems.push({topic,level:lvl,q});});
           } else if((!r.wrongIndices||(Array.isArray(r.wrongIndices)&&r.wrongIndices.length===0&&!r.retryComplete))&&r.correct<r.total){
