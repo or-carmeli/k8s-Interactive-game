@@ -718,6 +718,7 @@ export default function K8sQuestApp() {
   const [monitorServices, setMonitorServices]           = useState(null); // null = loading, [] = loaded
   const [monitorUptime, setMonitorUptime]               = useState(null);
   const [monitorIncidents, setMonitorIncidents]         = useState(null);
+  const [statusTick, setStatusTick]                     = useState(0);    // increments every 1s to keep timer live
   const [searchQuery, setSearchQuery]                   = useState("");
   const [expandedGuideSection, setExpandedGuideSection] = useState(null);
   const [answerResult, setAnswerResult]                 = useState(null); // { correct, correctIndex, explanation } — set after server-side validation
@@ -1022,7 +1023,7 @@ export default function K8sQuestApp() {
     setTimeout(() => setResumeToast(false), 3500);
   }, [dataLoaded, user, resumeData]);
 
-  // Fetch real monitoring data when status screen opens, poll every 60s
+  // Fetch real monitoring data when status screen opens, poll every 30s
   useEffect(() => {
     if (screen !== "status") return;
     setDbStatus(null);
@@ -1050,8 +1051,15 @@ export default function K8sQuestApp() {
     };
 
     load();
-    const interval = setInterval(load, 60_000);
+    const interval = setInterval(load, 30_000);
     return () => clearInterval(interval);
+  }, [screen]);
+
+  // Tick every 1s so the "Updated Xs ago" timer stays live
+  useEffect(() => {
+    if (screen !== "status") return;
+    const tick = setInterval(() => setStatusTick(t => t + 1), 1_000);
+    return () => clearInterval(tick);
   }, [screen]);
 
   // Check for a saved in-progress incident whenever we land on home or incident list
@@ -3452,10 +3460,14 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
         // Active incidents count
         const activeIncidents = monitorIncidents ? monitorIncidents.filter(i => i.status !== "resolved") : [];
 
-        // Last checked time
+        // Last checked time — statusTick dependency keeps this value live
+        void statusTick;
         const lastChecked = !loading && services.length
           ? new Date(Math.max(...services.map(s => new Date(s.last_checked).getTime())))
           : null;
+        const secondsAgo = lastChecked ? Math.floor((Date.now() - lastChecked.getTime()) / 1000) : null;
+        const isStaleWarning  = secondsAgo !== null && secondsAgo > 300;
+        const isStaleCritical = secondsAgo !== null && secondsAgo > 900;
 
         const metricCard = (label, value, sub, accent="#00D4FF") => (
           <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"16px 18px",minWidth:0}}>
@@ -3497,13 +3509,23 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
               <div style={{flex:1,minWidth:160}}>
                 <div style={{fontSize:18,fontWeight:800,color:"#e2e8f0"}}>{globalLabel}</div>
                 <div style={{fontSize:12,color:"#475569",marginTop:3}}>
-                  KubeQuest · {lastChecked ? `Updated ${Math.round((Date.now() - lastChecked.getTime()) / 1000)}s ago` : (lang==="en"?"Checking…":"בודק…")}
+                  KubeQuest · {secondsAgo !== null ? `Updated ${secondsAgo}s ago` : (lang==="en"?"Checking…":"בודק…")}
                 </div>
               </div>
               <div style={{fontSize:11,color:"#475569",fontFamily:"'Fira Code','Courier New',monospace",flexShrink:0}}>
                 {new Date().toUTCString().replace(" GMT","")} UTC
               </div>
             </div>
+
+            {/* ── STALE DATA WARNING ── */}
+            {isStaleWarning && (
+              <div style={{background:isStaleCritical?"rgba(239,68,68,0.08)":"rgba(245,158,11,0.08)",border:`1px solid ${isStaleCritical?"rgba(239,68,68,0.3)":"rgba(245,158,11,0.3)"}`,borderRadius:10,padding:"10px 16px",marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:16}}>{isStaleCritical?"⚠":"⚡"}</span>
+                <span style={{fontSize:13,fontWeight:600,color:isStaleCritical?"#EF4444":"#F59E0B"}}>
+                  {isStaleCritical ? (lang==="en"?"Status data is stale":"נתוני הסטטוס לא עדכניים") : (lang==="en"?"Status data may be stale":"ייתכן שנתוני הסטטוס לא עדכניים")}
+                </span>
+              </div>
+            )}
 
             {/* ── SERVICE HEALTH ── */}
             {sectionTitle(lang==="en"?"Service Health":"בריאות שירותים")}
