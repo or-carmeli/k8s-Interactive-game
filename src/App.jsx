@@ -3495,7 +3495,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   let borderColor = "rgba(255,255,255,0.09)", bg = "rgba(255,255,255,0.02)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
                   if (isEliminated)                { borderColor = "rgba(255,255,255,0.04)"; bg = "rgba(255,255,255,0.01)"; color = "#334155"; labelBg = "rgba(255,255,255,0.03)"; labelColor = "#334155"; }
                   else if (isChosen && !dispSubmitted) { borderColor = "#00D4FF66"; bg = "rgba(0,212,255,0.06)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.15)"; labelColor = "#00D4FF"; }
-                  if (dispSubmitted) {
+                  if (dispSubmitted && !checkingAnswer) {
                     if (isCorrect)             { borderColor = "#10B981"; bg = "rgba(16,185,129,0.1)";  color = "#10B981"; labelBg = "rgba(16,185,129,0.2)";  labelColor = "#10B981"; }
                     else if (isChosen)          { borderColor = "#EF4444"; bg = "rgba(239,68,68,0.1)";   color = "#EF4444"; labelBg = "rgba(239,68,68,0.2)";   labelColor = "#EF4444"; }
                   }
