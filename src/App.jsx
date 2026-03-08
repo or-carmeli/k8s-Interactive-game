@@ -3739,8 +3739,8 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
               <button onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
             </div>}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {/* Next topic button (all levels 100%) */}
-              {nextTopicIdx>0&&nextTopicIdx<TOPICS.length&&(()=>{
+              {/* Next topic button — only shown when current level is mastered */}
+              {nextTopicIdx>0&&nextTopicIdx<TOPICS.length&&effectivelyComplete&&(()=>{
                 const nt=TOPICS[nextTopicIdx];
                 return<button onClick={()=>startTopic(nt,"easy")}
                   style={{padding:14,background:`linear-gradient(135deg,${nt.color}ee,${nt.color}88)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${nt.color}55`}}>
