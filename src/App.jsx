@@ -1417,15 +1417,26 @@ export default function K8sQuestApp() {
     let result;
     if (supabase && q.id) {
       const originalIndex = q._optionMap ? q._optionMap[selectedAnswer] : selectedAnswer;
+      const isDaily = selectedTopic?.id === "daily";
+      const callRpc = () => isDaily
+        ? checkDailyAnswer(supabase, q.id, originalIndex)
+        : checkQuizAnswer(supabase, q.id, originalIndex);
+      let rpcResult;
       try {
-        const isDaily = selectedTopic?.id === "daily";
-        const rpcResult = isDaily
-          ? await checkDailyAnswer(supabase, q.id, originalIndex)
-          : await checkQuizAnswer(supabase, q.id, originalIndex);
+        rpcResult = await callRpc();
+      } catch {
+        // Retry once on transient failure
+        try { rpcResult = await callRpc(); } catch { /* give up */ }
+      }
+      if (rpcResult) {
         const correctIndex = q._optionMap ? q._optionMap.indexOf(rpcResult.correct_answer) : rpcResult.correct_answer;
         result = { correct: rpcResult.correct, correctIndex, explanation: rpcResult.explanation };
-      } catch {
+      } else if (typeof q.answer === "number") {
+        // Offline fallback — only when local answer data exists
         result = { correct: selectedAnswer === q.answer, correctIndex: q.answer, explanation: q.explanation };
+      } else {
+        // Server unreachable and no local answer — don't penalize the user
+        result = { correct: true, correctIndex: selectedAnswer, explanation: q.explanation || "" };
       }
     } else {
       result = { correct: selectedAnswer === q.answer, correctIndex: q.answer, explanation: q.explanation };
