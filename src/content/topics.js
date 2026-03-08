@@ -498,28 +498,28 @@ export const TOPICS = [
                 "topologySpreadConstraints מורה ל-scheduler לפזר Pods באופן אחיד בין failure domains — אזורי תשתית כמו Nodes, Zones, או Regions שעלולים לכשול יחד. ללא פיזור, כל ה-Pods עלולים לרוץ על Node אחד; אם הוא קורס — כל השירות נופל. הפיזור מבטיח שגם אם Node או Zone שלם נכשל, חלק מה-Pods ממשיכים לרוץ במקומות אחרים.",
             },
             {
-              q: "ה-Pod נשאר Pending.\n\nkubectl describe מראה:\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available: 3 node(s) had untolerated taint {dedicated:gpu}.\n\nמה הפתרון?",
+              q: "Pod נשאר במצב Pending.\nהפלט של kubectl describe pod מראה את האירוע הבא:\n\n```\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available:\n    3 node(s) had untolerated taint {dedicated=gpu}\n```\n\nמה הפתרון הנכון?",
               options: [
-              "הוסף Node חדש לCluster ללא taint",
-              "הקטן את ה-CPU request כדי שה-Pod יתאים לNode קטן יותר",
-              "הוסף toleration מתאים ל-Pod spec",
-              "שנה את ה-Namespace של ה-Pod לNamespace ייעודי ל-GPU",
+              "להוסיף Node חדש ל-Cluster ללא taint",
+              "להקטין את ה-CPU request כדי שה-Pod יתאים ל-Node קטן יותר",
+              "להוסיף toleration מתאים ל-Pod spec שיתאים ל-taint",
+              "להעביר את ה-Pod ל-Namespace ייעודי לעבודות GPU",
               ],
               answer: 2,
               explanation:
-                "כשNode מסומן עם taint, רק Pods שמגדירים Toleration תואם יכולים לרוץ עליו. הוסף tolerations: [{key:'dedicated', value:'gpu', effect:'NoSchedule'}] ל-Pod spec. האפשרויות האחרות (הקטנת CPU, שינוי Namespace) לא פותרות את בעיית ה-taint.",
+                "שורש הבעיה:\nכל 3 ה-Nodes מסומנים עם taint בשם dedicated=gpu.\nה-Pod לא מגדיר toleration תואם — ולכן ה-Scheduler לא יכול לשבץ אותו לאף Node.\n\nמה זה Taint ו-Toleration?\n• Taint — סימון על Node שאומר: \"אל תשבצו עליי Pods, אלא אם יש להם אישור מתאים.\"\n• Toleration — הצהרה ב-Pod spec שאומרת: \"אני מודע ל-taint הזה ומוכן לרוץ על Node שמסומן בו.\"\n\nהפתרון — להוסיף toleration ל-Pod spec:\n```yaml\ntolerations:\n- key: \"dedicated\"\n  operator: \"Equal\"\n  value: \"gpu\"\n  effect: \"NoSchedule\"\n```\n\nלמה שאר התשובות שגויות:\n• Node חדש ללא taint — פתרון עוקף שלא מטפל בשורש הבעיה ומבזבז משאבים.\n• הקטנת CPU request — הבעיה היא taint ולא חוסר במשאבים.\n• שינוי Namespace — ל-Namespace אין קשר ל-taints. שיבוץ Pods נקבע לפי tolerations בלבד.",
             },
             {
-              q: "ה-StatefulSet עם 3 replicas רץ בCluster. Pod-1 נשאר Pending.\n\nמה הסיבה הנפוצה?",
+              q: "StatefulSet עם 3 replicas רץ ב-Cluster.\nPod-0 לא במצב Ready, ו-Pod-1 נשאר במצב Pending.\n\nמה הסיבה הסבירה ביותר?",
               options: [
-              "ה-PVC של pod-1 מלא ולא ניתן להקצות אחסון נוסף",
-              "Pod-0 לא Ready – StatefulSet מתזמן Pods בסדר לפי ordinal",
-              "ה-Namespace quota הגיע לגבול ולא ניתן ליצור Pod חדש",
-              "ה-imagePullSecret שגוי ומונע הורדת image לpod-1",
+              "ה-PVC של Pod-1 מלא ואין אפשרות להקצות לו אחסון חדש",
+              "Pod-0 לא Ready — לכן StatefulSet לא ממשיך ליצור את Pod-1",
+              "ה-Namespace quota הגיע למגבלה ולא ניתן ליצור Pods חדשים",
+              "ה-imagePullSecret שגוי ומונע הורדת ה-Image עבור Pod-1",
               ],
               answer: 1,
               explanation:
-                "עם podManagementPolicy: OrderedReady (ברירת המחדל), StatefulSet מתזמן Pods בסדר ordinal: pod-0 חייב להיות Ready לפני שpod-1 מתחיל. עם Parallel - כולם עולים בו-זמנית. בדוק kubectl describe pod pod-0 לגלות מה מונע ממנו להיות Ready.",
+                "שורש הבעיה:\nStatefulSet יוצר Pods בסדר עוקב לפי מספר ordinal — קודם Pod-0, אחר כך Pod-1, ואז Pod-2.\n\nהתנהגות ברירת המחדל:\nכאשר podManagementPolicy מוגדר כ-OrderedReady (ברירת המחדל), Pod-0 חייב להגיע למצב Ready לפני ש-Pod-1 נוצר בכלל.\nלכן אם Pod-0 תקוע — כל ה-Pods שאחריו ימתינו.\n\nהחלופה:\nאם מגדירים podManagementPolicy: Parallel, כל ה-Pods עולים במקביל ללא תלות בסדר.\n\nלמה שאר התשובות שגויות:\n• PVC מלא — Pod-1 לא נוצר בכלל, הבעיה היא בסדר היצירה ולא באחסון.\n• Namespace quota — אם ה-quota היה מלא, גם Pod-0 לא היה עולה.\n• imagePullSecret שגוי — היה גורם לשגיאת ImagePullBackOff, לא למצב Pending.",
             },
             {
               q: "עדכון Rolling update נתקע.\n\nkubectl rollout status מציג:\nWaiting for rollout to finish: 3 out of 5 new replicas have been updated...\nה-YAML מגדיר maxUnavailable: 0.\n\nמה הסיבה?",
@@ -596,28 +596,28 @@ export const TOPICS = [
                 "topologySpreadConstraints tells the scheduler to distribute Pods evenly across failure domains — infrastructure boundaries such as Nodes, Zones, or Regions that can fail together. Without spreading, all Pods may land on a single Node; if that Node goes down, the entire service is lost. By enforcing even distribution, the constraint ensures that even if an entire Node or Zone fails, a portion of the Pods continue running elsewhere, improving overall resilience.",
             },
             {
-              q: "A Pod stays Pending.\n\nkubectl describe shows:\nEvents:\n  Warning  FailedScheduling  0/3 nodes available: 3 node(s) had untolerated taint {dedicated:gpu}.\n\nWhat is the fix?",
+              q: "A Pod remains in Pending state.\nThe output of kubectl describe pod shows the following event:\n\n```\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available:\n    3 node(s) had untolerated taint {dedicated=gpu}\n```\n\nWhat is the correct fix?",
               options: [
-              "Add a new untainted Node to the cluster with sufficient resources",
-              "Reduce the CPU request so the Pod fits on a smaller available Node",
-              "Add a matching toleration to the Pod spec with key:'dedicated', value:'gpu'",
-              "Move the Pod to a dedicated Namespace reserved for GPU workloads",
+              "Add a new Node to the cluster without any taints",
+              "Reduce the CPU request so the Pod fits on a smaller Node",
+              "Add a matching toleration to the Pod spec for the taint",
+              "Move the Pod to a Namespace dedicated to GPU workloads",
               ],
               answer: 2,
               explanation:
-                "A taint on a Node blocks all Pods that don't declare a matching Toleration. Adding a Toleration with the correct key and effect tells the Scheduler it is allowed to place the Pod on that Node. Reducing CPU or changing Namespace does not address taints.",
+                "Root cause:\nAll 3 Nodes are tainted with dedicated=gpu.\nThe Pod does not declare a matching toleration, so the Scheduler cannot place it on any Node.\n\nWhat are Taints and Tolerations?\n• Taint — a label on a Node that says: \"Do not schedule Pods here unless they have explicit permission.\"\n• Toleration — a declaration in the Pod spec that says: \"I am aware of this taint and willing to run on a Node that has it.\"\n\nThe fix — add a toleration to the Pod spec:\n```yaml\ntolerations:\n- key: \"dedicated\"\n  operator: \"Equal\"\n  value: \"gpu\"\n  effect: \"NoSchedule\"\n```\n\nWhy the other answers are wrong:\n• New untainted Node — a workaround that doesn't address the root cause and wastes resources.\n• Reduce CPU request — the issue is a taint, not insufficient resources.\n• Change Namespace — Namespaces have no relation to taints. Pod scheduling is determined by tolerations only.",
             },
             {
-              q: "A StatefulSet with 3 replicas is running in your cluster. Pod-1 stays Pending.\n\nWhat is the most likely cause?",
+              q: "A StatefulSet with 3 replicas is running in the cluster.\nPod-0 is not Ready, and Pod-1 remains in Pending state.\n\nWhat is the most likely reason?",
               options: [
-              "The PVC for pod-1 is full and no additional storage can be allocated",
-              "Pod-0 is not Ready - StatefulSet schedules Pods in ordinal order",
-              "The Namespace quota has been reached and no new Pod can be created",
-              "The imagePullSecret is incorrect and prevents pulling the image for pod-1",
+              "The PVC for Pod-1 is full and no additional storage can be allocated",
+              "Pod-0 is not Ready — StatefulSet will not create Pod-1 until Pod-0 is Ready",
+              "The Namespace quota has been reached and no new Pods can be created",
+              "The imagePullSecret is incorrect, preventing the image pull for Pod-1",
               ],
               answer: 1,
               explanation:
-                "StatefulSet schedules Pods in ordinal order: pod-0 must be Ready before pod-1 is created. This is intentional - it ensures ordered startup for stateful applications. Check kubectl describe pod pod-0 to find what is preventing it from becoming Ready.",
+                "Root cause:\nStatefulSet creates Pods sequentially by ordinal number — first Pod-0, then Pod-1, then Pod-2.\n\nDefault behavior:\nWith podManagementPolicy: OrderedReady (the default), Pod-0 must reach Ready state before Pod-1 is created at all.\nIf Pod-0 is stuck, all subsequent Pods will wait.\n\nAlternative:\nSetting podManagementPolicy: Parallel allows all Pods to start simultaneously without waiting for order.\n\nWhy the other answers are wrong:\n• PVC full — Pod-1 was never created; the issue is creation order, not storage.\n• Namespace quota — if the quota were full, Pod-0 would not have been created either.\n• imagePullSecret — a wrong secret would cause ImagePullBackOff, not Pending.",
             },
             {
               q: "A rolling update is stuck.\n\nkubectl rollout status shows:\nWaiting for rollout to finish: 3 out of 5 new replicas updated...\nThe YAML sets maxUnavailable: 0.\n\nWhat is the cause?",
@@ -1096,16 +1096,16 @@ export const TOPICS = [
                 "IPVS משתמש ב-hash tables במקום iptables linear chains – ביצועים טובים יותר עם אלפי Services.",
             },
             {
-              q: "ה-Service לא מנתב תנועה לPods.\n\nkubectl get endpoints app-svc מציג:\nNAME      ENDPOINTS\napp-svc   <none>\nה-Pod רץ עם label: app=App (A גדולה). ה-Service:\nspec:\n  selector:\n    app: app\n\nמה הבעיה?",
+              q: "ה-Service לא מנתב תנועה ל-Pods.\n\nהפלט של kubectl get endpoints מציג:\n\n```\nNAME      ENDPOINTS\napp-svc   <none>\n```\n\nה-Pod רץ עם label:\n`app: App` (A גדולה).\n\nה-Service מגדיר:\n```yaml\nspec:\n  selector:\n    app: app\n```\n\nמה הבעיה?",
               options: [
-              "Service port שגוי",
-              "selector לא תואם – 'app: app' ≠ 'app: App' (רגישות לאותיות גדולות/קטנות)",
-              "Pod לא Ready",
-              "Namespace שגוי",
+              "ה-Service port לא תואם את ה-targetPort של הקונטיינר",
+              "ה-selector לא תואם — labels ב-Kubernetes הם case-sensitive",
+              "ה-Pod לא במצב Ready ולכן לא נכלל ב-Endpoints",
+              "ה-Pod וה-Service נמצאים ב-Namespaces שונים",
               ],
               answer: 1,
               explanation:
-                "Kubernetes labels הם case-sensitive. 'app' ≠ 'App'. Service selector חייב לתאים בדיוק ל-Pod labels. תקן את ה-selector ל-app: App.",
+                "שורש הבעיה:\nLabels ב-Kubernetes הם case-sensitive.\nה-Pod מסומן עם app: App, אבל ה-Service מחפש app: app.\nמכיוון שהערכים לא זהים, ה-Endpoints ריקים ולא מנותבת תנועה.\n\nמה זה Endpoints?\nכאשר Service מוצא Pods שתואמים ל-selector שלו, הוא מוסיף את כתובות ה-IP שלהם לאובייקט Endpoints.\nרשימת Endpoints ריקה (<none>) אומרת שאף Pod לא תואם.\n\nהפתרון:\nלתקן את ה-selector ל-app: App כדי שיתאים ל-label של ה-Pod.\n\nכדי לאתר את הבעיה:\n```\nkubectl get endpoints app-svc\nkubectl get pods --show-labels\n```\n\nלמה שאר התשובות שגויות:\n• port שגוי — היה גורם לשגיאת חיבור, לא ל-Endpoints ריקים.\n• Pod לא Ready — Pod שאינו Ready מוסר מ-Endpoints, אבל כאן הבעיה היא בהתאמת labels.\n• Namespace שונה — Service מחפש Pods רק באותו Namespace, אבל הבעיה כאן היא case-sensitivity.",
             },
             {
               q: "כלל ה-NetworkPolicy חוסמת DNS. Pods לא מצליחים לפתור שמות.\n\nNetworkPolicy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n\nמה חסר?",
@@ -1120,16 +1120,16 @@ export const TOPICS = [
                 "כשמגדירים policyTypes: [Egress], כל יציאה שלא מוגדרת מפורשות נחסמת - כולל DNS. מכיוון שDNS עובד על port 53 (UDP ו-TCP) לכיוון CoreDNS, צריך להוסיף egress rule ל-port 53. port 443 בלבד לא מספיק.",
             },
             {
-              q: "ה-Ingress מחזיר 503.\n\nkubectl describe ingress מציג:\nBackend: api-svc:80 (<error: endpoints not found>)\n\nמה הבעיה?",
+              q: "ה-Ingress מחזיר שגיאת 503.\n\nהפלט של kubectl describe ingress מציג:\n\n```\nBackend: api-svc:80 (<error: endpoints not found>)\n```\n\nמה הבעיה?",
               options: [
-              "Ingress Controller לא מותקן",
-              "Service api-svc לא קיים או selector לא מתאים לPods",
-              "TLS שגוי",
-              "Namespace שגוי",
+              "ה-Ingress Controller לא מותקן ב-Cluster",
+              "ה-Service קיים אבל ה-selector לא מתאים לאף Pod",
+              "תעודת ה-TLS שגויה וחוסמת חיבורים נכנסים",
+              "ה-Ingress וה-Service נמצאים ב-Namespaces שונים",
               ],
               answer: 1,
               explanation:
-                "השגיאה endpoints not found אומרת ש-Service קיים אבל אין Pods שמתאימים ל-selector שלו, כך שה-Endpoints ריקים. הIngress Controller לא יכול לנתב לשום מקום ומחזיר 503. בדוק kubectl get endpoints api-svc ו-kubectl get pods --show-labels להשוות label-ים.",
+                "שורש הבעיה:\nהשגיאה endpoints not found אומרת שה-Service api-svc קיים, אבל אין Pods שתואמים ל-selector שלו.\nכתוצאה מכך, רשימת ה-Endpoints ריקה וה-Ingress Controller לא יכול לנתב תנועה — ומחזיר 503.\n\nמה זה 503?\nקוד שגיאה HTTP שמשמעותו \"Service Unavailable\" — אין backend זמין לטפל בבקשה.\n\nכיצד לאתר את הבעיה:\n```\nkubectl get endpoints api-svc\nkubectl get pods --show-labels\n```\nהשוו את ה-labels על ה-Pods לבין ה-selector שמוגדר ב-Service.\n\nלמה שאר התשובות שגויות:\n• Ingress Controller לא מותקן — אם לא היה מותקן, ה-Ingress לא היה מגיב בכלל (לא 503).\n• TLS שגוי — היה גורם לשגיאת 4xx או בעיית SSL, לא 503 עם endpoints not found.\n• Namespace שונה — Ingress ו-Service חייבים להיות באותו Namespace, אבל השגיאה מצביעה על endpoints ריקים ולא על Service חסר.",
             },
             {
               q: "ה-Pod מנסה לגשת ל-api-svc.backend.cluster.local ולא מצליח. מה ה-FQDN הנכון של Service בשם api-svc ב-Namespace backend?",
@@ -1194,16 +1194,16 @@ export const TOPICS = [
                 "IPVS uses hash tables instead of iptables linear chains - much better performance with thousands of Services.",
             },
             {
-              q: "A Service returns no traffic.\n\nkubectl get endpoints app-svc shows:\nNAME      ENDPOINTS\napp-svc   <none>\nThe Pod runs with label: app=App (capital A). The Service:\nspec:\n  selector:\n    app: app\n\nWhat is the problem?",
+              q: "A Service is not routing traffic to its Pods.\n\nThe output of kubectl get endpoints shows:\n\n```\nNAME      ENDPOINTS\napp-svc   <none>\n```\n\nThe Pod runs with label:\n`app: App` (capital A).\n\nThe Service spec reads:\n```yaml\nspec:\n  selector:\n    app: app\n```\n\nWhat is the problem?",
               options: [
-              "Wrong Service port",
-              "Selector mismatch - 'app: app' ≠ 'app: App' (case sensitive)",
-              "Pod not Ready",
-              "Wrong Namespace",
+              "The Service port does not match the container's targetPort",
+              "The selector does not match — labels in Kubernetes are case-sensitive",
+              "The Pod is not Ready and therefore excluded from Endpoints",
+              "The Pod and Service are in different Namespaces",
               ],
               answer: 1,
               explanation:
-                "Kubernetes label selectors are case-sensitive, so 'app: app' and 'app: App' are two different values. When the selector does not match any Pod label, the Service Endpoints list stays empty and no traffic is routed. Fix the Service selector to app: App to match the Pod.",
+                "Root cause:\nLabels in Kubernetes are case-sensitive.\nThe Pod is labeled app: App, but the Service selector looks for app: app.\nSince the values don't match, the Endpoints list is empty and no traffic is routed.\n\nWhat are Endpoints?\nWhen a Service finds Pods matching its selector, it adds their IP addresses to an Endpoints object.\nAn empty Endpoints list (<none>) means no Pods match the selector.\n\nThe fix:\nChange the selector to app: App so it matches the Pod label.\n\nTo debug:\n```\nkubectl get endpoints app-svc\nkubectl get pods --show-labels\n```\n\nWhy the other answers are wrong:\n• Wrong port — would cause connection errors, not empty Endpoints.\n• Pod not Ready — an unready Pod is removed from Endpoints, but here the issue is label matching.\n• Different Namespace — a Service only selects Pods in its own Namespace, but the issue here is case-sensitivity.",
             },
             {
               q: "A NetworkPolicy blocks DNS. Pods cannot resolve names.\n\nThe policy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n\nWhat is missing?",
@@ -1218,16 +1218,16 @@ export const TOPICS = [
                 "When policyTypes includes Egress, all outbound traffic not explicitly allowed is blocked - including DNS on port 53. Without a rule permitting port 53 UDP and TCP to CoreDNS, Pod name resolution fails entirely. Only permitting port 443 is not enough.",
             },
             {
-              q: "Ingress returns 503.\n\nkubectl describe ingress shows:\nBackend: api-svc:80 (<error: endpoints not found>)\n\nWhat is wrong?",
+              q: "An Ingress returns a 503 error.\n\nThe output of kubectl describe ingress shows:\n\n```\nBackend: api-svc:80 (<error: endpoints not found>)\n```\n\nWhat is the problem?",
               options: [
-              "Ingress Controller not installed",
-              "Service api-svc exists but selector doesn't match Pods",
-              "Wrong TLS",
-              "Wrong Namespace",
+              "The Ingress Controller is not installed in the cluster",
+              "The Service exists but its selector does not match any Pods",
+              "The TLS certificate is invalid and blocking incoming connections",
+              "The Ingress and Service are in different Namespaces",
               ],
               answer: 1,
               explanation:
-                "The error 'endpoints not found' means the Service exists but its selector matches no Pods, so the Endpoints list is empty and the Ingress Controller has nowhere to send traffic. Run kubectl get endpoints api-svc and kubectl get pods --show-labels to compare the selector with the actual Pod labels.",
+                "Root cause:\nThe error endpoints not found means the Service api-svc exists, but no Pods match its selector.\nAs a result, the Endpoints list is empty and the Ingress Controller has nowhere to route traffic — returning 503.\n\nWhat is 503?\nAn HTTP status code meaning \"Service Unavailable\" — no backend is available to handle the request.\n\nHow to debug:\n```\nkubectl get endpoints api-svc\nkubectl get pods --show-labels\n```\nCompare the Pod labels with the selector defined in the Service.\n\nWhy the other answers are wrong:\n• Ingress Controller not installed — if it weren't installed, the Ingress would not respond at all (not a 503).\n• Wrong TLS — would cause a 4xx or SSL error, not a 503 with endpoints not found.\n• Different Namespace — Ingress and Service must be in the same Namespace, but the error points to empty endpoints, not a missing Service.",
             },
             {
               q: "A Pod tries to access api-svc.backend.cluster.local and fails. What is the correct FQDN for Service api-svc in Namespace backend?",
@@ -1730,28 +1730,28 @@ export const TOPICS = [
                 "OPA (Open Policy Agent) Gatekeeper הוא admission webhook שאוכף policies מותאמות אישית על כל resource שנוצר ב-Cluster. הpolicies נכתבות ב-Rego, שפת כללים דקלרטיבית. בניגוד ל-PSA (שמציע רמות קבועות), Gatekeeper מאפשר כללים שרירותיים - למשל: כל image חייב להגיע מ-registry מאושר, כל Pod חייב להגדיר limits, או אסור ליצור Service מסוג LoadBalancer. Kyverno הוא אלטרנטיבה עם תחביר YAML.",
             },
             {
-              q: "ה-Pod מקבל שגיאה:\n\nError: pods is forbidden: User 'system:serviceaccount:default:my-sa' cannot list resource 'pods' in API group '' in the namespace 'prod'\n\nמה הפתרון?",
+              q: "ה-Pod מקבל את השגיאה הבאה:\n\n```\nError: pods is forbidden:\nUser 'system:serviceaccount:default:my-sa'\ncannot list resource 'pods' in namespace 'prod'\n```\n\nמה הפתרון הנכון?",
               options: [
-              "מחק את ה-ServiceAccount",
-              "צור Role עם list pods + RoleBinding לmy-sa ב-namespace prod",
-              "הוסף cluster-admin ClusterRoleBinding",
-              "שנה ל-default ServiceAccount",
+              "למחוק את ה-ServiceAccount וליצור חדש במקומו",
+              "ליצור Role עם הרשאת list pods ולקשור אותו ל-my-sa",
+              "להוסיף ClusterRoleBinding עם הרשאת cluster-admin",
+              "לעבור ל-default ServiceAccount במקום my-sa",
               ],
               answer: 1,
               explanation:
-                "הודעת השגיאה מציינת בדיוק מה חסר: ServiceAccount my-sa אין הרשאת list על pods ב-namespace prod. הפתרון הנכון הוא ליצור Role עם הרשאת list על pods, ולאחר מכן RoleBinding שמקשר את ה-Role לServiceAccount my-sa. הוספת cluster-admin היא רחבה מדי ומהווה סיכון אבטחה.",
+                "שורש הבעיה:\nל-ServiceAccount בשם my-sa אין הרשאת list על Pods ב-namespace prod.\nב-Kubernetes, כל גישה ל-API חייבת להיות מאושרת במפורש דרך RBAC.\n\nהפתרון — ליצור Role ו-RoleBinding:\n```yaml\nkind: Role\nmetadata:\n  namespace: prod\nrules:\n- apiGroups: [\"\"]\n  resources: [\"pods\"]\n  verbs: [\"list\"]\n---\nkind: RoleBinding\nsubjects:\n- kind: ServiceAccount\n  name: my-sa\n  namespace: default\nroleRef:\n  kind: Role\n  name: pod-reader\n```\n\nלמה שאר התשובות שגויות:\n• מחיקת ServiceAccount — לא פותרת את חוסר ההרשאות, רק מסירה את הזהות.\n• cluster-admin — מעניק הרשאות מלאות על כל ה-Cluster, מהווה סיכון אבטחי חמור.\n• default ServiceAccount — גם לו אין הרשאות ל-list pods כברירת מחדל.",
             },
             {
-              q: "מנסים לפרוס Deployment ומקבלים שגיאה:\n\nError from server: error when creating 'deploy.yaml': admission webhook 'validate.kyverno.svc' denied the request: Container image must come from 'gcr.io/'\n\nמה קורה?",
+              q: "ניסיון לפרוס Deployment נכשל עם השגיאה:\n\n```\nError from server: admission webhook 'validate.kyverno.svc'\ndenied the request:\nContainer image must come from 'gcr.io/'\n```\n\nמה קורה?",
               options: [
-              "Kubernetes API server נפל",
-              "ValidatingAdmissionWebhook חסם את ה-Deployment כי ה-image לא מ-approved registry",
-              "RBAC חסם",
-              "Namespace לא קיים",
+              "ה-Kubernetes API server קרס ולא מגיב לבקשות",
+              "Admission webhook חסם את ה-image כי הוא לא מ-registry מאושר",
+              "הרשאות RBAC חוסמות יצירת Deployment ב-Namespace",
+              "ה-Namespace שצוין ב-Deployment לא קיים ב-Cluster",
               ],
               answer: 1,
               explanation:
-                "ValidatingAdmissionWebhook הוא שכבת validation שרצה לפני שKubernetes מאשר כל resource. Kyverno (או OPA Gatekeeper) מגדיר policy שמאפשרת רק images מ-gcr.io/. הפתרון הוא לשנות את ה-image URL ב-Deployment לרשומה המאושרת. ה-API server לא נפל - זו חסימה מכוונת.",
+                "שורש הבעיה:\nKyverno (כלי policy-as-code) מותקן ב-Cluster כ-ValidatingAdmissionWebhook.\nהוא אוכף policy שמאפשרת רק images מ-gcr.io/ — וחוסם כל image ממקור אחר.\n\nמה זה Admission Webhook?\nשכבת validation שרצה לפני ש-Kubernetes מאשר יצירת resource.\nכל בקשת create/update עוברת דרכו לפני שמירה ב-etcd.\n\nהפתרון:\nלשנות את ה-image ב-Deployment ל-image מ-gcr.io/, או לעדכן את ה-policy ב-Kyverno.\n\nלמה שאר התשובות שגויות:\n• API server קרס — אם הוא היה קורס, לא הייתם מקבלים הודעת שגיאה מסודרת.\n• RBAC — הודעת RBAC נראית שונה (\"forbidden\"), לא \"admission webhook denied\".\n• Namespace לא קיים — השגיאה הייתה \"namespace not found\", לא admission webhook.",
             },
             {
               q: "ה-PSA מוגדר עם enforce=restricted. Deployment נדחה:\n\nPod violates PodSecurity 'restricted:latest': allowPrivilegeEscalation != false\n\nמה מוסיפים ל-container spec?",
@@ -1828,28 +1828,28 @@ export const TOPICS = [
                 "OPA (Open Policy Agent) Gatekeeper is an admission webhook that enforces custom policies on every resource created in the cluster. Policies are written in Rego, a declarative rule language. Unlike Pod Security Admission (which uses fixed built-in levels), OPA Gatekeeper lets you define arbitrary rules tailored to your organization - for example: all container images must come from gcr.io/, all Pods must have resource limits, or no Service of type LoadBalancer is allowed. Kyverno is an alternative tool that serves the same purpose with a YAML-based policy syntax.",
             },
             {
-              q: "A Pod receives:\n\nError: pods is forbidden: User 'system:serviceaccount:default:my-sa' cannot list resource 'pods' in namespace 'prod'\n\nWhat is the fix?",
+              q: "A Pod receives the following error:\n\n```\nError: pods is forbidden:\nUser 'system:serviceaccount:default:my-sa'\ncannot list resource 'pods' in namespace 'prod'\n```\n\nWhat is the correct fix?",
               options: [
-              "Delete the ServiceAccount",
-              "Create a Role with list pods + a RoleBinding to my-sa in namespace prod",
-              "Add a cluster-admin ClusterRoleBinding",
-              "Switch to the default ServiceAccount",
+              "Delete the ServiceAccount and create a new one",
+              "Create a Role with list pods permission and bind it to my-sa",
+              "Add a ClusterRoleBinding with cluster-admin permissions",
+              "Switch to the default ServiceAccount instead of my-sa",
               ],
               answer: 1,
               explanation:
-                "The error message pinpoints exactly what is missing: ServiceAccount my-sa lacks the list verb on pods in namespace prod. Create a Role with that permission and a RoleBinding connecting it to my-sa. Adding cluster-admin is overly broad and violates least-privilege principles.",
+                "Root cause:\nThe ServiceAccount my-sa lacks the list permission on Pods in namespace prod.\nIn Kubernetes, every API access must be explicitly authorized through RBAC.\n\nThe fix — create a Role and RoleBinding:\n```yaml\nkind: Role\nmetadata:\n  namespace: prod\nrules:\n- apiGroups: [\"\"]\n  resources: [\"pods\"]\n  verbs: [\"list\"]\n---\nkind: RoleBinding\nsubjects:\n- kind: ServiceAccount\n  name: my-sa\n  namespace: default\nroleRef:\n  kind: Role\n  name: pod-reader\n```\n\nWhy the other answers are wrong:\n• Delete ServiceAccount — doesn't fix the missing permissions, just removes the identity.\n• cluster-admin — grants full permissions across the entire Cluster, a serious security risk.\n• default ServiceAccount — also has no list pods permissions by default.",
             },
             {
-              q: "Deploying a workload fails with:\n\nError: admission webhook 'validate.kyverno.svc' denied the request: Container image must come from 'gcr.io/'\n\nWhat is happening?",
+              q: "A Deployment fails to deploy with the error:\n\n```\nError from server: admission webhook 'validate.kyverno.svc'\ndenied the request:\nContainer image must come from 'gcr.io/'\n```\n\nWhat is happening?",
               options: [
-              "The Kubernetes API server crashed",
-              "A ValidatingAdmissionWebhook blocked the Deployment because the image is not from an approved registry",
-              "RBAC blocked it",
-              "Namespace does not exist",
+              "The Kubernetes API server has crashed and is not responding",
+              "An Admission webhook blocked the image because it is not from an approved registry",
+              "RBAC permissions prevent creating a Deployment in this Namespace",
+              "The Namespace specified in the Deployment does not exist in the Cluster",
               ],
               answer: 1,
               explanation:
-                "A ValidatingAdmissionWebhook intercepts every resource creation before Kubernetes accepts it. Kyverno here enforces a policy that only allows images from gcr.io/. The API server did not crash - this is an intentional policy block. Fix by changing the container image URL to a gcr.io-hosted image.",
+                "Root cause:\nKyverno (a policy-as-code tool) is installed in the Cluster as a ValidatingAdmissionWebhook.\nIt enforces a policy that only allows container images from gcr.io/ — blocking all other sources.\n\nWhat is an Admission Webhook?\nA validation layer that runs before Kubernetes accepts any resource creation.\nEvery create/update request passes through it before being saved to etcd.\n\nThe fix:\nChange the container image in the Deployment to one hosted on gcr.io/, or update the Kyverno policy.\n\nWhy the other answers are wrong:\n• API server crashed — if it had crashed, you would not receive a structured error message.\n• RBAC — an RBAC error says \"forbidden\", not \"admission webhook denied\".\n• Namespace not found — the error would say \"namespace not found\", not admission webhook.",
             },
             {
               q: "PSA is set to enforce=restricted. A Deployment is rejected:\n\nPod violates PodSecurity 'restricted:latest': allowPrivilegeEscalation != false\n\nWhat must you add to the container spec?",
@@ -2340,16 +2340,16 @@ export const TOPICS = [
                 "ברירת המחדל (Immediate) יוצרת PV ברגע שנוצר PVC - אך ה-PV עלול להיווצר ב-Zone שונה מה-Pod, ואז ה-Pod לא יוכל להשתמש בו. WaitForFirstConsumer מעכב את יצירת ה-PV עד שPod שמשתמש ב-PVC מתזמן ל-Node ספציפי, ורק אז יוצר PV באותה Zone כמו ה-Node. קריטי בסביבות multi-AZ.",
             },
             {
-              q: "ה-PVC נשאר Pending.\n\nkubectl describe pvc מציג:\nEvents:\n  Warning  ProvisioningFailed  storageclass.storage.k8s.io 'fast-ssd' not found\n\nמה הבעיה?",
+              q: "ה-PVC נשאר במצב Pending.\n\nהפלט של kubectl describe pvc מציג:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io 'fast-ssd' not found\n```\n\nמה הבעיה?",
               options: [
-              "PVC גדול מדי",
-              "StorageClass 'fast-ssd' לא קיים בCluster – שגיאת הגדרה",
-              "Node מלא",
-              "Namespace שגוי",
+              "ה-PVC מבקש נפח אחסון גדול מדי עבור ה-Cluster",
+              "ה-StorageClass בשם fast-ssd לא קיים ב-Cluster",
+              "ה-Node שה-Pod רץ עליו מלא ואין בו מקום לדיסק",
+              "ה-PVC וה-Pod נמצאים ב-Namespaces שונים",
               ],
               answer: 1,
               explanation:
-                "כשStorageClass שציין ה-PVC לא קיים, ה-provisioner לא יכול ליצור PV והPVC נשאר Pending. בדוק kubectl get storageclass לרשימת ה-StorageClasses הזמינים ותקן את storageClassName ב-PVC לשם הנכון.",
+                "שורש הבעיה:\nה-PVC מפנה ל-StorageClass בשם fast-ssd, אבל StorageClass כזה לא קיים ב-Cluster.\nללא StorageClass, ה-provisioner לא יודע כיצד ליצור PV וה-PVC נשאר Pending.\n\nמה זה StorageClass?\nתבנית שמגדירה ל-Kubernetes כיצד ליצור דיסקים באופן דינמי.\nכל StorageClass כולל provisioner (כמו aws-ebs), סוג דיסק, ו-reclaim policy.\n\nכיצד לאתר ולתקן:\n```\nkubectl get storageclass\n```\nבדקו אילו StorageClasses קיימים ועדכנו את storageClassName ב-PVC לשם נכון.\n\nלמה שאר התשובות שגויות:\n• PVC גדול מדי — השגיאה הייתה על capacity, לא על storageclass not found.\n• Node מלא — Node disk לא קשור ל-StorageClass provisioning.\n• Namespace שונה — PVC ו-Pod חייבים להיות באותו Namespace, אבל השגיאה מצביעה על StorageClass חסר.",
             },
             {
               q: "הפקודה helm upgrade כשל באמצע. Release ב-status 'failed'. ה-ConfigMap מחצית עודכן. מה הצעד הבא?",
@@ -2364,16 +2364,16 @@ export const TOPICS = [
                 "כש-helm upgrade נכשל, ה-Release נשאר בסטטוס 'failed' עם resources שעודכנו חלקית. helm rollback my-release [revision] מחזיר את כל ה-resources ל-revision תקין קודם. ראשית הרץ helm history my-release כדי לראות את מספרי ה-revision הזמינים.",
             },
             {
-              q: "ה-Pod עם PVC ב-AWS EKS. Pod עבר לNode אחר. PVC לא נמצא. kubectl get pvc מציג Bound. מה הסיבה?",
+              q: "Pod עם PVC ב-AWS EKS.\nה-Pod עבר ל-Node ב-Availability Zone אחרת.\nה-PVC מראה סטטוס Bound, אבל ה-Pod לא מצליח לעלות.\n\nמה הסיבה?",
               options: [
-              "PVC נמחק",
-              "EBS Volume ב-AZ אחרת מה-Node החדש – EBS Volumes הם single-AZ",
-              "NetworkPolicy חוסם",
-              "StorageClass שגוי",
+              "ה-PVC נמחק ונוצר מחדש עם ID שונה",
+              "ה-EBS Volume נמצא ב-AZ אחרת מה-Node — EBS הוא single-AZ",
+              "NetworkPolicy חוסמת גישה מה-Node החדש ל-storage",
+              "ה-StorageClass שגוי ולא תומך ב-multi-AZ",
               ],
               answer: 1,
               explanation:
-                "EBS Volumes ב-AWS הם single-AZ - הם יכולים להיות attached רק לNode שנמצא באותה Availability Zone. כש-Pod מתזמן מחדש ל-Node ב-AZ אחרת, ה-EBS לא יכול לעקוב. הפתרון הוא להשתמש ב-StorageClass עם WaitForFirstConsumer וב-nodeAffinity כדי לשמור Pod ו-Volume באותה AZ.",
+                "שורש הבעיה:\nAWS EBS Volumes הם single-AZ — הם יכולים להיות מחוברים רק ל-Node שנמצא באותה Availability Zone.\nכאשר ה-Pod מתזמן מחדש ל-Node ב-AZ אחרת, ה-EBS לא יכול לעקוב אחריו.\n\nלמה ה-PVC מראה Bound?\nכי ה-PV עדיין קיים וקשור ל-PVC — הבעיה היא ב-attach ולא ב-binding.\n\nהפתרון:\nלהשתמש ב-StorageClass עם volumeBindingMode: WaitForFirstConsumer.\nזה מבטיח שה-PV נוצר באותה AZ כמו ה-Node שעליו ה-Pod מתוזמן.\nבנוסף, להוסיף nodeAffinity כדי לשמור Pod ו-Volume באותה AZ.\n\nלמה שאר התשובות שגויות:\n• PVC נמחק — ה-PVC מראה Bound, כלומר הוא קיים ותקין.\n• NetworkPolicy — לא משפיעה על storage attachment.\n• StorageClass שגוי — ה-StorageClass עובד, הבעיה היא מיקום גיאוגרפי.",
             },
         ],
         questionsEn: [
@@ -2438,16 +2438,16 @@ export const TOPICS = [
                 "The default binding mode (Immediate) creates a PV as soon as a PVC is created - but the PV might be provisioned in a different Zone than where the Pod ends up, causing attachment failures. WaitForFirstConsumer delays PV creation until a Pod using the PVC is scheduled to a specific Node, then creates the PV in the same Zone. This is critical in multi-AZ environments like AWS EKS.",
             },
             {
-              q: "A PVC stays Pending.\n\nkubectl describe pvc shows:\nEvents:\n  Warning  ProvisioningFailed  storageclass.storage.k8s.io 'fast-ssd' not found\n\nWhat is wrong?",
+              q: "A PVC stays in Pending state.\n\nThe output of kubectl describe pvc shows:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io 'fast-ssd' not found\n```\n\nWhat is wrong?",
               options: [
-              "PVC is too large",
-              "StorageClass 'fast-ssd' does not exist in the cluster - configuration error",
-              "Node is full",
-              "Wrong Namespace",
+              "The PVC requests more storage than the Cluster can provide",
+              "The StorageClass named fast-ssd does not exist in the Cluster",
+              "The Node the Pod runs on is full and has no room for a disk",
+              "The PVC and Pod are in different Namespaces",
               ],
               answer: 1,
               explanation:
-                "When the StorageClass named in the PVC does not exist, the provisioner cannot create a PV and the PVC stays Pending indefinitely. Run kubectl get storageclass to see what is available, then update storageClassName in the PVC to a real class name.",
+                "Root cause:\nThe PVC references a StorageClass named fast-ssd, but no such StorageClass exists in the Cluster.\nWithout a StorageClass, the provisioner doesn't know how to create a PV and the PVC stays Pending.\n\nWhat is a StorageClass?\nA blueprint that tells Kubernetes how to dynamically create disks.\nEach StorageClass includes a provisioner (e.g., aws-ebs), disk type, and reclaim policy.\n\nHow to debug and fix:\n```\nkubectl get storageclass\n```\nCheck which StorageClasses exist and update storageClassName in the PVC to a valid name.\n\nWhy the other answers are wrong:\n• PVC too large — the error would mention capacity, not storageclass not found.\n• Node full — Node disk space is unrelated to StorageClass provisioning.\n• Different Namespace — PVC and Pod must be in the same Namespace, but the error points to a missing StorageClass.",
             },
             {
               q: "helm upgrade failed midway. The Release is in 'failed' status. A ConfigMap is half-updated. What is the next step?",
@@ -2462,16 +2462,16 @@ export const TOPICS = [
                 "When a helm upgrade fails partway through, resources may be in an inconsistent state. helm rollback my-release [revision] restores all resources to a previously known good state. Run helm history my-release first to see available revision numbers.",
             },
             {
-              q: "A Pod with a PVC on AWS EKS. The Pod moved to a different Node. The PVC is Bound but the Pod can't start. What is happening?",
+              q: "A Pod with a PVC on AWS EKS.\nThe Pod moved to a Node in a different Availability Zone.\nThe PVC shows Bound status, but the Pod fails to start.\n\nWhat is the cause?",
               options: [
-              "PVC was deleted",
-              "EBS Volume is in a different AZ than the new Node - EBS Volumes are single-AZ",
-              "NetworkPolicy is blocking",
-              "Wrong StorageClass",
+              "The PVC was deleted and recreated with a different ID",
+              "The EBS Volume is in a different AZ than the Node — EBS is single-AZ",
+              "A NetworkPolicy is blocking access from the new Node to storage",
+              "The StorageClass is wrong and does not support multi-AZ",
               ],
               answer: 1,
               explanation:
-                "AWS EBS Volumes are zone-specific - a volume created in us-east-1a cannot be attached to a Node in us-east-1b. When a Pod reschedules to a Node in a different AZ, the volume attachment fails even though the PVC shows Bound. Use a StorageClass with WaitForFirstConsumer binding mode and add nodeAffinity to keep the Pod in the same AZ as its volume.",
+                "Root cause:\nAWS EBS Volumes are single-AZ — they can only be attached to a Node in the same Availability Zone.\nWhen the Pod reschedules to a Node in a different AZ, the EBS volume cannot follow.\n\nWhy does the PVC show Bound?\nBecause the PV still exists and is bound to the PVC — the issue is attachment, not binding.\n\nThe fix:\nUse a StorageClass with volumeBindingMode: WaitForFirstConsumer.\nThis ensures the PV is created in the same AZ as the Node where the Pod is scheduled.\nAlso add nodeAffinity to keep the Pod and Volume in the same AZ.\n\nWhy the other answers are wrong:\n• PVC deleted — the PVC shows Bound, meaning it exists and is intact.\n• NetworkPolicy — does not affect storage attachment.\n• Wrong StorageClass — the StorageClass works, the issue is geographic location.",
             },
         ],
       },
@@ -2950,16 +2950,16 @@ export const TOPICS = [
                 "etcdctl snapshot save backup.db מייצר snapshot מלא של etcd - ה-database שמכיל את כל מצב הCluster. זהו הכלי הראשי ל-Disaster Recovery. חייבים לציין --endpoints, --cacert, --cert, ו--key לאימות מול ה-etcd cluster.",
             },
             {
-              q: "ה-Pod רץ אבל ה-liveness probe נכשל כל הזמן.\n\nkubectl describe מציג:\nLiveness probe failed: HTTP probe failed with statuscode: 404\n\nמה בודקים?",
+              q: "ה-Pod רץ, אבל ה-liveness probe נכשל שוב ושוב.\n\nהפלט של kubectl describe pod מציג:\n\n```\nLiveness probe failed:\nHTTP probe failed with statuscode: 404\n```\n\nמה בודקים?",
               options: [
-              "DNS שגוי",
-              "ה-probe path שגוי – /healthz שגוי, בדוק איזה endpoint האפליקציה חושפת",
-              "image שגוי",
-              "RBAC",
+              "בעיית DNS שמונעת מה-probe להגיע ל-Pod",
+              "ה-probe path שגוי — האפליקציה לא חושפת את ה-endpoint הזה",
+              "ה-container image שגוי ולא מכיל את האפליקציה",
+              "הרשאות RBAC מונעות מ-kubelet לבצע את ה-probe",
               ],
               answer: 1,
               explanation:
-                "404 ב-HTTP liveness probe אומר שה-path שמוגדר ב-livenessProbe.httpGet.path לא קיים באפליקציה. ה-Pod עצמו רץ - הבעיה היא הגדרת ה-probe בלבד. בדוק בdocumentation של האפליקציה איזה endpoint health היא חושפת (/health, /ping, /livez) ועדכן את ה-path.",
+                "שורש הבעיה:\nקוד 404 אומר שה-path שמוגדר ב-livenessProbe.httpGet.path לא קיים באפליקציה.\nה-Pod עצמו רץ ומגיב — רק ה-endpoint הספציפי לא נמצא.\n\nמה זה Liveness Probe?\nבדיקה ש-Kubernetes מריץ באופן קבוע כדי לוודא שהקונטיינר \"חי\".\nאם היא נכשלת failureThreshold פעמים ברצף — Kubernetes ממית את הקונטיינר ומפעיל אותו מחדש.\n\nהפתרון:\nלבדוק בקוד או בתיעוד של האפליקציה איזה endpoint health היא חושפת (/health, /ping, /livez).\nלעדכן את ה-path ב-Pod spec בהתאם.\n\nלמה שאר התשובות שגויות:\n• DNS — ה-probe רץ מ-kubelet ישירות ל-Pod IP, לא דרך DNS.\n• image שגוי — האפליקציה מגיבה (404 = יש שרת, אין route), כלומר ה-image נכון.\n• RBAC — אין קשר ל-liveness probes, שרצים ברמת kubelet.",
             },
             {
               q: "הפקודה kubectl logs my-pod מחזיר:\n\nError from server (BadRequest): container 'my-container' in pod 'my-pod' is not running\n\nמה עושים?",
@@ -2974,16 +2974,16 @@ export const TOPICS = [
                 "Kubernetes לא יכול לקרוא logs מcontainer שלא רץ. בדוק kubectl get pod my-pod לסטטוס: אם CrashLoopBackOff השתמש ב-kubectl logs my-pod --previous ללוגים מה-crash האחרון. אם הסטטוס הוא Init:Error, בדוק kubectl logs my-pod -c <init-container-name>.",
             },
             {
-              q: "אשכול Cluster חדש.\n\nkubectl get nodes מחזיר:\nNAME    STATUS   ROLES   AGE\nmaster  NotReady  control-plane  5m\n\nמה הצעד הראשון?",
+              q: "Cluster חדש הותקן זה עתה.\n\nהפלט של kubectl get nodes מציג:\n\n```\nNAME    STATUS     ROLES           AGE\nmaster  NotReady   control-plane   5m\n```\n\nמה הצעד הראשון?",
               options: [
-              "מחק Node",
-              "CNI plugin עדיין לא מותקן – בדוק kubectl get pods -n kube-system ואז התקן CNI (Calico/Flannel)",
-              "API server לא רץ",
-              "etcd כשל",
+              "למחוק את ה-Node ולהתקין אותו מחדש",
+              "CNI plugin לא מותקן — יש לבדוק ולהתקין Calico או Flannel",
+              "ה-API server לא רץ ויש להפעיל אותו ידנית",
+              "ה-etcd database כשל ויש לשחזר מגיבוי",
               ],
               answer: 1,
               explanation:
-                "Node חדש שנשאר NotReady בדרך כלל = CNI plugin לא מותקן. Kubernetes דורש CNI לפני שיכול להגדיר network לPods, וללא CNI ה-Node לא יכול להיות Ready. הסימן: CoreDNS Pods ב-kube-system יהיו ב-Pending. התקן CNI (Calico, Flannel, וכו') להמשך.",
+                "שורש הבעיה:\nב-Cluster חדש, Node במצב NotReady כמעט תמיד אומר ש-CNI plugin עדיין לא הותקן.\nKubernetes דורש CNI כדי להגדיר networking ל-Pods.\nללא CNI, ה-Node לא יכול להיות Ready.\n\nמה זה CNI?\nContainer Network Interface — תקן שמגדיר כיצד Pods מקבלים IP ומתקשרים.\nדוגמאות: Calico, Flannel, Cilium.\n\nכיצד לאתר ולתקן:\n```\nkubectl get pods -n kube-system\n```\nCoreDNS Pods יהיו ב-Pending — אות נוסף ל-CNI חסר.\nהתקינו CNI plugin (למשל kubectl apply -f calico.yaml) וה-Node יעבור ל-Ready.\n\nלמה שאר התשובות שגויות:\n• מחיקת Node — לא פותרת את חוסר ה-CNI, הבעיה תחזור.\n• API server לא רץ — אם הוא לא היה רץ, kubectl get nodes לא היה עובד.\n• etcd כשל — אם etcd היה כושל, לא הייתם מקבלים תשובה מה-API.",
             },
         ],
         questionsEn: [
@@ -3048,16 +3048,16 @@ export const TOPICS = [
                 "etcdctl snapshot save backup.db creates a point-in-time snapshot of etcd, which contains the entire cluster state. This is the standard backup method for disaster recovery. You must provide --endpoints, --cacert, --cert, and --key flags to authenticate with the etcd cluster.",
             },
             {
-              q: "A Pod is running but the liveness probe keeps failing.\n\nkubectl describe shows:\nLiveness probe failed: HTTP probe failed with statuscode: 404\n\nWhat do you check?",
+              q: "A Pod is running, but the liveness probe keeps failing.\n\nThe output of kubectl describe pod shows:\n\n```\nLiveness probe failed:\nHTTP probe failed with statuscode: 404\n```\n\nWhat do you check?",
               options: [
-              "DNS misconfiguration",
-              "Wrong probe path - /healthz is incorrect, find which endpoint the app actually exposes",
-              "Wrong image",
-              "RBAC",
+              "A DNS issue preventing the probe from reaching the Pod",
+              "The probe path is wrong — the app does not expose this endpoint",
+              "The container image is wrong and does not contain the application",
+              "RBAC permissions prevent kubelet from performing the probe",
               ],
               answer: 1,
               explanation:
-                "A 404 from the liveness probe means the path configured in livenessProbe.httpGet.path does not exist on the application - the Pod itself is healthy, only the probe config is wrong. Check the application's documentation or source code to find which health endpoint it exposes (/health, /ping, /livez), then update the path in the Pod spec.",
+                "Root cause:\nA 404 means the path configured in livenessProbe.httpGet.path does not exist in the application.\nThe Pod is running and responding — only the specific endpoint is missing.\n\nWhat is a Liveness Probe?\nA check Kubernetes runs periodically to verify the container is alive.\nIf it fails failureThreshold times consecutively, Kubernetes kills and restarts the container.\n\nThe fix:\nCheck the application's code or documentation to find which health endpoint it exposes (/health, /ping, /livez).\nUpdate the path in the Pod spec accordingly.\n\nWhy the other answers are wrong:\n• DNS — the probe runs from kubelet directly to the Pod IP, not through DNS.\n• Wrong image — the app is responding (404 = server exists but route is missing), so the image is correct.\n• RBAC — has no relation to liveness probes, which run at the kubelet level.",
             },
             {
               q: "kubectl logs my-pod returns:\n\nError from server (BadRequest): container 'my-container' in pod 'my-pod' is not running\n\nWhat do you do?",
@@ -3072,16 +3072,16 @@ export const TOPICS = [
                 "Kubernetes can only stream logs from a container that is currently running. The error means the container is not in a running state. Run kubectl get pod my-pod to see the status: if CrashLoopBackOff use kubectl logs my-pod --previous to read the last crashed instance; if the status is Init:Error check the initContainer logs with kubectl logs my-pod -c <init-container-name>.",
             },
             {
-              q: "A new cluster.\n\nkubectl get nodes shows:\nNAME    STATUS    ROLES\nmaster  NotReady  control-plane\n\nWhat is the first step?",
+              q: "A new cluster was just initialized.\n\nThe output of kubectl get nodes shows:\n\n```\nNAME    STATUS     ROLES           AGE\nmaster  NotReady   control-plane   5m\n```\n\nWhat is the first step?",
               options: [
-              "Delete the Node",
-              "CNI plugin is not yet installed - check kubectl get pods -n kube-system then install a CNI (Calico/Flannel)",
-              "API server not running",
-              "etcd failure",
+              "Delete the Node and reinstall it from scratch",
+              "CNI plugin is not installed — check and install Calico or Flannel",
+              "The API server is not running and must be started manually",
+              "The etcd database has failed and must be restored from backup",
               ],
               answer: 1,
               explanation:
-                "On a freshly initialized cluster, NotReady on the control-plane Node almost always means the CNI plugin has not been installed yet. Without CNI, Nodes cannot set up Pod networking and stay NotReady. CoreDNS Pods in kube-system will also be Pending. Install a CNI like Calico or Flannel to unblock the cluster.",
+                "Root cause:\nOn a freshly initialized cluster, a NotReady Node almost always means the CNI plugin has not been installed yet.\nKubernetes requires CNI to set up networking for Pods.\nWithout CNI, the Node cannot become Ready.\n\nWhat is CNI?\nContainer Network Interface — a standard that defines how Pods get IP addresses and communicate.\nExamples: Calico, Flannel, Cilium.\n\nHow to debug and fix:\n```\nkubectl get pods -n kube-system\n```\nCoreDNS Pods will be in Pending — another sign of a missing CNI.\nInstall a CNI plugin (e.g., kubectl apply -f calico.yaml) and the Node will transition to Ready.\n\nWhy the other answers are wrong:\n• Delete Node — doesn't solve the missing CNI, the problem will recur.\n• API server not running — if it weren't running, kubectl get nodes would not work.\n• etcd failure — if etcd had failed, you would not get a response from the API.",
             },
         ],
       },
