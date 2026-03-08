@@ -486,16 +486,16 @@ export const TOPICS = [
                 "שגיאת OOMKilled (exit code 137) אומר שה-Linux kernel הרג את הקונטיינר כי חרג ממגבלת ה-memory שהוגדרה ב-resources.limits.memory. הפתרון: הגדל את ה-memory limit, או חפש memory leak בקוד.",
             },
             {
-              q: "מה topologySpreadConstraints?",
+              q: "מה התפקיד של topologySpreadConstraints בתזמון Pods ב-Kubernetes?",
               options: [
-              "מגביל את השימוש בCPU של Pods שרצים ב-Zone מסוים",
-              "מפזר Pods בצורה שווה בין Zones/Nodes לזמינות גבוהה",
-              "מנהל רזולוציית DNS בין Pods שרצים ב-Namespaces שונים",
-              "מגביל תנועת רשת בין Pods שרצים ב-Zones שונים",
+              "מגדיר כללי affinity שמחייבים Pods לרוץ על Node ספציפי לפי label",
+              "מפזר Pods באופן אחיד בין failure domains כמו Nodes או Zones כדי לשפר זמינות",
+              "מגביל את מספר ה-Pods שה-scheduler יכול למקם בו-זמנית במהלך rolling update",
+              "קובע סדר עדיפויות לפינוי Pods כאשר Node נכנס למצב NotReady",
               ],
               answer: 1,
               explanation:
-                "topologySpreadConstraints מגדיר כיצד Pods מתפזרים בין failure domains (Zones, Nodes) לזמינות גבוהה.",
+                "topologySpreadConstraints מורה ל-scheduler לפזר Pods באופן אחיד בין failure domains — אזורי תשתית כמו Nodes, Zones, או Regions שעלולים לכשול יחד. ללא פיזור, כל ה-Pods עלולים לרוץ על Node אחד; אם הוא קורס — כל השירות נופל. הפיזור מבטיח שגם אם Node או Zone שלם נכשל, חלק מה-Pods ממשיכים לרוץ במקומות אחרים.",
             },
             {
               q: "ה-Pod נשאר Pending.\n\nkubectl describe מראה:\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available: 3 node(s) had untolerated taint {dedicated:gpu}.\n\nמה הפתרון?",
@@ -584,16 +584,16 @@ export const TOPICS = [
                 "OOMKilled stands for 'Out Of Memory Killed'. When a container uses more memory than its limits.memory value, the Linux kernel's OOM Killer forcibly terminates the process. In Kubernetes you'll see exit code 137 in kubectl describe pod. To fix: check actual usage with kubectl top pod, then increase limits.memory (e.g. from 128Mi to 256Mi). If memory usage keeps growing over time, the application likely has a memory leak.",
             },
             {
-              q: "What does topologySpreadConstraints do?",
+              q: "What is the role of topologySpreadConstraints in Kubernetes scheduling?",
               options: [
-              "Limits the CPU usage of Pods running in a specific availability Zone",
-              "Spreads Pods evenly across Zones/Nodes for high availability",
-              "Manages DNS resolution between Pods in different Namespaces",
-              "Restricts network traffic between Pods running in different Zones",
+              "Defines affinity rules that force Pods to run on a specific Node based on its labels",
+              "Spreads Pods evenly across failure domains such as Nodes or Zones to improve availability",
+              "Limits the number of Pods the scheduler can place concurrently during a rolling update",
+              "Sets eviction priority for Pods when a Node enters NotReady state",
               ],
               answer: 1,
               explanation:
-                "topologySpreadConstraints defines how Pods are spread across failure domains (Zones, Nodes) for high availability.",
+                "topologySpreadConstraints tells the scheduler to distribute Pods evenly across failure domains — infrastructure boundaries such as Nodes, Zones, or Regions that can fail together. Without spreading, all Pods may land on a single Node; if that Node goes down, the entire service is lost. By enforcing even distribution, the constraint ensures that even if an entire Node or Zone fails, a portion of the Pods continue running elsewhere, improving overall resilience.",
             },
             {
               q: "A Pod stays Pending.\n\nkubectl describe shows:\nEvents:\n  Warning  FailedScheduling  0/3 nodes available: 3 node(s) had untolerated taint {dedicated:gpu}.\n\nWhat is the fix?",
