@@ -1,4 +1,4 @@
-const CACHE = "k8s-quest-v1";
+const CACHE = "k8s-quest-v2";
 const ASSETS = [
   "/",
   "/index.html",
