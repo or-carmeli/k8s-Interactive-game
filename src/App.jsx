@@ -3770,6 +3770,8 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
                   setShowExplanation(false);
                   topicCorrectRef.current=0; lastSessionScoreRef.current=0;
+                  liveIndexRef.current=0;
+                  setAnswerResult(null);
                   setSessionScore(0);
                   setQuizHistory([]); setShowReview(false);
                   // BUG-C fix: retries must never reset streak
