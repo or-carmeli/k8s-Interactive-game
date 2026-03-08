@@ -8,6 +8,7 @@ import { DAILY_QUESTIONS } from "./content/dailyQuestions";
 import { INCIDENTS } from "./content/incidents";
 import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
+import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory } from "./api/monitoring";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -597,6 +598,9 @@ export default function K8sQuestApp() {
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
   const [showMenu, setShowMenu]                         = useState(false);
   const [dbStatus, setDbStatus]                         = useState(null); // null | "ok" | "error"
+  const [monitorServices, setMonitorServices]           = useState(null); // null = loading, [] = loaded
+  const [monitorUptime, setMonitorUptime]               = useState(null);
+  const [monitorIncidents, setMonitorIncidents]         = useState(null);
   const [searchQuery, setSearchQuery]                   = useState("");
   const [expandedGuideSection, setExpandedGuideSection] = useState(null);
   const [answerResult, setAnswerResult]                 = useState(null); // { correct, correctIndex, explanation } — set after server-side validation
@@ -883,14 +887,36 @@ export default function K8sQuestApp() {
     // Do NOT call setShowResumeModal(true) here — req 2
   }, [screen]);
 
-  // Ping Supabase when status screen opens
+  // Fetch real monitoring data when status screen opens, poll every 30s
   useEffect(() => {
     if (screen !== "status") return;
     setDbStatus(null);
+    setMonitorServices(null);
+    setMonitorUptime(null);
+    setMonitorIncidents(null);
+
     if (!supabase) { setDbStatus("error"); return; }
-    supabase.from("user_stats").select("user_id").limit(1)
-      .then(({ error }) => setDbStatus(error ? "error" : "ok"))
-      .catch(() => setDbStatus("error"));
+
+    const load = async () => {
+      try {
+        const [services, uptime, incidents] = await Promise.all([
+          fetchSystemStatus(supabase),
+          fetchUptimeHistory(supabase, 30),
+          fetchIncidentHistory(supabase, 20),
+        ]);
+        setMonitorServices(services);
+        setMonitorUptime(uptime);
+        setMonitorIncidents(incidents);
+        const anyDown = services.some(s => s.status === "down");
+        setDbStatus(anyDown ? "error" : "ok");
+      } catch {
+        setDbStatus("error");
+      }
+    };
+
+    load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [screen]);
 
   // Check for a saved in-progress incident whenever we land on home or incident list
@@ -3181,33 +3207,69 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
         const buildTime = typeof __BUILD_TIME__ !== "undefined" ? new Date(__BUILD_TIME__) : null;
         const isSecure  = typeof window !== "undefined" && window.location.protocol === "https:";
 
-        // Derive global status from DB check
-        const globalOk      = dbStatus !== "error";
-        const globalLabel   = dbStatus === null ? "Checking…" : globalOk ? "All Systems Operational" : "Degraded Performance";
-        const globalColor   = dbStatus === null ? "#F59E0B" : globalOk ? "#10B981" : "#EF4444";
-        const globalGlow    = dbStatus === null ? "rgba(245,158,11,0.25)" : globalOk ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)";
-        const globalDot     = dbStatus === null ? "#F59E0B" : globalOk ? "#10B981" : "#EF4444";
+        const loading = monitorServices === null;
 
-        const svcStatus = (ok) => ok ? "Operational" : "Degraded";
-        const svcColor  = (ok) => ok ? "#10B981" : "#EF4444";
+        // Derive global status from real service data
+        const allOperational = !loading && monitorServices.every(s => s.status === "operational");
+        const anyDown = !loading && monitorServices.some(s => s.status === "down");
+        const globalOk      = loading ? null : (anyDown ? false : true);
+        const globalLabel   = loading ? "Checking…" : allOperational ? "All Systems Operational" : anyDown ? "Major Outage" : "Degraded Performance";
+        const globalColor   = loading ? "#F59E0B" : allOperational ? "#10B981" : anyDown ? "#EF4444" : "#F59E0B";
+        const globalGlow    = loading ? "rgba(245,158,11,0.25)" : allOperational ? "rgba(16,185,129,0.25)" : anyDown ? "rgba(239,68,68,0.25)" : "rgba(245,158,11,0.25)";
+        const globalDot     = globalColor;
 
-        // 30-day uptime bars - static plausible pattern, DB bar reflects live state
-        const uptimeBars = (seed, healthy=true) => Array.from({length:30},(_,i)=>{
-          const pseudo = (seed * 31 + i * 7) % 100;
-          if (!healthy && i===29) return "error";
-          if (pseudo < 3) return "incident";
-          return "ok";
-        });
+        const statusLabel = (s) => s === "operational" ? "Operational" : s === "degraded" ? "Degraded" : s === "down" ? "Down" : "Maintenance";
+        const statusColor = (s) => s === "operational" ? "#10B981" : s === "degraded" ? "#F59E0B" : s === "down" ? "#EF4444" : "#64748b";
 
-        const services = [
-          { name:"Quiz Engine",    bars: uptimeBars(11), ok: true },
-          { name:"Authentication", bars: uptimeBars(17), ok: true },
-          { name:"Leaderboard",    bars: uptimeBars(23), ok: true },
-          { name:"Database",       bars: uptimeBars(29, dbStatus!=="error"), ok: dbStatus!=="error" },
-          { name:"Content API",    bars: uptimeBars(37), ok: true },
-        ];
+        // Default service list (used while loading or if no data)
+        const defaultSvcNames = ["Quiz Engine","Authentication","Leaderboard","Database","Content API"];
+        const services = loading
+          ? defaultSvcNames.map(n => ({ service_name: n, status: "operational", latency_ms: null }))
+          : monitorServices;
 
-        const barColor = (t) => t==="ok" ? "#10B981" : t==="incident" ? "#F59E0B" : "#EF4444";
+        // Build uptime bars per service from real history
+        const uptimeByService = {};
+        if (monitorUptime) {
+          for (const row of monitorUptime) {
+            if (!uptimeByService[row.service_name]) uptimeByService[row.service_name] = {};
+            uptimeByService[row.service_name][row.day] = row.uptime_pct;
+          }
+        }
+        const getDayBars = (svcName) => {
+          const days = [];
+          for (let i = 29; i >= 0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            const key = d.toISOString().slice(0,10);
+            const pct = uptimeByService[svcName]?.[key];
+            if (pct === undefined || pct === null) days.push("nodata");
+            else if (pct >= 99) days.push("ok");
+            else if (pct >= 90) days.push("incident");
+            else days.push("error");
+          }
+          return days;
+        };
+        const barColor = (t) => t==="ok" ? "#10B981" : t==="incident" ? "#F59E0B" : t==="error" ? "#EF4444" : "rgba(255,255,255,0.06)";
+
+        // Compute average latency across services that have it
+        const latencies = services.filter(s => s.latency_ms != null).map(s => s.latency_ms);
+        const avgLatency = latencies.length ? Math.round(latencies.reduce((a,b)=>a+b,0)/latencies.length) : null;
+        const maxLatency = latencies.length ? Math.max(...latencies) : null;
+
+        // Compute overall uptime from history
+        let overallUptime = null;
+        if (monitorUptime && monitorUptime.length) {
+          const totalChecks = monitorUptime.reduce((s,r) => s + Number(r.total_checks), 0);
+          const okChecks = monitorUptime.reduce((s,r) => s + Number(r.ok_checks), 0);
+          if (totalChecks > 0) overallUptime = (okChecks / totalChecks * 100).toFixed(2);
+        }
+
+        // Active incidents count
+        const activeIncidents = monitorIncidents ? monitorIncidents.filter(i => i.status !== "resolved") : [];
+
+        // Last checked time
+        const lastChecked = !loading && services.length
+          ? new Date(Math.max(...services.map(s => new Date(s.last_checked).getTime())))
+          : null;
 
         const metricCard = (label, value, sub, accent="#00D4FF") => (
           <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"16px 18px",minWidth:0}}>
@@ -3228,6 +3290,10 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
           <div style={{fontSize:11,color:"#475569",fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",marginBottom:12,marginTop:28}}>{title}</div>
         );
 
+        // Severity colors for incidents
+        const sevColor = (s) => s === "critical" ? "#EF4444" : s === "high" ? "#F97316" : s === "medium" ? "#F59E0B" : "#64748b";
+        const incStatusColor = (s) => s === "resolved" ? "#10B981" : s === "monitoring" ? "#3B82F6" : s === "identified" ? "#F59E0B" : "#EF4444";
+
         return (
           <div className="page-pad" style={{maxWidth:720,margin:"0 auto",padding:"20px 16px 48px",animation:"fadeIn 0.3s ease"}}>
 
@@ -3237,15 +3303,15 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             </button>
 
             {/* ── GLOBAL STATUS BANNER ── */}
-            <div style={{background:`rgba(${globalOk?"16,185,129":"239,68,68"},0.06)`,border:`1px solid ${globalColor}33`,borderRadius:16,padding:"20px 24px",marginBottom:6,boxShadow:`0 0 32px ${globalGlow}`,display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+            <div style={{background:`rgba(${globalOk===false?"239,68,68":globalOk?"16,185,129":"245,158,11"},0.06)`,border:`1px solid ${globalColor}33`,borderRadius:16,padding:"20px 24px",marginBottom:6,boxShadow:`0 0 32px ${globalGlow}`,display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
               <div style={{position:"relative",flexShrink:0}}>
                 <div style={{width:14,height:14,borderRadius:"50%",background:globalDot,boxShadow:`0 0 10px ${globalDot}`}} />
-                {dbStatus!=="error"&&<div style={{position:"absolute",inset:0,borderRadius:"50%",background:globalDot,animation:"ping 2s ease-out infinite",opacity:0.4}} />}
+                {globalOk!==false&&<div style={{position:"absolute",inset:0,borderRadius:"50%",background:globalDot,animation:"ping 2s ease-out infinite",opacity:0.4}} />}
               </div>
               <div style={{flex:1,minWidth:160}}>
                 <div style={{fontSize:18,fontWeight:800,color:"#e2e8f0"}}>{globalLabel}</div>
                 <div style={{fontSize:12,color:"#475569",marginTop:3}}>
-                  KubeQuest · {lang==="en"?"Updated just now":"עודכן עכשיו"}
+                  KubeQuest · {lastChecked ? `Updated ${Math.round((Date.now() - lastChecked.getTime()) / 1000)}s ago` : (lang==="en"?"Checking…":"בודק…")}
                 </div>
               </div>
               <div style={{fontSize:11,color:"#475569",fontFamily:"'Fira Code','Courier New',monospace",flexShrink:0}}>
@@ -3256,31 +3322,38 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             {/* ── SERVICE HEALTH ── */}
             {sectionTitle(lang==="en"?"Service Health":"בריאות שירותים")}
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,overflow:"hidden"}}>
-              {services.map(({name,ok},i)=>(
-                <div key={name} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 16px",borderBottom:i<services.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
-                  <span style={{fontSize:13,color:"#cbd5e1",fontWeight:500}}>{name}</span>
-                  <span style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:700,color:svcColor(ok)}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:svcColor(ok),display:"inline-block",boxShadow:`0 0 6px ${svcColor(ok)}`}} />
-                    {name==="Database"&&dbStatus===null?"Checking…":svcStatus(ok)}
+              {services.map((svc,i)=>(
+                <div key={svc.service_name} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 16px",borderBottom:i<services.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
+                  <div style={{display:"flex",flexDirection:"column",gap:2}}>
+                    <span style={{fontSize:13,color:"#cbd5e1",fontWeight:500}}>{svc.service_name}</span>
+                    {svc.latency_ms!=null&&<span style={{fontSize:10,color:"#475569",fontFamily:"'Fira Code','Courier New',monospace"}}>{svc.latency_ms}ms</span>}
+                  </div>
+                  <span style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:700,color:statusColor(svc.status)}}>
+                    <span style={{width:8,height:8,borderRadius:"50%",background:statusColor(svc.status),display:"inline-block",boxShadow:`0 0 6px ${statusColor(svc.status)}`}} />
+                    {loading?"Checking…":statusLabel(svc.status)}
                   </span>
                 </div>
               ))}
             </div>
 
             {/* ── UPTIME - LAST 30 DAYS ── */}
-            {sectionTitle(lang==="en"?"Uptime - Last 30 Days":"זמינות - 30 ימים אחרונים")}
+            {sectionTitle(lang==="en"?"Uptime — Last 30 Days":"זמינות — 30 ימים אחרונים")}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {services.map(({name,bars,ok})=>{
-                const uptimePct = (bars.filter(b=>b==="ok").length/30*100).toFixed(2);
+              {services.map((svc)=>{
+                const bars = getDayBars(svc.service_name);
+                const dataBars = bars.filter(b=>b!=="nodata");
+                const okBars = bars.filter(b=>b==="ok").length;
+                const pct = dataBars.length ? (okBars/dataBars.length*100).toFixed(1) : "-";
+                const ok = svc.status === "operational";
                 return (
-                  <div key={name} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"12px 14px"}}>
+                  <div key={svc.service_name} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"12px 14px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <span style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>{name}</span>
-                      <span style={{fontSize:12,color:ok?"#10B981":"#EF4444",fontWeight:700,fontFamily:"'Fira Code','Courier New',monospace"}}>{uptimePct}%</span>
+                      <span style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>{svc.service_name}</span>
+                      <span style={{fontSize:12,color:ok?"#10B981":"#EF4444",fontWeight:700,fontFamily:"'Fira Code','Courier New',monospace"}}>{pct=== "-" ? "-" : `${pct}%`}</span>
                     </div>
                     <div style={{display:"flex",gap:2,alignItems:"flex-end"}}>
                       {bars.map((type,i)=>(
-                        <div key={i} title={type} style={{flex:1,height:24,borderRadius:3,background:barColor(type),opacity:type==="ok"?0.8:1,transition:"opacity 0.2s"}} />
+                        <div key={i} title={type==="nodata"?"No data":type} style={{flex:1,height:24,borderRadius:3,background:barColor(type),opacity:type==="ok"?0.8:type==="nodata"?0.3:1,transition:"opacity 0.2s"}} />
                       ))}
                     </div>
                     <div style={{display:"flex",justifyContent:"space-between",marginTop:5}}>
@@ -3295,10 +3368,10 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             {/* ── PERFORMANCE METRICS ── */}
             {sectionTitle(lang==="en"?"Performance Metrics":"מדדי ביצועים")}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10}}>
-              {metricCard("API Latency",   "12ms",    "avg · last 5m", "#00D4FF")}
-              {metricCard("Response Time", "98ms",    "p95 · last 5m", "#A855F7")}
-              {metricCard("Error Rate",    "0.01%",   "last 24h",      "#10B981")}
-              {metricCard("Active Users",  dbStatus==="ok"?"Live":"-", dbStatus==="ok"?"session active":"n/a", "#F59E0B")}
+              {metricCard("Avg Latency", avgLatency!=null?`${avgLatency}ms`:"-", loading?"checking…":"across services", "#00D4FF")}
+              {metricCard("Max Latency", maxLatency!=null?`${maxLatency}ms`:"-", loading?"checking…":"slowest service", "#A855F7")}
+              {metricCard("Uptime", overallUptime?`${overallUptime}%`:"-", "last 30 days", "#10B981")}
+              {metricCard("Active Incidents", String(activeIncidents.length), activeIncidents.length===0?"all clear":"in progress", activeIncidents.length===0?"#10B981":"#EF4444")}
             </div>
 
             {/* ── DEPLOYMENT INFO ── */}
@@ -3326,51 +3399,41 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
             {/* ── INCIDENT HISTORY ── */}
             {sectionTitle(lang==="en"?"Incident History":"היסטוריית אירועים")}
-            <div dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px",textAlign:"left",marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-                <div>
-                  <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>Quiz Submission Blocked After Session Return</div>
-                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>Mar 8, 2026 · Duration: ~2 hrs · Severity: Medium</div>
+            {monitorIncidents && monitorIncidents.length > 0 ? monitorIncidents.map((inc) => {
+              const started = new Date(inc.started_at);
+              const resolved = inc.resolved_at ? new Date(inc.resolved_at) : null;
+              const durationMs = resolved ? resolved - started : Date.now() - started;
+              const durationHrs = durationMs / 3600000;
+              const durationStr = durationHrs >= 1 ? `~${Math.round(durationHrs)} hr${Math.round(durationHrs)>1?"s":""}` : `~${Math.round(durationMs/60000)} min`;
+              return (
+                <div key={inc.id} dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px",textAlign:"left",marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>{inc.title}</div>
+                      <div style={{fontSize:11,color:"#64748b",marginTop:2}}>
+                        {started.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})} · Duration: {durationStr} · Severity: <span style={{color:sevColor(inc.severity),fontWeight:600}}>{inc.severity.charAt(0).toUpperCase()+inc.severity.slice(1)}</span>
+                      </div>
+                      {inc.affected_services?.length>0&&<div style={{fontSize:10,color:"#475569",marginTop:2}}>Affected: {inc.affected_services.join(", ")}</div>}
+                    </div>
+                    <span style={{fontSize:11,color:incStatusColor(inc.status),fontWeight:700,background:`${incStatusColor(inc.status)}1a`,padding:"3px 8px",borderRadius:6,whiteSpace:"nowrap",flexShrink:0}}>
+                      {inc.status.charAt(0).toUpperCase()+inc.status.slice(1)}
+                    </span>
+                  </div>
+                  {(inc.impact||inc.root_cause||inc.resolution||inc.prevention)&&(
+                    <div style={{padding:"12px 0",fontSize:12,color:"#94a3b8",lineHeight:1.7}}>
+                      {inc.impact&&<div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Impact: </span>{inc.impact}</div>}
+                      {inc.root_cause&&<div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Root Cause: </span>{inc.root_cause}</div>}
+                      {inc.resolution&&<div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Resolution: </span>{inc.resolution}</div>}
+                      {inc.prevention&&<div><span style={{color:"#e2e8f0",fontWeight:600}}>Prevention: </span>{inc.prevention}</div>}
+                    </div>
+                  )}
                 </div>
-                <span style={{fontSize:11,color:"#10B981",fontWeight:700,background:"rgba(16,185,129,0.1)",padding:"3px 8px",borderRadius:6}}>Resolved</span>
+              );
+            }) : (
+              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"16px",textAlign:"center",color:"#475569",fontSize:13}}>
+                {loading ? "Loading incidents…" : "No incidents recorded"}
               </div>
-              <div style={{padding:"12px 0",fontSize:12,color:"#94a3b8",lineHeight:1.7}}>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Impact: </span>Users who completed a quiz and started a new session were unable to submit answers. Additionally, a visual glitch caused the selected answer to briefly flash red before turning green during server-side validation.</div>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Root Cause: </span>A synchronous mutex ref (submittingRef) introduced to prevent double-submission was not reset on quiz start, quiz resume, or retry-mode completion. It remained locked from the previous session, silently blocking all future submissions. The visual flash was caused by rendering answer styling before the async RPC response arrived.</div>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Resolution: </span>Added submittingRef reset to startTopic, handleResumeQuiz, and retry-mode completion paths. Gated answer color styling on the checkingAnswer flag to prevent premature rendering.</div>
-                <div><span style={{color:"#e2e8f0",fontWeight:600}}>Prevention: </span>All ref-based mutex guards must be reset in every code path that initializes a new quiz session. No user data was lost.</div>
-              </div>
-            </div>
-            <div dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px",textAlign:"left"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-                <div>
-                  <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>Answer Validation Service Disruption</div>
-                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>Mar 8, 2026 · Duration: ~30 min · Severity: High</div>
-                </div>
-                <span style={{fontSize:11,color:"#10B981",fontWeight:700,background:"rgba(16,185,129,0.1)",padding:"3px 8px",borderRadius:6}}>Resolved</span>
-              </div>
-              <div style={{padding:"12px 0",fontSize:12,color:"#94a3b8",lineHeight:1.7}}>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Impact: </span>All answer-check RPCs returned errors. The client-side fallback produced incorrect results and empty explanations across all question types (quiz, daily, incident).</div>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Root Cause: </span>A security hardening migration introduced rate-limiting writes (INSERT) inside database functions marked as STABLE. The API gateway enforces read-only transactions for STABLE functions, causing the write operation to fail silently.</div>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Resolution: </span>Function volatility changed from STABLE to VOLATILE via a corrective migration patch, allowing read-write transactions. Deployed and verified within 30 minutes of detection.</div>
-                <div><span style={{color:"#e2e8f0",fontWeight:600}}>Prevention: </span>Added volatility validation to migration review checklist — any function containing INSERT/UPDATE/DELETE must be marked VOLATILE. No user data was lost.</div>
-              </div>
-            </div>
-            <div dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px",textAlign:"left",marginTop:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-                <div>
-                  <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>Authentication & Leaderboard Outage</div>
-                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>Mar 7, 2026 · Duration: ~4 hrs · Severity: High</div>
-                </div>
-                <span style={{fontSize:11,color:"#10B981",fontWeight:700,background:"rgba(16,185,129,0.1)",padding:"3px 8px",borderRadius:6}}>Resolved</span>
-              </div>
-              <div style={{padding:"12px 0",fontSize:12,color:"#94a3b8",lineHeight:1.7}}>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Impact: </span>Users were unable to sign in or sign up. Leaderboard data failed to load. Core quiz functionality remained operational in offline mode.</div>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Root Cause: </span>During a security hardening deployment, Supabase project configuration was disrupted, causing authentication endpoints and leaderboard RPC calls to fail.</div>
-                <div style={{marginBottom:8}}><span style={{color:"#e2e8f0",fontWeight:600}}>Resolution: </span>Corrected the Supabase configuration and verified auth flow and leaderboard queries were restored.</div>
-                <div><span style={{color:"#e2e8f0",fontWeight:600}}>Prevention: </span>Security hardening changes are now deployed incrementally with post-deployment smoke tests for authentication and leaderboard endpoints. No user data was lost.</div>
-              </div>
-            </div>
+            )}
 
             {/* ── SECURITY STATUS ── */}
             {sectionTitle(lang==="en"?"Security":"אבטחה")}
