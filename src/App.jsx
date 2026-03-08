@@ -1893,7 +1893,15 @@ export default function K8sQuestApp() {
         <div key={i} style={{fontFamily:"monospace",fontSize:11,color:"#7dd3fc",lineHeight:1.8,
           whiteSpace:"pre",direction:"ltr",textAlign:"left"}}>  {line}</div>
       );
-      if (line.startsWith('🔹')) return <div key={i} style={{color:"#94a3b8",fontSize:13,marginBottom:5}}>{line}</div>;
+      if (line.startsWith('🔹')) {
+        const text = line.slice(2).trimStart();
+        return (
+          <div key={i} style={{display:"flex",flexDirection:dir==="rtl"?"row-reverse":"row",alignItems:"flex-start",gap:6,marginBottom:5}}>
+            <span style={{flexShrink:0,fontSize:13,lineHeight:1.6}}>🔹</span>
+            <span style={{color:"#94a3b8",fontSize:13,flex:1,lineHeight:1.6,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidi(text,lang)}</span>
+          </div>
+        );
+      }
       if (!line.trim()) return <div key={i} style={{height:6}}/>;
       return <div key={i} style={{color:"#e2e8f0",fontSize:15,fontWeight:700,marginBottom:8}}>{line}</div>;
     });
