@@ -183,6 +183,7 @@ const TRANSLATIONS = {
     resumeBody: "נמצא חידון שלא הסתיים. רוצה להמשיך מהיכן שהפסקת?",
     resumeBody_m: "נמצא חידון שלא הסתיים. רוצה להמשיך מהיכן שהפסקת?",
     resumeBtn: "המשיכי", resumeBtn_m: "המשך",
+    resumeToast: "ממשיכים מאיפה שהפסקת.", resumeToast_m: "ממשיכים מאיפה שהפסקת.",
     resumeDiscard: "התחילי מחדש", resumeDiscard_m: "התחל מחדש",
     prevQuestion: "קודמת ←", backToCurrent: "→ חזרי לחידון", backToCurrent_m: "→ חזור לחידון",
     reviewing: "📖 סקירה",
@@ -298,6 +299,7 @@ const TRANSLATIONS = {
     resumeTitle: "Resume Quiz?",
     resumeBody: "You have an unfinished quiz. Continue where you left off?",
     resumeBtn: "Continue",
+    resumeToast: "Resuming your quiz where you left off.",
     resumeDiscard: "Start Fresh",
     prevQuestion: "← Prev", backToCurrent: "Back to Quiz →",
     reviewing: "📖 Review",
@@ -704,7 +706,9 @@ export default function K8sQuestApp() {
   const [eliminatedOption, setEliminatedOption] = useState(null);
   const [resumeData, setResumeData] = useState(null);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [resumeToast, setResumeToast] = useState(false);
   const pendingQuizStartRef = useRef(null); // stores the quiz-start fn while modal is open
+  const autoResumeAttempted = useRef(false); // ensures auto-restore runs only once on page load
   const [dailyStreak, setDailyStreak] = useState(() => {
     try { return JSON.parse(localStorage.getItem("daily_streak_v1")) || { date: null, streak: 0 }; } catch { return { date: null, streak: 0 }; }
   });
@@ -924,6 +928,7 @@ export default function K8sQuestApp() {
       submitted,
       selectedAnswer,
       showExplanation,
+      answerResult,
       quizHistory,
       sessionScore,
       topicCorrect:  topicCorrectRef.current,
@@ -957,6 +962,20 @@ export default function K8sQuestApp() {
     if (saved && saved.userId === (user.id || "guest")) setResumeData(saved);
     // Do NOT call setShowResumeModal(true) here — req 2
   }, [screen]);
+
+  // Auto-restore quiz session on page load (refresh resilience)
+  useEffect(() => {
+    if (autoResumeAttempted.current) return;
+    if (!dataLoaded || !user) return;
+    autoResumeAttempted.current = true;
+    if (!resumeData) return;
+    const answered = resumeData.questionIndex ?? 0;
+    const total = resumeData.questions?.length ?? 0;
+    if (answered <= 0 || answered >= total) return;
+    handleResumeQuiz();
+    setResumeToast(true);
+    setTimeout(() => setResumeToast(false), 3500);
+  }, [dataLoaded, user, resumeData]);
 
   // Fetch real monitoring data when status screen opens, poll every 60s
   useEffect(() => {
@@ -1276,6 +1295,7 @@ export default function K8sQuestApp() {
     setSelectedAnswer(saved.selectedAnswer ?? null);
     setSubmitted(saved.submitted ?? false);
     setShowExplanation(saved.showExplanation ?? false);
+    setAnswerResult(saved.answerResult || null);
     setQuizHistory(saved.quizHistory || []);
     setSessionScore(saved.sessionScore || 0);
     setRetryMode(saved.retryMode || false);
@@ -2328,6 +2348,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {showConfetti&&!a11y.reduceMotion&&<Confetti/>}
       {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
       {saveError&&<div role="alert" aria-live="assertive" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
+      {resumeToast&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,padding:"10px 20px",color:"#00D4FF",fontSize:13,fontWeight:600,zIndex:9999,boxShadow:"0 0 20px rgba(0,212,255,0.15)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap"}}>{t("resumeToast")}</div>}
 
       {showResumeModal&&resumeData&&(()=>{
         const answered = resumeData.questionIndex ?? 0;
