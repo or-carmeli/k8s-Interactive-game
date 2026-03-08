@@ -400,7 +400,7 @@ function renderQuestion(qText, lang) {
     const qDir = hasHebrew(qText) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
     return (
       <div dir={qDir} style={{color:"#e2e8f0",fontSize:18,fontWeight:700,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right"}}>
-        {renderBidi(qText, lang)}
+        {renderBidiBlock(qText, lang)}
       </div>
     );
   }
@@ -419,7 +419,7 @@ function renderQuestion(qText, lang) {
         const pDir = hasHebrew(para) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
         return (
           <div key={idx} dir={pDir} style={{color:"#e2e8f0",fontSize:isLast?18:15,fontWeight:isLast?700:400,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:pDir==="ltr"?"left":"right",unicodeBidi:"plaintext"}}>
-            {renderBidi(para, lang)}
+            {renderBidiBlock(para, lang)}
           </div>
         );
       })}
@@ -551,6 +551,45 @@ function renderBidi(text, lang) {
   }
 
   return renderBidiInner(text, lang, "b");
+}
+
+// Regex to detect CLI commands in mixed Hebrew text.
+// Matches: CLI tool name + one or more non-Hebrew argument tokens (flags, subcommands, args).
+const CLI_COMMAND_RE = /((?:kubectl|docker|helm|aws|git|kubeadm|kubelet|crictl|etcdctl|curl|wget)(?:\s+[^\s\u0590-\u05FF]+)+)/;
+
+// Splits text on CLI commands and renders commands as LTR code blocks on separate lines.
+function splitCliParts(text, lang, keyPrefix) {
+  const parts = text.split(CLI_COMMAND_RE);
+  if (parts.length <= 1) return renderBidiInner(text, lang, keyPrefix);
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (i % 2 === 1) return <code key={`${keyPrefix}-c${i}`} dir="ltr" className="cli-command">{part.trim()}</code>;
+    const trimmed = part.trim();
+    return trimmed ? <span key={`${keyPrefix}-t${i}`}>{renderBidiInner(trimmed, lang, `${keyPrefix}b${i}`)}</span> : null;
+  });
+}
+
+// Enhanced bidi renderer that detects full CLI commands (kubectl, docker, etc.)
+// and renders them as standalone LTR code blocks on a separate line,
+// preventing RTL word-reordering of flags like -n, --namespace.
+// Falls back to renderBidi for text without CLI commands.
+function renderBidiBlock(text, lang) {
+  if (!text || lang !== "he") return text;
+  // Quick check: does the text contain a CLI command outside backticks?
+  const bare = text.replace(/`[^`]+`/g, "");
+  if (!CLI_COMMAND_RE.test(bare)) return renderBidi(text, lang);
+  // Handle backtick-wrapped inline code first, then CLI commands in remaining segments
+  if (text.includes("`")) {
+    const btParts = text.split(/`([^`]+)`/);
+    if (btParts.length > 1) {
+      return btParts.map((part, i) => {
+        if (i % 2 === 1) return <span key={`bt-${i}`} dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{part}</span>;
+        if (!part) return null;
+        return <span key={`seg-${i}`}>{splitCliParts(part, lang, `s${i}`)}</span>;
+      });
+    }
+  }
+  return splitCliParts(text, lang, "b");
 }
 
 function Footer({ lang }) {
@@ -2022,7 +2061,7 @@ export default function K8sQuestApp() {
         return (
           <div key={i} style={{display:"flex",flexDirection:dir==="rtl"?"row-reverse":"row",alignItems:"flex-start",gap:6,marginBottom:5}}>
             <span style={{flexShrink:0,fontSize:13,lineHeight:1.6}}>🔹</span>
-            <span style={{color:"#94a3b8",fontSize:13,flex:1,lineHeight:1.6,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidi(text,lang)}</span>
+            <span style={{color:"#94a3b8",fontSize:13,flex:1,lineHeight:1.6,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidiBlock(text,lang)}</span>
           </div>
         );
       }
@@ -2047,7 +2086,7 @@ export default function K8sQuestApp() {
     if (!text) return null;
     const sentences = text.split(/\.\s+(?=[A-Z\u0590-\u05FFa-z`])/).filter(s => s.trim());
     if (sentences.length <= 1) {
-      return <div dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>{lang === "he" ? renderBidi(text, lang) : renderInline(text)}</div>;
+      return <div dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>{lang === "he" ? renderBidiBlock(text, lang) : renderInline(text)}</div>;
     }
     return (
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -2055,7 +2094,7 @@ export default function K8sQuestApp() {
           const cleaned = s.replace(/\.+$/, "") + ".";
           return (
             <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,textAlign:lang==="he"?"right":"left"}}>
-              {lang === "he" ? renderBidi(cleaned, lang) : renderInline(cleaned)}
+              {lang === "he" ? renderBidiBlock(cleaned, lang) : renderInline(cleaned)}
             </div>
           );
         })}
@@ -2073,7 +2112,7 @@ export default function K8sQuestApp() {
       if (!_hasHe(line) && terminalPat.test(line)) {
         return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre"}}>{line}</div>;
       }
-      return <div key={i} dir="auto" style={{color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4}}>{lang === "he" ? renderBidi(line, lang) : renderInline(line)}</div>;
+      return <div key={i} dir="auto" style={{color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>;
     });
   };
 
@@ -2289,7 +2328,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         onBlur={e=>e.currentTarget.style.top="-100px"}>
         {lang==="en"?"Skip to content":"דלג לתוכן"}
       </a>
-      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.quiz-text{direction:rtl;unicode-bidi:plaintext;text-align:right}.quiz-text[dir="ltr"]{direction:ltr;text-align:left}.code-inline{direction:ltr;display:inline-block;unicode-bidi:isolate}@media(max-width:600px){
+      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.quiz-text{direction:rtl;unicode-bidi:plaintext;text-align:right}.quiz-text[dir="ltr"]{direction:ltr;text-align:left}.code-inline{direction:ltr;display:inline-block;unicode-bidi:isolate}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:#7dd3fc;font-size:0.88em;margin-top:4px;text-align:left}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
 .quiz-bar-right{gap:8px!important}
@@ -3701,7 +3740,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   </div>
                   {hintVisible&&(
                     <div role="note" style={{background:"rgba(245,158,11,0.07)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:9,padding:"11px 14px",fontSize:13,color:"#fbbf24",lineHeight:1.6,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere",animation:"fadeIn 0.2s ease"}}>
-                      {renderBidi(currentQuestions[questionIndex].explanation.split(/\.\s+/)[0], lang)}
+                      {renderBidiBlock(currentQuestions[questionIndex].explanation.split(/\.\s+/)[0], lang)}
                     </div>
                   )}
                 </div>
@@ -3729,7 +3768,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                       dir={dir}
                       style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"14px 16px",background:bg,border:`1px solid ${borderColor}`,borderRadius:12,color,fontSize:15,cursor:isEliminated?"default":(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.7,display:"flex",alignItems:"center",flexDirection:dir==="rtl"?"row-reverse":"row",gap:12,transition:"all 0.15s",opacity:isEliminated?0.35:1,textDecoration:isEliminated?"line-through":"none",minHeight:56}}>
                       <span aria-hidden="true" style={{flexShrink:0,width:30,height:30,borderRadius:8,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
-                      <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
+                      <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7}}>{optDir==="ltr"?opt:renderBidiBlock(opt,lang)}</span>
                       {dispSubmitted&&!dispAnswerResult&&isChosen&&<span aria-hidden="true" style={{flexShrink:0,width:18,height:18,border:"2px solid #00D4FF44",borderTop:"2px solid #00D4FF",borderRadius:"50%",animation:"spin 0.6s linear infinite"}} />}
                       {dispSubmitted&&dispAnswerResult&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✓</span>}
                       {dispSubmitted&&dispAnswerResult&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✗</span>}
@@ -3781,7 +3820,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                         {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:18}}>
                           {paragraphs.map((s,idx,arr)=>(
                             <div key={idx} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch"}}>
-                              {renderBidi(s+(idx<arr.length-1?".":""),lang)}
+                              {renderBidiBlock(s+(idx<arr.length-1?".":""),lang)}
                             </div>
                           ))}
                         </div>}
@@ -3802,7 +3841,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                           <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left"}}>{q.options[iCorrectIdx]}</div>
                           {iParagraphs.map((s,idx,arr)=>(
                             <div key={idx} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch"}}>
-                              {renderBidi(s+(idx<arr.length-1?".":""),lang)}
+                              {renderBidiBlock(s+(idx<arr.length-1?".":""),lang)}
                             </div>
                           ))}
                         </div>
@@ -3978,14 +4017,14 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                         <div style={{fontWeight:700,fontSize:13,color:wasCorrect?"#10B981":"#EF4444",marginBottom:4}}>
                           <span aria-hidden="true">{wasCorrect?"✅":"❌"} </span>{t("question")} {i+1}
                         </div>
-                        <div style={{color:"#e2e8f0",fontSize:13,marginBottom:6}}>{renderBidi(h.q,lang)}</div>
+                        <div style={{color:"#e2e8f0",fontSize:13,marginBottom:6}}>{renderBidiBlock(h.q,lang)}</div>
                         {timedOut?<div style={{fontSize:13,color:"#F59E0B"}}>{t("timeUp")}</div>:(
                           <div style={{fontSize:13,color:wasCorrect?"#10B981":"#EF4444",marginBottom:4,dir:hasHebrew(h.options[h.chosen])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.chosen])?"right":"left"}}>
                             {t("optionLabels")[h.chosen]}. {h.options[h.chosen]}
                           </div>
                         )}
                         {!wasCorrect&&<div style={{fontSize:13,color:"#10B981",dir:hasHebrew(h.options[h.answer])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.answer])?"right":"left"}}><span aria-hidden="true">✓ </span>{h.options[h.answer]}</div>}
-                        <div style={{fontSize:12,color:"#64748b",marginTop:4,lineHeight:1.6}}>{renderBidi(h.explanation,lang)}</div>
+                        <div style={{fontSize:12,color:"#64748b",marginTop:4,lineHeight:1.6}}>{renderBidiBlock(h.explanation,lang)}</div>
                       </li>
                     );
                   })}
@@ -4092,7 +4131,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1,direction:"ltr"}}>
                       {["A","B","C","D"][i]}
                     </span>
-                    <span dir={dir} style={{flex:1,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere"}}>{hasHebrew(opt)?renderBidi(opt,lang):opt}</span>
+                    <span dir={dir} style={{flex:1,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere"}}>{hasHebrew(opt)?renderBidiBlock(opt,lang):opt}</span>
                     {incidentSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✓</span>}
                     {incidentSubmitted&&isChosen&&!isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✗</span>}
                   </button>
