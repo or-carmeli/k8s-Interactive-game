@@ -2593,7 +2593,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </button>
           <button onClick={()=>{
             const url="https://kubequest.online";
-            const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios 🚀":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים 🚀";
+            const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
             if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
             else{navigator.clipboard?.writeText(url);}
             setShowMenu(false);
@@ -3304,7 +3304,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
           <div style={{marginTop:16,textAlign:"center"}}>
             <button onClick={()=>{
               const url="https://kubequest.online";
-              const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios 🚀":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים 🚀";
+              const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
               if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
               else{navigator.clipboard?.writeText(url);}
             }} style={{padding:"10px 24px",background:"linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1))",border:"1px solid rgba(0,212,255,0.25)",borderRadius:10,color:"#00D4FF",fontSize:13,fontWeight:700,cursor:"pointer"}}>
