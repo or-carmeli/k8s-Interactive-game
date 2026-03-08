@@ -1425,6 +1425,8 @@ export default function K8sQuestApp() {
             if (!isFreeMode(selectedTopic.id)) saveUserData(stats, newCompleted, unlockedAchievements);
           }
           setAllowNextLevel(true);
+        } else {
+          setAllowNextLevel(false);
         }
         submittingRef.current = false;
         updateDailyStreak();
