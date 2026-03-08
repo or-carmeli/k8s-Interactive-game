@@ -3771,6 +3771,8 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   setShowExplanation(false);
                   topicCorrectRef.current=0; lastSessionScoreRef.current=0;
                   liveIndexRef.current=0;
+                  quizRunIdRef.current=Date.now().toString(36);
+                  submittingRef.current=false;
                   setAnswerResult(null);
                   setSessionScore(0);
                   setQuizHistory([]); setShowReview(false);
