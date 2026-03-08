@@ -56,6 +56,7 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 - **🏅 Achievements** — milestone-based reward system
 - **🌐 Hebrew / English** — full bilingual support with RTL layout
 - **👤 Guest Mode** — no account needed; sign up to sync progress across devices
+- **📊 Real-Time Monitoring** — live system status page with service health checks, uptime history, and incident tracking ([docs](docs/monitoring.md))
 
 ---
 
@@ -110,6 +111,8 @@ flowchart TD
     subgraph SB["Supabase"]
         AUTH["Auth Service"]
         DB[("PostgreSQL")]
+        EDGE["Edge Functions"]
+        CRON["pg_cron"]
     end
 
     subgraph K8S["Kubernetes — Optional"]
@@ -122,6 +125,10 @@ flowchart TD
     USER -->|HTTPS| SPA
     SPA -->|auth| AUTH
     SPA -->|read / write| DB
+    CRON -->|every 60s| EDGE
+    EDGE -->|health checks| DB
+    EDGE -->|health checks| AUTH
+    SPA -->|status page| DB
 ```
 
 > **Production** runs on Vercel + Supabase. The `k8s/` manifests and Docker image on GHCR enable self-hosting on any Kubernetes cluster.
@@ -245,14 +252,24 @@ kubectl apply -f k8s/
 ```
 src/
   App.jsx              # Main application (UI + state)
-  topics.js            # Quiz questions by topic and level
-  incidents.js         # Incident Mode scenarios
-  dailyQuestions.js    # Daily Challenge question pool
+  api/
+    quiz.js            # Quiz, daily, incident, leaderboard RPCs
+    monitoring.js      # System status monitoring RPCs
+  content/
+    topics.js          # Quiz questions by topic and level
+    incidents.js       # Incident Mode scenarios
+    dailyQuestions.js  # Daily Challenge question pool
   components/
     RoadmapView.jsx
     WeakAreaCard.jsx
   utils/
     quizPersistence.js # localStorage helpers for quiz resume
+supabase/
+  migrations/          # Database schema and RPCs
+  functions/
+    health-check/      # Edge Function — real-time service health checks
+docs/
+  monitoring.md        # Monitoring system documentation
 ```
 
 ---

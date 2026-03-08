@@ -37,7 +37,8 @@ const INCIDENT_DIFFICULTY_CONFIG = {
 const INCIDENT_SAVE_KEY = "incident_progress_v1";
 // v2.0.0 — major: portfolio repo refactor (BSL 1.1, proprietary content extracted)
 // v2.1.0 — security hardening, scoring fixes, question rebalance, incident history
-const APP_VERSION  = "2.1.0";
+// v2.2.0 — real-time monitoring system (health checks, uptime history, auto-incidents)
+const APP_VERSION  = "2.2.0";
 const SESSION_START = new Date();
 
 // Resume modal behaviour constants

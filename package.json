@@ -1,6 +1,6 @@
 {
   "name": "kubequest",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Interactive Kubernetes learning game — quizzes, incident scenarios, leaderboard, and progress tracking",
   "author": "Or Carmeli <https://github.com/or-carmeli>",
   "license": "MIT",
