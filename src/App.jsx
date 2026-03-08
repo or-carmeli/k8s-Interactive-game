@@ -728,8 +728,8 @@ export default function K8sQuestApp() {
       return;
     }
 
-    // Fallback: if Supabase never responds, unblock the UI after 10 s
-    const authTimeout = setTimeout(() => { setAuthChecked(true); setDataLoaded(true); }, 10000);
+    // Fallback: if Supabase never responds, unblock the UI after 5 s
+    const authTimeout = setTimeout(() => { setAuthChecked(true); setDataLoaded(true); }, 5000);
     supabase.auth.getSession().then(({ data: { session } }) => {
       clearTimeout(authTimeout);
       if (session) { setUser(session.user); loadUserData(session.user.id, session.user); }
@@ -801,7 +801,7 @@ export default function K8sQuestApp() {
       }
     } catch {}
     achievementsLoaded.current = true;
-    setTimeout(() => setDataLoaded(true), 2000);
+    setDataLoaded(true);
     // Check for a saved in-progress quiz for the guest session
     const savedQuiz = loadQuizState();
     if (savedQuiz && savedQuiz.userId === "guest") setResumeData(savedQuiz);
@@ -935,73 +935,85 @@ export default function K8sQuestApp() {
 
   const loadUserData = async (userId, sessionUser) => {
     if (!supabase) { setDataLoaded(true); return; }
-    const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
 
-    // Read guest localStorage but ALWAYS discard it once a real account is active.
-    // BUG-A fix: only merge guest data into brand-new accounts (no existing Supabase row).
-    // Merging into existing accounts causes cross-account contamination when users switch accounts.
-    let guestSaved = null;
+    // Timeout guard: if data loading takes too long, unblock the UI
+    const dataTimeout = setTimeout(() => { setDataLoaded(true); }, 5000);
+
     try {
-      const raw = localStorage.getItem("k8s_quest_guest");
-      if (raw) guestSaved = JSON.parse(raw);
-    } catch {}
-    // Always clear it immediately - prevents it leaking into whichever account logs in next
-    if (guestSaved) { try { localStorage.removeItem("k8s_quest_guest"); } catch {} }
+      const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
 
-    const base = data || {};
-    // Only perform merge for genuinely new accounts (no existing row in Supabase)
-    const shouldMerge = guestSaved && !data;
-    const gs = shouldMerge ? (guestSaved.stats || {}) : {};
-    const gc = shouldMerge ? (guestSaved.completedTopics || {}) : {};
-    const ga = shouldMerge ? (guestSaved.unlockedAchievements || []) : [];
+      // Read guest localStorage but ALWAYS discard it once a real account is active.
+      // BUG-A fix: only merge guest data into brand-new accounts (no existing Supabase row).
+      // Merging into existing accounts causes cross-account contamination when users switch accounts.
+      let guestSaved = null;
+      try {
+        const raw = localStorage.getItem("k8s_quest_guest");
+        if (raw) guestSaved = JSON.parse(raw);
+      } catch {}
+      // Always clear it immediately - prevents it leaking into whichever account logs in next
+      if (guestSaved) { try { localStorage.removeItem("k8s_quest_guest"); } catch {} }
 
-    const mergedCompleted = { ...(base.completed_topics || {}) };
-    Object.entries(gc).forEach(([key, val]) => {
-      if (!mergedCompleted[key] || val.correct > mergedCompleted[key].correct)
-        mergedCompleted[key] = val;
-    });
+      const base = data || {};
+      // Only perform merge for genuinely new accounts (no existing row in Supabase)
+      const shouldMerge = guestSaved && !data;
+      const gs = shouldMerge ? (guestSaved.stats || {}) : {};
+      const gc = shouldMerge ? (guestSaved.completedTopics || {}) : {};
+      const ga = shouldMerge ? (guestSaved.unlockedAchievements || []) : [];
 
-    const mergedAch = [...new Set([...(base.achievements || []), ...ga])];
-
-    const topicBaseScore = computeScore(mergedCompleted);
-    const mergedStats = {
-      total_answered: (base.total_answered || 0) + (gs.total_answered || 0),
-      total_correct:  (base.total_correct  || 0) + (gs.total_correct  || 0),
-      // Prefer the DB value - it includes free-mode bonus on top of topic score
-      total_score:    base.total_score != null ? Math.max(base.total_score, topicBaseScore) : topicBaseScore,
-      max_streak:     Math.max(base.max_streak || 0, gs.max_streak || 0),
-      current_streak: Math.max(base.current_streak || 0, gs.current_streak || 0),
-    };
-
-    setStats(mergedStats);
-    setCompletedTopics(mergedCompleted);
-    setUnlockedAchievements(mergedAch);
-
-    if (data) {
-      // Fix 4: load topic_stats from Supabase for existing accounts (overrides localStorage)
-      if (data.topic_stats && Object.keys(data.topic_stats).length > 0) {
-        setTopicStats(data.topic_stats);
-        try { localStorage.setItem("topicStats_v1", JSON.stringify(data.topic_stats)); } catch {}
-      }
-    } else {
-      // BUG-B fix: use INSERT (not upsert) for new accounts to guarantee one row per user
-      const username = sessionUser?.user_metadata?.username || sessionUser?.email?.split("@")[0];
-      const cleanNc = Object.fromEntries(
-        Object.entries(mergedCompleted).filter(([k]) => !isFreeMode(k.split("_")[0]))
-      );
-      // Fix 4: carry guest topicStats into the new account row
-      let guestTopicStats = {};
-      try { guestTopicStats = JSON.parse(localStorage.getItem("topicStats_v1")) || {}; } catch {}
-      await supabase.from("user_stats").insert({
-        user_id: userId, username,
-        ...mergedStats, completed_topics: cleanNc, achievements: mergedAch,
-        topic_stats: guestTopicStats,
-        updated_at: new Date().toISOString(),
+      const mergedCompleted = { ...(base.completed_topics || {}) };
+      Object.entries(gc).forEach(([key, val]) => {
+        if (!mergedCompleted[key] || val.correct > mergedCompleted[key].correct)
+          mergedCompleted[key] = val;
       });
-    }
 
-    achievementsLoaded.current = true;
-    setTimeout(() => setDataLoaded(true), 2000);   // ← data is now in state; no more flash of 0%
+      const mergedAch = [...new Set([...(base.achievements || []), ...ga])];
+
+      const topicBaseScore = computeScore(mergedCompleted);
+      const mergedStats = {
+        total_answered: (base.total_answered || 0) + (gs.total_answered || 0),
+        total_correct:  (base.total_correct  || 0) + (gs.total_correct  || 0),
+        // Prefer the DB value - it includes free-mode bonus on top of topic score
+        total_score:    base.total_score != null ? Math.max(base.total_score, topicBaseScore) : topicBaseScore,
+        max_streak:     Math.max(base.max_streak || 0, gs.max_streak || 0),
+        current_streak: Math.max(base.current_streak || 0, gs.current_streak || 0),
+      };
+
+      setStats(mergedStats);
+      setCompletedTopics(mergedCompleted);
+      setUnlockedAchievements(mergedAch);
+
+      if (data) {
+        // Fix 4: load topic_stats from Supabase for existing accounts (overrides localStorage)
+        if (data.topic_stats && Object.keys(data.topic_stats).length > 0) {
+          setTopicStats(data.topic_stats);
+          try { localStorage.setItem("topicStats_v1", JSON.stringify(data.topic_stats)); } catch {}
+        }
+      } else {
+        // BUG-B fix: use INSERT (not upsert) for new accounts to guarantee one row per user
+        const username = sessionUser?.user_metadata?.username || sessionUser?.email?.split("@")[0];
+        const cleanNc = Object.fromEntries(
+          Object.entries(mergedCompleted).filter(([k]) => !isFreeMode(k.split("_")[0]))
+        );
+        // Fix 4: carry guest topicStats into the new account row
+        let guestTopicStats = {};
+        try { guestTopicStats = JSON.parse(localStorage.getItem("topicStats_v1")) || {}; } catch {}
+        supabase.from("user_stats").insert({
+          user_id: userId, username,
+          ...mergedStats, completed_topics: cleanNc, achievements: mergedAch,
+          topic_stats: guestTopicStats,
+          updated_at: new Date().toISOString(),
+        }).then(() => {});  // fire-and-forget — don't block the UI for new account creation
+      }
+
+      achievementsLoaded.current = true;
+      clearTimeout(dataTimeout);
+      setDataLoaded(true);
+    } catch {
+      // Network error or unexpected failure — unblock the UI
+      clearTimeout(dataTimeout);
+      achievementsLoaded.current = true;
+      setDataLoaded(true);
+    }
 
     // Check for a saved in-progress quiz belonging to this user
     const savedQuiz = loadQuizState();
