@@ -132,6 +132,11 @@ DECLARE
   v_prev_status TEXT;
   v_last_history TIMESTAMPTZ;
 BEGIN
+  -- Capture the previous status before overwriting
+  SELECT status INTO v_prev_status
+  FROM system_status_current
+  WHERE service_name = p_service_name;
+
   -- Always update the live current-status row
   INSERT INTO system_status_current (service_name, status, latency_ms, last_checked, details)
   VALUES (p_service_name, p_status, p_latency_ms, now(), p_details)
@@ -140,8 +145,7 @@ BEGIN
     status = EXCLUDED.status,
     latency_ms = EXCLUDED.latency_ms,
     last_checked = EXCLUDED.last_checked,
-    details = EXCLUDED.details
-  RETURNING (SELECT sc.status FROM system_status_current sc WHERE sc.service_name = p_service_name) INTO v_prev_status;
+    details = EXCLUDED.details;
 
   -- Find when we last wrote a history row for this service
   SELECT MAX(checked_at) INTO v_last_history
