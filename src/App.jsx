@@ -3322,7 +3322,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
             {/* ── INCIDENT HISTORY ── */}
             {sectionTitle(lang==="en"?"Incident History":"היסטוריית אירועים")}
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px"}}>
+            <div dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px",textAlign:"left"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
                 <div>
                   <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>Answer Validation Service Disruption</div>
