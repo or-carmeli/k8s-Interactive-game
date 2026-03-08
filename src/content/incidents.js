@@ -50,7 +50,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl get pods -n production returns:\n\nNAME            READY   STATUS      RESTARTS   AGE\napi-server-xyz  0/1     OOMKilled   14         2h\n\nWhat does OOMKilled specifically mean and what command gives you the most detail?",
         promptHe:
-          "kubectl get pods -n production מחזיר:\n\nNAME            READY   STATUS      RESTARTS   AGE\napi-server-xyz  0/1     OOMKilled   14         2h\n\nמה המשמעות של OOMKilled ואיזה פקודה מספקת את המידע המלא ביותר?",
+          "הרצת הפקודה `kubectl get pods -n production` מחזירה:\n\nNAME            READY   STATUS      RESTARTS   AGE\napi-server-xyz  0/1     OOMKilled   14         2h\n\nמה המשמעות של OOMKilled ואיזה פקודה מספקת את המידע המלא ביותר?",
         options: [
           "OOMKilled is a liveness probe failure - check probe config with kubectl edit deployment",
           "OOMKilled means the container exceeded its memory limit - run kubectl describe pod api-server-xyz -n production",
@@ -73,7 +73,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl describe pod api-server-xyz -n production shows:\n\n  Limits:\n    memory: 256Mi\n  Last State:\n    Reason: OOMKilled\n    Exit Code: 137\n\nHow do you determine the right memory limit to set?",
         promptHe:
-          "kubectl describe pod api-server-xyz -n production מציג:\n\n  Limits:\n    memory: 256Mi\n  Last State:\n    Reason: OOMKilled\n    Exit Code: 137\n\nכיצד קובעים את מגבלת הזיכרון הנכונה להגדיר?",
+          "הפקודה `kubectl describe pod api-server-xyz -n production` מציגה:\n\n  Limits:\n    memory: 256Mi\n  Last State:\n    Reason: OOMKilled\n    Exit Code: 137\n\nכיצד קובעים את מגבלת הזיכרון הנכונה להגדיר?",
         options: [
           "kubectl top pod api-server-xyz -n production  (see actual memory usage)",
           "kubectl logs api-server-xyz -n production --previous  (scan logs for errors)",
@@ -96,7 +96,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl top pod shows `api-server-xyz` using ~240Mi at idle, spiking to 320Mi under load. The current limit is 256Mi. What is the correct fix?",
         promptHe:
-          "kubectl top pod מראה שהשימוש של `api-server-xyz` הוא כ-240Mi במצב מנוחה, ועולה ל-320Mi תחת עומס. המגבלה הנוכחית היא 256Mi. מה התיקון הנכון?",
+          "הפקודה `kubectl top pod` מראה שהשימוש של `api-server-xyz` הוא כ-240Mi במצב מנוחה, ועולה ל-320Mi תחת עומס. המגבלה הנוכחית היא 256Mi. מה התיקון הנכון?",
         options: [
           "Delete the pod - Kubernetes will recreate it and somehow the memory issue will go away",
           "Increase the memory limit to 512Mi and set request to 256Mi in the Deployment spec",
@@ -204,7 +204,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl get pods -n staging:\n\nNAME                         STATUS             RESTARTS\npayment-service-7d4b9-abc12  CrashLoopBackOff   9\n\nThe pod is crashing repeatedly. What command reveals the application error?",
         promptHe:
-          "kubectl get pods -n staging:\n\nNAME                         STATUS             RESTARTS\npayment-service-7d4b9-abc12  CrashLoopBackOff   9\n\nה-Pod קורס שוב ושוב. איזו פקודה חושפת את שגיאת האפליקציה?",
+          "הרצת `kubectl get pods -n staging` מציגה:\n\nNAME                         STATUS             RESTARTS\npayment-service-7d4b9-abc12  CrashLoopBackOff   9\n\nה-Pod קורס שוב ושוב. איזו פקודה חושפת את שגיאת האפליקציה?",
         options: [
           "kubectl describe pod payment-service-7d4b9-abc12 -n staging",
           "kubectl logs payment-service-7d4b9-abc12 -n staging --previous",
@@ -250,7 +250,7 @@ export const INCIDENTS = [
         prompt:
           "Inspecting the pod spec reveals a volumeMount expecting ConfigMap 'payment-config'.\n\nkubectl get configmap -n staging:\n\nNAME              DATA   AGE\napp-settings      3      5d\n\nThe ConfigMap 'payment-config' does not exist in this namespace. What most likely happened?",
         promptHe:
-          "בדיקת ה-pod spec מגלה volumeMount המצפה ל-ConfigMap 'payment-config'.\n\nkubectl get configmap -n staging:\n\nNAME              DATA   AGE\napp-settings      3      5d\n\nה-ConfigMap 'payment-config' אינו קיים ב-namespace הזה. מה כנראה קרה?",
+          "בדיקת ה-Pod spec מגלה volumeMount המצפה ל-ConfigMap בשם `payment-config`.\n\nהרצת `kubectl get configmap -n staging` מציגה:\n\nNAME              DATA   AGE\napp-settings      3      5d\n\nה-ConfigMap `payment-config` אינו קיים ב-Namespace הזה. מה כנראה קרה?",
         options: [
           "The ConfigMap was created in a different namespace (e.g., production) but not in staging",
           "The ConfigMap was accidentally deleted from staging",
@@ -335,7 +335,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl describe pod shows:\n\n  Events:\n    Failed to pull image 'registry.company.com/myapp:v2.1':\n    rpc error: code = Unknown\n    unauthorized: authentication required\n\nWhat does this error specifically indicate?",
         promptHe:
-          "kubectl describe pod מציג:\n\n  Events:\n    Failed to pull image 'registry.company.com/myapp:v2.1':\n    rpc error: code = Unknown\n    unauthorized: authentication required\n\nמה מציינת שגיאה זו באופן ספציפי?",
+          "הפקודה `kubectl describe pod` מציגה:\n\n  Events:\n    Failed to pull image 'registry.company.com/myapp:v2.1':\n    rpc error: code = Unknown\n    unauthorized: authentication required\n\nמה מציינת שגיאה זו באופן ספציפי?",
         options: [
           "The image tag `v2.1` does not exist in the registry",
           "The registry requires credentials but the pod has none configured",
@@ -466,7 +466,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl get svc backend-svc -n production shows the Service exists with ClusterIP and port 80. What is the single most diagnostic command to run next?",
         promptHe:
-          "kubectl get svc backend-svc -n production מציג שה-Service קיים עם ClusterIP ופורט 80. מהי הפקודה האחת האבחונית ביותר להריץ כעת?",
+          "הפקודה `kubectl get svc backend-svc -n production` מציגה שה-Service קיים עם ClusterIP ופורט 80. מהי הפקודה האבחונית ביותר להריץ כעת?",
         options: [
           "kubectl get endpoints backend-svc -n production",
           "kubectl get ingress -n production",
@@ -489,7 +489,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl get endpoints backend-svc -n production:\n\nNAME          ENDPOINTS   AGE\nbackend-svc   <none>      3d\n\n`<none>` - the Service has no matching pods. What do you do next?",
         promptHe:
-          "kubectl get endpoints backend-svc -n production:\n\nNAME          ENDPOINTS   AGE\nbackend-svc   <none>      3d\n\n`<none>` - ל-Service אין Pods תואמים. מה הצעד הבא?",
+          "הרצת `kubectl get endpoints backend-svc -n production` מציגה:\n\nNAME          ENDPOINTS   AGE\nbackend-svc   <none>      3d\n\n`<none>` — ל-Service אין Pods תואמים. מה הצעד הבא?",
         options: [
           "kubectl get pods -n production --show-labels  (see actual pod labels)",
           "kubectl describe svc backend-svc -n production  (see the selector the Service uses)",
@@ -643,7 +643,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl get pods -n kube-system -l k8s-app=kube-dns:\n\nNAME              STATUS      RESTARTS\ncoredns-abc12     OOMKilled   7\ncoredns-def34     OOMKilled   7\n\nBoth CoreDNS pods are OOMKilling. What should you do before changing anything?",
         promptHe:
-          "kubectl get pods -n kube-system -l k8s-app=kube-dns:\n\nNAME              STATUS      RESTARTS\ncoredns-abc12     OOMKilled   7\ncoredns-def34     OOMKilled   7\n\nשני Pods של CoreDNS מקבלים OOMKill. מה יש לעשות לפני שמשנים דבר?",
+          "הרצת `kubectl get pods -n kube-system -l k8s-app=kube-dns` מציגה:\n\nNAME              STATUS      RESTARTS\ncoredns-abc12     OOMKilled   7\ncoredns-def34     OOMKilled   7\n\nשני Pods של CoreDNS מקבלים OOMKill. מה יש לעשות לפני שמשנים דבר?",
         options: [
           "kubectl delete pods -n kube-system -l k8s-app=kube-dns  (force restart)",
           "kubectl describe pod coredns-abc12 -n kube-system  (check memory limit)",
@@ -820,7 +820,7 @@ export const INCIDENTS = [
         prompt:
           "kubectl describe shows:\n  Policy: allow-frontend\n  PodSelector: role=frontend  (targets backend pods)\n  Ingress from: podSelector role=frontend\n\nBut `deny-all-ingress` blocks everything else. You suspect a label mismatch. What must you check?",
         promptHe:
-          "kubectl describe מציג:\n  Policy: allow-frontend\n  PodSelector: role=frontend  (מטרגט Pods של באקאנד)\n  Ingress from: podSelector role=frontend\n\nאך `deny-all-ingress` חוסמת את כל השאר. אתה חושד באי-התאמת label. מה חייבים לבדוק?",
+          "הפקודה `kubectl describe` מציגה:\n\n  Policy: allow-frontend\n  PodSelector: role=frontend  (מטרגט Pods של באקאנד)\n  Ingress from: podSelector role=frontend\n\nאך `deny-all-ingress` חוסמת את כל השאר. אתה חושד באי-התאמת label. מה חייבים לבדוק?",
         options: [
           "kubectl get pods -n production --show-labels  (check actual labels on frontend pods)",
           "kubectl delete networkpolicy deny-all-ingress -n production",

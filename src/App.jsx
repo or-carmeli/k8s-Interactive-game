@@ -442,43 +442,113 @@ function shuffleOptions(questions) {
   });
 }
 
-// Set of Kubernetes / technical terms that should render as inline code
+// Set of Kubernetes / technical terms that should render as inline code.
+// Compared via lower-case; trailing "s" is also stripped for plural matching.
 const K8S_CODE_TERMS = new Set([
-  "kubectl","api-server","kube-proxy","kubelet","etcd","helm","docker",
+  // CLI tools
+  "kubectl","helm","docker","kubelet","kubeadm",
+  // kubectl subcommands
   "kubectl get pods","kubectl get nodes","kubectl describe","kubectl logs",
   "kubectl apply","kubectl delete","kubectl scale","kubectl rollout","kubectl exec",
+  "kubectl top pod","kubectl top","kubectl drain","kubectl cordon","kubectl debug",
+  "kubectl edit","kubectl patch","kubectl create","kubectl rollout undo",
+  "kubectl rollout status","kubectl rollout history",
+  // Core resources
+  "pod","node","namespace","service","deployment","replicaset",
+  "statefulset","daemonset","job","cronjob","configmap","secret",
+  "ingress","networkpolicy","serviceaccount","endpoint",
+  // Storage
+  "pv","pvc","persistentvolume","persistentvolumeclaim",
+  // Scaling & scheduling
+  "hpa","vpa","pdb","poddisruptionbudget",
+  // Components
+  "api-server","kube-proxy","etcd","coredns","cni",
+  // Well-known namespaces / env names
   "kube-system","production","staging","default",
+  // Pod states & errors
+  "oomkilled","crashloopbackoff","imagepullbackoff","errimagepull",
+  "containercreating",
+  // Concepts
+  "toleration","taint","affinity",
+  // Resources
+  "cpu","memory","gpu",
+  // QoS classes
+  "guaranteed","burstable","besteffort",
+  // Probes (multi-word)
+  "liveness probe","readiness probe","startup probe",
+  // Update strategies
+  "rolling update","rollback","rollout",
+  // Service types
+  "clusterip","nodeport","loadbalancer","externalname",
+  // Other K8s objects & terms
+  "resourcequota","limitrange","priorityclass",
+  "init container","ephemeral container","sidecar",
+  "replica","backofflimit",
+  // Config formats
+  "yaml","json","rbac","tls","dns",
+  // Monitoring / ecosystem
+  "prometheus","grafana","fluentd","pagerduty",
+  // Common k8s tool terms
+  "distroless","metrics-server",
 ]);
 
-// Check if a token (or multi-word phrase) is a known K8s / CLI term or DNS name
+// Check if a token (or multi-word phrase) is a known K8s / CLI term or DNS name.
+// For multi-word Latin runs, also checks each individual word so that
+// "CPU request" is recognised even if the exact phrase isn't in the set.
 function isCodeTerm(token) {
-  if (/\.\w/.test(token)) return true; // DNS name or dotted path (e.g. api.prod.svc.cluster.local)
-  return K8S_CODE_TERMS.has(token.toLowerCase().replace(/s$/,"")) || K8S_CODE_TERMS.has(token.toLowerCase());
+  if (/\.\w/.test(token)) return true; // DNS name or dotted path
+  const lower = token.toLowerCase();
+  if (K8S_CODE_TERMS.has(lower) || K8S_CODE_TERMS.has(lower.replace(/s$/,""))) return true;
+  // For multi-word tokens, check if any single word is a known term
+  if (lower.includes(" ")) {
+    return lower.split(/\s+/).some(w => K8S_CODE_TERMS.has(w) || K8S_CODE_TERMS.has(w.replace(/s$/,"")));
+  }
+  return false;
+}
+
+// Inline-code style shared between backtick spans and K8s code terms
+const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"#7dd3fc",whiteSpace:"nowrap"};
+
+// Inner bidi logic: wraps Latin sequences in <span dir="ltr">, applies code styling to K8s terms.
+function renderBidiInner(text, lang, keyPrefix) {
+  if (!text || !/[A-Za-z]/.test(text)) return text;
+  const parts = text.split(/((?:[A-Za-z](?:[A-Za-z0-9\-_:/]|\.[A-Za-z0-9])*(?:\s+(?=[A-Za-z]))?)+)/);
+  if (parts.length <= 1) return text;
+  const startsWithLatin = /^[A-Za-z]/.test(text);
+  return parts.map((part, idx) => {
+    const k = `${keyPrefix}-${idx}`;
+    if (/^[A-Za-z]/.test(part)) {
+      const codeStyle = isCodeTerm(part) ? CODE_SPAN_STYLE : undefined;
+      return <span key={k} dir="ltr" style={{unicodeBidi:"isolate",...codeStyle}}>{(idx === 0 && startsWithLatin ? "\u200F" : "")}{part}</span>;
+    }
+    if (idx > 0 && /^[A-Za-z]/.test(parts[idx - 1])) return "\u200F" + part;
+    return part;
+  });
 }
 
 // Wraps inline English/Latin sequences in <span dir="ltr"> for correct bidi rendering
 // in RTL Hebrew paragraphs. K8s terms get inline-code styling.
+// Also handles backtick-wrapped inline code (`command`) for consistency.
 // Returns text unchanged for English mode.
 function renderBidi(text, lang) {
   if (!text || lang !== "he") return text;
-  if (!/[A-Za-z]/.test(text)) return text;
-  // Capture LTR runs including internal dots (DNS names like api.prod.svc.cluster.local)
-  // but NOT trailing dots so punctuation stays in RTL flow for correct bidi placement.
-  const parts = text.split(/((?:[A-Za-z](?:[A-Za-z0-9\-_:/]|\.[A-Za-z0-9])*(?:\s+(?=[A-Za-z]))?)+)/);
-  if (parts.length <= 1) return text;
-  const startsWithLatin = /^[A-Za-z]/.test(text);
-  return parts.map((part, i) => {
-    if (/^[A-Za-z]/.test(part)) {
-      const codeStyle = isCodeTerm(part)
-        ? {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"#7dd3fc",whiteSpace:"nowrap"}
-        : undefined;
-      return <span key={i} dir="ltr" style={{unicodeBidi:"isolate",...codeStyle}}>{(i === 0 && startsWithLatin ? "\u200F" : "")}{part}</span>;
+
+  // Handle inline backtick code spans first: `term` → <span dir="ltr" style={code}>term</span>
+  if (text.includes("`")) {
+    const btParts = text.split(/`([^`]+)`/);
+    if (btParts.length > 1) {
+      return btParts.map((part, i) => {
+        if (i % 2 === 1) {
+          // backtick-wrapped content → always render as LTR inline code
+          return <span key={`bt-${i}`} dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{part}</span>;
+        }
+        if (!part) return null;
+        return <span key={`seg-${i}`}>{renderBidiInner(part, lang, `s${i}`)}</span>;
+      });
     }
-    // Insert RLM (U+200F) before punctuation that immediately follows an LTR span so
-    // the Unicode bidi algorithm places it at the visual end of the RTL sentence.
-    if (i > 0 && /^[A-Za-z]/.test(parts[i - 1])) return "\u200F" + part;
-    return part;
-  });
+  }
+
+  return renderBidiInner(text, lang, "b");
 }
 
 function Footer({ lang }) {
@@ -1929,35 +1999,39 @@ export default function K8sQuestApp() {
     );
   };
 
-  // Renders incident explanation as short paragraphs for readability
+  // Renders incident explanation as short paragraphs for readability.
+  // Uses renderBidi for proper K8s term styling + backtick handling in Hebrew mode.
   const renderIncidentExplanation = (text) => {
     if (!text) return null;
     const sentences = text.split(/\.\s+(?=[A-Z\u0590-\u05FFa-z`])/).filter(s => s.trim());
     if (sentences.length <= 1) {
-      return <div dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>{renderInline(text)}</div>;
+      return <div dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>{lang === "he" ? renderBidi(text, lang) : renderInline(text)}</div>;
     }
     return (
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        {sentences.map((s, i) => (
-          <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,textAlign:lang==="he"?"right":"left"}}>
-            {renderInline(s.replace(/\.+$/, "") + ".")}
-          </div>
-        ))}
+        {sentences.map((s, i) => {
+          const cleaned = s.replace(/\.+$/, "") + ".";
+          return (
+            <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,textAlign:lang==="he"?"right":"left"}}>
+              {lang === "he" ? renderBidi(cleaned, lang) : renderInline(cleaned)}
+            </div>
+          );
+        })}
       </div>
     );
   };
 
-  // Renders incident step prompt: terminal lines in monospace, Hebrew lines as normal text with inline code
+  // Renders incident step prompt: terminal lines in monospace, Hebrew lines with bidi K8s term rendering.
   const renderIncidentPrompt = (text) => {
     if (!text) return null;
     const terminalPat = /^(kubectl|NAME\s|READY|STATUS\s|\s{2,}|[a-z0-9]+(-[a-z0-9]+)+\s|FATAL|Error|Failed|rpc error|unauthorized|  [A-Za-z])/;
-    const hasHebrew = (s) => /[\u0590-\u05FF]/.test(s);
+    const _hasHe = (s) => /[\u0590-\u05FF]/.test(s);
     return text.split("\n").map((line, i) => {
       if (!line.trim()) return <div key={i} style={{height:6}}/>;
-      if (!hasHebrew(line) && terminalPat.test(line)) {
+      if (!_hasHe(line) && terminalPat.test(line)) {
         return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre"}}>{line}</div>;
       }
-      return <div key={i} dir="auto" style={{color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4}}>{renderInline(line)}</div>;
+      return <div key={i} dir="auto" style={{color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4}}>{lang === "he" ? renderBidi(line, lang) : renderInline(line)}</div>;
     });
   };
 
@@ -3973,7 +4047,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1,direction:"ltr"}}>
                       {["A","B","C","D"][i]}
                     </span>
-                    <span style={{flex:1,direction:dir}}>{opt}</span>
+                    <span dir={dir} style={{flex:1,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere"}}>{hasHebrew(opt)?renderBidi(opt,lang):opt}</span>
                     {incidentSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✓</span>}
                     {incidentSubmitted&&isChosen&&!isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✗</span>}
                   </button>
