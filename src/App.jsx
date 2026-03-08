@@ -98,7 +98,7 @@ const TRANSLATIONS = {
     pts: "נק׳",
     achievementsTitle: "🏅 הישגים",
     leaderboardTitle: "🏆 לוח תוצאות", noData: "אין נתונים עדיין", anonymous: "אנונימי",
-    back: "→ חזרי", theory: "📖 תיאוריה",
+    back: "→ חזרה", theory: "📖 תיאוריה",
     startQuiz: "🎯 התחילי חידון!", ptsPerQ: "נק׳ לשאלה",
     question: "שאלה", of: "/", streakLabel: "רצף",
     confirmAnswer: "✔ אשרי תשובה",
@@ -157,7 +157,7 @@ const TRANSLATIONS = {
     playingAsGuest_m: "· משחק כאורח",
     guestBanner_m: "💡 הרשם כדי לשמור התקדמות ולהופיע בלוח התוצאות",
     signupNow_m: "הרשם",
-    back_m: "→ חזור",
+    back_m: "→ חזרה",
     startQuiz_m: "🎯 התחל חידון!",
     confirmAnswer_m: "✔ אשר תשובה",
     finishTopic_m: "🎉 סיים נושא!",
@@ -185,7 +185,7 @@ const TRANSLATIONS = {
     resumeBtn: "המשיכי", resumeBtn_m: "המשך",
     resumeToast: "ממשיכים מאיפה שהפסקת.", resumeToast_m: "ממשיכים מאיפה שהפסקת.",
     resumeDiscard: "התחילי מחדש", resumeDiscard_m: "התחל מחדש",
-    prevQuestion: "קודמת ←", backToCurrent: "→ חזרי לחידון", backToCurrent_m: "→ חזור לחידון",
+    prevQuestion: "→ שאלה קודמת", backToCurrent: "→ חזרי לחידון", backToCurrent_m: "→ חזור לחידון",
     reviewing: "📖 סקירה",
     tryAgainBtn: "🔁 נסי שוב", tryAgainBtn_m: "🔁 נסה שוב",
     tryAgainBadge: "לא נספר לניקוד",
@@ -251,7 +251,7 @@ const TRANSLATIONS = {
     pts: "pts",
     achievementsTitle: "🏅 Achievements",
     leaderboardTitle: "🏆 Leaderboard", noData: "No data yet", anonymous: "Anonymous",
-    back: "← Back", theory: "📖 Theory",
+    back: "← Return", theory: "📖 Theory",
     startQuiz: "🎯 Start Quiz!", ptsPerQ: "pts per question",
     question: "Question", of: "/", streakLabel: "Streak",
     confirmAnswer: "✔ Confirm Answer",
@@ -301,7 +301,7 @@ const TRANSLATIONS = {
     resumeBtn: "Continue",
     resumeToast: "Resuming your quiz where you left off.",
     resumeDiscard: "Start Fresh",
-    prevQuestion: "← Prev", backToCurrent: "Back to Quiz →",
+    prevQuestion: "← Previous Question", backToCurrent: "Back to Quiz →",
     reviewing: "📖 Review",
     tryAgainBtn: "🔁 Try Again",
     tryAgainBadge: "Won't count toward score",
@@ -2883,7 +2883,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {screen==="search"&&(
         <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
           <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
-            {dir==="rtl"?"→ חזרה":"← Back"}
+            {dir==="rtl"?"→ חזרה":"← Return"}
           </button>
           <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:16}}>{t("searchBtn")}</h2>
           <input type="search" autoFocus value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
@@ -2940,7 +2940,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         return (
           <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
             <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
-              {dir==="rtl"?"→ חזרה":"← Back"}
+              {dir==="rtl"?"→ חזרה":"← Return"}
             </button>
             <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("mistakesBtn")}</h2>
             <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>{t("mistakesHint")}</p>
@@ -3300,7 +3300,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
         return (
           <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
             <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
-              {dir==="rtl"?"→ חזרה":"← Back"}
+              {dir==="rtl"?"→ חזרה":"← Return"}
             </button>
             <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("guideBtn")}</h2>
             <p style={{color:"#64748b",fontSize:13,marginBottom:20,direction:dir}}>{lang==="en"?"Quick reference for key Kubernetes concepts - tap a section to expand":"סיכום מהיר של מושגי Kubernetes מרכזיים – לחצו על נושא לפתיחה"}</p>
@@ -3346,7 +3346,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
       {screen==="about"&&(
         <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
           <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>
-            {dir==="rtl"?"→ חזרה":"← Back"}
+            {dir==="rtl"?"→ חזרה":"← Return"}
           </button>
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,marginBottom:28}}>
             <svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 0 14px rgba(0,212,255,0.4))"}}>
@@ -3497,7 +3497,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
             {/* Back */}
             <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:28,display:"flex",alignItems:"center",gap:6}}>
-              ← {lang==="en"?"Back":"חזרה"}
+              {lang==="en"?"← Return":"→ חזרה"}
             </button>
 
             {/* ── GLOBAL STATUS BANNER ── */}
@@ -4113,7 +4113,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8,direction:"ltr"}}>
               <button onClick={()=>{saveIncidentProgress(selectedIncident,incidentStepIndex,incidentScore,incidentMistakes,incidentElapsed,incidentHistory);setScreen("incidentList");}}
                 style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13}}>
-                ← {lang==="he"?"חזרה":"Back"}
+                {lang==="he"?"→ חזרה":"← Return"}
               </button>
               <div style={{display:"flex",gap:14,alignItems:"center",fontSize:13,fontWeight:700}}>
                 <span style={{color:"#94a3b8"}}>{t("incidentStep")} <span style={{color:"#e2e8f0"}}>{incidentStepIndex+1}/{totalSteps}</span></span>
