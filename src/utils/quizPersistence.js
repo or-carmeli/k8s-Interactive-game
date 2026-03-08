@@ -1,5 +1,6 @@
 const QUIZ_KEY  = "k8s_quiz_inprogress_v1";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const AUTO_RESUME_MS = 2 * 60 * 1000;   // 2 minutes — only auto-resume if this recent
 
 export function saveQuizState(state) {
   try {
@@ -23,6 +24,12 @@ export function loadQuizState() {
   } catch {
     return null;
   }
+}
+
+/** True if saved state is recent enough to be an actual page refresh (not a new session) */
+export function isRecentQuizState(state) {
+  if (!state || !state.timestamp) return false;
+  return Date.now() - state.timestamp < AUTO_RESUME_MS;
 }
 
 export function clearQuizState() {

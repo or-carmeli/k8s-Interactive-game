@@ -6,7 +6,7 @@ import { ACHIEVEMENTS } from "./topicMeta";
 import { TOPICS } from "./content/topics";
 import { DAILY_QUESTIONS } from "./content/dailyQuestions";
 import { INCIDENTS } from "./content/incidents";
-import { saveQuizState, loadQuizState, clearQuizState } from "./utils/quizPersistence";
+import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from "./utils/quizPersistence";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory } from "./api/monitoring";
 
@@ -1066,13 +1066,15 @@ export default function K8sQuestApp() {
   }, [screen]);
 
   // Auto-restore quiz or incident session on page load (refresh resilience)
+  // Only auto-resume if state was saved very recently (<2 min), indicating an
+  // actual page refresh. Older saves are offered via the resume modal instead.
   useEffect(() => {
     if (autoResumeAttempted.current) return;
     if (!dataLoaded || !user) return;
     autoResumeAttempted.current = true;
 
-    // Priority 1: Resume quiz
-    if (resumeData) {
+    // Priority 1: Resume quiz — only if it's a recent refresh, not a new session
+    if (resumeData && isRecentQuizState(resumeData)) {
       const answered = resumeData.questionIndex ?? 0;
       const total = resumeData.questions?.length ?? 0;
       if (answered < total) {
@@ -1596,7 +1598,12 @@ export default function K8sQuestApp() {
         const correctIndex = q._optionMap ? q._optionMap.indexOf(rpcResult.correct_answer) : rpcResult.correct_answer;
         result = { correct: rpcResult.correct, correctIndex, explanation: rpcResult.explanation };
       } else {
-        result = { correct: true, correctIndex: selectedAnswer, explanation: q.explanation || "" };
+        // RPC failed (likely stale question ID after DB re-seed) — clear the
+        // invalid saved quiz so it won't keep breaking on every submit.
+        clearQuizState();
+        submittingRef.current = false;
+        setCheckingAnswer(false);
+        return;
       }
     } else {
       result = { correct: selectedAnswer === q.answer, correctIndex: q.answer, explanation: q.explanation };
