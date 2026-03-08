@@ -553,9 +553,10 @@ function renderBidi(text, lang) {
   return renderBidiInner(text, lang, "b");
 }
 
-// Regex to detect CLI commands in mixed Hebrew text.
-// Matches: CLI tool name + one or more non-Hebrew argument tokens (flags, subcommands, args).
-const CLI_COMMAND_RE = /((?:kubectl|docker|helm|aws|git|kubeadm|kubelet|crictl|etcdctl|curl|wget)(?:\s+[^\s\u0590-\u05FF]+)+)/;
+// Regex to detect CLI commands in mixed text.
+// Matches: CLI tool name + one or more argument tokens (excludes Hebrew chars and opening parens
+// so parenthetical explanations like "(see memory usage)" are not captured as part of the command).
+const CLI_COMMAND_RE = /((?:kubectl|docker|helm|aws|git|kubeadm|kubelet|crictl|etcdctl|curl|wget)(?:\s+[^\s\u0590-\u05FF(]+)+)/;
 
 // Splits text on CLI commands and renders commands as LTR code blocks on separate lines.
 function splitCliParts(text, lang, keyPrefix) {
@@ -572,13 +573,17 @@ function splitCliParts(text, lang, keyPrefix) {
 // Enhanced bidi renderer that detects full CLI commands (kubectl, docker, etc.)
 // and renders them as standalone LTR code blocks on a separate line,
 // preventing RTL word-reordering of flags like -n, --namespace.
-// Falls back to renderBidi for text without CLI commands.
+// Falls back to renderBidi for Hebrew text without CLI commands,
+// or returns text unchanged for non-Hebrew text without CLI commands.
 function renderBidiBlock(text, lang) {
-  if (!text || lang !== "he") return text;
+  if (!text) return text;
   // Quick check: does the text contain a CLI command outside backticks?
   const bare = text.replace(/`[^`]+`/g, "");
-  if (!CLI_COMMAND_RE.test(bare)) return renderBidi(text, lang);
-  // Handle backtick-wrapped inline code first, then CLI commands in remaining segments
+  const hasCli = CLI_COMMAND_RE.test(bare);
+  // No CLI command: for Hebrew fall back to renderBidi; for English return plain text
+  if (!hasCli) return lang === "he" ? renderBidi(text, lang) : text;
+  // CLI command found (any language): handle backtick-wrapped inline code first,
+  // then CLI commands in remaining segments
   if (text.includes("`")) {
     const btParts = text.split(/`([^`]+)`/);
     if (btParts.length > 1) {
@@ -3768,7 +3773,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                       dir={dir}
                       style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"14px 16px",background:bg,border:`1px solid ${borderColor}`,borderRadius:12,color,fontSize:15,cursor:isEliminated?"default":(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.7,display:"flex",alignItems:"center",flexDirection:dir==="rtl"?"row-reverse":"row",gap:12,transition:"all 0.15s",opacity:isEliminated?0.35:1,textDecoration:isEliminated?"line-through":"none",minHeight:56}}>
                       <span aria-hidden="true" style={{flexShrink:0,width:30,height:30,borderRadius:8,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
-                      <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7}}>{optDir==="ltr"?opt:renderBidiBlock(opt,lang)}</span>
+                      <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7}}>{renderBidiBlock(opt,lang)}</span>
                       {dispSubmitted&&!dispAnswerResult&&isChosen&&<span aria-hidden="true" style={{flexShrink:0,width:18,height:18,border:"2px solid #00D4FF44",borderTop:"2px solid #00D4FF",borderRadius:"50%",animation:"spin 0.6s linear infinite"}} />}
                       {dispSubmitted&&dispAnswerResult&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✓</span>}
                       {dispSubmitted&&dispAnswerResult&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✗</span>}
@@ -4131,7 +4136,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1,direction:"ltr"}}>
                       {["A","B","C","D"][i]}
                     </span>
-                    <span dir={dir} style={{flex:1,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere"}}>{hasHebrew(opt)?renderBidiBlock(opt,lang):opt}</span>
+                    <span dir={dir} style={{flex:1,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere"}}>{renderBidiBlock(opt,lang)}</span>
                     {incidentSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✓</span>}
                     {incidentSubmitted&&isChosen&&!isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✗</span>}
                   </button>
