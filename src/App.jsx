@@ -3576,8 +3576,8 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   let borderColor = "rgba(255,255,255,0.09)", bg = "rgba(255,255,255,0.02)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
                   if (isEliminated)                { borderColor = "rgba(255,255,255,0.04)"; bg = "rgba(255,255,255,0.01)"; color = "#334155"; labelBg = "rgba(255,255,255,0.03)"; labelColor = "#334155"; }
                   else if (isChosen && !dispSubmitted) { borderColor = "#00D4FF66"; bg = "rgba(0,212,255,0.06)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.15)"; labelColor = "#00D4FF"; }
-                  if (dispSubmitted && checkingAnswer && isChosen) { borderColor = "#00D4FF99"; bg = "rgba(0,212,255,0.10)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.2)"; labelColor = "#00D4FF"; }
-                  if (dispSubmitted && !checkingAnswer) {
+                  if (dispSubmitted && !dispAnswerResult && isChosen) { borderColor = "#00D4FF99"; bg = "rgba(0,212,255,0.10)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.2)"; labelColor = "#00D4FF"; }
+                  if (dispSubmitted && dispAnswerResult) {
                     if (isCorrect)             { borderColor = "#10B981"; bg = "rgba(16,185,129,0.1)";  color = "#10B981"; labelBg = "rgba(16,185,129,0.2)";  labelColor = "#10B981"; }
                     else if (isChosen)          { borderColor = "#EF4444"; bg = "rgba(239,68,68,0.1)";   color = "#EF4444"; labelBg = "rgba(239,68,68,0.2)";   labelColor = "#EF4444"; }
                   }
@@ -3591,9 +3591,9 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                       style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"14px 16px",background:bg,border:`1px solid ${borderColor}`,borderRadius:12,color,fontSize:15,cursor:isEliminated?"default":(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.7,display:"flex",alignItems:"center",flexDirection:dir==="rtl"?"row-reverse":"row",gap:12,transition:"all 0.15s",opacity:isEliminated?0.35:1,textDecoration:isEliminated?"line-through":"none",minHeight:56}}>
                       <span aria-hidden="true" style={{flexShrink:0,width:30,height:30,borderRadius:8,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
                       <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
-                      {dispSubmitted&&checkingAnswer&&isChosen&&<span aria-hidden="true" style={{flexShrink:0,width:18,height:18,border:"2px solid #00D4FF44",borderTop:"2px solid #00D4FF",borderRadius:"50%",animation:"spin 0.6s linear infinite"}} />}
-                      {dispSubmitted&&!checkingAnswer&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✓</span>}
-                      {dispSubmitted&&!checkingAnswer&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✗</span>}
+                      {dispSubmitted&&!dispAnswerResult&&isChosen&&<span aria-hidden="true" style={{flexShrink:0,width:18,height:18,border:"2px solid #00D4FF44",borderTop:"2px solid #00D4FF",borderRadius:"50%",animation:"spin 0.6s linear infinite"}} />}
+                      {dispSubmitted&&dispAnswerResult&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✓</span>}
+                      {dispSubmitted&&dispAnswerResult&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✗</span>}
                     </button>
                   );
                 })}
