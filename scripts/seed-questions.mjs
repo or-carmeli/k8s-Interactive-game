@@ -8,7 +8,8 @@
 //      (use the SERVICE ROLE key, not the anon key, to bypass RLS)
 //
 // Usage:
-//   node scripts/seed-questions.mjs
+//   node scripts/seed-questions.mjs            # first-time seed (inserts only)
+//   node scripts/seed-questions.mjs --reseed   # clear all tables then re-insert
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -26,6 +27,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const { TOPICS } = await import("../src/content/topics.js");
 const { DAILY_QUESTIONS } = await import("../src/content/dailyQuestions.js");
 const { INCIDENTS } = await import("../src/content/incidents.js");
+
+// ── Clear existing data (order matters for FK constraints) ──────────────────
+const RESEED = process.argv.includes("--reseed");
+if (RESEED) {
+  console.log("Re-seed mode: clearing existing data...");
+  for (const table of ["incident_steps", "incidents", "daily_questions", "quiz_theories", "quiz_questions"]) {
+    const { error } = await supabase.from(table).delete().neq("id", 0);
+    if (error) { console.error(`Error clearing ${table}:`, error); process.exit(1); }
+    console.log(`  Cleared ${table}`);
+  }
+}
 
 // ── Seed quiz questions + theories ──────────────────────────────────────────
 console.log("Seeding quiz questions and theories...");

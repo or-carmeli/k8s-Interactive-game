@@ -101,13 +101,13 @@ const TRANSLATIONS = {
     confirmAnswer: "✔ אשרי תשובה",
     correct: "✅ נכון!", incorrect: "❌ לא נכון",
     finishTopic: "🎉 סיימי נושא!", nextQuestion: "שאלה הבאה ←",
-    correctCount: "נכון", perfect: "⭐ מושלם!", points: "נקודות",
+    correctCount: "נכון", perfect: "מושלם!", points: "נקודות",
     guestSaveHint: "💡 הירשמי כדי לשמור את הניקוד!", signupLink: "הירשמי עכשיו",
-    tryAgain: "🔄 נסי שוב", backToTopics: "→ חזרי לנושאים",
-    nextLevelBtn: "🚀 המשיכי לרמה הבאה", locked: "🔒 נעול",
+    tryAgain: "נסי שוב", backToTopics: "חזרי לנושאים",
+    nextLevelBtn: "המשיכי לרמה הבאה", locked: "🔒 נעול",
     skipTheory: "⚡ דלגי לחידון",
     timerOn: "⏱ כבי טיימר", timerOff: "⏱ הפעילי טיימר", timeUp: "⏰ הזמן נגמר!",
-    reviewBtn: "📋 צפי בסקירה", hideReview: "הסתירי סקירה", reviewTitle: "סקירת שאלות",
+    reviewBtn: "צפי בסקירה", hideReview: "הסתירי סקירה", reviewTitle: "סקירת שאלות",
     loadingText: "טוען...",
     saveErrorText: "⚠️ הנתונים לא נשמרו – בדקי חיבור לאינטרנט",
     newAchievement: "הישג חדש!", allRightsReserved: "כל הזכויות שמורות ל",
@@ -139,10 +139,10 @@ const TRANSLATIONS = {
     a11yTitle: "♿ נגישות", a11yFontSize: "גודל טקסט", a11yReduceMotion: "הפחת תנועה", a11yHighContrast: "ניגודיות גבוהה",
     readQuestion: "🔊 קראי שאלה", stopSpeech: "⏹ עצרי", autoRead: "קריאה אוטומטית",
     hint: "💡 רמז", eliminate: "❌ הסרי תשובה שגויה",
-    shareResult: "🔗 שתפי תוצאה",
+    shareResult: "שתפי תוצאה",
     readQuestion_m: "🔊 קרא שאלה", stopSpeech_m: "⏹ עצור", autoRead_m: "קריאה אוטומטית",
     hint_m: "💡 רמז", eliminate_m: "❌ הסר תשובה שגויה",
-    shareResult_m: "🔗 שתף תוצאה",
+    shareResult_m: "שתף תוצאה",
     // Male-form overrides (used when gender === "m")
     tagline_m: "למד Kubernetes בצורה כיפית ואינטראקטיבית",
     startPlaying_m: "⚡ התחל לשחק עכשיו",
@@ -159,11 +159,11 @@ const TRANSLATIONS = {
     confirmAnswer_m: "✔ אשר תשובה",
     finishTopic_m: "🎉 סיים נושא!",
     guestSaveHint_m: "💡 הרשם כדי לשמור את הניקוד!", signupLink_m: "הרשם עכשיו",
-    tryAgain_m: "🔄 נסה שוב", backToTopics_m: "→ חזור לנושאים",
-    nextLevelBtn_m: "🚀 המשך לרמה הבאה",
+    tryAgain_m: "נסה שוב", backToTopics_m: "חזור לנושאים",
+    nextLevelBtn_m: "המשך לרמה הבאה",
     skipTheory_m: "⚡ דלג לחידון",
     timerOn_m: "⏱ כבה טיימר", timerOff_m: "⏱ הפעל טיימר",
-    reviewBtn_m: "📋 צפה בסקירה", hideReview_m: "הסתר סקירה",
+    reviewBtn_m: "צפה בסקירה", hideReview_m: "הסתר סקירה",
     saveErrorText_m: "⚠️ הנתונים לא נשמרו – בדוק חיבור לאינטרנט",
     guestName_m: "אורח",
     resetProgress_m: "אפס התקדמות", resetConfirm_m: "האם אתה בטוח? פעולה זו תמחק את כל ההתקדמות ולא ניתן לבטלה.",
@@ -253,13 +253,13 @@ const TRANSLATIONS = {
     confirmAnswer: "✔ Confirm Answer",
     correct: "✅ Correct!", incorrect: "❌ Incorrect",
     finishTopic: "🎉 Finish Topic!", nextQuestion: "Next Question →",
-    correctCount: "correct", perfect: "⭐ Perfect!", points: "points",
+    correctCount: "correct", perfect: "Perfect!", points: "points",
     guestSaveHint: "💡 Sign up to save your score!", signupLink: "Sign up now",
-    tryAgain: "🔄 Try Again", backToTopics: "← Back to Topics",
-    nextLevelBtn: "🚀 Next Level", locked: "🔒 Locked",
+    tryAgain: "Try Again", backToTopics: "Back to Topics",
+    nextLevelBtn: "Next Level", locked: "🔒 Locked",
     skipTheory: "⚡ Skip to Quiz",
     timerOn: "⏱ Timer On", timerOff: "⏱ Timer Off", timeUp: "⏰ Time's Up!",
-    reviewBtn: "📋 View Review", hideReview: "Hide Review", reviewTitle: "Question Review",
+    reviewBtn: "View Review", hideReview: "Hide Review", reviewTitle: "Question Review",
     loadingText: "Loading...",
     saveErrorText: "⚠️ Data not saved – check your internet connection",
     newAchievement: "New Achievement!", allRightsReserved: "All rights reserved to",
@@ -291,7 +291,7 @@ const TRANSLATIONS = {
     a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
     readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop", autoRead: "Auto Read",
     hint: "💡 Hint", eliminate: "❌ Eliminate Wrong",
-    shareResult: "🔗 Share Result",
+    shareResult: "Share Result",
     resumeTitle: "Resume Quiz?",
     resumeBody: "You have an unfinished quiz. Continue where you left off?",
     resumeBtn: "Continue",
@@ -2582,7 +2582,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.05))",border:"1px solid rgba(239,68,68,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
-              <span className="action-emoji" style={{fontSize:28,flexShrink:0}}>🚨</span>
               <div className="action-text" style={{textAlign:"start",minWidth:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{color:"#EF4444",fontWeight:800,fontSize:15}}>{t("incidentModeBtn")}</span>
@@ -3619,7 +3618,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                 const nt=TOPICS[nextTopicIdx];
                 return<button onClick={()=>startTopic(nt,"easy")}
                   style={{padding:14,background:`linear-gradient(135deg,${nt.color}ee,${nt.color}88)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${nt.color}55`}}>
-                  🚀 {lang==="en"?"Next Topic":"נושא הבא"}: {nt.icon} {nt.name}
+                  {lang==="en"?"Next Topic":"נושא הבא"}: {nt.icon} {nt.name}
                 </button>;
               })()}
               {/* Next level button */}
@@ -3652,7 +3651,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                   setScreen("topic");
                 }}
                   style={{padding:13,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:12,color:"#EF4444",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                  🔄 {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
+                  {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
                 </button>
               )}
               {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
