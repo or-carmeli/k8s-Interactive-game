@@ -1146,6 +1146,7 @@ export default function K8sQuestApp() {
   const handleResumeQuiz = () => {
     const saved = resumeData;
     if (!saved) return;
+    submittingRef.current = false;
 
     // Resolve topic object
     let topic = null;
@@ -1398,6 +1399,7 @@ export default function K8sQuestApp() {
           }
           setAllowNextLevel(true);
         }
+        submittingRef.current = false;
         updateDailyStreak();
         setScreen("topicComplete");
         return;
@@ -1449,6 +1451,7 @@ export default function K8sQuestApp() {
   const startTopic = async (topic, level) => {
     quizRunIdRef.current = Date.now().toString(36);
     liveIndexRef.current = 0;
+    submittingRef.current = false;
     clearQuizState();
     isRetryRef.current = false; // Only the explicit "retry wrong answers" flow sets this true
     setAnswerResult(null);
@@ -3506,8 +3509,8 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                       style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"14px 16px",background:bg,border:`1px solid ${borderColor}`,borderRadius:12,color,fontSize:15,cursor:isEliminated?"default":(tryAgainActive?(tryAgainSelected===null?"pointer":"default"):(dispSubmitted?"default":"pointer")),lineHeight:1.7,display:"flex",alignItems:"center",flexDirection:dir==="rtl"?"row-reverse":"row",gap:12,transition:"all 0.15s",opacity:isEliminated?0.35:1,textDecoration:isEliminated?"line-through":"none",minHeight:56}}>
                       <span aria-hidden="true" style={{flexShrink:0,width:30,height:30,borderRadius:8,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:labelColor}}>{t("optionLabels")[i]}</span>
                       <span dir={optDir} style={{flex:1,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7}}>{optDir==="ltr"?opt:renderBidi(opt,lang)}</span>
-                      {dispSubmitted&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✓</span>}
-                      {dispSubmitted&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✗</span>}
+                      {dispSubmitted&&!checkingAnswer&&isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✓</span>}
+                      {dispSubmitted&&!checkingAnswer&&isChosen&&!isCorrect&&<span aria-hidden="true" style={{flexShrink:0,fontSize:18,lineHeight:1}}>✗</span>}
                     </button>
                   );
                 })}
