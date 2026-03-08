@@ -216,10 +216,11 @@ export default function RoadmapView({
                   </button>
                 ) : recLvl && !(overallProgress === 0 && isCurrent) ? (
                   <button onClick={()=>startTopic(topic,recLvl)}
-                    style={{width:"100%",padding:"8px",background:`linear-gradient(135deg,${topic.color}20,${topic.color}10)`,border:`1px solid ${topic.color}40`,borderRadius:10,color:topic.color,fontSize:13,fontWeight:700,cursor:"pointer",transition:"transform 0.15s",direction:dir}}
+                    style={{width:"100%",padding:"8px",background:`linear-gradient(135deg,${topic.color}20,${topic.color}10)`,border:`1px solid ${topic.color}40`,borderRadius:10,color:topic.color,fontSize:13,fontWeight:700,cursor:"pointer",transition:"transform 0.15s",direction:dir,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
                     onMouseEnter={e=>e.currentTarget.style.transform="translateY(-1px)"}
                     onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
-                    {t("roadmapContinueHere")}
+                    <span>{t("roadmapContinueHere")}</span>
+                    <span aria-hidden="true">{dir==="rtl"?"◀":"▶"}</span>
                   </button>
                 ) : null}
 
