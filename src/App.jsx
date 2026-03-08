@@ -1055,10 +1055,11 @@ export default function K8sQuestApp() {
       }
     }
 
-    // Priority 2: Resume incident
+    // Priority 2: Resume incident (only if real progress was made)
     try {
       const saved = JSON.parse(localStorage.getItem(INCIDENT_SAVE_KEY));
-      if (saved?.incidentId) {
+      const hasProgress = saved && ((saved.stepIndex ?? 0) > 0 || (saved.history && saved.history.length > 0));
+      if (saved?.incidentId && hasProgress) {
         const incident = INCIDENTS.find(i => i.id === saved.incidentId);
         if (incident) {
           setSelectedIncident(incident);
