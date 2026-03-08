@@ -3322,11 +3322,18 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
 
             {/* ── INCIDENT HISTORY ── */}
             {sectionTitle(lang==="en"?"Incident History":"היסטוריית אירועים")}
-            <div style={{background:"rgba(16,185,129,0.04)",border:"1px solid rgba(16,185,129,0.15)",borderRadius:12,padding:"20px 20px",display:"flex",alignItems:"center",gap:14}}>
-              <span style={{fontSize:22,flexShrink:0}}>✅</span>
-              <div>
-                <div style={{fontSize:14,fontWeight:700,color:"#10B981"}}>No incidents in the last 30 days</div>
-                <div style={{fontSize:12,color:"#475569",marginTop:3}}>All services have been running without disruption.</div>
+            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>{lang==="en"?"Answer validation service disruption":"שיבוש בשירות בדיקת תשובות"}</div>
+                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>Mar 8, 2026 · ~30 min</div>
+                </div>
+                <span style={{fontSize:11,color:"#10B981",fontWeight:700,background:"rgba(16,185,129,0.1)",padding:"3px 8px",borderRadius:6}}>{lang==="en"?"Resolved":"טופל"}</span>
+              </div>
+              <div style={{padding:"10px 0",fontSize:12,color:"#94a3b8",lineHeight:1.5}}>
+                {lang==="en"
+                  ?"A database function misconfiguration caused the answer-check RPC to fail silently. The client fallback path returned incorrect results and empty explanations for all question types. Root cause: a read-only transaction constraint on a write-dependent function. Fixed via migration patch. No user data was lost."
+                  :"תקלת הגדרה בפונקציית מסד נתונים גרמה לכשל שקט ב-RPC של בדיקת תשובות. נתיב ה-fallback בצד הלקוח החזיר תוצאות שגויות והסברים ריקים בכל סוגי השאלות. שורש הבעיה: הגבלת טרנזקציה לקריאה בלבד על פונקציה שדורשת כתיבה. תוקן באמצעות migration. לא אבד מידע."}
               </div>
             </div>
 
