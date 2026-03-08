@@ -27,8 +27,14 @@ self.addEventListener("activate", e => {
 });
 
 // Fetch – network first, fallback to cache
+// For navigation requests (HTML pages), always try network and never
+// fall back to a stale cached page — this prevents iOS Safari from
+// being stuck on an old broken bundle forever.
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
+
+  const isNavigate = e.request.mode === "navigate";
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
@@ -36,6 +42,6 @@ self.addEventListener("fetch", e => {
         caches.open(CACHE).then(c => c.put(e.request, clone));
         return res;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() => isNavigate ? caches.match("/index.html") : caches.match(e.request))
   );
 });
