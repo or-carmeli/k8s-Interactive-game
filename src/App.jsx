@@ -3712,13 +3712,10 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
       {/* TOPIC */}
       {screen==="topic"&&selectedTopic&&selectedLevel&&(
         <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease"}}>
-          <div style={{position:"relative",display:"flex",flexWrap:"wrap",alignItems:"center",gap:8,marginBottom:22,minHeight:36}}>
-            {topicScreen==="theory"&&<button onClick={()=>setScreen("home")} aria-label={t("back")} style={{position:"absolute",[dir==="rtl"?"right":"left"]:0,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} aria-hidden="false"><span aria-hidden="true">{dir==="rtl"?"→":"←"}</span></button>}
-            <div style={{flex:1,minWidth:160,display:"flex",alignItems:"center",gap:8,justifyContent:"center",paddingInlineStart:topicScreen==="theory"?44:0}}>
-              <span style={{fontSize:18}}>{selectedTopic.icon}</span>
-              <h2 style={{margin:0,color:selectedTopic.color,fontSize:17,fontWeight:800,textAlign:"center"}}>{selectedTopic.name}</h2>
-            </div>
-            <span style={{flexShrink:0,fontSize:12,color:LEVEL_CONFIG[selectedLevel].color,background:`${LEVEL_CONFIG[selectedLevel].color}18`,padding:"3px 10px",borderRadius:20,fontWeight:700,whiteSpace:"nowrap"}}>{LEVEL_CONFIG[selectedLevel].icon} {lang==="en"?LEVEL_CONFIG[selectedLevel].labelEn:LEVEL_CONFIG[selectedLevel].label}</span>
+          <div style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:6,marginBottom:18}}>
+            <button onClick={()=>setScreen("home")} aria-label={t("back")} style={{position:"absolute",[dir==="rtl"?"right":"left"]:0,top:0,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",width:34,height:34,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}><span aria-hidden="true">{dir==="rtl"?"→":"←"}</span></button>
+            <h2 style={{margin:0,color:selectedTopic.color,fontSize:17,fontWeight:800,textAlign:"center"}}>{selectedTopic.name}</h2>
+            <span style={{fontSize:12,color:LEVEL_CONFIG[selectedLevel].color,background:`${LEVEL_CONFIG[selectedLevel].color}18`,padding:"3px 10px",borderRadius:20,fontWeight:700,whiteSpace:"nowrap"}}>{LEVEL_CONFIG[selectedLevel].icon} {lang==="en"?LEVEL_CONFIG[selectedLevel].labelEn:LEVEL_CONFIG[selectedLevel].label}</span>
           </div>
 
           {topicScreen==="theory"?(
@@ -3743,24 +3740,18 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             <div>
               <div style={{marginBottom:18}}>
                 {/* Row 1: progress indicator — prominent and centered */}
-                <div className="quiz-bar" style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,direction:dir}}>
-                  <button onClick={()=>setScreen("home")} aria-label={t("back")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",width:34,height:34,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <span aria-hidden="true">{dir==="rtl"?"→":"←"}</span>
-                  </button>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flex:1,justifyContent:"center"}}>
-                    {questionIndex > 0 && (
-                      <button onClick={()=>setQuestionIndex(p=>p-1)}
-                        style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"5px 10px",borderRadius:7,cursor:"pointer",fontSize:12}}>
-                        {t("prevQuestion")}
-                      </button>
-                    )}
-                    <span aria-live="polite" aria-atomic="true" style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>
-                      {t("question")} {questionIndex+1} {t("of")} {currentQuestions.length}
-                    </span>
-                    {isInHistoryMode && !tryAgainActive && <span style={{fontSize:11,color:"#A855F7",fontWeight:700,background:"rgba(168,85,247,0.12)",padding:"2px 8px",borderRadius:6}}>{t("reviewing")}</span>}
-                    {tryAgainActive && <span style={{fontSize:11,color:"#F59E0B",fontWeight:700,background:"rgba(245,158,11,0.12)",padding:"2px 8px",borderRadius:6}}>{t("tryAgainBadge")}</span>}
-                  </div>
-                  <div style={{width:34,flexShrink:0}}/>
+                <div className="quiz-bar" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,direction:dir}}>
+                  {questionIndex > 0 && (
+                    <button onClick={()=>setQuestionIndex(p=>p-1)}
+                      style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"5px 10px",borderRadius:7,cursor:"pointer",fontSize:12,flexShrink:0}}>
+                      {t("prevQuestion")}
+                    </button>
+                  )}
+                  <span aria-live="polite" aria-atomic="true" style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>
+                    {t("question")} {questionIndex+1} {t("of")} {currentQuestions.length}
+                  </span>
+                  {isInHistoryMode && !tryAgainActive && <span style={{fontSize:11,color:"#A855F7",fontWeight:700,background:"rgba(168,85,247,0.12)",padding:"2px 8px",borderRadius:6}}>{t("reviewing")}</span>}
+                  {tryAgainActive && <span style={{fontSize:11,color:"#F59E0B",fontWeight:700,background:"rgba(245,158,11,0.12)",padding:"2px 8px",borderRadius:6}}>{t("tryAgainBadge")}</span>}
                 </div>
                 {/* Row 2: stats bar — timer, streak, score */}
                 <div className="quiz-bar-right" style={{display:"flex",gap:10,alignItems:"center",justifyContent:"center",marginBottom:8,direction:"ltr"}}>
