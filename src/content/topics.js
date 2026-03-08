@@ -124,14 +124,14 @@ export const TOPICS = [
             {
               q: "מה resource requests ב-Pod?",
               options: [
-              "כמות משאבים מקסימלית שהקונטיינר רשאי לצרוך לפני OOMKill",
-              "כמות משאבים מינימלית שהPod צריך לקבל מה-Scheduler",
               "גודל ה-container image שמוריד מה-registry לפני הפעלה",
-              "מגבלת קצב הרשת שהPod מקבל מה-CNI plugin",
+              "כמות ה-CPU וה-Memory שה-Pod מבקש כדי שה-Scheduler יוכל לבחור Node מתאים",
+              "רשימת הפורטים שה-Pod חושף לתעבורת רשת",
+              "מגבלת קצב הרשת שה-Pod מקבל מה-CNI plugin",
               ],
               answer: 1,
               explanation:
-                "requests מגדיר כמה CPU/Memory ה-Pod צריך. ה-Scheduler משתמש בזה לבחור Node מתאים.",
+                "requests מגדיר כמה CPU/Memory ה-Pod מבקש. ה-Scheduler משתמש בזה כדי למצוא Node עם מספיק משאבים פנויים ולתזמן את ה-Pod עליו.",
             },
             {
               q: "מה מטרת Namespace ב-Kubernetes?",
@@ -222,14 +222,14 @@ export const TOPICS = [
             {
               q: "What are resource requests in a Pod?",
               options: [
-              "Maximum resources the container may consume before receiving OOMKill",
-              "Minimum resources the Pod needs, used by the Scheduler to pick a Node",
               "Size of the container image downloaded from the registry before startup",
+              "The amount of CPU and Memory the Pod asks for so the Scheduler can find a suitable Node",
+              "The list of ports the Pod exposes for network traffic",
               "Network rate limit assigned to the Pod by the CNI plugin",
               ],
               answer: 1,
               explanation:
-                "requests tells Kubernetes the minimum CPU and memory your container needs to run properly. The Scheduler uses this value when deciding which Node to place the Pod on - it only considers Nodes that have at least that much free capacity. Setting requests too low can cause performance problems; setting them too high wastes cluster resources. Note: requests are a scheduling hint - the container can still use more (up to its limit). The hard cap is set separately via limits.",
+                "requests defines how much CPU and Memory the Pod is asking for. The Scheduler uses this to find a Node with enough available resources and schedule the Pod on it. Note: requests are a scheduling hint — the container can use more resources up to its limit. The hard cap is set separately via limits.",
             },
             {
               q: "What is the purpose of a Namespace in Kubernetes?",
