@@ -25,9 +25,9 @@ export const INCIDENTS = [
     steps: [
       {
         prompt:
-          "🚨 PagerDuty alert: `api-server` pod in namespace `production` is restarting every 2 minutes. End users are seeing 503 errors. What is your first action?",
+          "🚨 PagerDuty alert:\n`api-server` pod in namespace `production` is restarting every 2 minutes.\nEnd users are seeing 503 errors.\n\nWhat is your first action?",
         promptHe:
-          "🚨 התראת PagerDuty: ה-Pod של `api-server` ב-namespace `production` מתאפס כל 2 דקות. משתמשים מקבלים שגיאות 503. מה הצעד הראשון שלך?",
+          "🚨 התראת PagerDuty:\nה-Pod של `api-server` ב-namespace `production` מתאפס כל 2 דקות.\nמשתמשים מקבלים שגיאות 503.\n\nמה הצעד הראשון שלך?",
         options: [
           "kubectl get pods -n production",
           "kubectl delete pod api-server -n production",
@@ -48,9 +48,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl get pods -n production returns:\n\nNAME            READY   STATUS      RESTARTS   AGE\napi-server-xyz  0/1     OOMKilled   14         2h\n\nWhat does OOMKilled specifically mean and what command gives you the most detail?",
+          "You ran kubectl get pods -n production:\n\nNAME            READY   STATUS      RESTARTS   AGE\napi-server-xyz  0/1     OOMKilled   14         2h\n\nWhat does OOMKilled mean?\nWhich command gives you the most detail?",
         promptHe:
-          "הרצת הפקודה `kubectl get pods -n production` מחזירה:\n\nNAME            READY   STATUS      RESTARTS   AGE\napi-server-xyz  0/1     OOMKilled   14         2h\n\nמה המשמעות של OOMKilled ואיזה פקודה מספקת את המידע המלא ביותר?",
+          "הרצת kubectl get pods -n production:\n\nNAME            READY   STATUS      RESTARTS   AGE\napi-server-xyz  0/1     OOMKilled   14         2h\n\nמה המשמעות של OOMKilled?\nאיזו פקודה תיתן את המידע המפורט ביותר?",
         options: [
           "OOMKilled is a liveness probe failure - check probe config with kubectl edit deployment",
           "OOMKilled means the container exceeded its memory limit - run kubectl describe pod api-server-xyz -n production",
@@ -71,9 +71,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl describe pod api-server-xyz -n production shows:\n\n  Limits:\n    memory: 256Mi\n  Last State:\n    Reason: OOMKilled\n    Exit Code: 137\n\nHow do you determine the right memory limit to set?",
+          "kubectl describe pod api-server-xyz -n production shows:\n\n  Limits:\n    memory: 256Mi\n  Last State:\n    Reason: OOMKilled\n    Exit Code: 137\n\nHow do you determine the right memory limit?",
         promptHe:
-          "הפקודה `kubectl describe pod api-server-xyz -n production` מציגה:\n\n  Limits:\n    memory: 256Mi\n  Last State:\n    Reason: OOMKilled\n    Exit Code: 137\n\nכיצד קובעים את מגבלת הזיכרון הנכונה להגדיר?",
+          "kubectl describe pod api-server-xyz -n production מציג:\n\n  Limits:\n    memory: 256Mi\n  Last State:\n    Reason: OOMKilled\n    Exit Code: 137\n\nכיצד קובעים את מגבלת הזיכרון הנכונה?",
         options: [
           "kubectl top pod api-server-xyz -n production  (see actual memory usage)",
           "kubectl logs api-server-xyz -n production --previous  (scan logs for errors)",
@@ -94,9 +94,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl top pod shows `api-server-xyz` using ~240Mi at idle, spiking to 320Mi under load. The current limit is 256Mi. What is the correct fix?",
+          "kubectl top pod shows:\n`api-server-xyz` — ~240Mi at idle, spikes to 320Mi under load.\nCurrent memory limit: 256Mi.\n\nWhat is the correct fix?",
         promptHe:
-          "הפקודה `kubectl top pod` מראה שהשימוש של `api-server-xyz` הוא כ-240Mi במצב מנוחה, ועולה ל-320Mi תחת עומס. המגבלה הנוכחית היא 256Mi. מה התיקון הנכון?",
+          "kubectl top pod מציג:\n`api-server-xyz` — כ-240Mi במנוחה, עולה ל-320Mi תחת עומס.\nמגבלת זיכרון נוכחית: 256Mi.\n\nמה התיקון הנכון?",
         options: [
           "Delete the pod - Kubernetes will recreate it and somehow the memory issue will go away",
           "Increase the memory limit to 512Mi and set request to 256Mi in the Deployment spec",
@@ -117,9 +117,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You patch the Deployment with the new memory limits. How do you verify the rolling update succeeds and the pod no longer OOMKills?",
+          "You patched the Deployment with new memory limits.\nThe rolling update is in progress.\n\nHow do you verify the update succeeded and the pod no longer OOMKills?",
         promptHe:
-          "עדכנת את ה-Deployment עם מגבלות הזיכרון החדשות. כיצד מאמתים שה-rolling update הצליח וה-Pod אינו עוד מקבל OOMKill?",
+          "עדכנת את ה-Deployment עם מגבלות זיכרון חדשות.\nה-rolling update בתהליך.\n\nכיצד מוודאים שהעדכון הצליח וה-Pod לא מקבל OOMKill?",
         options: [
           "kubectl rollout status deployment/api-server -n production",
           "kubectl get pods -n production -w  (watch pod restarts)",
@@ -140,9 +140,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "The new pod has been stable for 15 minutes. What should you do before closing the incident to prevent recurrence?",
+          "The new pod has been stable for 15 minutes.\n\nWhat should you do before closing the incident to prevent recurrence?",
         promptHe:
-          "ה-Pod החדש יציב כבר 15 דקות. מה עליך לעשות לפני סגירת האירוע כדי למנוע הישנות?",
+          "ה-Pod החדש יציב כבר 15 דקות.\n\nמה עליך לעשות לפני סגירת האירוע כדי למנוע הישנות?",
         options: [
           "Increase all node sizes immediately as a precaution",
           "Add a Prometheus alert on memory usage > 80% of limit, and audit resource limits on all other Deployments",
@@ -179,9 +179,9 @@ export const INCIDENTS = [
     steps: [
       {
         prompt:
-          "🚨 Alert: `payment-service` in namespace `staging` entered CrashLoopBackOff 10 minutes after a new release was deployed. The on-call engineer asks for a quick diagnosis. Where do you start?",
+          "🚨 Alert:\n`payment-service` in namespace `staging` entered CrashLoopBackOff.\nThis started 10 minutes after a new release was deployed.\n\nThe on-call engineer asks for a quick diagnosis.\nWhere do you start?",
         promptHe:
-          "🚨 התראה: `payment-service` ב-namespace `staging` נכנס ל-CrashLoopBackOff 10 דקות אחרי שגרסה חדשה הוצבה. המהנדס התורן מבקש אבחון מהיר. מאיפה מתחילים?",
+          "🚨 התראה:\n`payment-service` ב-namespace `staging` נכנס ל-CrashLoopBackOff.\nזה התחיל 10 דקות אחרי שגרסה חדשה הוצבה.\n\nהמהנדס התורן מבקש אבחון מהיר.\nמאיפה מתחילים?",
         options: [
           "kubectl get pods -n staging",
           "kubectl rollout undo deployment/payment-service -n staging  (roll back immediately)",
@@ -202,9 +202,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl get pods -n staging:\n\nNAME                         STATUS             RESTARTS\npayment-service-7d4b9-abc12  CrashLoopBackOff   9\n\nThe pod is crashing repeatedly. What command reveals the application error?",
+          "kubectl get pods -n staging:\n\nNAME                         STATUS             RESTARTS\npayment-service-7d4b9-abc12  CrashLoopBackOff   9\n\nThe pod is crashing repeatedly.\nWhat command reveals the application error?",
         promptHe:
-          "הרצת `kubectl get pods -n staging` מציגה:\n\nNAME                         STATUS             RESTARTS\npayment-service-7d4b9-abc12  CrashLoopBackOff   9\n\nה-Pod קורס שוב ושוב. איזו פקודה חושפת את שגיאת האפליקציה?",
+          "kubectl get pods -n staging:\n\nNAME                         STATUS             RESTARTS\npayment-service-7d4b9-abc12  CrashLoopBackOff   9\n\nה-Pod קורס שוב ושוב.\nאיזו פקודה חושפת את שגיאת האפליקציה?",
         options: [
           "kubectl describe pod payment-service-7d4b9-abc12 -n staging",
           "kubectl logs payment-service-7d4b9-abc12 -n staging --previous",
@@ -225,9 +225,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "Previous logs show:\n\nFATAL  config file '/etc/app/config.yaml' not found\nError: no such file or directory\n\nThe app is missing a config file it expects to be mounted. What do you check?",
+          "Previous logs show:\n\nFATAL  config file '/etc/app/config.yaml' not found\nError: no such file or directory\n\nThe app expects a mounted config file that doesn't exist.\n\nWhat do you check?",
         promptHe:
-          "הלוגים הקודמים מראים:\n\nFATAL  config file '/etc/app/config.yaml' not found\nError: no such file or directory\n\nלאפליקציה חסר קובץ קונפיגורציה שהיא מצפה שיהיה מוצמד. מה בודקים?",
+          "הלוגים הקודמים מראים:\n\nFATAL  config file '/etc/app/config.yaml' not found\nError: no such file or directory\n\nהאפליקציה מצפה לקובץ config שלא קיים.\n\nמה בודקים?",
         options: [
           "kubectl describe pod payment-service-7d4b9-abc12 -n staging  (check volumes and mounts)",
           "kubectl get configmap -n staging  (list available ConfigMaps)",
@@ -248,9 +248,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "Inspecting the pod spec reveals a volumeMount expecting ConfigMap 'payment-config'.\n\nkubectl get configmap -n staging:\n\nNAME              DATA   AGE\napp-settings      3      5d\n\nThe ConfigMap 'payment-config' does not exist in this namespace. What most likely happened?",
+          "The pod spec has a volumeMount expecting ConfigMap `payment-config`.\n\nkubectl get configmap -n staging:\n\nNAME              DATA   AGE\napp-settings      3      5d\n\nConfigMap `payment-config` does not exist in this namespace.\n\nWhat most likely happened?",
         promptHe:
-          "בדיקת ה-Pod spec מגלה volumeMount המצפה ל-ConfigMap בשם `payment-config`.\n\nהרצת `kubectl get configmap -n staging` מציגה:\n\nNAME              DATA   AGE\napp-settings      3      5d\n\nה-ConfigMap `payment-config` אינו קיים ב-Namespace הזה. מה כנראה קרה?",
+          "ה-Pod spec מכיל volumeMount שמצפה ל-ConfigMap בשם `payment-config`.\n\nkubectl get configmap -n staging:\n\nNAME              DATA   AGE\napp-settings      3      5d\n\nה-ConfigMap `payment-config` לא קיים ב-namespace הזה.\n\nמה כנראה קרה?",
         options: [
           "The ConfigMap was created in a different namespace (e.g., production) but not in staging",
           "The ConfigMap was accidentally deleted from staging",
@@ -271,9 +271,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You need to create `payment-config` in staging using the production version as a reference. What is the safest approach?",
+          "You need to create `payment-config` in staging.\nThe production version can serve as a reference.\n\nWhat is the safest approach?",
         promptHe:
-          "יש ליצור את `payment-config` ב-staging תוך שימוש בגרסת production כהפניה. מה הגישה הבטוחה ביותר?",
+          "צריך ליצור `payment-config` ב-staging.\nהגרסה ב-production יכולה לשמש כהפניה.\n\nמה הגישה הבטוחה ביותר?",
         options: [
           "kubectl get configmap payment-config -n production -o yaml | sed 's/namespace: production/namespace: staging/' | kubectl apply -f -",
           "kubectl cp payment-config -n production staging/",
@@ -310,9 +310,9 @@ export const INCIDENTS = [
     steps: [
       {
         prompt:
-          "🚨 A newly deployed microservice has all pods in `ImagePullBackOff`. Other services on the same cluster are healthy. What is your first diagnostic step?",
+          "🚨 A newly deployed microservice has all pods in `ImagePullBackOff`.\nOther services on the same cluster are healthy.\n\nWhat is your first diagnostic step?",
         promptHe:
-          "🚨 מיקרו-שירות שהוצב לאחרונה מציג כל ה-Pods שלו במצב `ImagePullBackOff`. שירותים אחרים באותו קלאסטר תקינים. מה הצעד האבחוני הראשון שלך?",
+          "🚨 מיקרו-שירות חדש שהוצב — כל ה-Pods במצב `ImagePullBackOff`.\nשירותים אחרים באותו cluster תקינים.\n\nמה הצעד האבחוני הראשון?",
         options: [
           "kubectl describe pod <pod-name> -n default",
           "kubectl delete deployment myapp  (tear it down and redeploy)",
@@ -333,9 +333,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl describe pod shows:\n\n  Events:\n    Failed to pull image 'registry.company.com/myapp:v2.1':\n    rpc error: code = Unknown\n    unauthorized: authentication required\n\nWhat does this error specifically indicate?",
+          "kubectl describe pod shows:\n\n  Events:\n    Failed to pull image 'registry.company.com/myapp:v2.1':\n    rpc error: code = Unknown\n    unauthorized: authentication required\n\nWhat does this error indicate?",
         promptHe:
-          "הפקודה `kubectl describe pod` מציגה:\n\n  Events:\n    Failed to pull image 'registry.company.com/myapp:v2.1':\n    rpc error: code = Unknown\n    unauthorized: authentication required\n\nמה מציינת שגיאה זו באופן ספציפי?",
+          "kubectl describe pod מציג:\n\n  Events:\n    Failed to pull image 'registry.company.com/myapp:v2.1':\n    rpc error: code = Unknown\n    unauthorized: authentication required\n\nמה מציינת שגיאה זו?",
         options: [
           "The image tag `v2.1` does not exist in the registry",
           "The registry requires credentials but the pod has none configured",
@@ -356,9 +356,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "Your registry `registry.company.com` requires a username/password to pull images. What Kubernetes resource is designed to hold registry credentials?",
+          "The registry `registry.company.com` requires username/password to pull images.\n\nWhat Kubernetes resource is designed to hold registry credentials?",
         promptHe:
-          "ה-registry `registry.company.com` שלך דורש שם משתמש/סיסמה למשיכת images. איזה משאב Kubernetes מיועד להחזיק אישורי registry?",
+          "ה-registry `registry.company.com` דורש username/password למשיכת images.\n\nאיזה משאב Kubernetes מיועד להחזיק אישורי registry?",
         options: [
           "A ConfigMap with base64-encoded credentials",
           "A Secret of type `kubernetes.io/dockerconfigjson`",
@@ -379,9 +379,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You run the following command:\n\nkubectl get secret -n default\n\nNo registry-related Secret exists in the namespace. How do you create one correctly?",
+          "You ran:\n\nkubectl get secret -n default\n\nNo registry-related Secret exists in the namespace.\n\nHow do you create one correctly?",
         promptHe:
-          "הרצת הפקודה הבאה:\n\nkubectl get secret -n default\n\nלא קיים Secret הקשור ל-registry ב-namespace. כיצד יוצרים אחד נכון?",
+          "הרצת:\n\nkubectl get secret -n default\n\nלא קיים Secret הקשור ל-registry ב-namespace.\n\nכיצד יוצרים אחד נכון?",
         options: [
           "kubectl create secret docker-registry regcred --docker-server=registry.company.com --docker-username=user --docker-password=pass -n default",
           "kubectl create configmap registry-auth --from-literal=password=mypassword",
@@ -402,9 +402,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You created the `regcred` Secret. The deployment still fails to pull. What critical step did you miss?",
+          "You created the `regcred` Secret.\nThe Deployment still fails to pull the image.\n\nWhat critical step did you miss?",
         promptHe:
-          "יצרת את ה-Secret `regcred`. ה-Deployment עדיין נכשל במשיכה. איזה צעד קריטי החמצת?",
+          "יצרת את ה-Secret `regcred`.\nה-Deployment עדיין נכשל במשיכת ה-image.\n\nאיזה צעד קריטי החמצת?",
         options: [
           "The Secret value needs to be base64-encoded again manually",
           "The Deployment spec must reference the Secret under `imagePullSecrets`",
@@ -441,9 +441,9 @@ export const INCIDENTS = [
     steps: [
       {
         prompt:
-          "🚨 Users report 'connection refused' when the frontend calls the backend API. Pod status for both frontend and backend shows Running/Ready. Where do you start?",
+          "🚨 Users report 'connection refused' when the frontend calls the backend API.\nPod status for both frontend and backend: Running/Ready.\n\nWhere do you start?",
         promptHe:
-          "🚨 משתמשים מדווחים על 'connection refused' כשהפרונטאנד קורא ל-API הבאקאנד. סטטוס ה-Pod של שניהם מציג Running/Ready. מאיפה מתחילים?",
+          "🚨 משתמשים מדווחים על 'connection refused' כשהפרונטאנד קורא ל-API הבאקאנד.\nסטטוס Pods — frontend ו-backend: Running/Ready.\n\nמאיפה מתחילים?",
         options: [
           "kubectl get svc backend-svc -n production  (inspect the Service)",
           "kubectl restart pod backend -n production",
@@ -464,9 +464,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl get svc backend-svc -n production shows the Service exists with ClusterIP and port 80. What is the single most diagnostic command to run next?",
+          "kubectl get svc backend-svc -n production:\nService exists with ClusterIP and port 80.\n\nWhat is the single most diagnostic command to run next?",
         promptHe:
-          "הפקודה `kubectl get svc backend-svc -n production` מציגה שה-Service קיים עם ClusterIP ופורט 80. מהי הפקודה האבחונית ביותר להריץ כעת?",
+          "kubectl get svc backend-svc -n production:\nה-Service קיים עם ClusterIP ופורט 80.\n\nמהי הפקודה האבחונית ביותר להריץ כעת?",
         options: [
           "kubectl get endpoints backend-svc -n production",
           "kubectl get ingress -n production",
@@ -487,9 +487,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl get endpoints backend-svc -n production:\n\nNAME          ENDPOINTS   AGE\nbackend-svc   <none>      3d\n\n`<none>` - the Service has no matching pods. What do you do next?",
+          "kubectl get endpoints backend-svc -n production:\n\nNAME          ENDPOINTS   AGE\nbackend-svc   <none>      3d\n\nEndpoints: `<none>` — the Service has no matching pods.\n\nWhat do you do next?",
         promptHe:
-          "הרצת `kubectl get endpoints backend-svc -n production` מציגה:\n\nNAME          ENDPOINTS   AGE\nbackend-svc   <none>      3d\n\n`<none>` — ל-Service אין Pods תואמים. מה הצעד הבא?",
+          "kubectl get endpoints backend-svc -n production:\n\nNAME          ENDPOINTS   AGE\nbackend-svc   <none>      3d\n\nEndpoints: `<none>` — ל-Service אין Pods תואמים.\n\nמה הצעד הבא?",
         options: [
           "kubectl get pods -n production --show-labels  (see actual pod labels)",
           "kubectl describe svc backend-svc -n production  (see the selector the Service uses)",
@@ -510,9 +510,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "Here is what you found:\n\nkubectl describe svc backend-svc -n production\n  Selector: app=backend\n\nkubectl get pods -n production --show-labels\n  Pod labels: app=backend-v2\n\nThe label was updated in the last deployment, but the Service selector was not. What is the fix?",
+          "Here is what you found:\n\nkubectl describe svc backend-svc -n production\n  Selector: app=backend\n\nkubectl get pods -n production --show-labels\n  Pod labels: app=backend-v2\n\nThe label was updated in the last deployment.\nThe Service selector was not updated.\n\nWhat is the fix?",
         promptHe:
-          "הנה מה שמצאת:\n\nkubectl describe svc backend-svc -n production\n  Selector: app=backend\n\nkubectl get pods -n production --show-labels\n  Pod labels: app=backend-v2\n\nה-label עודכן בדיפלוימנט האחרון, אך ה-selector של ה-Service לא עודכן. מה התיקון?",
+          "הנה מה שמצאת:\n\nkubectl describe svc backend-svc -n production\n  Selector: app=backend\n\nkubectl get pods -n production --show-labels\n  Pod labels: app=backend-v2\n\nה-label עודכן ב-Deployment האחרון.\nה-selector של ה-Service לא עודכן.\n\nמה התיקון?",
         options: [
           "Manually add label `app=backend` to every running pod with kubectl label",
           "kubectl patch svc backend-svc -n production -p '{\"spec\":{\"selector\":{\"app\":\"backend-v2\"}}}'",
@@ -533,9 +533,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You've patched the Service selector. How do you confirm traffic is flowing end-to-end?",
+          "You patched the Service selector to match `app=backend-v2`.\n\nHow do you confirm traffic is flowing end-to-end?",
         promptHe:
-          "עדכנת את ה-selector של ה-Service. כיצד מאשרים שהתעבורה זורמת מקצה לקצה?",
+          "עדכנת את ה-selector של ה-Service ל-`app=backend-v2`.\n\nכיצד מאשרים שהתעבורה זורמת מקצה לקצה?",
         options: [
           "kubectl get endpoints backend-svc -n production  (verify pod IPs appear)",
           "kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -n production -- curl backend-svc/health",
@@ -556,9 +556,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "Traffic is restored. What process change prevents selector mismatches from reaching production again?",
+          "Traffic is restored.\n\nWhat process change prevents selector mismatches from reaching production again?",
         promptHe:
-          "התעבורה שוחזרה. איזה שינוי תהליך ימנע אי-התאמות selector מלהגיע לproduction שוב?",
+          "התעבורה שוחזרה.\n\nאיזה שינוי תהליך ימנע אי-התאמות selector מלהגיע ל-production שוב?",
         options: [
           "Manually double-check Service selectors after every deployment",
           "Use Helm/Kustomize to derive both the Service selector and Deployment pod labels from a single shared value, and alert on kube_endpoint_ready == 0",
@@ -595,9 +595,9 @@ export const INCIDENTS = [
     steps: [
       {
         prompt:
-          "🚨 Multiple applications log 'no such host' and 'dial tcp: lookup svc-name: no such host'. DNS seems broken cluster-wide. How do you confirm the DNS issue before investigating infrastructure?",
+          "🚨 Multiple applications log:\n'no such host'\n'dial tcp: lookup svc-name: no such host'\n\nDNS appears broken cluster-wide.\n\nHow do you confirm the DNS issue before investigating infrastructure?",
         promptHe:
-          "🚨 אפליקציות מרובות מתעדות 'no such host' ו-'dial tcp: lookup svc-name: no such host'. DNS נראה שבור בכל הקלאסטר. כיצד מאשרים את בעיית ה-DNS לפני בדיקת תשתית?",
+          "🚨 אפליקציות מרובות מתעדות:\n'no such host'\n'dial tcp: lookup svc-name: no such host'\n\nה-DNS נראה שבור בכל ה-cluster.\n\nכיצד מאשרים את בעיית ה-DNS לפני בדיקת תשתית?",
         options: [
           "kubectl run dns-test --image=busybox:1.28 --rm -it --restart=Never -- nslookup kubernetes.default",
           "Restart all pods in all namespaces",
@@ -618,9 +618,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "nslookup kubernetes.default fails: 'server can't find kubernetes.default: NXDOMAIN'. DNS is broken. Where does Kubernetes cluster DNS run?",
+          "nslookup kubernetes.default fails:\n'server can't find kubernetes.default: NXDOMAIN'\n\nDNS is confirmed broken.\n\nWhere does Kubernetes cluster DNS run?",
         promptHe:
-          "nslookup kubernetes.default נכשל: 'server can't find kubernetes.default: NXDOMAIN'. ה-DNS שבור. היכן רץ ה-DNS של קלאסטר Kubernetes?",
+          "nslookup kubernetes.default נכשל:\n'server can't find kubernetes.default: NXDOMAIN'\n\nה-DNS אושר כשבור.\n\nהיכן רץ ה-DNS של cluster Kubernetes?",
         options: [
           "On every node as a system daemon (systemd-resolved)",
           "As CoreDNS pods in the kube-system namespace",
@@ -641,9 +641,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl get pods -n kube-system -l k8s-app=kube-dns:\n\nNAME              STATUS      RESTARTS\ncoredns-abc12     OOMKilled   7\ncoredns-def34     OOMKilled   7\n\nBoth CoreDNS pods are OOMKilling. What should you do before changing anything?",
+          "kubectl get pods -n kube-system -l k8s-app=kube-dns:\n\nNAME              STATUS      RESTARTS\ncoredns-abc12     OOMKilled   7\ncoredns-def34     OOMKilled   7\n\nBoth CoreDNS pods are OOMKilling.\n\nWhat should you do before changing anything?",
         promptHe:
-          "הרצת `kubectl get pods -n kube-system -l k8s-app=kube-dns` מציגה:\n\nNAME              STATUS      RESTARTS\ncoredns-abc12     OOMKilled   7\ncoredns-def34     OOMKilled   7\n\nשני Pods של CoreDNS מקבלים OOMKill. מה יש לעשות לפני שמשנים דבר?",
+          "kubectl get pods -n kube-system -l k8s-app=kube-dns:\n\nNAME              STATUS      RESTARTS\ncoredns-abc12     OOMKilled   7\ncoredns-def34     OOMKilled   7\n\nשני Pods של CoreDNS מקבלים OOMKill.\n\nמה יש לעשות לפני שמשנים דבר?",
         options: [
           "kubectl delete pods -n kube-system -l k8s-app=kube-dns  (force restart)",
           "kubectl describe pod coredns-abc12 -n kube-system  (check memory limit)",
@@ -664,9 +664,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "After running describe and top on the CoreDNS pod:\n\nkubectl describe pod coredns-abc12 -n kube-system\n  Memory limit: 170Mi\n\nkubectl top pod coredns-abc12 -n kube-system\n  Current usage: 168Mi (99% of limit)\n\nThe cluster recently scaled from 20 to 80 nodes. What is the likely root cause?",
+          "Results from describe and top:\n\nkubectl describe pod coredns-abc12 -n kube-system\n  Memory limit: 170Mi\n\nkubectl top pod coredns-abc12 -n kube-system\n  Current usage: 168Mi (99% of limit)\n\nThe cluster recently scaled from 20 to 80 nodes.\n\nWhat is the likely root cause?",
         promptHe:
-          "לאחר הרצת describe ו-top על ה-Pod של CoreDNS:\n\nkubectl describe pod coredns-abc12 -n kube-system\n  Memory limit: 170Mi\n\nkubectl top pod coredns-abc12 -n kube-system\n  Current usage: 168Mi (99% of limit)\n\nהקלאסטר גדל לאחרונה מ-20 ל-80 Nodes. מה הסיבה השורשית הסבירה?",
+          "תוצאות describe ו-top:\n\nkubectl describe pod coredns-abc12 -n kube-system\n  Memory limit: 170Mi\n\nkubectl top pod coredns-abc12 -n kube-system\n  Current usage: 168Mi (99% of limit)\n\nה-cluster גדל לאחרונה מ-20 ל-80 Nodes.\n\nמה הסיבה השורשית הסבירה?",
         options: [
           "A memory leak in the CoreDNS binary - upgrade CoreDNS immediately",
           "The cluster grew significantly; CoreDNS caches DNS records for many more Services and Pods now, requiring more memory",
@@ -687,9 +687,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "How do you safely increase CoreDNS memory limits without causing a total DNS blackout?",
+          "CoreDNS needs more memory.\n\nHow do you safely increase the limits without causing a total DNS blackout?",
         promptHe:
-          "כיצד מגדילים בבטחה מגבלות זיכרון של CoreDNS ללא גרימת השבתת DNS מוחלטת?",
+          "CoreDNS צריך יותר זיכרון.\n\nכיצד מגדילים את המגבלות בבטחה ללא השבתת DNS מוחלטת?",
         options: [
           "kubectl edit deployment coredns -n kube-system  (increase memory limit, triggers rolling update)",
           "kubectl delete deployment coredns -n kube-system  (delete and recreate)",
@@ -710,9 +710,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "After increasing memory to 512Mi, the CoreDNS pods are Running. How do you verify DNS is fully restored?",
+          "Memory increased to 512Mi.\nCoreDNS pods are now Running.\n\nHow do you verify DNS is fully restored?",
         promptHe:
-          "לאחר הגדלת הזיכרון ל-512Mi, Pods של CoreDNS פועלים. כיצד מאמתים ש-DNS שוחזר לחלוטין?",
+          "הזיכרון הוגדל ל-512Mi.\nה-Pods של CoreDNS כעת Running.\n\nכיצד מאמתים ש-DNS שוחזר לחלוטין?",
         options: [
           "kubectl run dns-verify --image=busybox:1.28 --rm -it --restart=Never -- nslookup kubernetes.default.svc.cluster.local",
           "kubectl get pods -n kube-system  (confirm Running status)",
@@ -733,9 +733,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "DNS is stable. What monitoring should you add so this never silently fails again?",
+          "DNS is stable.\n\nWhat monitoring should you add so this never silently fails again?",
         promptHe:
-          "ה-DNS יציב. איזו ניטור יש להוסיף כדי שזה לא ייכשל שוב בשקט?",
+          "ה-DNS יציב.\n\nאיזה ניטור יש להוסיף כדי שזה לא ייכשל שוב בשקט?",
         options: [
           "Alert when CoreDNS pod memory usage exceeds 80% of its limit",
           "Alert on CoreDNS pod restart count > 0 in 5 minutes",
@@ -772,9 +772,9 @@ export const INCIDENTS = [
     steps: [
       {
         prompt:
-          "🚨 After the security team applied new NetworkPolicies to the `production` namespace, frontend-to-backend calls silently time out. Both sets of pods show Running/Ready. What do you check first?",
+          "🚨 The security team applied new NetworkPolicies to namespace `production`.\nFrontend-to-backend calls now silently time out.\nBoth sets of pods show Running/Ready.\n\nWhat do you check first?",
         promptHe:
-          "🚨 לאחר שצוות האבטחה החיל NetworkPolicies חדשות על namespace `production`, קריאות מהפרונטאנד לבאקאנד מסתיימות ב-timeout בשקט. שני קבוצות Pods מציגות Running/Ready. מה בודקים קודם?",
+          "🚨 צוות האבטחה החיל NetworkPolicies חדשות על namespace `production`.\nקריאות frontend → backend מסתיימות ב-timeout בשקט.\nשתי קבוצות ה-Pods מציגות Running/Ready.\n\nמה בודקים קודם?",
         options: [
           "kubectl get networkpolicy -n production  (list all policies in the namespace)",
           "kubectl rollout undo deployment/backend -n production  (roll back backend)",
@@ -795,9 +795,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You run:\n\nkubectl get networkpolicy -n production\n\nSeveral policies are listed, including 'deny-all-ingress' and 'allow-frontend'. How do you inspect what each policy actually permits?",
+          "You ran:\n\nkubectl get networkpolicy -n production\n\nSeveral policies are listed, including:\n- deny-all-ingress\n- allow-frontend\n\nHow do you inspect what each policy actually permits?",
         promptHe:
-          "הרצת:\n\nkubectl get networkpolicy -n production\n\nמספר מדיניות מופיעות ברשימה, כולל 'deny-all-ingress' ו-'allow-frontend'. כיצד בודקים מה כל מדיניות בפועל מתירה?",
+          "הרצת:\n\nkubectl get networkpolicy -n production\n\nמספר policies מופיעות, כולל:\n- deny-all-ingress\n- allow-frontend\n\nכיצד בודקים מה כל policy בפועל מתירה?",
         options: [
           "kubectl describe networkpolicy -n production  (shows selectors and rules for all policies)",
           "kubectl logs networkpolicy-controller -n kube-system",
@@ -818,9 +818,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "kubectl describe shows:\n  Policy: allow-frontend\n  PodSelector: role=frontend  (targets backend pods)\n  Ingress from: podSelector role=frontend\n\nBut `deny-all-ingress` blocks everything else. You suspect a label mismatch. What must you check?",
+          "kubectl describe shows:\n\n  Policy: allow-frontend\n  PodSelector: role=frontend  (targets backend pods)\n  Ingress from: podSelector role=frontend\n\n`deny-all-ingress` blocks everything else.\nYou suspect a label mismatch.\n\nWhat must you check?",
         promptHe:
-          "הפקודה `kubectl describe` מציגה:\n\n  Policy: allow-frontend\n  PodSelector: role=frontend  (מטרגט Pods של באקאנד)\n  Ingress from: podSelector role=frontend\n\nאך `deny-all-ingress` חוסמת את כל השאר. אתה חושד באי-התאמת label. מה חייבים לבדוק?",
+          "kubectl describe מציג:\n\n  Policy: allow-frontend\n  PodSelector: role=frontend  (מטרגט Pods של באקאנד)\n  Ingress from: podSelector role=frontend\n\n`deny-all-ingress` חוסמת את כל השאר.\nאתה חושד באי-התאמת labels.\n\nמה חייבים לבדוק?",
         options: [
           "kubectl get pods -n production --show-labels  (check actual labels on frontend pods)",
           "kubectl delete networkpolicy deny-all-ingress -n production",
@@ -841,9 +841,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "You run:\n\nkubectl get pods -n production --show-labels\n  frontend pods: app=frontend (NOT role=frontend)\n\nBut the 'allow-frontend' policy's from podSelector specifies role=frontend. What is the correct fix?",
+          "You ran:\n\nkubectl get pods -n production --show-labels\n  frontend pods: app=frontend (NOT role=frontend)\n\nThe allow-frontend policy's from-selector expects: role=frontend.\nActual frontend pod labels: app=frontend.\n\nWhat is the correct fix?",
         promptHe:
-          "הרצת:\n\nkubectl get pods -n production --show-labels\n  frontend pods: app=frontend (לא role=frontend)\n\nאך ה-podSelector מסוג from במדיניות 'allow-frontend' מציין role=frontend. מה התיקון הנכון?",
+          "הרצת:\n\nkubectl get pods -n production --show-labels\n  frontend pods: app=frontend (לא role=frontend)\n\nה-from-selector של allow-frontend מצפה ל: role=frontend.\nה-labels בפועל על ה-Pods: app=frontend.\n\nמה התיקון הנכון?",
         options: [
           "kubectl label pod <each-frontend-pod> role=frontend  (relabel individual pods)",
           "kubectl patch networkpolicy allow-frontend -n production -p to update the from-selector to `app=frontend`",
@@ -864,9 +864,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "After patching the NetworkPolicy, how do you confirm traffic actually flows before declaring the incident resolved?",
+          "You patched the NetworkPolicy.\n\nHow do you confirm traffic actually flows before declaring the incident resolved?",
         promptHe:
-          "לאחר עדכון ה-NetworkPolicy, כיצד מאשרים שהתעבורה אכן זורמת לפני הכרזת פתרון האירוע?",
+          "עדכנת את ה-NetworkPolicy.\n\nכיצד מאשרים שהתעבורה אכן זורמת לפני הכרזת פתרון האירוע?",
         options: [
           "kubectl run curl-test --image=curlimages/curl -n production --rm -it --restart=Never -- curl backend-svc:8080/health",
           "Wait for real user traffic and monitor error rates",
@@ -887,9 +887,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "Traffic is restored. How do you ensure this label-vs-selector mismatch cannot silently reach production again?",
+          "Traffic is restored.\n\nHow do you ensure this label-vs-selector mismatch cannot silently reach production again?",
         promptHe:
-          "התעבורה שוחזרה. כיצד מבטיחים שאי-התאמה זו של label מול selector לא תוכל להגיע לproduction שוב בשקט?",
+          "התעבורה שוחזרה.\n\nכיצד מבטיחים שאי-התאמת label מול selector לא תגיע ל-production שוב בשקט?",
         options: [
           "Ask engineers to manually verify NetworkPolicy selectors after every deployment",
           "Store NetworkPolicies in Git (GitOps), run a policy linter (e.g., Kube-linter) in CI, and validate in staging before production",
@@ -910,9 +910,9 @@ export const INCIDENTS = [
       },
       {
         prompt:
-          "The security team asks: how do you validate that a new NetworkPolicy enforces exactly what's intended without causing outages?",
+          "The security team asks:\nHow do you validate a new NetworkPolicy enforces exactly what's intended — without causing outages?",
         promptHe:
-          "צוות האבטחה שואל: כיצד מאמתים שNetworkPolicy חדשה אוכפת בדיוק את המיועד ללא גרימת השבתות?",
+          "צוות האבטחה שואל:\nכיצד מאמתים ש-NetworkPolicy חדשה אוכפת בדיוק את המיועד — ללא גרימת השבתות?",
         options: [
           "Apply in production and monitor; roll back if issues appear",
           "Read the YAML carefully and trust it is correct",
