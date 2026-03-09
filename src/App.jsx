@@ -3935,7 +3935,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     const isCorrect = dispAnswerResult ? dispAnswerResult.correct : (!timedOut && dispSelectedAnswer === q.answer);
                     const explanationText = dispAnswerResult?.explanation || q.explanation || "";
                     const correctIdx = dispAnswerResult?.correctIndex ?? q.answer;
-                    const paragraphs = explanationText.split(/\. /).filter(s => s.trim());
+                    const paragraphs = explanationText.split("\n").filter(s => s.trim());
                     return (
                       <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:18,overflow:"hidden"}}>
                         {/* Status banner */}
@@ -3949,10 +3949,10 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                           </span>
                         </div>
                         {/* Explanation body — paragraphs, no bullets */}
-                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:18}}>
-                          {paragraphs.map((s,idx,arr)=>(
-                            <div key={idx} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
-                              {renderBidiBlock(s+(idx<arr.length-1?".":""),lang)}
+                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:10}}>
+                          {paragraphs.map((s,idx)=>(
+                            <div key={idx} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.75,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
+                              {renderBidiBlock(s,lang)}
                             </div>
                           ))}
                         </div>}
