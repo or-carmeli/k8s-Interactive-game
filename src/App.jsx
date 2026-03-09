@@ -686,6 +686,7 @@ export default function K8sQuestApp() {
   showExplanationRef.current = showExplanation;
   const handleSubmitRef = useRef(null);
   const nextQuestionRef = useRef(null);
+  const burgerRef = useRef(null);
 
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0,
@@ -2682,9 +2683,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       )}
 
       {/* Dropdown menu - rendered outside <main> so CSS zoom never affects it */}
-      {showMenu&&(<>
+      {showMenu&&(()=>{
+        const rect = burgerRef.current?.getBoundingClientRect();
+        const menuRight = rect ? Math.max(8, window.innerWidth - rect.right) : 8;
+        return(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:82,right:8,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
+        <div style={{position:"fixed",top:82,right:menuRight,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
 
           {/* Language + Gender */}
           <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
@@ -2803,7 +2807,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </button>
           </div>
         </div>
-      </>)}
+      </>)})()}
       <main id="main-content" style={fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : undefined}>
       {/* HOME */}
       {screen==="home"&&(
@@ -2840,7 +2844,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               );
               const burgerBtn=(
-                <button onClick={()=>setShowMenu(p=>!p)} aria-label={lang==="en"?"Open menu":"פתח תפריט"} aria-expanded={showMenu} aria-haspopup="menu"
+                <button ref={burgerRef} onClick={()=>setShowMenu(p=>!p)} aria-label={lang==="en"?"Open menu":"פתח תפריט"} aria-expanded={showMenu} aria-haspopup="menu"
                   style={{flexShrink:0,width:46,height:46,
                     background:showMenu?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",
                     border:`1px solid ${showMenu?"rgba(0,212,255,0.3)":"rgba(255,255,255,0.1)"}`,
