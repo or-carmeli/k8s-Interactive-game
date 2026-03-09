@@ -404,10 +404,13 @@ function renderQuestion(qText, lang) {
       </div>
     );
   }
+  const terminalPat = /^(kubectl|NAME\s|READY|STATUS\s|\s{2,}|[a-z0-9]+(-[a-z0-9]+)+\s|FATAL|Error:|Failed|rpc error|unauthorized)/;
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       {paragraphs.map((para, idx) => {
-        const isCode = para.includes("\n");
+        const lines = para.split("\n");
+        const nonEmpty = lines.filter(l => l.trim());
+        const isCode = nonEmpty.length > 1 && nonEmpty.every(l => !hasHebrew(l) && terminalPat.test(l));
         if (isCode) {
           return (
             <pre key={idx} style={{margin:0,background:"rgba(0,0,0,0.45)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"10px 14px",fontFamily:"monospace",fontSize:13,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all",textAlign:"left",direction:"ltr",unicodeBidi:"plaintext"}}>
@@ -622,26 +625,8 @@ function Footer({ lang }) {
   );
 }
 
-const welcomeMessagesHe = [
-  "בוא נתרגל קצת Kubernetes",
-  "מוכן לשאלה הבאה?",
-  "בוא נראה מה קורה בקלאסטר",
-  "עוד שאלה קטנה מהשטח",
-  "מוכן לאתגר קטן?",
-  "נראה אם היית עובר ראיון DevOps",
-];
-const welcomeMessagesEn = [
-  "Let's practice some Kubernetes",
-  "Ready for the next question?",
-  "Let's see what's happening in the cluster",
-  "Another quick scenario from the field",
-  "Ready for a small challenge?",
-  "Let's see if you would pass a DevOps interview",
-];
-
 export default function K8sQuestApp() {
   const [lang, setLang]                   = useState("he");
-  const [welcomeIdx] = useState(() => Math.floor(Math.random() * welcomeMessagesHe.length));
   const [gender, setGender]               = useState(() => localStorage.getItem("gender_v1") || "m");
   const handleSetGender = (g) => { setGender(g); localStorage.setItem("gender_v1", g); };
   const t = (key) => {
@@ -2866,10 +2851,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <span style={{color:"#64748b",fontSize:13,lineHeight:1,direction:dir,flexShrink:0}}>{t("greeting")}</span>
                 <span style={{color:"#e2e8f0",fontSize:13,fontWeight:700,lineHeight:1,direction:"ltr",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{displayName}</span>
               </div>
-              {/* Row 2: tagline / mode hint - smaller and dimmer */}
-              <p style={{color:"#64748b",fontSize:11,margin:0,lineHeight:1.3,textAlign:"center",direction:dir}}>
-                {isInterviewMode?t("interviewModeHint"):(lang==="he"?welcomeMessagesHe:welcomeMessagesEn)[welcomeIdx]}
-              </p>
               {/* Row 3: streak */}
               {dailyStreak.streak > 0 && (
                 <div style={{background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:14,padding:"4px 12px",fontSize:12,color:"#F59E0B",fontWeight:700,marginTop:2}}>
