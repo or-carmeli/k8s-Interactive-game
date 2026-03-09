@@ -3931,7 +3931,15 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     const isCorrect = dispAnswerResult ? dispAnswerResult.correct : (!timedOut && dispSelectedAnswer === q.answer);
                     const explanationText = dispAnswerResult?.explanation || q.explanation || "";
                     const correctIdx = dispAnswerResult?.correctIndex ?? q.answer;
-                    const paragraphs = explanationText.split("\n").filter(s => s.trim());
+                    const paragraphs = explanationText.split("\n").flatMap(p => {
+                      const t2 = p.trim(); if (!t2) return [];
+                      // Don't split lines that are code blocks
+                      if (t2.startsWith("```") || (t2.startsWith("`") && t2.endsWith("`"))) return [t2];
+                      // Split on ". " at sentence boundaries, but not inside backtick-wrapped code
+                      // Temporarily replace backtick spans, split, then restore
+                      const codes = []; const safe = t2.replace(/`[^`]+`/g, m => { codes.push(m); return `\x00${codes.length-1}\x00`; });
+                      return safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i]));
+                    });
                     return (
                       <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:18,overflow:"hidden"}}>
                         {/* Status banner */}
@@ -3944,7 +3952,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                                 : (tryAgainActive ? t("tryAgainWrong") : t("incorrect"))}
                           </span>
                         </div>
-                        {/* Explanation body — paragraphs, no bullets */}
+                        {/* Explanation body — one sentence per line */}
                         {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:10}}>
                           {paragraphs.map((s,idx)=>(
                             <div key={idx} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.75,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
@@ -3959,7 +3967,12 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     const q = currentQuestions[questionIndex];
                     const iExplanation = dispAnswerResult?.explanation || q.explanation || "";
                     const iCorrectIdx = dispAnswerResult?.correctIndex ?? q.answer;
-                    const iParagraphs = iExplanation.split(/\. /).filter(s => s.trim());
+                    const iParagraphs = iExplanation.split("\n").flatMap(p => {
+                      const t2 = p.trim(); if (!t2) return [];
+                      if (t2.startsWith("```") || (t2.startsWith("`") && t2.endsWith("`"))) return [t2];
+                      const codes = []; const safe = t2.replace(/`[^`]+`/g, m => { codes.push(m); return `\x00${codes.length-1}\x00`; });
+                      return safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i]));
+                    });
                     return (
                       <div dir={dir} style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:14,padding:0,marginBottom:18,direction:dir,animation:"fadeIn 0.3s ease",overflow:"hidden"}}>
                         <div style={{background:"rgba(168,85,247,0.10)",padding:"13px 20px",borderBottom:"1px solid rgba(168,85,247,0.12)",textAlign:dir==="rtl"?"right":"left"}}>
@@ -3969,7 +3982,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                           <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left"}}>{q.options[iCorrectIdx]}</div>
                           {iParagraphs.map((s,idx,arr)=>(
                             <div key={idx} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
-                              {renderBidiBlock(s+(idx<arr.length-1?".":""),lang)}
+                              {renderBidiBlock(s,lang)}
                             </div>
                           ))}
                         </div>
