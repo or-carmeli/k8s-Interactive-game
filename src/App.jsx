@@ -2217,17 +2217,24 @@ export default function K8sQuestApp() {
     );
   };
 
-  // Renders incident step prompt: terminal lines in monospace, Hebrew lines with bidi K8s term rendering.
+  // Renders incident step prompt: title (bold), facts (normal), terminal (monospace), question (amber).
   const renderIncidentPrompt = (text) => {
     if (!text) return null;
     const terminalPat = /^(kubectl|NAME\s|READY|STATUS\s|\s{2,}|[a-z0-9]+(-[a-z0-9]+)+\s|FATAL|Error|Failed|rpc error|unauthorized|  [A-Za-z])/;
     const _hasHe = (s) => /[\u0590-\u05FF]/.test(s);
-    return text.split("\n").map((line, i) => {
+    const lines = text.split("\n");
+    const titleIdx = lines.findIndex(l => l.trim() && !(!_hasHe(l) && terminalPat.test(l)));
+    let questionIdx = -1;
+    for (let i = lines.length - 1; i >= 0; i--) { if (lines[i].trim().endsWith("?")) { questionIdx = i; break; } }
+    return lines.map((line, i) => {
       if (!line.trim()) return <div key={i} style={{height:6}}/>;
       if (!_hasHe(line) && terminalPat.test(line)) {
         return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre"}}>{line}</div>;
       }
-      return <div key={i} dir="auto" style={{color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>;
+      const isTitle = i === titleIdx;
+      const isQ = i === questionIdx && i !== titleIdx;
+      const style = isTitle ? {color:"#f8fafc",fontSize:15,fontWeight:700,lineHeight:1.6,marginBottom:2} : isQ ? {color:"#fbbf24",fontSize:14,fontWeight:600,lineHeight:1.8,marginTop:4} : {color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4};
+      return <div key={i} dir="auto" style={style}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>;
     });
   };
 
