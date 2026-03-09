@@ -452,14 +452,14 @@ export const TOPICS = [
             {
               q: "מה DaemonSet מבטיח?",
               options: [
-              "שPod מסוים רץ פעם אחת בלבד ולא מופעל מחדש לאחר השלמה",
-              "שPod רץ על כל Node ב-Cluster, ומתווסף אוטומטית לNodeים חדשים",
-              "שPod רץ רק על Node ספציפי שמסומן עם label מתאים",
-              "שPod מופעל מחדש כל דקה לפי לוח הזמנים המוגדר",
+              "שה-Pod רץ פעם אחת עד להשלמה ולא מופעל מחדש — התנהגות של Job",
+              "שDaemonSet מבטיח שPod אחד רץ על כל Node ב-Cluster",
+              "שה-Pod רץ רק על Node שמסומן עם label מתאים דרך nodeSelector",
+              "שה-Pod מופעל מחדש לפי לוח זמנים קבוע — התנהגות של CronJob",
 ],
               answer: 1,
               explanation:
-                "DaemonSet מבטיח Pod אחד על כל Node — מתווסף אוטומטית ל-Nodes חדשים.\nNode מצטרף → Pod נוסף. Node מוסר → Pod נמחק.\nשימושי ל-logging (Fluentd), monitoring (node-exporter), ו-CNI plugins.",
+                "DaemonSet מבטיח Pod אחד על כל Node ב-Cluster.\nNode חדש מצטרף → Pod נוסף אוטומטית. Pod נכשל → מופעל מחדש.\nשימושי ל-logging (Fluentd), monitoring (node-exporter), ו-CNI plugins.",
             },
             {
               q: "מה תפקיד ה-HPA ב-Kubernetes?",
@@ -550,14 +550,14 @@ export const TOPICS = [
             {
               q: "What does a DaemonSet guarantee?",
               options: [
-              "A Pod runs on a fixed schedule every minute via the kubelet",
-              "A Pod runs only on a Node with a matching label selector",
-              "Pod runs on every Node in the cluster, added automatically to new Nodes",
-              "A specific Pod runs once and is never restarted after completion",
+              "The Pod runs on a fixed schedule — this describes a CronJob, not a DaemonSet",
+              "The Pod runs only on Nodes matching a specific label via nodeSelector",
+              "DaemonSet ensures that one Pod runs on every Node in the cluster",
+              "The Pod runs once to completion and is never restarted — this describes a Job",
 ],
               answer: 2,
               explanation:
-                "DaemonSet guarantees one Pod copy on every Node — added automatically to new Nodes.\nNode joins → Pod added. Node removed → Pod deleted.\nIdeal for logging (Fluentd), monitoring (node-exporter), and CNI plugins.",
+                "DaemonSet ensures one Pod runs on every Node in the cluster.\nNew Nodes automatically get a Pod. If a Pod fails, it is restarted.\nCommon use cases: logging (Fluentd), monitoring (node-exporter), and CNI plugins.",
             },
             {
               q: "What is HPA?",
