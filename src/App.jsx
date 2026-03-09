@@ -6,6 +6,7 @@ import { ACHIEVEMENTS } from "./topicMeta";
 import { TOPICS } from "./content/topics";
 import { DAILY_QUESTIONS } from "./content/dailyQuestions";
 import { INCIDENTS } from "./content/incidents";
+import { CHEATSHEET } from "./content/cheatsheet";
 import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from "./utils/quizPersistence";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory } from "./api/monitoring";
@@ -786,7 +787,7 @@ export default function K8sQuestApp() {
   const currentLevelData = selectedTopic && selectedLevel && !isFreeMode(selectedTopic.id) && !retryMode ? getLevelData(selectedTopic, selectedLevel) : null;
   const currentQuestions = isFreeMode(selectedTopic?.id) || retryMode ? mixedQuestions : (topicQuestions.length > 0 ? topicQuestions : (currentLevelData?.questions || []));
 
-  useEffect(() => { const t = setTimeout(() => setMinLoadElapsed(true), 1000); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(() => setMinLoadElapsed(true), 500); return () => clearTimeout(t); }, []);
 
   // Restore progress from local cache immediately on mount (before auth/Supabase resolves)
   useEffect(() => {
@@ -1535,6 +1536,7 @@ export default function K8sQuestApp() {
   const handleSubmit = async () => {
     if (selectedAnswer === null || submitted || checkingAnswer || submittingRef.current) return;
     submittingRef.current = true;
+    try {
     setSubmitted(true);
     const q = currentQuestions[questionIndex];
 
@@ -1629,6 +1631,11 @@ export default function K8sQuestApp() {
           localStorage.setItem("scoredFreeKeys_v1", JSON.stringify([...scored]));
         } catch {}
       }
+    }
+    } catch (err) {
+      console.error("handleSubmit error:", err);
+      submittingRef.current = false;
+      setCheckingAnswer(false);
     }
   };
 
@@ -1749,6 +1756,7 @@ export default function K8sQuestApp() {
     quizRunIdRef.current = Date.now().toString(36);
     answerCacheRef.current = {};
     liveIndexRef.current = 0;
+    submittingRef.current = false;
     clearQuizState();
     setAnswerResult(null);
     let rawQs;
@@ -1801,6 +1809,7 @@ export default function K8sQuestApp() {
     quizRunIdRef.current = Date.now().toString(36);
     answerCacheRef.current = {};
     liveIndexRef.current = 0;
+    submittingRef.current = false;
     clearQuizState();
     setAnswerResult(null);
     let dailyQs;
@@ -1899,6 +1908,7 @@ export default function K8sQuestApp() {
     quizRunIdRef.current = Date.now().toString(36);
     answerCacheRef.current = {};
     liveIndexRef.current = 0;
+    submittingRef.current = false;
     clearQuizState();
     const qs = bookmarks.map(b => ({ q: b.question_text, options: b.options, answer: b.answer, explanation: b.explanation }));
     setMixedQuestions(shuffleOptions([...qs]));
@@ -3061,308 +3071,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {/* ── GUIDE ── */}
       {screen==="guide"&&(()=>{
-        const GUIDE=[
-          // ── 1. Core Objects ──────────────────────────────────────────────
-          {id:"core",icon:"🧩",color:"#00D4FF",title:lang==="en"?"Core Objects":"אובייקטים מרכזיים",items:[
-            {sect:"Pod"},
-            {k:"Pod",         v:lang==="en"?"Smallest deployable unit. Contains 1+ containers sharing network and storage. Gets a new IP on every restart.":"היחידה הקטנה ביותר. מכיל 1+ קונטיינרים. מקבל IP חדש בכל restart."},
-            {k:"restartPolicy",v:lang==="en"?"Always (default) / OnFailure (Jobs) / Never":"Always (ברירת מחדל) / OnFailure / Never"},
-            {sect:"Deployment"},
-            {k:"Deployment",  v:lang==="en"?"Manages identical Pods. Handles rolling updates and rollbacks automatically. Use for stateless apps.":"מנהל Pods זהים. מטפל ב-rolling update ו-rollback. לאפליקציות stateless."},
-            {sect:"StatefulSet"},
-            {k:"StatefulSet", v:lang==="en"?"Like Deployment but each Pod gets a stable identity (pod-0, pod-1) and its own persistent PVC. Use for databases.":"כמו Deployment אך עם זהות יציבה (pod-0, pod-1) ו-PVC ייחודי. לבסיסי נתונים."},
-            {sect:"DaemonSet"},
-            {k:"DaemonSet",   v:lang==="en"?"Runs exactly one Pod copy on every Node. Used for: log collectors, monitoring agents, CNI plugins.":"Pod אחד בדיוק על כל Node. לניטור, לוגים, CNI."},
-            {sect:"Job / CronJob"},
-            {k:"Job",         v:lang==="en"?"Runs a task to completion (exit 0). Retries on failure up to backoffLimit.":"מריץ משימה עד סיום. לעבודות batch ו-one-off."},
-            {k:"CronJob",     v:lang==="en"?"Creates Jobs on a cron schedule.  e.g. '0 * * * *' = every hour.":"יוצר Jobs לפי לוח זמנים. למשל: '0 * * * *' = כל שעה."},
-          ],code:
-`# Pods
-kubectl get pods                        # current namespace
-kubectl get pods -A                     # all namespaces
-kubectl describe pod <name>             # events, conditions, spec
-kubectl logs <pod>                      # stdout/stderr
-kubectl logs <pod> --previous           # logs before last crash
-
-# Deployments
-kubectl get deployments
-kubectl rollout status  deploy/<name>   # watch rolling update
-kubectl rollout undo    deploy/<name>   # rollback to previous version
-kubectl rollout restart deploy/<name>   # rolling restart (zero downtime)
-kubectl scale deploy/<name> --replicas=3
-
-# StatefulSets / DaemonSets / Jobs
-kubectl get statefulsets
-kubectl get daemonsets
-kubectl get jobs && kubectl get cronjobs`},
-
-          // ── 2. Networking ─────────────────────────────────────────────────
-          {id:"networking",icon:"🌐",color:"#10B981",title:lang==="en"?"Networking":"רשת",items:[
-            {sect:lang==="en"?"Services":"Services"},
-            {k:"ClusterIP",    v:lang==="en"?"Internal-only. Default type. Not reachable from outside the cluster.":"גישה פנימית בלבד. סוג ברירת מחדל."},
-            {k:"NodePort",     v:lang==="en"?"External access via <NodeIP>:<30000–32767>. Good for dev/testing.":"גישה חיצונית דרך פורט קבוע. לפיתוח ובדיקות."},
-            {k:"LoadBalancer", v:lang==="en"?"Cloud provider creates an external load balancer. Standard for production.":"ספק ענן יוצר LB חיצוני. סטנדרט לפרודקשן."},
-            {k:"Headless",     v:lang==="en"?"clusterIP: None - DNS returns individual Pod IPs. Used by StatefulSets.":"clusterIP: None – DNS מחזיר IPs של Pods ישירות."},
-            {sect:lang==="en"?"Port fields":"שדות פורטים"},
-            {k:"port",       v:lang==="en"?"Port the Service listens on inside the cluster":"פורט שה-Service מאזין עליו בתוך הקלאסטר"},
-            {k:"targetPort", v:lang==="en"?"Port on the Pod container (where your app listens)":"פורט בתוך הקונטיינר"},
-            {k:"nodePort",   v:lang==="en"?"External port on the Node (NodePort type only, 30000–32767)":"פורט חיצוני על ה-Node (NodePort בלבד)"},
-            {sect:lang==="en"?"Cluster DNS":"DNS פנימי"},
-            {k:"Same namespace",  v:lang==="en"?"Short name works:  http://my-svc":"שם קצר עובד:  http://my-svc"},
-            {k:"Cross-namespace", v:lang==="en"?"http://my-svc.my-ns  or full FQDN: my-svc.my-ns.svc.cluster.local":"http://my-svc.my-ns  או FQDN מלא"},
-            {sect:"Ingress"},
-            {k:"Ingress",    v:lang==="en"?"Routes HTTP/S traffic from outside the cluster to Services. Requires an Ingress Controller (nginx, traefik…).":"מנתב HTTP/S חיצוני ל-Services. דורש Ingress Controller."},
-            {sect:"NetworkPolicy"},
-            {k:"Default",    v:lang==="en"?"No policy = all traffic allowed. Best practice: apply deny-all first, then explicit allow rules.":"ללא policy = הכל מותר. שיטה טובה: deny-all ואז allows ספציפיים."},
-            {k:"ingress",    v:lang==="en"?"Controls traffic coming INTO the selected Pods":"שולט בתעבורה שנכנסת ל-Pods"},
-            {k:"egress",     v:lang==="en"?"Controls traffic going OUT from the selected Pods":"שולט בתעבורה שיוצאת מ-Pods"},
-          ],code:
-`# Services
-kubectl get svc
-kubectl describe svc <name>             # see selector, ports, type
-kubectl get endpoints <svc>             # Pods the Service is routing to
-                                        # empty list = selector label mismatch
-
-# Ingress
-kubectl get ingress
-kubectl describe ingress <name>
-
-# NetworkPolicy
-kubectl get networkpolicies -n <ns>
-kubectl describe networkpolicy <name>   # read rules in human format
-
-# 💡 Test connectivity from inside the cluster:
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl http://my-svc.my-ns/health`},
-
-          // ── 3. Scheduling ─────────────────────────────────────────────────
-          {id:"scheduling",icon:"⚙️",color:"#F59E0B",title:lang==="en"?"Scheduling":"תזמון",items:[
-            {sect:lang==="en"?"Node Selection":"בחירת Node"},
-            {k:"nodeSelector",  v:lang==="en"?"Simple label match. Pod only runs on Nodes with that label.":"התאמת label פשוטה. Pod ירוץ רק על Node עם ה-label."},
-            {k:"nodeAffinity",  v:lang==="en"?"Like nodeSelector but with required / preferred rules and richer expressions (In, NotIn, Exists).":"כמו nodeSelector עם כללים required/preferred ורחבים יותר."},
-            {sect:lang==="en"?"Taints & Tolerations":"Taints ו-Tolerations"},
-            {k:"Taint",       v:lang==="en"?"Marks a Node to repel Pods. Effects: NoSchedule / PreferNoSchedule / NoExecute.":"מסמן Node לדחיית Pods. אפקטים: NoSchedule / PreferNoSchedule / NoExecute."},
-            {k:"Toleration",  v:lang==="en"?"Added to a Pod spec to allow scheduling onto a tainted Node.":"מתווסף ל-Pod spec לאפשר תזמון על Node עם Taint."},
-            {sect:lang==="en"?"Resource Requests & Limits":"בקשות ומגבלות משאבים"},
-            {k:"requests",    v:lang==="en"?"Minimum reserved for the Pod. The Scheduler uses this to pick a Node with enough capacity.":"מינימום שמור. הבסיס שבו Scheduler בוחר Node."},
-            {k:"limits",      v:lang==="en"?"Maximum allowed. Exceeding memory → OOMKilled (exit 137). Exceeding CPU → throttled (not killed).":"מקסימום. חריגת זיכרון → OOMKilled. חריגת CPU → throttling."},
-            {sect:lang==="en"?"Health Probes":"Probes בריאות"},
-            {k:"livenessProbe",  v:lang==="en"?"Fail → Kubernetes restarts the container":"כשלון → Kubernetes מאתחל את הקונטיינר"},
-            {k:"readinessProbe", v:lang==="en"?"Fail → Pod removed from Service endpoints (no traffic sent to it)":"כשלון → Pod מוסר מה-Service (ללא traffic)"},
-            {k:"startupProbe",   v:lang==="en"?"Delays liveness/readiness checks until the app finishes starting up":"עוצר liveness/readiness עד שהאפליקציה סיימה לעלות"},
-            {sect:lang==="en"?"QoS Classes":"מחלקות QoS"},
-            {k:"Guaranteed",  v:lang==="en"?"requests == limits on all containers. Last to be evicted under memory pressure.":"requests == limits. אחרון לפינוי בלחץ זיכרון."},
-            {k:"Burstable",   v:lang==="en"?"At least one container has requests < limits. Middle eviction priority.":"requests < limits. עדיפות ביניים."},
-            {k:"BestEffort",  v:lang==="en"?"No requests or limits set. First to be evicted when a Node is under pressure.":"ללא requests/limits. הראשון לפינוי."},
-          ],code:
-`# Why is my Pod Pending? → read Events
-kubectl describe pod <name>             # scroll to Events at the bottom
-
-# Node labels and capacity
-kubectl get nodes --show-labels
-kubectl describe node <name>            # Capacity, Allocatable, Taints
-
-# Taints
-kubectl taint nodes <node> key=val:NoSchedule
-kubectl taint nodes <node> key=val:NoSchedule-  # remove taint (trailing dash)
-
-# Live resource usage (requires metrics-server)
-kubectl top pods
-kubectl top pods --sort-by=memory
-kubectl top nodes
-
-# 💡 requests too high  → Pod stays Pending forever
-#    limits too low     → Pod gets OOMKilled`},
-
-          // ── 4. Configuration ──────────────────────────────────────────────
-          {id:"configuration",icon:"🔧",color:"#A855F7",title:lang==="en"?"Configuration":"קונפיגורציה",items:[
-            {sect:"ConfigMap"},
-            {k:"ConfigMap",  v:lang==="en"?"Stores non-sensitive key-value config. Mount as a volume (auto-updates in ~1 min) or inject as env vars (requires Pod restart to update).":"קונפיגורציה non-sensitive. כvolume מתעדכן אוטומטית; כenv var דורש restart."},
-            {sect:"Secret"},
-            {k:"Secret",     v:lang==="en"?"Like ConfigMap but for sensitive data. Values are base64-encoded - NOT encrypted by default. Use Sealed Secrets or External Secrets Operator for production GitOps.":"לנתונים רגישים. מקודד base64, לא מוצפן כברירת מחדל."},
-            {sect:lang==="en"?"Injecting config into Pods":"הזרקת קונפיגורציה ל-Pods"},
-            {k:"env.value",                      v:lang==="en"?"Hardcoded value directly in the Pod spec.":"ערך קבוע ב-spec."},
-            {k:"env.valueFrom.configMapKeyRef",  v:lang==="en"?"Pull one key from a ConfigMap as an env var.":"env var ממפתח ספציפי ב-ConfigMap."},
-            {k:"env.valueFrom.secretKeyRef",     v:lang==="en"?"Pull one key from a Secret as an env var.":"env var ממפתח ספציפי ב-Secret."},
-            {k:"envFrom.configMapRef",           v:lang==="en"?"Inject ALL keys from a ConfigMap as env vars.":"כל המפתחות מ-ConfigMap כ-env vars."},
-            {k:"volumeMount (ConfigMap/Secret)", v:lang==="en"?"Each key becomes a file at mountPath. ConfigMap volumes auto-update, env vars do not.":"כל מפתח = קובץ. ConfigMap כvolume מתעדכן אוטומטית."},
-          ],code:
-`# ConfigMaps
-kubectl get configmap -n <ns>
-kubectl describe cm <name>
-kubectl create cm <name> --from-literal=key=value
-kubectl create cm <name> --from-file=config.properties
-
-# Secrets
-kubectl get secret -n <ns>
-kubectl describe secret <name>           # shows key names, NOT values
-kubectl create secret generic <name> --from-literal=password=mypass
-
-# Decode a secret value
-kubectl get secret <name> -o jsonpath='{.data.password}' | base64 --decode
-
-# 💡 Env vars from ConfigMap/Secret are frozen at Pod creation.
-#    Edit the ConfigMap, then restart Pods:
-kubectl rollout restart deploy/<name>`},
-
-          // ── 5. Storage ────────────────────────────────────────────────────
-          {id:"storage",icon:"💾",color:"#6366F1",title:lang==="en"?"Storage":"אחסון",items:[
-            {sect:lang==="en"?"Ephemeral Volumes":"Volumes זמניים"},
-            {k:"emptyDir",  v:lang==="en"?"Created with the Pod, deleted with the Pod. Survives container restarts. Shared by all containers in the same Pod.":"נוצר עם ה-Pod, נמחק איתו. שורד container restart. משותף לכל הקונטיינרים."},
-            {k:"hostPath",  v:lang==="en"?"Mounts a Node directory into the Pod. Avoid in production - breaks portability.":"תיקיה מה-Node לתוך ה-Pod. יש להימנע ב-production."},
-            {sect:"PersistentVolume (PV)"},
-            {k:"PV",        v:lang==="en"?"A piece of real storage in the cluster (cloud disk, NFS…). Provisioned by admin or auto-created by a StorageClass.":"אחסון אמיתי בקלאסטר. נוצר על ידי Admin או אוטומטית על ידי StorageClass."},
-            {sect:"PersistentVolumeClaim (PVC)"},
-            {k:"PVC",       v:lang==="en"?"A Pod's request for storage. Kubernetes binds it to a PV matching size, accessMode, and storageClass.":"בקשת Pod לאחסון. Kubernetes מוצא PV מתאים ומחבר ביניהם."},
-            {sect:"StorageClass"},
-            {k:"StorageClass",v:lang==="en"?"Blueprint for dynamic provisioning. Names the provisioner plugin (AWS EBS CSI, GCP PD, Ceph…) that creates real disks on demand.":"תבנית ל-dynamic provisioning. מגדיר provisioner שיוצר דיסקים אוטומטית."},
-            {sect:lang==="en"?"Access Modes":"מצבי גישה"},
-            {k:"ReadWriteOnce (RWO)",v:lang==="en"?"One Node - read + write. Default for most cloud disks.":"Node אחד – קריאה וכתיבה. ברירת מחדל."},
-            {k:"ReadWriteMany (RWX)",v:lang==="en"?"Many Nodes - read + write. Requires NFS, AWS EFS, or Ceph.":"מספר Nodes – קריאה וכתיבה. דורש NFS/EFS."},
-            {k:"ReadOnlyMany  (ROX)",v:lang==="en"?"Many Nodes - read only.":"מספר Nodes – קריאה בלבד."},
-            {sect:lang==="en"?"Reclaim Policy":"מדיניות שחרור"},
-            {k:"Retain", v:lang==="en"?"Data preserved after PVC deletion. Admin must clean up manually. Recommended for databases.":"נתונים נשמרים לאחר מחיקת PVC. Admin מנקה ידנית. לבסיסי נתונים."},
-            {k:"Delete", v:lang==="en"?"PV and the underlying cloud disk are deleted when PVC is deleted. Default for dynamic provisioning.":"PV ודיסק פיזי נמחקים עם מחיקת PVC. ברירת מחדל לdynamic."},
-          ],code:
-`kubectl get pv                           # cluster-level (no namespace needed)
-kubectl get pvc -n <ns>
-kubectl describe pvc <name>              # check status + Events
-                                         # Pending = no matching PV found
-
-kubectl get storageclass
-
-# ⚠️  StatefulSet PVCs survive helm uninstall (intentional data protection)
-# Delete manually AFTER confirming backups:
-kubectl delete pvc -l app=<name> -n <ns>`},
-
-          // ── 6. Security ───────────────────────────────────────────────────
-          {id:"security",icon:"🔒",color:"#EF4444",title:lang==="en"?"Security":"אבטחה",items:[
-            {sect:"RBAC"},
-            {k:"Role",               v:lang==="en"?"Grants permissions within one namespace.":"הרשאות בתוך namespace אחד."},
-            {k:"ClusterRole",        v:lang==="en"?"Grants cluster-wide permissions. Can be reused across namespaces via RoleBinding.":"הרשאות ברמת הקלאסטר. ניתן לשימוש חוזר בכל namespace."},
-            {k:"RoleBinding",        v:lang==="en"?"Attaches a Role (or ClusterRole) to a User, Group, or ServiceAccount in a namespace.":"מקשר Role לנושא בתוך namespace."},
-            {k:"ClusterRoleBinding", v:lang==="en"?"Attaches a ClusterRole to a subject cluster-wide.":"מקשר ClusterRole בכל הקלאסטר."},
-            {sect:lang==="en"?"ServiceAccounts":"ServiceAccounts"},
-            {k:"ServiceAccount",     v:lang==="en"?"Identity for Pods when calling the Kubernetes API. Every namespace has a 'default' SA auto-mounted into Pods.":"זהות ל-Pods מול ה-API. ה-SA 'default' מוזרק אוטומטית לכל Pod."},
-            {sect:lang==="en"?"Pod Security":"אבטחת Pod"},
-            {k:"runAsNonRoot: true",             v:lang==="en"?"Container must not run as root (UID 0). Reduces blast radius if compromised.":"קונטיינר לא ירוץ כ-root. מצמצם נזק אפשרי."},
-            {k:"readOnlyRootFilesystem: true",   v:lang==="en"?"Container filesystem is read-only. Prevents writing malicious files.":"filesystem לקריאה בלבד. מונע כתיבת קבצים זדוניים."},
-            {k:"allowPrivilegeEscalation: false",v:lang==="en"?"Process cannot gain more privileges than its parent.":"מונע הסלמת הרשאות."},
-            {sect:lang==="en"?"Common Verbs":"פעלים נפוצים"},
-            {k:"get / list / watch",      v:lang==="en"?"Read-only access":"גישת קריאה בלבד"},
-            {k:"create / update / patch", v:lang==="en"?"Write access":"גישת כתיבה"},
-            {k:"delete",                  v:lang==="en"?"Remove a resource":"מחיקת משאב"},
-            {k:"* (wildcard)",            v:lang==="en"?"All verbs - avoid in production":"כל הפעלים – יש להימנע ב-production"},
-          ],code:
-`# RBAC
-kubectl get role,rolebinding -n <ns>
-kubectl get clusterrole,clusterrolebinding
-kubectl describe rolebinding <name> -n <ns>
-
-# Check what a ServiceAccount can do
-kubectl auth can-i get pods --as=system:serviceaccount:<ns>:<sa-name>
-kubectl auth can-i '*' '*'              # check your own full access
-
-# ServiceAccounts
-kubectl get serviceaccounts -n <ns>
-kubectl describe sa <name> -n <ns>
-
-# 💡 Principle of least privilege: grant only the verbs your app actually needs.
-#    Use 'kubectl auth can-i' in CI to verify permissions before deploying.`},
-
-          // ── 7. Troubleshooting ────────────────────────────────────────────
-          {id:"troubleshooting",icon:"🔍",color:"#FF6B35",title:lang==="en"?"Troubleshooting":"פתרון בעיות",items:[
-            {sect:"CrashLoopBackOff"},
-            {k:"Cause", v:lang==="en"?"Container starts, crashes immediately, Kubernetes keeps restarting with exponential delay.":"הקונטיינר קורס שוב ושוב עם השהייה גדלה."},
-            {k:"Fix",   v:lang==="en"?"kubectl logs <pod> --previous  →  read the crash output before it restarted":"kubectl logs <pod> --previous – קרא את ה-crash output"},
-            {sect:"ImagePullBackOff"},
-            {k:"Cause", v:lang==="en"?"Kubernetes can't pull the image - typo in name/tag, or missing imagePullSecret for a private registry.":"לא ניתן למשוך image – שם/tag שגוי, או imagePullSecret חסר."},
-            {k:"Fix",   v:lang==="en"?"kubectl describe pod <name>  →  read the exact error in Events":"kubectl describe pod – קרא את השגיאה המדויקת ב-Events"},
-            {sect:lang==="en"?"Pending Pod":"Pod תקוע"},
-            {k:"Cause", v:lang==="en"?"No Node can accept it - CPU/memory insufficient, wrong nodeSelector, missing toleration, or unbound PVC.":"אין Node פנוי – CPU/memory, nodeSelector, toleration, או PVC לא bound."},
-            {k:"Fix",   v:lang==="en"?"kubectl describe pod <name>  →  read the FailedScheduling event":"kubectl describe pod – קרא FailedScheduling event"},
-            {sect:"OOMKilled"},
-            {k:"Cause", v:lang==="en"?"Container exceeded its memory limit. Linux kernel terminates it with exit code 137.":"חריגת מגבלת זיכרון. Linux ממית עם קוד יציאה 137."},
-            {k:"Fix",   v:lang==="en"?"Increase limits.memory in Pod spec. Measure actual usage with kubectl top pod.":"הגדל limits.memory. מדוד שימוש בפועל עם kubectl top pod."},
-            {sect:"Node NotReady"},
-            {k:"Cause", v:lang==="en"?"kubelet stopped reporting - process crashed, TLS cert expired, or disk/memory pressure.":"kubelet הפסיק לדווח – קרסה, TLS פג, לחץ disk/memory."},
-            {k:"Fix",   v:lang==="en"?"kubectl describe node  →  SSH into the Node  →  systemctl status kubelet":"kubectl describe node, ואז SSH: systemctl status kubelet"},
-          ],code:
-`# Universal first step - read the Events
-kubectl describe pod <name>             # scroll down to Events section
-
-# Logs
-kubectl logs <pod>                      # current container
-kubectl logs <pod> --previous           # ← logs from the crashed instance
-kubectl logs <pod> -c <container>       # specific container in a multi-container Pod
-kubectl logs <pod> -f                   # follow / stream in real time
-
-# Node issues
-kubectl describe node <name>            # Conditions + recent Events
-# Then SSH into the Node:
-# systemctl status kubelet
-# journalctl -u kubelet --since "10 min ago"
-
-# Resource pressure
-kubectl top pods --sort-by=memory
-kubectl top nodes
-
-# Service not reachable?
-kubectl get endpoints <svc>             # empty = selector label mismatch`},
-
-          // ── 8. kubectl Quick Reference ────────────────────────────────────
-          {id:"kubectl",icon:"⌨️",color:"#7dd3fc",title:"kubectl Quick Reference",items:[
-            {sect:lang==="en"?"Useful flags":"דגלים שימושיים"},
-            {k:"-n <ns>",              v:lang==="en"?"Target a specific namespace":"Namespace ספציפי"},
-            {k:"-A  (--all-namespaces)",v:lang==="en"?"Resources across all namespaces":"כל ה-namespaces"},
-            {k:"-o wide",              v:lang==="en"?"Extra columns: Node name, Pod IP":"עמודות נוספות: Node, IP"},
-            {k:"-o yaml",              v:lang==="en"?"Full resource spec as YAML":"spec מלא כ-YAML"},
-            {k:"-o jsonpath='...'",    v:lang==="en"?"Extract a specific field from output":"חילוץ שדה ספציפי מה-output"},
-            {k:"--dry-run=client",     v:lang==="en"?"Preview what would happen without applying":"סימולציה ללא שינוי"},
-            {k:"-w  (--watch)",        v:lang==="en"?"Stream updates in real time":"עדכונים בזמן אמת"},
-            {k:"--previous",           v:lang==="en"?"(kubectl logs) Show the last crashed container's logs":"לוגים מה-crash האחרון"},
-          ],code:
-`# Inspect
-kubectl get pods -n <ns>
-kubectl get pods -A
-kubectl get all -n <ns>                 # pods, svcs, deploys, ...
-kubectl describe pod <name>
-kubectl get events --sort-by=.metadata.creationTimestamp
-
-# Logs & Debug
-kubectl logs <pod>
-kubectl logs <pod> --previous           # last crashed instance
-kubectl logs <pod> -f                   # stream
-kubectl exec -it <pod> -- sh
-kubectl port-forward <pod> 8080:80      # local → pod tunnel
-kubectl port-forward svc/<name> 8080:80
-
-# Apply / Delete
-kubectl apply -f <file.yaml>
-kubectl diff  -f <file.yaml>            # preview changes before applying
-kubectl apply --dry-run=client -f <file.yaml>
-kubectl delete pod <name>
-kubectl delete pod <name> --grace-period=0 --force
-
-# Rollouts
-kubectl rollout restart deploy/<name>   # rolling restart (zero downtime)
-kubectl rollout status  deploy/<name>   # watch progress
-kubectl rollout undo    deploy/<name>   # rollback to previous version
-kubectl rollout history deploy/<name>   # list all revisions
-
-# Resources
-kubectl top pod --sort-by=memory
-kubectl top node
-
-# Contexts & Namespaces
-kubectl config get-contexts
-kubectl config use-context <name>
-kubectl config set-context --current --namespace=<ns>
-
-# Output formats
-kubectl get pod <name> -o yaml
-kubectl get pod <name> -o wide
-kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
-        ];
         const isOpen = id => expandedGuideSection===id;
         return (
           <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
@@ -3370,10 +3078,9 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
               {dir==="rtl"?"→ חזרה":"← Return"}
             </button>
             <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("guideBtn")}</h2>
-            <p style={{color:"#64748b",fontSize:13,marginBottom:20,direction:dir}}>{lang==="en"?"Quick reference for key Kubernetes concepts - tap a section to expand":"סיכום מהיר של מושגי Kubernetes מרכזיים – לחצו על נושא לפתיחה"}</p>
-            {GUIDE.map(section=>(
+            <p style={{color:"#64748b",fontSize:13,marginBottom:20,direction:dir}}>{lang==="en"?"Kubernetes cheat sheet — tap a section to expand":"שליף Kubernetes — לחצו על נושא לפתיחה"}</p>
+            {CHEATSHEET.map(section=>(
               <div key={section.id} style={{marginBottom:8}}>
-                {/* Section header */}
                 <button onClick={()=>setExpandedGuideSection(s=>s===section.id?null:section.id)}
                   style={{width:"100%",background:isOpen(section.id)?`${section.color}10`:"rgba(255,255,255,0.03)",
                     border:`1px solid ${isOpen(section.id)?section.color+"40":"rgba(255,255,255,0.08)"}`,
@@ -3382,25 +3089,19 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                     padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,direction:"ltr",
                     transition:"background 0.2s,border-color 0.2s"}}>
                   <span style={{fontSize:20,flexShrink:0}}>{section.icon}</span>
-                  <span style={{flex:1,textAlign:"left",color:"#e2e8f0",fontSize:14,fontWeight:700}}>{section.title}</span>
+                  <span style={{flex:1,textAlign:"left",color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?section.title:section.titleHe}</span>
                   <span style={{color:isOpen(section.id)?section.color:"#475569",fontSize:10,fontWeight:700}}>{isOpen(section.id)?"▲":"▼"}</span>
                 </button>
-                {/* Expanded content */}
                 {isOpen(section.id)&&(
-                  <div style={{background:"rgba(0,0,0,0.2)",border:`1px solid ${section.color}25`,borderTop:"none",borderRadius:"0 0 10px 10px",padding:"14px 16px"}}>
-                    {section.items.map((item,i)=>
-                      item.sect
-                        ? <div key={i} style={{fontSize:10,color:"#475569",fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:i>0?14:2,marginBottom:8,paddingBottom:5,borderBottom:"1px solid rgba(255,255,255,0.05)",direction:"ltr"}}>{item.sect}</div>
-                        : <div key={i} style={{display:"flex",gap:10,marginBottom:7,alignItems:"flex-start",direction:"ltr"}}>
-                            <span style={{background:`${section.color}15`,color:section.color,fontWeight:700,fontSize:11,padding:"2px 7px",borderRadius:4,whiteSpace:"nowrap",fontFamily:"monospace",flexShrink:0,lineHeight:1.6}}>{item.k}</span>
-                            <span style={{color:"#94a3b8",fontSize:13,direction:dir,lineHeight:1.55,flex:1}}>{item.v}</span>
-                          </div>
-                    )}
-                    {section.code&&(
-                      <pre style={{marginTop:section.items.length?12:0,background:"rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"12px 14px",fontFamily:"monospace",fontSize:12,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",direction:"ltr",lineHeight:1.75}}>
-                        {section.code}
-                      </pre>
-                    )}
+                  <div style={{background:"rgba(0,0,0,0.2)",border:`1px solid ${section.color}25`,borderTop:"none",borderRadius:"0 0 10px 10px",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
+                    {section.concepts.map((c,i)=>(
+                      <div key={i} style={{background:"rgba(255,255,255,0.02)",borderRadius:8,padding:"8px 10px",borderLeft:`2px solid ${section.color}30`}}>
+                        <span style={{color:section.color,fontWeight:700,fontSize:12,fontFamily:"monospace"}}>{lang==="he"&&c.nHe?c.nHe:c.n}</span>
+                        <div style={{color:"#94a3b8",fontSize:12,lineHeight:1.5,marginTop:2,direction:dir}}>{lang==="en"?c.d:c.dHe}</div>
+                        {c.c&&<pre style={{marginTop:4,background:"rgba(0,0,0,0.35)",borderRadius:5,padding:"5px 8px",fontFamily:"monospace",fontSize:11,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",direction:"ltr",lineHeight:1.55}}>{c.c}</pre>}
+                      </div>
+                    ))}
+                    {section.tip&&<div style={{marginTop:2,padding:"6px 10px",background:`${section.color}08`,borderRadius:6,fontSize:11,color:"#64748b",fontFamily:"monospace",direction:"ltr"}}>{"💡 "}{lang==="en"?section.tip:section.tipHe}</div>}
                   </div>
                 )}
               </div>
