@@ -224,7 +224,7 @@ const TRANSLATIONS = {
     bookmark_m: "☆ שמור", bookmarkActive_m: "★ שמור",
     searchBtn: "🔎 חיפוש שאלה", searchPlaceholder: "חפשי לפי מילת מפתח...", searchNoResults: "לא נמצאו תוצאות",
     mistakesBtn: "❌ טעויות שלי", mistakesEmpty: "אין טעויות! כל הכבוד 🎉", mistakesHint: "שאלות שטעית בהן",
-    guideBtn: "📘 מדריך Kubernetes", aboutBtn: "ℹ️ אודות האפליקציה",
+    guideBtn: "📘 kubectl שליף", guideSub: "פקודות kubectl מוכנות להעתקה — לחצו לפתיחה", aboutBtn: "ℹ️ אודות האפליקציה",
     shareBtn: "📤 שתפי עם חבר", shareBtn_m: "📤 שתף עם חבר",
     dailyStreak: "ימים ברצף",
   },
@@ -336,7 +336,7 @@ const TRANSLATIONS = {
     bookmark: "☆ Save", bookmarkActive: "★ Saved",
     searchBtn: "🔎 Search Question", searchPlaceholder: "Search by keyword...", searchNoResults: "No results found",
     mistakesBtn: "❌ My Mistakes", mistakesEmpty: "No mistakes! Great job 🎉", mistakesHint: "Questions you answered incorrectly",
-    guideBtn: "📘 Kubernetes Guide", aboutBtn: "ℹ️ About",
+    guideBtn: "📘 kubectl Cheat Sheet", guideSub: "Copy-ready kubectl commands — tap to expand", aboutBtn: "ℹ️ About",
     shareBtn: "📤 Share",
     dailyStreak: "day streak",
   },
@@ -684,6 +684,7 @@ export default function K8sQuestApp() {
   const [statusTick, setStatusTick]                     = useState(0);    // increments every 1s to keep timer live
   const [searchQuery, setSearchQuery]                   = useState("");
   const [expandedGuideSection, setExpandedGuideSection] = useState(null);
+  const [copiedCmd, setCopiedCmd]                       = useState(null);  // tracks last copied command for visual feedback
   const [answerResult, setAnswerResult]                 = useState(null); // { correct, correctIndex, explanation } — set after server-side validation
   const [checkingAnswer, setCheckingAnswer]             = useState(false);
   const [theoryContent, setTheoryContent]               = useState(null);
@@ -3095,43 +3096,80 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         );
       })()}
 
-      {/* ── GUIDE ── */}
+      {/* ── GUIDE — kubectl Cheat Sheet ── */}
       {screen==="guide"&&(()=>{
         const isOpen = id => expandedGuideSection===id;
+        const handleCopy = (cmd) => {
+          navigator.clipboard?.writeText(cmd).catch(()=>{});
+          setCopiedCmd(cmd);
+          setTimeout(()=>setCopiedCmd(c=>c===cmd?null:c),1500);
+        };
+        const totalCmds = CHEATSHEET.reduce((s,sec)=>s+sec.commands.length,0);
         return (
           <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
             <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
               {dir==="rtl"?"→ חזרה":"← Return"}
             </button>
-            <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("guideBtn")}</h2>
-            <p style={{color:"#64748b",fontSize:13,marginBottom:20,direction:dir}}>{lang==="en"?"Kubernetes cheat sheet — tap a section to expand":"שליף Kubernetes — לחצו על נושא לפתיחה"}</p>
-            {CHEATSHEET.map(section=>(
-              <div key={section.id} style={{marginBottom:8}}>
+
+            {/* Header */}
+            <div style={{marginBottom:20}}>
+              <h2 style={{color:"#e2e8f0",fontSize:20,fontWeight:800,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>{t("guideBtn")}</h2>
+              <p style={{color:"#64748b",fontSize:13,lineHeight:1.5,margin:0,direction:dir}}>{t("guideSub")}</p>
+              <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+                <span style={{fontSize:11,color:"#94a3b8",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"3px 8px"}}>{CHEATSHEET.length} {lang==="en"?"sections":"קטגוריות"}</span>
+                <span style={{fontSize:11,color:"#94a3b8",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"3px 8px"}}>{totalCmds} {lang==="en"?"commands":"פקודות"}</span>
+              </div>
+            </div>
+
+            {/* Sections */}
+            {CHEATSHEET.map(section=>{
+              const open = isOpen(section.id);
+              const cmdCount = section.commands.length;
+              return (
+              <div key={section.id} style={{marginBottom:10}}>
+                {/* Section header */}
                 <button onClick={()=>setExpandedGuideSection(s=>s===section.id?null:section.id)}
-                  style={{width:"100%",background:isOpen(section.id)?`${section.color}10`:"rgba(255,255,255,0.03)",
-                    border:`1px solid ${isOpen(section.id)?section.color+"40":"rgba(255,255,255,0.08)"}`,
-                    borderLeft:`3px solid ${section.color}`,
-                    borderRadius:isOpen(section.id)?"10px 10px 0 0":10,
-                    padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,direction:"ltr",
-                    transition:"background 0.2s,border-color 0.2s"}}>
-                  <span style={{fontSize:20,flexShrink:0}}>{section.icon}</span>
-                  <span style={{flex:1,textAlign:"left",color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?section.title:section.titleHe}</span>
-                  <span style={{color:isOpen(section.id)?section.color:"#475569",fontSize:10,fontWeight:700}}>{isOpen(section.id)?"▲":"▼"}</span>
+                  style={{width:"100%",background:open?`${section.color}0D`:"rgba(255,255,255,0.025)",
+                    border:`1px solid ${open?section.color+"40":"rgba(255,255,255,0.07)"}`,
+                    borderRadius:open?"12px 12px 0 0":12,
+                    padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,direction:"ltr",
+                    transition:"all 0.2s ease"}}>
+                  <span style={{fontSize:22,flexShrink:0,width:32,textAlign:"center"}}>{section.icon}</span>
+                  <div style={{flex:1,textAlign:"left",display:"flex",flexDirection:"column",gap:2}}>
+                    <span style={{color:"#e2e8f0",fontSize:15,fontWeight:700,letterSpacing:-0.2}}>{lang==="en"?section.title:section.titleHe}</span>
+                    <span style={{color:"#64748b",fontSize:11}}>{cmdCount} {lang==="en"?"commands":"פקודות"}</span>
+                  </div>
+                  <span style={{color:open?section.color:"#475569",fontSize:10,fontWeight:700,transition:"transform 0.2s",transform:open?"rotate(180deg)":"rotate(0deg)"}}>▼</span>
                 </button>
-                {isOpen(section.id)&&(
-                  <div style={{background:"rgba(0,0,0,0.2)",border:`1px solid ${section.color}25`,borderTop:"none",borderRadius:"0 0 10px 10px",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
-                    {section.concepts.map((c,i)=>(
-                      <div key={i} style={{background:"rgba(255,255,255,0.02)",borderRadius:8,padding:"8px 10px",borderLeft:`2px solid ${section.color}30`}}>
-                        <span style={{color:section.color,fontWeight:700,fontSize:12,fontFamily:"monospace"}}>{lang==="he"&&c.nHe?c.nHe:c.n}</span>
-                        <div style={{color:"#94a3b8",fontSize:12,lineHeight:1.5,marginTop:2,direction:dir}}>{lang==="en"?c.d:c.dHe}</div>
-                        {c.c&&<pre style={{marginTop:4,background:"rgba(0,0,0,0.35)",borderRadius:5,padding:"5px 8px",fontFamily:"monospace",fontSize:11,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",direction:"ltr",lineHeight:1.55}}>{c.c}</pre>}
+
+                {/* Expanded command list */}
+                {open&&(
+                  <div style={{background:"rgba(0,0,0,0.25)",border:`1px solid ${section.color}20`,borderTop:"none",borderRadius:"0 0 12px 12px",padding:"6px 0",overflow:"hidden"}}>
+                    {section.commands.map((entry,i)=>{
+                      const isCopied = copiedCmd===entry.cmd;
+                      return (
+                      <div key={i} style={{padding:"10px 14px",borderBottom:i<cmdCount-1?`1px solid rgba(255,255,255,0.04)`:"none"}}>
+                        {/* Command line with copy button */}
+                        <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                          <code style={{flex:1,fontFamily:"'SF Mono','Cascadia Code','Fira Code',monospace",fontSize:12.5,color:"#7dd3fc",lineHeight:1.5,wordBreak:"break-all",direction:"ltr",display:"block"}}>{entry.cmd}</code>
+                          <button
+                            onClick={(e)=>{e.stopPropagation();handleCopy(entry.cmd);}}
+                            aria-label="Copy command"
+                            style={{flexShrink:0,background:isCopied?"rgba(16,185,129,0.15)":"rgba(255,255,255,0.04)",
+                              border:`1px solid ${isCopied?"rgba(16,185,129,0.3)":"rgba(255,255,255,0.08)"}`,
+                              borderRadius:6,padding:"4px 8px",cursor:"pointer",color:isCopied?"#10B981":"#64748b",
+                              fontSize:12,lineHeight:1,transition:"all 0.15s ease",display:"flex",alignItems:"center",gap:4}}>
+                            {isCopied?<>&#10003;</>:<>&#9112;</>}
+                          </button>
+                        </div>
+                        {/* Description */}
+                        <div style={{color:"#94a3b8",fontSize:12,lineHeight:1.4,marginTop:4,direction:dir}}>{lang==="en"?entry.desc:entry.descHe}</div>
                       </div>
-                    ))}
-                    {section.tip&&<div style={{marginTop:2,padding:"6px 10px",background:`${section.color}08`,borderRadius:6,fontSize:11,color:"#64748b",fontFamily:"monospace",direction:"ltr"}}>{"💡 "}{lang==="en"?section.tip:section.tipHe}</div>}
+                    );})}
                   </div>
                 )}
               </div>
-            ))}
+            );})}
           </div>
         );
       })()}

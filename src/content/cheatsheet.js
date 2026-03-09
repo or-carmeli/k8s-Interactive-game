@@ -1,130 +1,134 @@
-// ── Kubernetes Cheat Sheet Data ──────────────────────────────────────────────
-// Each section has: id, icon, color, title/titleHe, concepts[], and optional tip/tipHe.
-// Each concept has: n (name), nHe? (Hebrew name), d (desc EN), dHe (desc HE), c? (commands).
+// ── kubectl Cheat Sheet Data ─────────────────────────────────────────────────
+// Redesigned as a practical DevOps quick-reference organised by task.
+// Each section has: id, icon, color, title/titleHe, commands[].
+// Each command has: cmd (full kubectl command), desc/descHe (one-line purpose).
 
 export const CHEATSHEET = [
-  // ── 1. Core Objects ────────────────────────────────────────────────────────
+  // ── 1. Inspect Resources ──────────────────────────────────────────────────
   {
-    id: "core", icon: "🧩", color: "#00D4FF",
-    title: "Core Objects", titleHe: "אובייקטים מרכזיים",
-    concepts: [
-      { n: "Pod", d: "Smallest deployable unit. 1+ containers sharing network & storage.", dHe: "היחידה הקטנה ביותר. 1+ קונטיינרים עם רשת ואחסון משותפים.", c: "kubectl get pods -A\nkubectl describe pod <name>\nkubectl logs <pod> --previous" },
-      { n: "Deployment", d: "Manages identical Pods. Rolling updates & rollbacks. Stateless apps.", dHe: "מנהל Pods זהים. rolling update ו-rollback. לאפליקציות stateless.", c: "kubectl rollout status deploy/<name>\nkubectl rollout undo deploy/<name>\nkubectl scale deploy/<name> --replicas=3" },
-      { n: "StatefulSet", d: "Stable identity (pod-0, pod-1) + own PVC per Pod. For databases.", dHe: "זהות יציבה (pod-0, pod-1) + PVC ייחודי. לבסיסי נתונים.", c: "kubectl get statefulsets" },
-      { n: "DaemonSet", d: "Exactly one Pod per Node. Log collectors, monitoring, CNI.", dHe: "Pod אחד על כל Node. ניטור, לוגים, CNI.", c: "kubectl get daemonsets" },
-      { n: "Job / CronJob", d: "Job runs to completion. CronJob runs on cron schedule.", dHe: "Job: רץ עד סיום. CronJob: לפי לוח זמנים.", c: "kubectl get jobs\nkubectl get cronjobs" },
-      { n: "restartPolicy", d: "Always (default) · OnFailure (Jobs) · Never", dHe: "Always (ברירת מחדל) · OnFailure · Never" },
+    id: "inspect", icon: "🔎", color: "#00D4FF",
+    title: "Inspect Resources", titleHe: "בדיקת משאבים",
+    commands: [
+      { cmd: "kubectl get pods -A", desc: "Show pods across all namespaces", descHe: "הצגת Pods בכל ה-namespaces" },
+      { cmd: "kubectl get pods -n <ns> -o wide", desc: "List pods with node and IP details", descHe: "רשימת Pods עם פרטי Node ו-IP" },
+      { cmd: "kubectl get deploy,svc,ing -n <ns>", desc: "Show deployments, services, and ingresses", descHe: "הצגת Deployments, Services ו-Ingresses" },
+      { cmd: "kubectl describe pod <pod> -n <ns>", desc: "Show events and config details for a pod", descHe: "הצגת אירועים ופרטי קונפיגורציה של Pod" },
+      { cmd: "kubectl get events -n <ns> --sort-by=.lastTimestamp", desc: "List recent events sorted by time", descHe: "רשימת אירועים אחרונים לפי זמן" },
+      { cmd: "kubectl get nodes -o wide", desc: "List all nodes with OS and IP info", descHe: "רשימת Nodes עם פרטי IP ומערכת הפעלה" },
+      { cmd: "kubectl top pods -n <ns> --sort-by=memory", desc: "Show pod memory and CPU usage", descHe: "הצגת שימוש ב-CPU וזיכרון של Pods" },
+      { cmd: "kubectl top nodes", desc: "Show node resource utilisation", descHe: "הצגת ניצולת משאבים של Nodes" },
     ],
   },
 
-  // ── 2. Networking ──────────────────────────────────────────────────────────
+  // ── 2. Namespaces ─────────────────────────────────────────────────────────
   {
-    id: "networking", icon: "🌐", color: "#10B981",
+    id: "namespaces", icon: "📂", color: "#A855F7",
+    title: "Namespaces", titleHe: "Namespaces",
+    commands: [
+      { cmd: "kubectl get ns", desc: "List all namespaces", descHe: "רשימת כל ה-namespaces" },
+      { cmd: "kubectl create ns <name>", desc: "Create a new namespace", descHe: "יצירת namespace חדש" },
+      { cmd: "kubectl config set-context --current --namespace=<ns>", desc: "Set default namespace for current context", descHe: "הגדרת namespace ברירת מחדל" },
+      { cmd: "kubectl get all -n <ns>", desc: "List all resources in a namespace", descHe: "רשימת כל המשאבים ב-namespace" },
+      { cmd: "kubectl delete ns <name>", desc: "Delete a namespace and all its resources", descHe: "מחיקת namespace וכל המשאבים שלו" },
+    ],
+  },
+
+  // ── 3. Debugging ──────────────────────────────────────────────────────────
+  {
+    id: "debugging", icon: "🐛", color: "#FF6B35",
+    title: "Debugging", titleHe: "דיבוג",
+    commands: [
+      { cmd: "kubectl describe pod <pod> -n <ns>", desc: "Check events and error reasons for a pod", descHe: "בדיקת אירועים וסיבות שגיאה של Pod" },
+      { cmd: "kubectl get pod <pod> -o yaml", desc: "View full pod spec and status", descHe: "הצגת spec וסטטוס מלא של Pod" },
+      { cmd: "kubectl get events -n <ns> --field-selector reason=FailedScheduling", desc: "Find scheduling failures", descHe: "מציאת כשלונות תזמון" },
+      { cmd: "kubectl describe node <node>", desc: "Check node conditions and pressure", descHe: "בדיקת מצב Node ולחצים" },
+      { cmd: "kubectl auth can-i get pods --as=system:serviceaccount:<ns>:<sa>", desc: "Test RBAC permissions for a service account", descHe: "בדיקת הרשאות RBAC של ServiceAccount" },
+      { cmd: "kubectl run debug --image=busybox -it --rm -- sh", desc: "Spin up a quick debug container", descHe: "הרצת קונטיינר דיבוג מהיר" },
+    ],
+  },
+
+  // ── 4. Logs ───────────────────────────────────────────────────────────────
+  {
+    id: "logs", icon: "📜", color: "#10B981",
+    title: "Logs", titleHe: "לוגים",
+    commands: [
+      { cmd: "kubectl logs <pod> -n <ns>", desc: "Show logs for a pod", descHe: "הצגת לוגים של Pod" },
+      { cmd: "kubectl logs <pod> -c <container>", desc: "Show logs for a specific container", descHe: "הצגת לוגים של קונטיינר ספציפי" },
+      { cmd: "kubectl logs <pod> --previous", desc: "Show logs from last crashed container", descHe: "הצגת לוגים מקונטיינר שקרס" },
+      { cmd: "kubectl logs <pod> -f", desc: "Stream logs in real time", descHe: "הזרמת לוגים בזמן אמת" },
+      { cmd: "kubectl logs <pod> --tail=100", desc: "Show last 100 log lines", descHe: "הצגת 100 שורות לוג אחרונות" },
+      { cmd: "kubectl logs -l app=<name> -n <ns>", desc: "Show logs for all pods matching a label", descHe: "הצגת לוגים לכל Pods לפי label" },
+    ],
+  },
+
+  // ── 5. Exec & Port-Forward ────────────────────────────────────────────────
+  {
+    id: "exec", icon: "💻", color: "#7dd3fc",
+    title: "Exec & Port-Forward", titleHe: "Exec ו-Port-Forward",
+    commands: [
+      { cmd: "kubectl exec -it <pod> -- sh", desc: "Open a shell inside a pod", descHe: "פתיחת shell בתוך Pod" },
+      { cmd: "kubectl exec -it <pod> -c <container> -- sh", desc: "Shell into a specific container", descHe: "Shell לקונטיינר ספציפי" },
+      { cmd: "kubectl exec <pod> -- cat /etc/config/app.conf", desc: "Read a file inside a pod", descHe: "קריאת קובץ בתוך Pod" },
+      { cmd: "kubectl port-forward pod/<pod> 8080:80", desc: "Forward local port 8080 to pod port 80", descHe: "העברת פורט מקומי 8080 לפורט 80 ב-Pod" },
+      { cmd: "kubectl port-forward svc/<svc> 3000:80 -n <ns>", desc: "Forward local port to a service", descHe: "העברת פורט מקומי ל-Service" },
+      { cmd: "kubectl cp <pod>:/path/file ./local-file", desc: "Copy a file from a pod to local machine", descHe: "העתקת קובץ מ-Pod למכונה מקומית" },
+    ],
+  },
+
+  // ── 6. Networking ─────────────────────────────────────────────────────────
+  {
+    id: "networking", icon: "🌐", color: "#F59E0B",
     title: "Networking", titleHe: "רשת",
-    concepts: [
-      { n: "ClusterIP", d: "Internal-only Service. Default type. Not reachable from outside.", dHe: "Service פנימי בלבד. סוג ברירת מחדל." },
-      { n: "NodePort", d: "External access via <NodeIP>:<30000–32767>. For dev/testing.", dHe: "גישה חיצונית דרך פורט (30000–32767). לפיתוח." },
-      { n: "LoadBalancer", d: "Cloud provider creates external LB. Standard for production.", dHe: "ספק ענן יוצר LB חיצוני. סטנדרט לפרודקשן." },
-      { n: "Headless", d: "clusterIP: None — DNS returns Pod IPs. Used by StatefulSets.", dHe: "clusterIP: None — DNS מחזיר IPs של Pods ישירות." },
-      { n: "Port fields", nHe: "שדות פורט", d: "port (cluster) · targetPort (container) · nodePort (external, 30000–32767)", dHe: "port (קלאסטר) · targetPort (קונטיינר) · nodePort (חיצוני)" },
-      { n: "DNS", d: "Same ns: http://my-svc · Cross: my-svc.other-ns.svc.cluster.local", dHe: "אותו ns: http://my-svc · אחר: my-svc.other-ns.svc.cluster.local" },
-      { n: "Ingress", d: "Routes HTTP/S from outside to Services. Needs Ingress Controller.", dHe: "מנתב HTTP/S חיצוני ל-Services. דורש Ingress Controller.", c: "kubectl get ingress\nkubectl describe ingress <name>" },
-      { n: "NetworkPolicy", d: "No policy = all allowed. Apply deny-all first, then explicit allows.", dHe: "ללא policy = הכל מותר. deny-all ואז allows ספציפיים.", c: "kubectl get networkpolicies -n <ns>" },
-    ],
-    tip: "kubectl get endpoints <svc>  → empty list = selector mismatch",
-    tipHe: "kubectl get endpoints <svc> → רשימה ריקה = selector לא תואם",
-  },
-
-  // ── 3. Scheduling ──────────────────────────────────────────────────────────
-  {
-    id: "scheduling", icon: "⚙️", color: "#F59E0B",
-    title: "Scheduling", titleHe: "תזמון",
-    concepts: [
-      { n: "nodeSelector", d: "Simple label match. Pod runs only on Nodes with that label.", dHe: "התאמת label פשוטה." },
-      { n: "nodeAffinity", d: "Like nodeSelector with required/preferred rules and richer expressions.", dHe: "כמו nodeSelector עם כללים required/preferred מתקדמים." },
-      { n: "Taint", d: "Marks Node to repel Pods. NoSchedule / PreferNoSchedule / NoExecute.", dHe: "מסמן Node לדחיית Pods. NoSchedule / PreferNoSchedule / NoExecute.", c: "kubectl taint nodes <node> key=val:NoSchedule\nkubectl taint nodes <node> key=val:NoSchedule-" },
-      { n: "Toleration", d: "Added to Pod spec to allow scheduling on tainted Node.", dHe: "מתווסף ל-Pod לאפשר תזמון על Node עם Taint." },
-      { n: "requests", d: "Minimum reserved. Scheduler uses this to pick a Node.", dHe: "מינימום שמור. Scheduler בוחר Node לפי זה." },
-      { n: "limits", d: "Maximum allowed. Memory exceeded → OOMKilled (137). CPU → throttled.", dHe: "מקסימום. חריגת memory → OOMKilled. חריגת CPU → throttling." },
-      { n: "livenessProbe", d: "Fail → container restarted.", dHe: "כשלון → Kubernetes מאתחל את הקונטיינר." },
-      { n: "readinessProbe", d: "Fail → Pod removed from Service endpoints.", dHe: "כשלון → Pod מוסר מה-Service." },
-      { n: "startupProbe", d: "Delays liveness/readiness until app finishes starting.", dHe: "משהה liveness/readiness עד שהאפליקציה סיימה לעלות." },
-      { n: "QoS Classes", nHe: "מחלקות QoS", d: "Guaranteed (req=lim) · Burstable (req<lim) · BestEffort (none). Evicted: BestEffort first.", dHe: "Guaranteed (req=lim) · Burstable (req<lim) · BestEffort (ללא). פינוי: BestEffort ראשון." },
-    ],
-    tip: "kubectl top pods --sort-by=memory  ·  kubectl describe pod → Events",
-    tipHe: "kubectl top pods --sort-by=memory · kubectl describe pod → Events",
-  },
-
-  // ── 4. Configuration ───────────────────────────────────────────────────────
-  {
-    id: "configuration", icon: "🔧", color: "#A855F7",
-    title: "Configuration", titleHe: "קונפיגורציה",
-    concepts: [
-      { n: "ConfigMap", d: "Non-sensitive config. Volume mount auto-updates; env vars need Pod restart.", dHe: "קונפיגורציה. כ-volume מתעדכן; כ-env var דורש restart.", c: "kubectl get cm\nkubectl create cm <name> --from-literal=key=val" },
-      { n: "Secret", d: "Like ConfigMap for sensitive data. Base64-encoded, NOT encrypted by default.", dHe: "לנתונים רגישים. base64, לא מוצפן כברירת מחדל.", c: "kubectl get secret -n <ns>\nkubectl get secret <name> -o jsonpath='{.data.key}' | base64 -d" },
-      { n: "env.valueFrom", d: "configMapKeyRef / secretKeyRef → one key as env var.", dHe: "configMapKeyRef/secretKeyRef → מפתח אחד כ-env var." },
-      { n: "envFrom", d: "configMapRef / secretRef → inject ALL keys as env vars.", dHe: "configMapRef/secretRef → כל המפתחות כ-env vars." },
-      { n: "volumeMount", d: "Each key becomes a file. ConfigMap volumes auto-update, env vars don't.", dHe: "כל מפתח = קובץ. volume מתעדכן; env var לא." },
-    ],
-    tip: "kubectl rollout restart deploy/<name>  → pick up ConfigMap changes",
-    tipHe: "kubectl rollout restart deploy/<name> → קליטת שינויי ConfigMap",
-  },
-
-  // ── 5. Storage ─────────────────────────────────────────────────────────────
-  {
-    id: "storage", icon: "💾", color: "#6366F1",
-    title: "Storage", titleHe: "אחסון",
-    concepts: [
-      { n: "emptyDir", d: "Lives with the Pod. Shared by containers. Gone when Pod deleted.", dHe: "חי עם ה-Pod. משותף לקונטיינרים. נמחק עם ה-Pod." },
-      { n: "hostPath", d: "Mounts Node directory into Pod. Avoid in production.", dHe: "תיקיה מה-Node. יש להימנע ב-production." },
-      { n: "PV / PVC", d: "PV = real storage. PVC = Pod's request. K8s binds matching PV to PVC.", dHe: "PV = אחסון אמיתי. PVC = בקשה. K8s מחבר PV ל-PVC.", c: "kubectl get pv\nkubectl get pvc -n <ns>\nkubectl describe pvc <name>" },
-      { n: "StorageClass", d: "Dynamic provisioning blueprint. Names provisioner (EBS, GCP PD, Ceph…).", dHe: "תבנית dynamic provisioning. מגדיר provisioner.", c: "kubectl get storageclass" },
-      { n: "Access Modes", nHe: "מצבי גישה", d: "RWO (1 Node r/w) · RWX (many Nodes r/w, NFS/EFS) · ROX (many read-only)", dHe: "RWO (Node אחד) · RWX (מספר Nodes, NFS/EFS) · ROX (קריאה בלבד)" },
-      { n: "Reclaim Policy", nHe: "שחרור", d: "Retain = data preserved, manual cleanup. Delete = PV + disk gone with PVC.", dHe: "Retain = נתונים נשמרים. Delete = PV + דיסק נמחקים עם PVC." },
+    commands: [
+      { cmd: "kubectl get svc -A", desc: "List all services across namespaces", descHe: "רשימת כל ה-Services בכל ה-namespaces" },
+      { cmd: "kubectl get endpoints <svc> -n <ns>", desc: "Check which pods back a service", descHe: "בדיקת אילו Pods מאחורי Service" },
+      { cmd: "kubectl get ingress -n <ns>", desc: "List ingress rules in a namespace", descHe: "רשימת חוקי Ingress ב-namespace" },
+      { cmd: "kubectl describe ingress <name> -n <ns>", desc: "Show ingress routing details", descHe: "הצגת פרטי ניתוב Ingress" },
+      { cmd: "kubectl get networkpolicies -n <ns>", desc: "List network policies", descHe: "רשימת Network Policies" },
+      { cmd: "kubectl run tmp --image=curlimages/curl -it --rm -- curl <svc>.<ns>.svc.cluster.local", desc: "Test DNS resolution from inside the cluster", descHe: "בדיקת DNS מתוך הקלאסטר" },
     ],
   },
 
-  // ── 6. Security ────────────────────────────────────────────────────────────
+  // ── 7. Deployments & Rollouts ─────────────────────────────────────────────
   {
-    id: "security", icon: "🔒", color: "#EF4444",
-    title: "Security", titleHe: "אבטחה",
-    concepts: [
-      { n: "Role / ClusterRole", d: "Role = one namespace. ClusterRole = cluster-wide permissions.", dHe: "Role = namespace אחד. ClusterRole = כל הקלאסטר.", c: "kubectl get role,rolebinding -n <ns>\nkubectl get clusterrole,clusterrolebinding" },
-      { n: "RoleBinding", d: "Attaches Role/ClusterRole to User, Group, or ServiceAccount.", dHe: "מקשר Role לנושא בתוך namespace." },
-      { n: "ServiceAccount", d: "Pod identity for K8s API. Default SA auto-mounted. Use least privilege.", dHe: "זהות ל-Pods מול ה-API. SA 'default' מוזרק אוטומטית.", c: "kubectl auth can-i get pods --as=system:serviceaccount:<ns>:<sa>" },
-      { n: "Pod Security", nHe: "אבטחת Pod", d: "runAsNonRoot · readOnlyRootFilesystem · allowPrivilegeEscalation: false", dHe: "runAsNonRoot · readOnlyRootFilesystem · allowPrivilegeEscalation: false" },
-      { n: "RBAC Verbs", nHe: "פעלים", d: "get/list/watch (read) · create/update/patch (write) · delete · * (all — avoid)", dHe: "get/list/watch (קריאה) · create/update/patch (כתיבה) · delete · * (הכל — יש להימנע)" },
+    id: "deployments", icon: "🚀", color: "#6366F1",
+    title: "Deployments & Rollouts", titleHe: "Deployments ו-Rollouts",
+    commands: [
+      { cmd: "kubectl rollout status deploy/<name> -n <ns>", desc: "Watch a deployment rollout progress", descHe: "מעקב אחרי התקדמות rollout" },
+      { cmd: "kubectl rollout undo deploy/<name> -n <ns>", desc: "Roll back to the previous revision", descHe: "חזרה לגרסה הקודמת" },
+      { cmd: "kubectl rollout history deploy/<name>", desc: "Show deployment revision history", descHe: "הצגת היסטוריית גרסאות" },
+      { cmd: "kubectl set image deploy/<name> <container>=<image>:<tag>", desc: "Update container image for a deployment", descHe: "עדכון image של קונטיינר ב-Deployment" },
+      { cmd: "kubectl rollout restart deploy/<name> -n <ns>", desc: "Restart all pods in a deployment", descHe: "הפעלה מחדש של כל ה-Pods ב-Deployment" },
+      { cmd: "kubectl apply -f manifest.yaml --dry-run=client", desc: "Validate manifest without applying", descHe: "בדיקת manifest ללא החלה" },
+      { cmd: "kubectl diff -f manifest.yaml", desc: "Show what would change before applying", descHe: "הצגת שינויים לפני החלה" },
     ],
   },
 
-  // ── 7. Troubleshooting ─────────────────────────────────────────────────────
+  // ── 8. Scaling ────────────────────────────────────────────────────────────
   {
-    id: "troubleshooting", icon: "🔍", color: "#FF6B35",
-    title: "Troubleshooting", titleHe: "פתרון בעיות",
-    concepts: [
-      { n: "CrashLoopBackOff", d: "Container crashes repeatedly with exponential backoff delay.", dHe: "קונטיינר קורס שוב ושוב עם השהייה גדלה.", c: "kubectl logs <pod> --previous" },
-      { n: "ImagePullBackOff", d: "Can't pull image — typo, wrong tag, or missing imagePullSecret.", dHe: "לא ניתן למשוך image — שם/tag שגוי או secret חסר.", c: "kubectl describe pod <name>  # → Events" },
-      { n: "Pending Pod", nHe: "Pod תקוע", d: "No Node fits — CPU/memory, nodeSelector, toleration, or unbound PVC.", dHe: "אין Node מתאים — CPU/memory, nodeSelector, toleration, PVC.", c: "kubectl describe pod <name>  # → FailedScheduling" },
-      { n: "OOMKilled", d: "Exceeded memory limit. Exit code 137. Increase limits.memory.", dHe: "חריגת memory. קוד 137. הגדל limits.memory.", c: "kubectl top pod --sort-by=memory" },
-      { n: "Node NotReady", d: "kubelet stopped — crashed, TLS expired, disk/memory pressure.", dHe: "kubelet הפסיק לדווח — קרס, TLS פג, לחץ disk.", c: "kubectl describe node <name>\n# SSH → systemctl status kubelet" },
+    id: "scaling", icon: "📈", color: "#10B981",
+    title: "Scaling", titleHe: "סקיילינג",
+    commands: [
+      { cmd: "kubectl scale deploy/<name> --replicas=3 -n <ns>", desc: "Scale a deployment to 3 replicas", descHe: "שינוי מספר הרפליקות ל-3" },
+      { cmd: "kubectl autoscale deploy/<name> --min=2 --max=10 --cpu-percent=80", desc: "Create a horizontal pod autoscaler", descHe: "יצירת HPA עם מינימום 2, מקסימום 10" },
+      { cmd: "kubectl get hpa -n <ns>", desc: "List horizontal pod autoscalers", descHe: "רשימת HPAs ב-namespace" },
+      { cmd: "kubectl scale statefulset/<name> --replicas=5", desc: "Scale a StatefulSet", descHe: "שינוי מספר רפליקות של StatefulSet" },
     ],
-    tip: "Always start: kubectl describe pod <name> → scroll to Events",
-    tipHe: "תמיד התחל: kubectl describe pod <name> → גלול ל-Events",
   },
 
-  // ── 8. kubectl Quick Reference ─────────────────────────────────────────────
+  // ── 9. Cleanup ────────────────────────────────────────────────────────────
   {
-    id: "kubectl", icon: "⌨️", color: "#7dd3fc",
-    title: "kubectl Quick Ref", titleHe: "kubectl שליף",
-    concepts: [
-      { n: "-n <ns>", d: "Target specific namespace", dHe: "Namespace ספציפי" },
-      { n: "-A", d: "All namespaces", dHe: "כל ה-namespaces" },
-      { n: "-o wide / yaml", d: "Extra columns / full resource spec", dHe: "עמודות נוספות / spec מלא" },
-      { n: "--dry-run=client", d: "Preview without applying", dHe: "סימולציה ללא שינוי" },
-      { n: "-w (--watch)", d: "Stream updates in real time", dHe: "עדכונים בזמן אמת" },
-      { n: "--previous", d: "Logs from last crashed container", dHe: "לוגים מה-crash האחרון" },
+    id: "cleanup", icon: "🧹", color: "#EF4444",
+    title: "Cleanup", titleHe: "ניקוי",
+    commands: [
+      { cmd: "kubectl delete pod <pod> -n <ns>", desc: "Delete a specific pod", descHe: "מחיקת Pod ספציפי" },
+      { cmd: "kubectl delete pod <pod> --grace-period=0 --force", desc: "Force-delete a stuck pod", descHe: "מחיקת Pod תקוע בכוח" },
+      { cmd: "kubectl delete deploy <name> -n <ns>", desc: "Delete a deployment and its pods", descHe: "מחיקת Deployment וה-Pods שלו" },
+      { cmd: "kubectl delete -f manifest.yaml", desc: "Delete all resources defined in a file", descHe: "מחיקת משאבים שמוגדרים בקובץ" },
+      { cmd: "kubectl delete pods --field-selector=status.phase=Failed -n <ns>", desc: "Delete all failed pods in a namespace", descHe: "מחיקת כל ה-Pods שנכשלו ב-namespace" },
+      { cmd: "kubectl drain <node> --ignore-daemonsets --delete-emptydir-data", desc: "Safely evict all pods from a node", descHe: "פינוי בטוח של כל ה-Pods מ-Node" },
+      { cmd: "kubectl cordon <node>", desc: "Mark a node as unschedulable", descHe: "סימון Node כלא-ניתן-לתזמון" },
+      { cmd: "kubectl uncordon <node>", desc: "Allow scheduling on a node again", descHe: "החזרת Node לתזמון" },
     ],
-    tip: "kubectl exec -it <pod> -- sh  ·  kubectl port-forward pod/<name> 8080:80",
-    tipHe: "kubectl exec -it <pod> -- sh  ·  kubectl port-forward pod/<name> 8080:80",
   },
 ];
