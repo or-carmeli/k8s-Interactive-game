@@ -17,8 +17,8 @@ function stageProgress(topicId, completedTopics) {
   let score = 0;
   LVL_ORDER.forEach(lvl => {
     const r = completedTopics[`${topicId}_${lvl}`];
-    if (!r || r.total === 0) return;
-    score += r.retryComplete ? 1 : Math.min(r.correct, r.total) / r.total;
+    if (!r || !r.total || r.total <= 0) return;
+    score += r.retryComplete ? 1 : Math.min(r.correct || 0, r.total) / r.total;
   });
   return Math.min(100, Math.round((score / LVL_ORDER.length) * 100));
 }
@@ -26,7 +26,9 @@ function stageProgress(topicId, completedTopics) {
 function isStageCompleted(topicId, completedTopics) {
   return LVL_ORDER.every(lvl => {
     const r = completedTopics[`${topicId}_${lvl}`];
-    return r && (r.correct === r.total || r.retryComplete);
+    // Guard: both correct and total must be valid numbers to count as completed
+    return r && typeof r.correct === "number" && typeof r.total === "number"
+      && r.total > 0 && (r.correct === r.total || r.retryComplete);
   });
 }
 
@@ -34,7 +36,7 @@ function nextRecommendedLevel(topicId, completedTopics, isLevelLocked) {
   for (const lvl of LVL_ORDER) {
     if (isLevelLocked(topicId, lvl)) continue;
     const r = completedTopics[`${topicId}_${lvl}`];
-    if (!r || (!r.retryComplete && r.correct < r.total)) return lvl;
+    if (!r || (!r.retryComplete && (r.correct || 0) < (r.total || 0))) return lvl;
   }
   return null;
 }
@@ -57,9 +59,9 @@ export default function RoadmapView({
   const allDone = currentStageIdx === -1;
   const currentStageNum = allDone ? topics.length : currentStageIdx + 1;
 
-  const overallProgress = Math.round(
+  const overallProgress = topics.length > 0 ? Math.round(
     topics.reduce((sum, topic) => sum + stageProgress(topic.id, completedTopics), 0) / topics.length
-  );
+  ) : 0;
 
   const handleGlobalContinue = () => {
     const idx   = allDone ? 0 : currentStageIdx;
@@ -241,7 +243,7 @@ export default function RoadmapView({
                           <div style={{fontSize:12,fontWeight:700,color:lvlLocked?"#334155":done?cfg.color:"#64748b"}}>
                             {lang==="en"?cfg.labelEn:cfg.label}
                           </div>
-                          {done&&!lvlLocked&&<div aria-hidden="true" style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}}>{done.correct>0?"✓":""} {done.correct}/{done.total}</div>}
+                          {done&&!lvlLocked&&done.total>0&&<div aria-hidden="true" style={{fontSize:10,color:(done.correct||0)>0?cfg.color:"#EF4444"}}>{(done.correct||0)>0?"✓":""} {done.correct||0}/{done.total}</div>}
                           <div aria-hidden="true" style={{fontSize:10,color:lvlLocked?"#1e293b":"#475569"}}>+{cfg.points}{t("pts")}</div>
                         </button>
                       );

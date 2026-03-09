@@ -766,13 +766,35 @@ export default function K8sQuestApp() {
 
   const isFreeMode = (id) => id === "mixed" || id === "daily" || id === "bookmarks";
 
+  // ── Data normalization helpers ───────────────────────────────────────────
+  // Guard against legacy/incomplete data that can produce NaN and corrupt scores.
+  const normalizeCompleted = (ct) => {
+    if (!ct || typeof ct !== "object") return {};
+    const out = {};
+    for (const [key, raw] of Object.entries(ct)) {
+      if (!raw || typeof raw !== "object") continue;
+      const total   = (typeof raw.total   === "number" && raw.total   >= 0) ? raw.total   : 0;
+      const correct = (typeof raw.correct === "number" && raw.correct >= 0) ? Math.min(raw.correct, total) : 0;
+      out[key] = { ...raw, correct, total };
+    }
+    return out;
+  };
+
+  const normalizeStats = (s) => ({
+    total_answered: (typeof s?.total_answered === "number" && isFinite(s.total_answered)) ? s.total_answered : 0,
+    total_correct:  (typeof s?.total_correct  === "number" && isFinite(s.total_correct))  ? s.total_correct  : 0,
+    total_score:    (typeof s?.total_score    === "number" && isFinite(s.total_score))     ? s.total_score    : 0,
+    max_streak:     (typeof s?.max_streak     === "number" && isFinite(s.max_streak))      ? s.max_streak     : 0,
+    current_streak: (typeof s?.current_streak === "number" && isFinite(s.current_streak))  ? s.current_streak : 0,
+  });
+
   // Weighted progress % for a single topic - matches Roadmap's stageProgress logic.
   const computeTopicProgress = (topicId) => {
     let score = 0;
     LEVEL_ORDER.forEach(lvl => {
       const r = completedTopics[`${topicId}_${lvl}`];
-      if (!r || r.total === 0) return;
-      score += r.retryComplete ? 1 : Math.min(r.correct, r.total) / r.total;
+      if (!r || !r.total || r.total <= 0) return;
+      score += r.retryComplete ? 1 : Math.min(r.correct || 0, r.total) / r.total;
     });
     return Math.min(100, Math.round((score / LEVEL_ORDER.length) * 100));
   };
@@ -786,7 +808,7 @@ export default function K8sQuestApp() {
       const topicId = parts.slice(0, -1).join("_");
       if (isFreeMode(topicId)) return sum;               // BUG-E fix: skip mixed/daily
       const lvl = parts[parts.length - 1];
-      return sum + (res.correct * (LEVEL_CONFIG[lvl]?.points ?? 0));
+      return sum + ((res.correct || 0) * (LEVEL_CONFIG[lvl]?.points ?? 0));
     }, 0);
   const currentLevelData = selectedTopic && selectedLevel && !isFreeMode(selectedTopic.id) && !retryMode ? getLevelData(selectedTopic, selectedLevel) : null;
   const currentQuestions = isFreeMode(selectedTopic?.id) || retryMode ? mixedQuestions : (topicQuestions.length > 0 ? topicQuestions : (currentLevelData?.questions || []));
@@ -800,10 +822,10 @@ export default function K8sQuestApp() {
       if (!raw) return;
       const cached = JSON.parse(raw);
       if (cached?.completedTopics && typeof cached.completedTopics === "object" && Object.keys(cached.completedTopics).length > 0) {
-        setCompletedTopics(cached.completedTopics);
+        setCompletedTopics(normalizeCompleted(cached.completedTopics));
       }
       if (cached?.stats && typeof cached.stats === "object") {
-        setStats(prev => ({ ...prev, ...cached.stats }));
+        setStats(prev => ({ ...prev, ...normalizeStats(cached.stats) }));
       }
       if (Array.isArray(cached?.achievements)) {
         setUnlockedAchievements(cached.achievements);
@@ -902,8 +924,12 @@ export default function K8sQuestApp() {
       const saved = localStorage.getItem("k8s_quest_guest");
       if (saved) {
         const { stats: s, completedTopics: c, unlockedAchievements: u } = JSON.parse(saved);
-        if (c) setCompletedTopics(c);
-        if (s) setStats({ ...s, total_score: computeScore(c || {}) });
+        const nc = normalizeCompleted(c || {});
+        const ns = normalizeStats(s);
+        if (Object.keys(nc).length > 0) setCompletedTopics(nc);
+        // Preserve the higher of saved score vs canonical score (saved may include free-mode bonuses)
+        const canonical = computeScore(nc);
+        setStats({ ...ns, total_score: Math.max(ns.total_score, canonical) });
         if (u) setUnlockedAchievements(u);
       }
     } catch {}
@@ -1165,8 +1191,8 @@ export default function K8sQuestApp() {
       const gc = shouldMerge ? (guestSaved.completedTopics || {}) : {};
       const ga = shouldMerge ? (guestSaved.unlockedAchievements || []) : [];
 
-      const mergedCompleted = { ...(base.completed_topics || {}) };
-      Object.entries(gc).forEach(([key, val]) => {
+      const mergedCompleted = normalizeCompleted({ ...(base.completed_topics || {}) });
+      Object.entries(normalizeCompleted(gc)).forEach(([key, val]) => {
         if (!mergedCompleted[key] || val.correct > mergedCompleted[key].correct)
           mergedCompleted[key] = val;
       });
@@ -1174,16 +1200,29 @@ export default function K8sQuestApp() {
       const mergedAch = [...new Set([...(base.achievements || []), ...ga])];
 
       const topicBaseScore = computeScore(mergedCompleted);
+      const dbScore = (typeof base.total_score === "number" && isFinite(base.total_score)) ? base.total_score : 0;
+      // Reconcile with local cache: if the user just completed a quiz but Supabase hasn't
+      // caught up yet, the local cache may hold a higher (valid) score. Preserve the max.
+      let localCacheScore = 0;
+      try {
+        const raw = localStorage.getItem("k8s_progress_v2");
+        if (raw) {
+          const cached = JSON.parse(raw);
+          if (cached?.userId === userId && typeof cached?.stats?.total_score === "number" && isFinite(cached.stats.total_score)) {
+            localCacheScore = cached.stats.total_score;
+          }
+        }
+      } catch {}
       const mergedStats = {
         total_answered: (base.total_answered || 0) + (gs.total_answered || 0),
         total_correct:  (base.total_correct  || 0) + (gs.total_correct  || 0),
-        // Prefer the DB value - it includes free-mode bonus on top of topic score
-        total_score:    base.total_score != null ? Math.max(base.total_score, topicBaseScore) : topicBaseScore,
+        // Use the highest of: DB value, canonical topic score, and local cache score
+        total_score:    Math.max(dbScore, topicBaseScore, localCacheScore),
         max_streak:     Math.max(base.max_streak || 0, gs.max_streak || 0),
         current_streak: Math.max(base.current_streak || 0, gs.current_streak || 0),
       };
 
-      setStats(mergedStats);
+      setStats(normalizeStats(mergedStats));
       setCompletedTopics(mergedCompleted);
       setUnlockedAchievements(mergedAch);
 
@@ -1697,8 +1736,20 @@ export default function K8sQuestApp() {
         ? quizHistory.filter(h=>h.chosen!==h.answer).map(h=>({q:h.q,options:h.options,answer:h.answer}))
         : (completedTopics[key]?.wrongQuestions??[]);
       const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, wrongIndices: wrongIdx, wrongQuestions, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
-      // Recompute canonical score; use Math.max to preserve per-question points and free-mode bonuses
-      const newStats = { ...stats, total_score: Math.max(stats.total_score, computeScore(newCompleted)) };
+      // Recompute canonical score from completedTopics (single source of truth).
+      // For topic quizzes: canonical score + preserved free-mode bonus (prevents replay inflation).
+      // For free-mode quizzes: keep accumulated score (free-mode additions are duplicate-guarded).
+      const newCanonical = computeScore(newCompleted);
+      let newTotalScore;
+      if (isFreeMode(selectedTopic.id)) {
+        newTotalScore = Math.max(stats.total_score, newCanonical);
+      } else {
+        const oldCanonical = computeScore(completedTopics);
+        const preQuizScore = stats.total_score - sessionScore;
+        const freeModeBonus = Math.max(0, preQuizScore - oldCanonical);
+        newTotalScore = newCanonical + freeModeBonus;
+      }
+      const newStats = { ...stats, total_score: newTotalScore };
       const newAch = [
         ...unlockedAchievements,
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
