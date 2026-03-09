@@ -3537,12 +3537,16 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
           ? defaultSvcNames.map(n => ({ service_name: n, status: "operational", latency_ms: null }))
           : monitorServices;
 
-        // Build uptime bars per service from real history
+        // Build uptime bars + check totals per service from real history
         const uptimeByService = {};
+        const checksByService = {};
         if (monitorUptime) {
           for (const row of monitorUptime) {
             if (!uptimeByService[row.service_name]) uptimeByService[row.service_name] = {};
             uptimeByService[row.service_name][row.day] = row.uptime_pct;
+            if (!checksByService[row.service_name]) checksByService[row.service_name] = { ok: 0, total: 0 };
+            checksByService[row.service_name].ok += Number(row.ok_checks);
+            checksByService[row.service_name].total += Number(row.total_checks);
           }
         }
         const getDayBars = (svcName) => {
@@ -3665,9 +3669,8 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {services.map((svc)=>{
                 const bars = getDayBars(svc.service_name);
-                const dataBars = bars.filter(b=>b!=="nodata");
-                const okBars = bars.filter(b=>b==="ok").length;
-                const pct = dataBars.length ? (okBars/dataBars.length*100).toFixed(1) : "-";
+                const checks = checksByService[svc.service_name];
+                const pct = checks && checks.total > 0 ? (checks.ok / checks.total * 100).toFixed(1) : "-";
                 const ok = svc.status === "operational";
                 return (
                   <div key={svc.service_name} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"12px 14px"}}>
