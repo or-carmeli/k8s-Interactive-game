@@ -27,7 +27,7 @@ interface CheckResult {
 async function timedCheck(
   name: string,
   fn: () => Promise<{ ok: boolean; details?: Record<string, unknown> }>,
-  degradedThresholdMs = 2000
+  degradedThresholdMs = 3000
 ): Promise<CheckResult> {
   const start = performance.now();
   try {
