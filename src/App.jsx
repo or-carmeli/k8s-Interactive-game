@@ -3542,6 +3542,17 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
         };
         const barColor = (t) => t==="ok" ? "#10B981" : t==="incident" ? "#F59E0B" : t==="error" ? "#EF4444" : "rgba(255,255,255,0.06)";
 
+        // Determine actual monitoring span for accurate labels
+        let monitoringDays = 30;
+        if (monitorUptime && monitorUptime.length) {
+          const allDays = [...new Set(monitorUptime.map(r => r.day))].sort();
+          if (allDays.length > 0) {
+            const first = new Date(allDays[0]);
+            const diffMs = Date.now() - first.getTime();
+            monitoringDays = Math.min(30, Math.max(1, Math.ceil(diffMs / 86400000)));
+          }
+        }
+
         // Compute average latency across services that have it
         const latencies = services.filter(s => s.latency_ms != null).map(s => s.latency_ms);
         const avgLatency = latencies.length ? Math.round(latencies.reduce((a,b)=>a+b,0)/latencies.length) : null;
@@ -3643,7 +3654,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
             </div>
 
             {/* ── UPTIME - LAST 30 DAYS ── */}
-            {sectionTitle(lang==="en"?"Uptime — Last 30 Days":"זמינות — 30 ימים אחרונים")}
+            {sectionTitle(lang==="en"?`Uptime — Last ${monitoringDays} Days`:`זמינות — ${monitoringDays} ימים אחרונים`)}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {services.map((svc)=>{
                 const bars = getDayBars(svc.service_name);
@@ -3662,7 +3673,7 @@ kubectl get pods -o jsonpath='{.items[*].metadata.name}'`},
                       ))}
                     </div>
                     <div style={{display:"flex",justifyContent:"space-between",marginTop:5}}>
-                      <span style={{fontSize:10,color:"#334155"}}>30 days ago</span>
+                      <span style={{fontSize:10,color:"#334155"}}>{monitoringDays >= 30 ? (lang==="en"?"30 days ago":"לפני 30 ימים") : (lang==="en"?`${monitoringDays}d ago`:`לפני ${monitoringDays} ימים`)}</span>
                       <span style={{fontSize:10,color:"#334155"}}>Today</span>
                     </div>
                   </div>
