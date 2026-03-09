@@ -1,6 +1,6 @@
 {
-  "name": "K8s Quest",
-  "short_name": "K8s Quest",
+  "name": "KubeQuest",
+  "short_name": "KubeQuest",
   "description": "למד Kubernetes בצורה כיפית ואינטראקטיבית",
   "start_url": "/",
   "display": "standalone",
