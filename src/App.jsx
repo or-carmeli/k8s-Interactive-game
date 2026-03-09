@@ -630,7 +630,6 @@ export default function K8sQuestApp() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [submitted, setSubmitted]         = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [expandedExplanation, setExpandedExplanation] = useState(false);
   const [flash, setFlash]                 = useState(false);
   const [tryAgainActive, setTryAgainActive]   = useState(false);
   const [tryAgainSelected, setTryAgainSelected] = useState(null);
@@ -874,8 +873,7 @@ export default function K8sQuestApp() {
     const handlePopState = () => {
       // If explanation is showing, dismiss it and stay in quiz
       if (screenRef.current === "topic" && topicScreenRef.current === "quiz" && showExplanationRef.current) {
-        setShowExplanation(false); setExpandedExplanation(false);
-      }
+        setShowExplanation(false);      }
       // Re-push so the next back press is also caught
       window.history.pushState({ quiz: true }, "");
     };
@@ -1725,8 +1723,7 @@ export default function K8sQuestApp() {
       setQuestionIndex(p => p + 1);
       setSelectedAnswer(null);
       setSubmitted(false);
-      setShowExplanation(false); setExpandedExplanation(false);
-      setAnswerResult(null);
+      setShowExplanation(false);      setAnswerResult(null);
       if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[selectedLevel] || 25) : (TIMER_DURATIONS[selectedLevel] || 30));
     }
   };
@@ -1769,8 +1766,7 @@ export default function K8sQuestApp() {
     });
     setSelectedTopic(topic); setSelectedLevel(level); setTopicScreen("theory");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false); setExpandedExplanation(false);
-    topicCorrectRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0;
     lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
@@ -1824,8 +1820,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false); setExpandedExplanation(false);
-    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -1869,8 +1864,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false); setExpandedExplanation(false);
-    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.daily : TIMER_DURATIONS.daily);
@@ -1942,8 +1936,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(BOOKMARKS_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false); setExpandedExplanation(false);
-    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -3659,27 +3652,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                                 : (tryAgainActive ? t("tryAgainWrong") : t("incorrect"))}
                           </span>
                         </div>
-                        {/* Explanation body — compact with Learn more toggle */}
-                        {!isInterviewMode&&(()=>{
-                          const visibleCount = Math.min(2, paragraphs.length);
-                          const hasMore = paragraphs.length > visibleCount;
-                          return <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:10}}>
-                          {paragraphs.slice(0, visibleCount).map((s,idx)=>(
+                        {/* Explanation body */}
+                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:10}}>
+                          {paragraphs.map((s,idx)=>(
                             <div key={idx} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.75,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
                               {renderBidiBlock(s,lang)}
                             </div>
                           ))}
-                          {hasMore&&<button onClick={()=>setExpandedExplanation(p=>!p)} style={{background:"none",border:"none",color:"#64748b",fontSize:12,cursor:"pointer",padding:"4px 0",display:"flex",alignItems:"center",gap:4,direction:dir,alignSelf:dir==="rtl"?"flex-end":"flex-start"}}>
-                            <span style={{fontSize:10}}>{expandedExplanation?"▾":"▸"}</span>
-                            <span>{expandedExplanation?(lang==="en"?"Show less":"פחות"):(lang==="en"?"Learn more":"למידע נוסף")}</span>
-                          </button>}
-                          {expandedExplanation&&paragraphs.slice(visibleCount).map((s,idx)=>(
-                            <div key={`ext-${idx}`} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.75,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate",animation:"fadeIn 0.2s ease"}}>
-                              {renderBidiBlock(s,lang)}
-                            </div>
-                          ))}
-                        </div>;
-                        })()}
+                        </div>}
                       </div>
                     );
                   })()}
@@ -3700,17 +3680,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         </div>
                         <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:14}}>
                           <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left"}}>{q.options[iCorrectIdx]}</div>
-                          {iParagraphs.slice(0, Math.min(2, iParagraphs.length)).map((s,idx)=>(
+                          {iParagraphs.map((s,idx)=>(
                             <div key={idx} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
-                              {renderBidiBlock(s,lang)}
-                            </div>
-                          ))}
-                          {iParagraphs.length>2&&<button onClick={()=>setExpandedExplanation(p=>!p)} style={{background:"none",border:"none",color:"#64748b",fontSize:12,cursor:"pointer",padding:"4px 0",display:"flex",alignItems:"center",gap:4,direction:dir,alignSelf:dir==="rtl"?"flex-end":"flex-start"}}>
-                            <span style={{fontSize:10}}>{expandedExplanation?"▾":"▸"}</span>
-                            <span>{expandedExplanation?(lang==="en"?"Show less":"פחות"):(lang==="en"?"Learn more":"למידע נוסף")}</span>
-                          </button>}
-                          {expandedExplanation&&iParagraphs.slice(2).map((s,idx)=>(
-                            <div key={`iext-${idx}`} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate",animation:"fadeIn 0.2s ease"}}>
                               {renderBidiBlock(s,lang)}
                             </div>
                           ))}
@@ -3816,8 +3787,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   setAllowNextLevel(false);
                   setTopicScreen("quiz");
                   setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-                  setShowExplanation(false); setExpandedExplanation(false);
-                  topicCorrectRef.current=0; lastSessionScoreRef.current=0;
+                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0;
                   liveIndexRef.current=0;
                   quizRunIdRef.current=Date.now().toString(36);
                   submittingRef.current=false;
