@@ -92,7 +92,7 @@ const TRANSLATIONS = {
     resendSuccess: "✅ אימייל חדש נשלח! בדקי את תיבת הדואר.",
     resendError: "❌ שגיאה בשליחה מחדש. נסי שוב.",
     greeting: "שלום", playingAsGuest: "· משחקת כאורחת",
-    leaderboardBtn: "🏆 טבלה", logout: "יציאה",
+    leaderboardBtn: "🏆 דירוג", logout: "יציאה",
     guestBanner: "💡 הירשמי כדי לשמור התקדמות ולהופיע בלוח התוצאות",
     signupNow: "הירשמי",
     score: "ניקוד", accuracy: "דיוק", streak: "רצף", completed: "הושלמו",
@@ -215,7 +215,7 @@ const TRANSLATIONS = {
     reportSend: "שלחי דיווח", reportSend_m: "שלח דיווח",
     reportThanks: "✓ תודה! הדיווח נשלח.",
     reportCancel: "ביטול",
-    savedQuestions: "🔖 שאלות שמורות", savedQuestionsTitle: "שאלות שמורות",
+    savedQuestions: "📌 שאלות שמורות", savedQuestionsTitle: "שאלות שמורות",
     noBookmarks: "עוד לא שמרת שאלות. לחצי על ☆ בזמן חידון כדי לשמור.",
     noBookmarks_m: "עוד לא שמרת שאלות. לחץ על ☆ בזמן חידון כדי לשמור.",
     startSavedQuiz: "▶ תרגלי שאלות שמורות", startSavedQuiz_m: "▶ תרגל שאלות שמורות",
@@ -224,7 +224,7 @@ const TRANSLATIONS = {
     bookmark_m: "☆ שמור", bookmarkActive_m: "★ שמור",
     searchBtn: "🔎 חיפוש שאלה", searchPlaceholder: "חפשי לפי מילת מפתח...", searchNoResults: "לא נמצאו תוצאות",
     mistakesBtn: "❌ טעויות שלי", mistakesEmpty: "אין טעויות! כל הכבוד 🎉", mistakesHint: "שאלות שטעית בהן",
-    guideBtn: "📘 kubectl שליף", guideSub: "פקודות kubectl מוכנות להעתקה — לחצו לפתיחה", aboutBtn: "ℹ️ אודות האפליקציה",
+    guideBtn: "📘 פקודות", guideSub: "פקודות kubectl מוכנות להעתקה — לחצו לפתיחה", aboutBtn: "ℹ️ אודות האפליקציה",
     shareBtn: "📤 שתפי עם חבר", shareBtn_m: "📤 שתף עם חבר",
     dailyStreak: "ימים ברצף",
   },
@@ -329,15 +329,15 @@ const TRANSLATIONS = {
     reportSend: "Send report",
     reportThanks: "✓ Thanks! Report sent.",
     reportCancel: "Cancel",
-    savedQuestions: "🔖 Saved Questions", savedQuestionsTitle: "Saved Questions",
+    savedQuestions: "📌 Saved Questions", savedQuestionsTitle: "Saved Questions",
     noBookmarks: "No saved questions yet. Tap ☆ during a quiz to save one.",
     startSavedQuiz: "▶ Practice Saved Questions",
     removeBookmark: "Remove",
     bookmark: "☆ Save", bookmarkActive: "★ Saved",
     searchBtn: "🔎 Search Question", searchPlaceholder: "Search by keyword...", searchNoResults: "No results found",
     mistakesBtn: "❌ My Mistakes", mistakesEmpty: "No mistakes! Great job 🎉", mistakesHint: "Questions you answered incorrectly",
-    guideBtn: "📘 kubectl Cheat Sheet", guideSub: "Copy-ready kubectl commands — tap to expand", aboutBtn: "ℹ️ About",
-    shareBtn: "📤 Share",
+    guideBtn: "📘 Commands", guideSub: "Copy-ready kubectl commands — tap to expand", aboutBtn: "ℹ️ About the App",
+    shareBtn: "📤 Share with a Friend",
     dailyStreak: "day streak",
   },
 };
@@ -2705,26 +2705,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400,direction:dir}}>
             {t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginInlineStart:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}
           </button>
-          <button onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("mistakesBtn")}
-          </button>
-          <button onClick={()=>{setSearchQuery("");setScreen("search");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("searchBtn")}
-          </button>
 
           {/* ── 2. Progress ── */}
           <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
             <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
           </div>
+          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            ⭐ {lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
+          </button>
+          <button onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("mistakesBtn")}
+          </button>
           <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("leaderboardBtn")}
           </button>
           <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,direction:dir}}>
             <span>{t("savedQuestions")}</span>
             {bookmarks.length>0&&<span style={{background:"rgba(168,85,247,0.2)",color:"#A855F7",fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:10}}>{bookmarks.length}</span>}
-          </button>
-          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            ⭐ {lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
           </button>
 
           {/* ── 3. Learning ── */}
@@ -2734,18 +2731,44 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <button onClick={()=>{setExpandedGuideSection(null);setScreen("guide");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("guideBtn")}
           </button>
+          <button onClick={()=>{setSearchQuery("");setScreen("search");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("searchBtn")}
+          </button>
 
-          {/* ── 4. Settings ── */}
+          {/* ── 4. Application ── */}
           <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"SETTINGS":"הגדרות"}</span>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APPLICATION":"האפליקציה"}</span>
+          </div>
+          <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            🟢 {lang==="en"?"System Status":"סטטוס מערכת"}
+          </button>
+          <button onClick={()=>{setScreen("about");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("aboutBtn")}
+          </button>
+          <button onClick={()=>{
+            const url="https://kubequest.online";
+            const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
+            if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
+            else{navigator.clipboard?.writeText(url);}
+            setShowMenu(false);
+          }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("shareBtn")}
+          </button>
+          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
+            <span>✉️</span>{lang==="en"?"Contact":"צור קשר"}
+          </a>
+
+          {/* ── 5. Accessibility ── */}
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
+            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"ACCESSIBILITY":"נגישות"}</span>
           </div>
           <div style={{padding:"4px 14px 10px"}}>
             <div style={{display:"flex",gap:4}}>
-              {(["reduceMotion","highContrast"]).map((key,i)=>(
+              {(["highContrast","reduceMotion"]).map((key,i)=>(
                 <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
                   aria-pressed={a11y[key]}
                   style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
-                  {i===0?t("a11yReduceMotion"):t("a11yHighContrast")}{a11y[key]?" ✓":""}
+                  {i===0?t("a11yHighContrast"):t("a11yReduceMotion")}{a11y[key]?" ✓":""}
                 </button>
               ))}
             </div>
@@ -2766,31 +2789,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             )}
           </div>
-          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
-            <span>✉️</span>{lang==="en"?"Contact":"צור קשר"}
-          </a>
 
-          {/* ── 5. App ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APP":"אפליקציה"}</span>
-          </div>
-          <button onClick={()=>{setScreen("about");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("aboutBtn")}
-          </button>
-          <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            🟢 {lang==="en"?"System Status":"סטטוס מערכת"}
-          </button>
-          <button onClick={()=>{
-            const url="https://kubequest.online";
-            const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
-            if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
-            else{navigator.clipboard?.writeText(url);}
-            setShowMenu(false);
-          }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("shareBtn")}
-          </button>
-
-          {/* ── System ── */}
+          {/* ── Divider + System ── */}
           <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4,paddingTop:4}}>
             <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#EF4444",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
               <span aria-hidden="true">🗑</span>{t("resetProgress")}
