@@ -2834,6 +2834,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <span style={{color:"#64748b",fontSize:13,lineHeight:1,direction:dir,flexShrink:0}}>{t("greeting")}</span>
                 <span style={{color:"#e2e8f0",fontSize:13,fontWeight:700,lineHeight:1,direction:"ltr",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{displayName}</span>
               </div>
+              {/* Row 2: mode hint */}
+              <p style={{color:"#64748b",fontSize:11,margin:0,lineHeight:1.3,textAlign:"center",direction:dir}}>
+                {isInterviewMode?t("interviewModeHint"):(lang==="en"
+                  ?`Timer ${timerEnabled?"on":"off"}`
+                  :`טיימר ${timerEnabled?"פעיל":"כבוי"}`)}
+              </p>
               {/* Row 3: streak */}
               {dailyStreak.streak > 0 && (
                 <div style={{background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.3)",borderRadius:14,padding:"4px 12px",fontSize:12,color:"#F59E0B",fontWeight:700,marginTop:2}}>
