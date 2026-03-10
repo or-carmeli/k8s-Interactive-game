@@ -11,7 +11,7 @@ export function ThemeProvider({ children }) {
     document.documentElement.setAttribute("data-theme", theme);
     // Update theme-color meta tag for mobile browsers
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = theme === "light" ? "#f8fafc" : "#020817";
+    if (meta) meta.content = theme === "light" ? "#f0f4f8" : "#020817";
     try { localStorage.setItem("kq_theme", theme); } catch {}
   }, [theme]);
 
