@@ -2504,7 +2504,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         onBlur={e=>e.currentTarget.style.top="-100px"}>
         {lang==="en"?"Skip to content":"דלג לתוכן"}
       </a>}
-      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.quiz-text{direction:rtl;unicode-bidi:plaintext;text-align:right}.quiz-text[dir="ltr"]{direction:ltr;text-align:left}.code-inline{direction:ltr;display:inline-block;unicode-bidi:isolate}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:#7dd3fc;font-size:0.88em;margin-top:4px;text-align:left}@media(max-width:600px){
+      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.quiz-text{direction:rtl;unicode-bidi:plaintext;text-align:right}.quiz-text[dir="ltr"]{direction:ltr;text-align:left}.code-inline{direction:ltr;display:inline-block;unicode-bidi:isolate}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:#7dd3fc;font-size:0.88em;margin-top:4px;text-align:left}.cbr-block{background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;align-items:stretch;transition:border-color 0.15s,background 0.15s;overflow:hidden}.cbr-block:hover{border-color:rgba(255,255,255,0.12);background:rgba(0,0,0,0.5)}.cbr-code{flex:1;min-width:0;padding:10px 14px;font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:12.5px;color:#7dd3fc;line-height:1.6;white-space:pre;overflow-x:auto;direction:ltr}.cbr-copy{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:0 12px;border:none;border-left:1px solid rgba(255,255,255,0.06);background:transparent;color:#64748b;font-size:11px;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:inherit;min-width:62px;justify-content:center}.cbr-copy:hover{background:rgba(255,255,255,0.04);color:#94a3b8}.cbr-copy:focus-visible{outline:2px solid #00D4FF!important;outline-offset:-2px}.cbr-copy.copied{color:#10B981;background:rgba(16,185,129,0.08)}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
 .quiz-bar-right{gap:8px!important}
@@ -3166,14 +3166,36 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const handleCopy = (cmd) => {
           navigator.clipboard?.writeText(cmd).catch(()=>{});
           setCopiedCmd(cmd);
-          setTimeout(()=>setCopiedCmd(c=>c===cmd?null:c),1800);
+          setTimeout(()=>setCopiedCmd(c=>c===cmd?null:c),1500);
         };
         const totalCmds = CHEATSHEET.reduce((s,sec)=>s+sec.commands.length,0);
+        const isHe = lang==="he";
+
+        /* ── Reusable CodeBlockRow ── */
+        const CodeBlockRow = ({cmd,desc,descHe:dHe})=>{
+          const isCopied = copiedCmd===cmd;
+          return (
+            <div style={{padding:"4px 0 6px"}}>
+              <div className="cbr-block">
+                <code className="cbr-code">{cmd}</code>
+                <button className={`cbr-copy${isCopied?" copied":""}`}
+                  onClick={(e)=>{e.stopPropagation();handleCopy(cmd);}}
+                  aria-label="Copy command">
+                  {isCopied?<><span style={{fontSize:13}}>&#10003;</span> Copied</>:<>Copy</>}
+                </button>
+              </div>
+              <div style={{color:"#64748b",fontSize:11.5,lineHeight:1.35,marginTop:4,
+                padding:isHe?"0 0 0 0":"0",direction:isHe?"rtl":"ltr",
+                textAlign:isHe?"right":"left"}}>{isHe?dHe:desc}</div>
+            </div>
+          );
+        };
+
         return (
           <div className="page-pad" style={{maxWidth:700,margin:"0 auto",padding:"16px 14px",animation:"fadeIn 0.3s ease",direction:"ltr"}}>
-            <div style={{display:"flex",justifyContent:lang==="he"?"flex-end":"flex-start",marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:isHe?"flex-end":"flex-start",marginBottom:16}}>
               <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:13,display:"inline-flex",alignItems:"center",gap:5}}>
-                {lang==="he"?"חזרה →":"← Back"}
+                {isHe?"חזרה →":"← Back"}
               </button>
             </div>
 
@@ -3209,30 +3231,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
                 {/* Expanded command list */}
                 {open&&(
-                  <div style={{padding:"2px 0 8px",borderBottom:`1px solid ${section.color}15`}}>
-                    {section.commands.map((entry,i)=>{
-                      const isCopied = copiedCmd===entry.cmd;
-                      return (
-                      <div key={i} style={{padding:"5px 4px 5px 30px"}}>
-                        {/* Code block — always LTR */}
-                        <div style={{display:"flex",alignItems:"center",gap:8,
-                          background:"rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.06)",
-                          borderRadius:5,padding:"5px 6px 5px 12px",position:"relative"}}>
-                          <code style={{flex:1,fontFamily:"'SF Mono','Cascadia Code','Fira Code',monospace",fontSize:12.5,color:"#7dd3fc",lineHeight:1.6,whiteSpace:"nowrap",overflowX:"auto",display:"block"}}>{entry.cmd}</code>
-                          <button
-                            onClick={(e)=>{e.stopPropagation();handleCopy(entry.cmd);}}
-                            aria-label="Copy command"
-                            style={{flexShrink:0,background:isCopied?"rgba(16,185,129,0.12)":"rgba(255,255,255,0.03)",
-                              border:`1px solid ${isCopied?"rgba(16,185,129,0.25)":"rgba(255,255,255,0.07)"}`,
-                              borderRadius:4,padding:"3px 8px",cursor:"pointer",color:isCopied?"#10B981":"#64748b",
-                              fontSize:11,lineHeight:1,transition:"all 0.15s ease",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
-                            {isCopied?<><span style={{fontSize:12}}>&#10003;</span> Copied</>:<>Copy</>}
-                          </button>
-                        </div>
-                        {/* Description — Hebrew in Hebrew mode */}
-                        <div style={{color:"#64748b",fontSize:11.5,lineHeight:1.3,marginTop:3,paddingLeft:12,direction:lang==="he"?"rtl":"ltr",textAlign:lang==="he"?"right":"left"}}>{lang==="he"?entry.descHe:entry.desc}</div>
-                      </div>
-                    );})}
+                  <div style={{padding:"4px 0 8px 28px",borderBottom:`1px solid ${section.color}15`}}>
+                    {section.commands.map((entry,i)=>
+                      <CodeBlockRow key={i} cmd={entry.cmd} desc={entry.desc} descHe={entry.descHe}/>
+                    )}
                   </div>
                 )}
               </div>
@@ -3434,9 +3436,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             )}
 
             {/* ── GLOBAL STATUS BANNER ── */}
-            <div style={{background:`rgba(${globalOk===false?"239,68,68":globalOk?"16,185,129":"245,158,11"},0.03)`,border:`1px solid ${globalColor}18`,borderRadius:12,padding:"20px 22px",marginBottom:8,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+            <div style={{background:`rgba(${globalOk===false?"239,68,68":globalOk?"16,185,129":"245,158,11"},0.03)`,border:`1px solid ${globalColor}18`,borderRadius:12,padding:"20px 22px",marginBottom:8,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap",boxShadow:`0 0 12px ${globalColor}40,0 0 28px ${globalColor}26,inset 0 0 18px ${globalColor}0D`}}>
               <div style={{position:"relative",flexShrink:0}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:globalDot}} />
+                <div style={{width:10,height:10,borderRadius:"50%",background:globalDot,boxShadow:`0 0 8px ${globalDot}CC,0 0 16px ${globalDot}99,0 0 24px ${globalDot}66`,animation:"dotPulse 2.5s ease-in-out infinite"}} />
                 {globalOk!==false&&<div style={{position:"absolute",inset:-2,borderRadius:"50%",background:globalDot,animation:"ping 2.5s ease-out infinite",opacity:0.2}} />}
               </div>
               <div style={{flex:1,minWidth:160}}>
@@ -3611,7 +3613,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             </div>
 
-            <style>{`@keyframes ping{0%{transform:scale(1);opacity:0.4}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+            <style>{`@keyframes ping{0%{transform:scale(1);opacity:0.4}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 8px currentColor,0 0 16px currentColor,0 0 24px currentColor}50%{opacity:.85;box-shadow:0 0 4px currentColor,0 0 10px currentColor,0 0 16px currentColor}}`}</style>
           </div>
         );
       })()}
