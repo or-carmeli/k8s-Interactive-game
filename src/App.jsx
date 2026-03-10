@@ -10,7 +10,7 @@ import { INCIDENTS } from "./content/incidents";
 import { CHEATSHEET } from "./content/cheatsheet";
 import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from "./utils/quizPersistence";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
-import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory } from "./api/monitoring";
+import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory, fetchMaintenanceWindows } from "./api/monitoring";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -682,6 +682,7 @@ export default function K8sQuestApp() {
   const [monitorServices, setMonitorServices]           = useState(null); // null = loading, [] = loaded
   const [monitorUptime, setMonitorUptime]               = useState(null);
   const [monitorIncidents, setMonitorIncidents]         = useState(null);
+  const [maintenanceWindows, setMaintenanceWindows]     = useState(null);
   const [statusTick, setStatusTick]                     = useState(0);    // increments every 1s to keep timer live
   const [searchQuery, setSearchQuery]                   = useState("");
   const [expandedGuideSection, setExpandedGuideSection] = useState(null);
@@ -1093,19 +1094,22 @@ export default function K8sQuestApp() {
     setMonitorServices(null);
     setMonitorUptime(null);
     setMonitorIncidents(null);
+    setMaintenanceWindows(null);
 
     if (!supabase) { setDbStatus("error"); return; }
 
     const load = async () => {
       try {
-        const [services, uptime, incidents] = await Promise.all([
+        const [services, uptime, incidents, maintenance] = await Promise.all([
           fetchSystemStatus(supabase),
           fetchUptimeHistory(supabase, 30),
           fetchIncidentHistory(supabase, 20),
+          fetchMaintenanceWindows(supabase),
         ]);
         setMonitorServices(services);
         setMonitorUptime(uptime);
         setMonitorIncidents(incidents);
+        setMaintenanceWindows(maintenance);
         const anyDown = services.some(s => s.status === "down");
         setDbStatus(anyDown ? "error" : "ok");
       } catch {
@@ -3246,14 +3250,29 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         // Derive global status from real service data
         const allOperational = !loading && monitorServices.every(s => s.status === "operational");
         const anyDown = !loading && monitorServices.some(s => s.status === "down");
+        const anyMaintenance = !loading && monitorServices.some(s => s.status === "maintenance");
+
+        // Maintenance windows
+        const activeMaintenance = maintenanceWindows
+          ? maintenanceWindows.find(w => new Date(w.starts_at) <= new Date() && new Date(w.ends_at) > new Date())
+          : null;
+        const upcomingMaintenance = maintenanceWindows
+          ? maintenanceWindows.filter(w => new Date(w.starts_at) > new Date())
+          : [];
+        const inMaintenance = anyMaintenance || !!activeMaintenance;
+
         const globalOk      = loading ? null : (anyDown ? false : true);
-        const globalLabel   = loading ? "Checking…" : allOperational ? "All Systems Operational" : anyDown ? "Major Outage" : "Degraded Performance";
-        const globalColor   = loading ? "#F59E0B" : allOperational ? "#10B981" : anyDown ? "#EF4444" : "#F59E0B";
-        const globalGlow    = loading ? "rgba(245,158,11,0.25)" : allOperational ? "rgba(16,185,129,0.25)" : anyDown ? "rgba(239,68,68,0.25)" : "rgba(245,158,11,0.25)";
+        const globalLabel   = loading ? "Checking…"
+          : anyDown ? (lang==="en" ? "Major Outage" : "תקלה משמעותית")
+          : inMaintenance ? (lang==="en" ? "Scheduled Maintenance" : "תחזוקה מתוכננת")
+          : allOperational ? (lang==="en" ? "All Systems Operational" : "כל המערכות פעילות")
+          : (lang==="en" ? "Degraded Performance" : "ביצועים מופחתים");
+        const globalColor   = loading ? "#F59E0B" : anyDown ? "#EF4444" : inMaintenance ? "#7C3AED" : allOperational ? "#10B981" : "#F59E0B";
+        const globalGlow    = loading ? "rgba(245,158,11,0.25)" : anyDown ? "rgba(239,68,68,0.25)" : inMaintenance ? "rgba(124,58,237,0.25)" : allOperational ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)";
         const globalDot     = globalColor;
 
-        const statusLabel = (s) => s === "operational" ? "Operational" : s === "degraded" ? "Degraded" : s === "down" ? "Down" : "Maintenance";
-        const statusColor = (s) => s === "operational" ? "#10B981" : s === "degraded" ? "#F59E0B" : s === "down" ? "#EF4444" : "#64748b";
+        const statusLabel = (s) => s === "operational" ? (lang==="en" ? "Operational" : "פעיל") : s === "degraded" ? (lang==="en" ? "Degraded" : "מופחת") : s === "down" ? (lang==="en" ? "Down" : "מושבת") : (lang==="en" ? "Maintenance" : "תחזוקה");
+        const statusColor = (s) => s === "operational" ? "#10B981" : s === "degraded" ? "#F59E0B" : s === "down" ? "#EF4444" : "#7C3AED";
 
         // Default service list (used while loading or if no data)
         const defaultSvcNames = ["Quiz Engine","Authentication","Leaderboard","Database","Content API"];
@@ -3378,6 +3397,42 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <span style={{fontSize:16}}>{isStaleCritical?"⚠":"⚡"}</span>
                 <span style={{fontSize:13,fontWeight:600,color:isStaleCritical?"#EF4444":"#F59E0B"}}>
                   {isStaleCritical ? (lang==="en"?"Status data is stale":"נתוני הסטטוס לא עדכניים") : (lang==="en"?"Status data may be stale":"ייתכן שנתוני הסטטוס לא עדכניים")}
+                </span>
+              </div>
+            )}
+
+            {/* ── MAINTENANCE BANNER ── */}
+            {activeMaintenance && (
+              <div style={{background:"rgba(124,58,237,0.08)",border:"1px solid rgba(124,58,237,0.3)",borderRadius:12,padding:"16px 20px",marginBottom:6,display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:16}}>🔧</span>
+                  <span style={{fontSize:15,fontWeight:700,color:"#A78BFA"}}>
+                    {lang==="en" ? (activeMaintenance.title || "Scheduled Maintenance") : (activeMaintenance.title_he || activeMaintenance.title || "תחזוקה מתוכננת")}
+                  </span>
+                </div>
+                {(activeMaintenance.description || activeMaintenance.description_he) && (
+                  <div style={{fontSize:13,color:"#94a3b8",lineHeight:1.6}}>
+                    {lang==="en" ? (activeMaintenance.description || "") : (activeMaintenance.description_he || activeMaintenance.description || "")}
+                  </div>
+                )}
+                <div style={{fontSize:12,color:"#7C3AED",fontFamily:"'Fira Code','Courier New',monospace"}}>
+                  {new Date(activeMaintenance.starts_at).toUTCString().replace(" GMT","")} — {new Date(activeMaintenance.ends_at).toUTCString().replace(" GMT","")} UTC
+                </div>
+                {activeMaintenance.affected_services?.length > 0 && (
+                  <div style={{fontSize:12,color:"#64748b"}}>
+                    {lang==="en" ? "Affected: " : "מושפעים: "}{activeMaintenance.affected_services.join(", ")}
+                  </div>
+                )}
+              </div>
+            )}
+            {upcomingMaintenance.length > 0 && !activeMaintenance && (
+              <div style={{background:"rgba(124,58,237,0.04)",border:"1px solid rgba(124,58,237,0.15)",borderRadius:10,padding:"10px 16px",marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:14}}>📅</span>
+                <span style={{fontSize:13,fontWeight:600,color:"#A78BFA"}}>
+                  {lang==="en"
+                    ? `Maintenance scheduled: ${new Date(upcomingMaintenance[0].starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"})} UTC`
+                    : `תחזוקה מתוכננת: ${new Date(upcomingMaintenance[0].starts_at).toLocaleDateString("he-IL",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"})} UTC`
+                  }
                 </span>
               </div>
             )}

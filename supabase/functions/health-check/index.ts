@@ -19,7 +19,7 @@ const anonClient = createClient(SUPABASE_URL, ANON_KEY);
 
 interface CheckResult {
   service_name: string;
-  status: "operational" | "degraded" | "down";
+  status: "operational" | "degraded" | "down" | "maintenance";
   latency_ms: number;
   details: Record<string, unknown>;
 }
@@ -121,6 +121,10 @@ Deno.serve(async (req) => {
   // Auth is handled by Supabase's built-in JWT verification.
   // Any request with a valid anon or service role key passes through.
 
+  // Check if a maintenance window is currently active
+  const { data: isMaintenance } = await adminClient.rpc("is_maintenance_active");
+  const maintenanceActive = isMaintenance === true;
+
   // Run all 5 checks in parallel
   const results = await Promise.all([
     timedCheck("Database",       checkDatabase),
@@ -129,6 +133,16 @@ Deno.serve(async (req) => {
     timedCheck("Leaderboard",    checkLeaderboard),
     timedCheck("Authentication", checkAuthentication),
   ]);
+
+  // During maintenance, override non-operational statuses to 'maintenance'
+  if (maintenanceActive) {
+    for (const r of results) {
+      if (r.status !== "operational") {
+        r.status = "maintenance";
+        r.details = { ...r.details, maintenance_override: true };
+      }
+    }
+  }
 
   // Write each result to the monitoring tables via the upsert RPC
   const writeResults = await Promise.all(
@@ -144,9 +158,9 @@ Deno.serve(async (req) => {
 
   const writeErrors = writeResults.filter((r) => r.error);
 
-  // Auto-incident detection: 3+ consecutive "down" checks for a service
+  // Auto-incident detection: 3+ consecutive "down" checks (skip during maintenance)
   for (const r of results) {
-    if (r.status === "down") {
+    if (r.status === "down" && !maintenanceActive) {
       // Check if the last 3 history entries for this service are all "down"
       const { data: history } = await adminClient
         .from("system_status_history")
@@ -180,6 +194,7 @@ Deno.serve(async (req) => {
   return new Response(
     JSON.stringify({
       checked_at: new Date().toISOString(),
+      maintenance_active: maintenanceActive,
       results,
       write_errors: writeErrors.length,
     }),
