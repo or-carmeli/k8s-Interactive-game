@@ -561,6 +561,8 @@ const K8S_CODE_TERMS = new Set([
 
 // Returns "code", "concept", or null for a given token.
 function getTermKind(token) {
+  // Flags like --show-labels, --namespace=kube-system, -n, -f → code
+  if (/^--?[A-Za-z]/.test(token)) return "code";
   // Dotted paths like spec.containers or securityContext.runAsNonRoot → code
   if (/^[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z]/.test(token)) return "code";
   const lower = token.toLowerCase();
@@ -576,20 +578,28 @@ const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,paddin
 // Concept tag style for K8s resource types — highlighted but not code
 const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",borderRadius:4,padding:"1px 5px",fontSize:"0.92em",fontWeight:500,color:"var(--concept-text)"};
 
-// Inner bidi logic: wraps Latin sequences in <span dir="ltr">, applies code styling to K8s terms.
+// Inner bidi logic: wraps Latin sequences, flags, and arrows in <span dir="ltr">, applies code styling to K8s terms.
 function renderBidiInner(text, lang, keyPrefix) {
-  if (!text || !/[A-Za-z]/.test(text)) return text;
-  const parts = text.split(/((?:[A-Za-z](?:[A-Za-z0-9\-_:/]|\.[A-Za-z0-9])*(?:\s+(?=[A-Za-z]))?)+)/);
+  if (!text || (!/[A-Za-z]/.test(text) && !/[→←]/.test(text) && !/(->|<-)/.test(text))) return text;
+  // Normalize ASCII arrows to Unicode before splitting
+  text = text.replace(/-->/g, "\u2192").replace(/<--/g, "\u2190").replace(/->/g, "\u2192").replace(/<-(?!-)/g, "\u2190");
+  // Split on: flag sequences (--flag, -f), Latin word sequences, or arrow chars
+  const parts = text.split(/((?:--?[A-Za-z][\w\-]*(?:=[^\s\u0590-\u05FF]*)?(?:\s+(?=(?:--?)?[A-Za-z]))?)+|(?:[A-Za-z](?:[A-Za-z0-9\-_:/=]|\.[A-Za-z0-9])*(?:\s+(?=(?:--?)?[A-Za-z]))?)+|[→←])/);
   if (parts.length <= 1) return text;
-  const startsWithLatin = /^[A-Za-z]/.test(text);
+  const startsWithLatin = /^[A-Za-z]/.test(text) || /^--?[A-Za-z]/.test(text);
+  const isLtrPart = (p) => /^[A-Za-z]/.test(p) || /^--?[A-Za-z]/.test(p) || /^[→←]$/.test(p);
   return parts.map((part, idx) => {
     const k = `${keyPrefix}-${idx}`;
-    if (/^[A-Za-z]/.test(part)) {
+    if (/^[A-Za-z]/.test(part) || /^--?[A-Za-z]/.test(part)) {
       const kind = getTermKind(part);
       const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : undefined;
       return [idx === 0 && startsWithLatin ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{part}</span>];
     }
-    if (idx > 0 && /^[A-Za-z]/.test(parts[idx - 1])) return "\u200F" + part;
+    // Arrow characters — wrap in LTR isolation to prevent bidi reordering
+    if (/^[→←]$/.test(part)) {
+      return <span key={k} dir="ltr" style={{unicodeBidi:"isolate",padding:"0 2px"}}>{part}</span>;
+    }
+    if (idx > 0 && isLtrPart(parts[idx - 1])) return "\u200F" + part;
     return part;
   });
 }
@@ -4377,11 +4387,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         </div>
                         <div style={{color:"var(--text-primary)",fontSize:13,marginBottom:6}}>{renderBidiBlock(h.q,lang)}</div>
                         {timedOut?<div style={{fontSize:13,color:"#F59E0B"}}>{t("timeUp")}</div>:(
-                          <div style={{fontSize:13,color:wasCorrect?"#10B981":"#EF4444",marginBottom:4,dir:hasHebrew(h.options[h.chosen])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.chosen])?"right":"left"}}>
-                            {t("optionLabels")[h.chosen]}. {h.options[h.chosen]}
+                          <div dir={hasHebrew(h.options[h.chosen])?"rtl":"ltr"} style={{fontSize:13,color:wasCorrect?"#10B981":"#EF4444",marginBottom:4,direction:hasHebrew(h.options[h.chosen])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.chosen])?"right":"left",unicodeBidi:"isolate"}}>
+                            {t("optionLabels")[h.chosen]}. {lang==="he"?renderBidi(h.options[h.chosen],lang):h.options[h.chosen]}
                           </div>
                         )}
-                        {!wasCorrect&&<div style={{fontSize:13,color:"#10B981",dir:hasHebrew(h.options[h.answer])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.answer])?"right":"left"}}><span aria-hidden="true">✓ </span>{h.options[h.answer]}</div>}
+                        {!wasCorrect&&<div dir={hasHebrew(h.options[h.answer])?"rtl":"ltr"} style={{fontSize:13,color:"#10B981",direction:hasHebrew(h.options[h.answer])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.answer])?"right":"left",unicodeBidi:"isolate"}}><span aria-hidden="true">✓ </span>{lang==="he"?renderBidi(h.options[h.answer],lang):h.options[h.answer]}</div>}
                         <div style={{fontSize:12,color:"var(--text-muted)",marginTop:4,lineHeight:1.6}}>{renderBidiBlock(h.explanation,lang)}</div>
                       </li>
                     );
@@ -4493,14 +4503,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   if (isCorrect)       { bg="rgba(16,185,129,0.1)"; border="#10B981"; color="#10B981"; labelBg="rgba(16,185,129,0.2)"; labelColor="#10B981"; }
                   else if (isChosen)   { bg="rgba(239,68,68,0.1)";  border="#EF4444"; color="#EF4444"; labelBg="rgba(239,68,68,0.2)";  labelColor="#EF4444"; }
                 }
+                const optDir = (dir==="rtl" && !hasHebrew(opt)) ? "ltr" : dir;
                 return(
                   <button key={i} onClick={()=>{ if (!incidentSubmitted) submitIncidentStep(i); }}
                     aria-pressed={!incidentSubmitted ? i===incidentAnswer : undefined}
-                    style={{width:"100%",textAlign:dir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s",direction:dir}}>
+                    style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",lineHeight:1.55,display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s",direction:optDir}}>
                     <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1,direction:"ltr"}}>
                       {["A","B","C","D"][i]}
                     </span>
-                    <span dir={dir} style={{flex:1,direction:dir,wordBreak:"break-word",overflowWrap:"anywhere"}}>{lang==="he"?renderBidi(opt,lang):opt}</span>
+                    <span dir={optDir} style={{flex:1,direction:optDir,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:optDir==="rtl"?"right":"left",lineHeight:1.7,unicodeBidi:"isolate"}}>{lang==="he"?renderBidi(opt,lang):opt}</span>
                     {incidentSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✓</span>}
                     {incidentSubmitted&&isChosen&&!isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✗</span>}
                   </button>
