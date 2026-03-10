@@ -20,7 +20,7 @@ function stageProgress(topicId, completedTopics) {
     if (!r || r.total === 0) return;
     score += r.retryComplete ? 1 : Math.min(r.correct, r.total) / r.total;
   });
-  return Math.min(100, Math.round((score / LVL_ORDER.length) * 100));
+  return LVL_ORDER.length > 0 ? Math.min(100, Math.round((score / LVL_ORDER.length) * 100)) : 0;
 }
 
 function isStageCompleted(topicId, completedTopics) {
@@ -57,9 +57,9 @@ export default function RoadmapView({
   const allDone = currentStageIdx === -1;
   const currentStageNum = allDone ? topics.length : currentStageIdx + 1;
 
-  const overallProgress = Math.round(
-    topics.reduce((sum, topic) => sum + stageProgress(topic.id, completedTopics), 0) / topics.length
-  );
+  const overallProgress = topics.length > 0
+    ? Math.round(topics.reduce((sum, topic) => sum + stageProgress(topic.id, completedTopics), 0) / topics.length)
+    : 0;
 
   const handleGlobalContinue = () => {
     const idx   = allDone ? 0 : currentStageIdx;

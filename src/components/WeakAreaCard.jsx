@@ -59,7 +59,7 @@ export default function WeakAreaCard({ topicStats, completedTopics, onGoToTopic,
     return best;
   });
 
-  const accuracy  = Math.round(weakData.correct / weakData.answered * 100);
+  const accuracy  = weakData.answered > 0 ? Math.round(weakData.correct / weakData.answered * 100) : 0;
   const color     = indicatorColor(accuracy);
   const name      = TOPIC_NAMES[weakId] || weakId;
   const allPerfect = accuracy === 100 && entries.length >= Object.keys(TOPIC_NAMES).length;

@@ -74,7 +74,27 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
-            .then(r => console.log("SW registered:", r.scope))
+            .then(reg => {
+              console.log("SW registered:", reg.scope);
+              // Check for updates periodically
+              setInterval(() => reg.update(), 60000);
+              reg.addEventListener("updatefound", () => {
+                var newSW = reg.installing;
+                if (!newSW) return;
+                newSW.addEventListener("statechange", () => {
+                  if (newSW.state === "activated" && navigator.serviceWorker.controller) {
+                    // Don't interrupt an active quiz or incident — defer reload
+                    if (window.__KQ_QUIZ_ACTIVE__) {
+                      console.log("[KubeQuest] New SW activated; deferring reload (quiz active)");
+                      window.__KQ_PENDING_RELOAD__ = true;
+                      return;
+                    }
+                    console.log("[KubeQuest] New SW activated, reloading for fresh assets");
+                    window.location.reload();
+                  }
+                });
+              });
+            })
             .catch(e => console.log("SW error:", e));
         });
       }

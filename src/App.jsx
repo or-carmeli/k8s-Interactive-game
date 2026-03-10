@@ -10,6 +10,7 @@ import { DAILY_QUESTIONS } from "./content/dailyQuestions";
 import { INCIDENTS } from "./content/incidents";
 import { CHEATSHEET } from "./content/cheatsheet";
 import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from "./utils/quizPersistence";
+import { safeGetItem, safeGetJSON, checkDataVersion } from "./utils/storage";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory, fetchMaintenanceWindows } from "./api/monitoring";
 
@@ -17,6 +18,14 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 if (!supabase) console.warn("[KubeQuest] Supabase not configured — VITE_SUPABASE_URL:", !!SUPABASE_URL, "VITE_SUPABASE_ANON_KEY:", !!SUPABASE_KEY);
+
+// Run version check before any component mounts — clears stale keys if data version changed
+checkDataVersion();
+console.info(
+  `[KubeQuest] build: ${typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : "dev"}` +
+  ` | data-v: ${typeof __APP_DATA_VERSION__ !== "undefined" ? __APP_DATA_VERSION__ : "dev"}` +
+  ` | SW: ${"serviceWorker" in navigator ? "supported" : "unsupported"}`
+);
 
 const GUEST_USER = { id: "guest", email: "guest", user_metadata: { username: "Guest" } };
 
@@ -629,7 +638,7 @@ function Footer({ lang }) {
 export default function K8sQuestApp() {
   const { theme, toggleTheme } = useTheme();
   const [lang, setLang]                   = useState("he");
-  const [gender, setGender]               = useState(() => localStorage.getItem("gender_v1") || "m");
+  const [gender, setGender]               = useState(() => safeGetItem("gender_v1", "m"));
   const handleSetGender = (g) => { setGender(g); localStorage.setItem("gender_v1", g); };
   const t = (key) => {
     if (lang === "he" && gender === "m" && TRANSLATIONS.he[key + "_m"]) return TRANSLATIONS.he[key + "_m"];
@@ -652,7 +661,7 @@ export default function K8sQuestApp() {
 
   const [screen, setScreen]               = useState(()=>{
     if (window.location.pathname==="/status" || window.location.hostname==="status.kubequest.online") return "status";
-    try { const s=localStorage.getItem("kq_screen_v1"); if (s&&["home","incidentList","incident","incidentComplete","topic"].includes(s)) return s; } catch {}
+    const s = safeGetItem("kq_screen_v1"); if (s&&["home","incidentList","incident","incidentComplete","topic"].includes(s)) return s;
     return "home";
   });
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -703,9 +712,7 @@ export default function K8sQuestApp() {
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, best_score:0, max_streak:0, current_streak:0,
   });
-  const [topicStats, setTopicStats] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("topicStats_v1")) || {}; } catch { return {}; }
-  });
+  const [topicStats, setTopicStats] = useState(() => safeGetJSON("topicStats_v1", {}));
   const [highlightTopic, setHighlightTopic]             = useState(null);
   const [completedTopics, setCompletedTopics]           = useState({});
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
@@ -718,7 +725,7 @@ export default function K8sQuestApp() {
   const [shareCopied, setShareCopied]                   = useState(false);
   const [timerEnabled, setTimerEnabled]                 = useState(false);
   const [timeLeft, setTimeLeft]                         = useState(TIMER_DURATIONS.easy);
-  const [isInterviewMode, setIsInterviewMode]           = useState(() => localStorage.getItem("isInterviewMode_v1") === "true");
+  const [isInterviewMode, setIsInterviewMode]           = useState(() => safeGetItem("isInterviewMode_v1") === "true");
   const [homeTab, setHomeTab]                           = useState("roadmap");
   const [showConfetti, setShowConfetti]                 = useState(false);
   const [mixedQuestions, setMixedQuestions]             = useState([]);
@@ -743,10 +750,8 @@ export default function K8sQuestApp() {
   const [incidentSteps, setIncidentSteps]               = useState(null); // fetched steps for online mode
   const [incidentAnswerResult, setIncidentAnswerResult] = useState(null); // { correct, correctIndex, explanation, explanationHe }
   const [a11y, setA11y] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("a11y_v1"));
-      if (saved) return saved;
-    } catch {}
+    const saved = safeGetJSON("a11y_v1");
+    if (saved) return saved;
     return {
       fontSize: "normal",
       reduceMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
@@ -770,12 +775,8 @@ export default function K8sQuestApp() {
   const [resumeToast, setResumeToast] = useState(false);
   const pendingQuizStartRef = useRef(null); // stores the quiz-start fn while modal is open
   const autoResumeAttempted = useRef(false); // ensures auto-restore runs only once on page load
-  const [dailyStreak, setDailyStreak] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("daily_streak_v1")) || { date: null, streak: 0 }; } catch { return { date: null, streak: 0 }; }
-  });
-  const [bookmarks, setBookmarks] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("bookmarks_v1")) || []; } catch { return []; }
-  });
+  const [dailyStreak, setDailyStreak] = useState(() => safeGetJSON("daily_streak_v1", { date: null, streak: 0 }));
+  const [bookmarks, setBookmarks] = useState(() => safeGetJSON("bookmarks_v1", []));
   const [showBookmarks, setShowBookmarks] = useState(false);
 
   // ── Incident Mode state ───────────────────────────────────────────────────
@@ -825,7 +826,7 @@ export default function K8sQuestApp() {
       if (!r || r.total === 0) return;
       score += r.retryComplete ? 1 : Math.min(r.correct, r.total) / r.total;
     });
-    return Math.min(100, Math.round((score / LEVEL_ORDER.length) * 100));
+    return LEVEL_ORDER.length > 0 ? Math.min(100, Math.round((score / LEVEL_ORDER.length) * 100)) : 0;
   };
 
   // Compute best_score (internal canonical metric) from completedTopics.
@@ -848,30 +849,28 @@ export default function K8sQuestApp() {
 
   // Restore progress from local cache immediately on mount (before auth/Supabase resolves)
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("k8s_progress_v2");
-      if (!raw) return;
-      const cached = JSON.parse(raw);
-      if (cached?.completedTopics && typeof cached.completedTopics === "object" && Object.keys(cached.completedTopics).length > 0) {
-        setCompletedTopics(cached.completedTopics);
-      }
-      if (cached?.stats && typeof cached.stats === "object") {
-        const s = cached.stats;
-        // total_score is accumulated (persisted as-is), best_score is canonical
-        setStats(prev => ({
-          ...prev,
-          total_answered: Number(s.total_answered) || prev.total_answered,
-          total_correct:  Number(s.total_correct)  || prev.total_correct,
-          total_score:    Number(s.total_score)     || prev.total_score,
-          best_score:     Number(s.best_score)      || prev.best_score,
-          max_streak:     Number(s.max_streak)      || prev.max_streak,
-          current_streak: Number(s.current_streak)  || prev.current_streak,
-        }));
-      }
-      if (Array.isArray(cached?.achievements)) {
-        setUnlockedAchievements(cached.achievements);
-      }
-    } catch {}
+    const cached = safeGetJSON("k8s_progress_v2");
+    if (!cached) return;
+    console.info("[KubeQuest] Restoring progress from local cache");
+    if (cached?.completedTopics && typeof cached.completedTopics === "object" && Object.keys(cached.completedTopics).length > 0) {
+      setCompletedTopics(cached.completedTopics);
+    }
+    if (cached?.stats && typeof cached.stats === "object") {
+      const s = cached.stats;
+      // total_score is accumulated (persisted as-is), best_score is canonical
+      setStats(prev => ({
+        ...prev,
+        total_answered: Number(s.total_answered) || prev.total_answered,
+        total_correct:  Number(s.total_correct)  || prev.total_correct,
+        total_score:    Number(s.total_score)     || prev.total_score,
+        best_score:     Number(s.best_score)      || prev.best_score,
+        max_streak:     Number(s.max_streak)      || prev.max_streak,
+        current_streak: Number(s.current_streak)  || prev.current_streak,
+      }));
+    }
+    if (Array.isArray(cached?.achievements)) {
+      setUnlockedAchievements(cached.achievements);
+    }
   }, []);
 
   useEffect(() => {
@@ -901,7 +900,7 @@ export default function K8sQuestApp() {
       if (session) { setUser(session.user); loadUserData(session.user.id, session.user); }
       else {
         // Restore guest session if user previously chose guest mode
-        try { if (localStorage.getItem("k8s_guest_session")) setUser(GUEST_USER); } catch {}
+        if (safeGetItem("k8s_guest_session")) setUser(GUEST_USER);
         setDataLoaded(true);
       }
       setAuthChecked(true);
@@ -961,15 +960,14 @@ export default function K8sQuestApp() {
   const guestLoadedRef = useRef(false);
   useEffect(() => {
     if (!isGuest) { guestLoadedRef.current = false; return; }
-    try {
-      const saved = localStorage.getItem("k8s_quest_guest");
-      if (saved) {
-        const { stats: s, completedTopics: c, unlockedAchievements: u } = JSON.parse(saved);
-        if (c) setCompletedTopics(c);
-        if (s) setStats(s);
-        if (u) setUnlockedAchievements(u);
-      }
-    } catch {}
+    const guestData = safeGetJSON("k8s_quest_guest");
+    if (guestData) {
+      console.info("[KubeQuest] Restoring guest progress from localStorage");
+      const { stats: s, completedTopics: c, unlockedAchievements: u } = guestData;
+      if (c) setCompletedTopics(c);
+      if (s) setStats(s);
+      if (u) setUnlockedAchievements(u);
+    }
     guestLoadedRef.current = true;
     achievementsLoaded.current = true;
     setDataLoaded(true);
@@ -1100,7 +1098,15 @@ export default function K8sQuestApp() {
   useEffect(() => {
     if (isStatusDomain) return;
     try { localStorage.setItem("kq_screen_v1", screen); } catch {}
-  }, [screen]);
+    // Signal to SW update handler whether a quiz/incident is active
+    const quizActive = (screen === "topic" && topicScreen === "quiz") || screen === "incident";
+    window.__KQ_QUIZ_ACTIVE__ = quizActive;
+    // If a SW update was deferred while a quiz was active, reload now
+    if (!quizActive && window.__KQ_PENDING_RELOAD__) {
+      window.__KQ_PENDING_RELOAD__ = false;
+      window.location.reload();
+    }
+  }, [screen, topicScreen]);
 
   // Pre-load saved quiz data when returning home (modal is NOT shown here — only when starting a quiz)
   useEffect(() => {
@@ -1135,7 +1141,7 @@ export default function K8sQuestApp() {
     // hydrate incident state from saved progress (or fall back to home)
     if (screen === "incident" && !selectedIncident) {
       try {
-        const saved = JSON.parse(localStorage.getItem(INCIDENT_SAVE_KEY));
+        const saved = safeGetJSON(INCIDENT_SAVE_KEY);
         if (saved?.incidentId) {
           const incident = INCIDENTS.find(i => i.id === saved.incidentId);
           if (incident) {
@@ -1242,7 +1248,7 @@ export default function K8sQuestApp() {
   useEffect(() => {
     if (screen !== "home" && screen !== "incidentList") return;
     try {
-      const saved = JSON.parse(localStorage.getItem(INCIDENT_SAVE_KEY));
+      const saved = safeGetJSON(INCIDENT_SAVE_KEY);
       if (saved?.incidentId) {
         const incident = INCIDENTS.find(i => i.id === saved.incidentId);
         if (incident) { setIncidentResume({ ...saved, incident }); return; }
@@ -1263,11 +1269,7 @@ export default function K8sQuestApp() {
       // Read guest localStorage but ALWAYS discard it once a real account is active.
       // BUG-A fix: only merge guest data into brand-new accounts (no existing Supabase row).
       // Merging into existing accounts causes cross-account contamination when users switch accounts.
-      let guestSaved = null;
-      try {
-        const raw = localStorage.getItem("k8s_quest_guest");
-        if (raw) guestSaved = JSON.parse(raw);
-      } catch {}
+      let guestSaved = safeGetJSON("k8s_quest_guest");
       // Always clear guest data & session flag — prevents it leaking into whichever account logs in next
       if (guestSaved) { try { localStorage.removeItem("k8s_quest_guest"); } catch {} }
       try { localStorage.removeItem("k8s_guest_session"); } catch {}
@@ -1314,7 +1316,7 @@ export default function K8sQuestApp() {
         );
         // Fix 4: carry guest topicStats into the new account row
         let guestTopicStats = {};
-        try { guestTopicStats = JSON.parse(localStorage.getItem("topicStats_v1")) || {}; } catch {}
+        guestTopicStats = safeGetJSON("topicStats_v1", {});
         supabase.from("user_stats").insert({
           user_id: userId, username,
           ...mergedStats, completed_topics: cleanNc, achievements: mergedAch,
@@ -1622,7 +1624,7 @@ export default function K8sQuestApp() {
     if (answered / total < RESUME_MIN_PROGRESS) return false;      // req 5: <20% → skip
     try {
       if (sessionStorage.getItem(RESUME_SESSION_KEY)) return false; // req 3: once per session
-      const dismissedAt = localStorage.getItem(RESUME_DISMISS_KEY);
+      const dismissedAt = safeGetItem(RESUME_DISMISS_KEY);
       if (dismissedAt && Date.now() - parseInt(dismissedAt) < RESUME_COOLDOWN_MS) return false; // req 4
     } catch {}
     return true;
@@ -1787,7 +1789,7 @@ export default function K8sQuestApp() {
       if (correct) {
         try {
           const freeKey = currentQuestions[questionIndex].q.slice(0, 100);
-          const scored = new Set(JSON.parse(localStorage.getItem("scoredFreeKeys_v1")) || []);
+          const scored = new Set(safeGetJSON("scoredFreeKeys_v1", []));
           scored.add(freeKey);
           localStorage.setItem("scoredFreeKeys_v1", JSON.stringify([...scored]));
         } catch {}
@@ -4267,7 +4269,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const step = getIncidentStep(incidentStepIndex);
         const totalSteps = incidentSteps ? incidentSteps.length : selectedIncident.steps.length;
         const maxScore = totalSteps * 10;
-        const progress = ((incidentStepIndex + (incidentSubmitted ? 1 : 0)) / totalSteps) * 100;
+        const progress = totalSteps > 0 ? ((incidentStepIndex + (incidentSubmitted ? 1 : 0)) / totalSteps) * 100 : 0;
         return(
           <div style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease",direction:dir}}>
             {/* Top bar */}
