@@ -3263,15 +3263,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
         const globalOk      = loading ? null : (anyDown ? false : true);
         const globalLabel   = loading ? "Checking…"
-          : anyDown ? (lang==="en" ? "Major Outage" : "תקלה משמעותית")
-          : inMaintenance ? (lang==="en" ? "Scheduled Maintenance" : "תחזוקה מתוכננת")
-          : allOperational ? (lang==="en" ? "All Systems Operational" : "כל המערכות פעילות")
-          : (lang==="en" ? "Degraded Performance" : "ביצועים מופחתים");
+          : anyDown ? "Major Outage"
+          : inMaintenance ? "Scheduled Maintenance"
+          : allOperational ? "All Systems Operational"
+          : "Degraded Performance";
         const globalColor   = loading ? "#F59E0B" : anyDown ? "#EF4444" : inMaintenance ? "#facc15" : allOperational ? "#10B981" : "#F59E0B";
         const globalGlow    = loading ? "rgba(245,158,11,0.25)" : anyDown ? "rgba(239,68,68,0.25)" : inMaintenance ? "none" : allOperational ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)";
         const globalDot     = globalColor;
 
-        const statusLabel = (s) => s === "operational" ? (lang==="en" ? "Operational" : "פעיל") : s === "degraded" ? (lang==="en" ? "Degraded" : "מופחת") : s === "down" ? (lang==="en" ? "Down" : "מושבת") : (lang==="en" ? "Maintenance" : "תחזוקה");
+        const statusLabel = (s) => s === "operational" ? "Operational" : s === "degraded" ? "Degraded" : s === "down" ? "Down" : "Maintenance";
         const statusColor = (s) => s === "operational" ? "#10B981" : s === "degraded" ? "#F59E0B" : s === "down" ? "#EF4444" : "#facc15";
 
         // Default service list (used while loading or if no data)
@@ -3367,11 +3367,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const incStatusColor = (s) => s === "resolved" ? "#10B981" : s === "monitoring" ? "#3B82F6" : s === "identified" ? "#F59E0B" : "#EF4444";
 
         return (
-          <div className="page-pad" style={{maxWidth:720,margin:"0 auto",padding:"20px 16px 48px",animation:"fadeIn 0.3s ease"}}>
+          <div dir="ltr" className="page-pad" style={{maxWidth:720,margin:"0 auto",padding:"20px 16px 48px",animation:"fadeIn 0.3s ease"}}>
 
             {/* Back */}
             <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:28,display:"flex",alignItems:"center",gap:6}}>
-              {lang==="en"?"← Return":"→ חזרה"}
+              ← Return
             </button>
 
             {/* ── GLOBAL STATUS BANNER ── */}
@@ -3383,7 +3383,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{flex:1,minWidth:160}}>
                 <div style={{fontSize:18,fontWeight:800,color:"#e2e8f0"}}>{globalLabel}</div>
                 <div style={{fontSize:12,color:"#475569",marginTop:3}}>
-                  KubeQuest · {secondsAgo !== null ? `Updated ${secondsAgo}s ago` : (lang==="en"?"Checking…":"בודק…")}
+                  KubeQuest · {secondsAgo !== null ? `Updated ${secondsAgo}s ago` : "Checking…"}
                 </div>
               </div>
               <div style={{fontSize:11,color:"#475569",fontFamily:"'Fira Code','Courier New',monospace",flexShrink:0}}>
@@ -3396,7 +3396,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{background:isStaleCritical?"rgba(239,68,68,0.08)":"rgba(245,158,11,0.08)",border:`1px solid ${isStaleCritical?"rgba(239,68,68,0.3)":"rgba(245,158,11,0.3)"}`,borderRadius:10,padding:"10px 16px",marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:16}}>{isStaleCritical?"⚠":"⚡"}</span>
                 <span style={{fontSize:13,fontWeight:600,color:isStaleCritical?"#EF4444":"#F59E0B"}}>
-                  {isStaleCritical ? (lang==="en"?"Status data is stale":"נתוני הסטטוס לא עדכניים") : (lang==="en"?"Status data may be stale":"ייתכן שנתוני הסטטוס לא עדכניים")}
+                  {isStaleCritical ? "Status data is stale" : "Status data may be stale"}
                 </span>
               </div>
             )}
@@ -3446,7 +3446,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             ); })()}
 
             {/* ── SERVICE HEALTH ── */}
-            {sectionTitle(lang==="en"?"Service Health":"בריאות שירותים")}
+            {sectionTitle("Service Health")}
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,overflow:"hidden"}}>
               {services.map((svc,i)=>(
                 <div key={svc.service_name} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"13px 16px",borderBottom:i<services.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
@@ -3463,7 +3463,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
 
             {/* ── UPTIME - LAST 30 DAYS ── */}
-            {sectionTitle(lang==="en"?`Uptime — Last ${monitoringDays} Days`:`זמינות — ${monitoringDays} ימים אחרונים`)}
+            {sectionTitle(`Uptime — Last ${monitoringDays} Days`)}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {services.map((svc)=>{
                 const bars = getDayBars(svc.service_name);
@@ -3482,7 +3482,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       ))}
                     </div>
                     <div style={{display:"flex",justifyContent:"space-between",marginTop:5}}>
-                      <span style={{fontSize:10,color:"#334155"}}>{monitoringDays >= 30 ? (lang==="en"?"30 days ago":"לפני 30 ימים") : (lang==="en"?`${monitoringDays}d ago`:`לפני ${monitoringDays} ימים`)}</span>
+                      <span style={{fontSize:10,color:"#334155"}}>{monitoringDays >= 30 ? "30 days ago" : `${monitoringDays}d ago`}</span>
                       <span style={{fontSize:10,color:"#334155"}}>Today</span>
                     </div>
                   </div>
@@ -3491,7 +3491,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
 
             {/* ── PERFORMANCE METRICS ── */}
-            {sectionTitle(lang==="en"?"Performance Metrics":"מדדי ביצועים")}
+            {sectionTitle("Performance Metrics")}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10}}>
               {metricCard("Avg Latency", avgLatency!=null?`${avgLatency}ms`:"-", loading?"checking…":"across services", "#00D4FF")}
               {metricCard("Max Latency", maxLatency!=null?`${maxLatency}ms`:"-", loading?"checking…":"slowest service", "#A855F7")}
@@ -3500,7 +3500,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
 
             {/* ── DEPLOYMENT INFO ── */}
-            {sectionTitle(lang==="en"?"Deployment":"פריסה")}
+            {sectionTitle("Deployment")}
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px"}}>
               {infoRow("Version",     `v${APP_VERSION}`,                                      "#00D4FF", true)}
               {infoRow("Environment", env,                                                     isProd?"#10B981":"#F59E0B")}
@@ -3523,7 +3523,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
 
             {/* ── INCIDENT HISTORY ── */}
-            {sectionTitle(lang==="en"?"Incident History":"היסטוריית אירועים")}
+            {sectionTitle("Incident History")}
             {monitorIncidents && monitorIncidents.length > 0 ? monitorIncidents.map((inc) => {
               const started = new Date(inc.started_at);
               const resolved = inc.resolved_at ? new Date(inc.resolved_at) : null;
@@ -3561,7 +3561,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             )}
 
             {/* ── SECURITY STATUS ── */}
-            {sectionTitle(lang==="en"?"Security":"אבטחה")}
+            {sectionTitle("Security")}
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"4px 16px"}}>
               {infoRow("TLS Certificate", isSecure ? "✓ Valid · Let's Encrypt" : "Not active", isSecure?"#10B981":"#EF4444")}
               {infoRow("Connection",      isSecure ? "HTTPS · Encrypted" : "HTTP · Unencrypted",   isSecure?"#10B981":"#F59E0B")}
