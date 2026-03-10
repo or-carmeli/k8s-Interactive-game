@@ -51,7 +51,7 @@
       button, a, [role="button"] { touch-action: manipulation; }
       html { overflow-x: hidden; max-width: 100%; }
       body {
-        background: #020817;
+        background: var(--bg-body, #020817);
         overflow-x: hidden;
         max-width: 100vw;
         padding-top: env(safe-area-inset-top, 0px);
@@ -60,6 +60,10 @@
         padding-right: env(safe-area-inset-right, 0px);
       }
     </style>
+    <script>
+      // Apply saved theme before React loads to prevent flash
+      try { var t = localStorage.getItem("kq_theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch(e) {}
+    </script>
   </head>
 
   <body>

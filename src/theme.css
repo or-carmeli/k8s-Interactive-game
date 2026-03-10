@@ -1,0 +1,112 @@
+/* ═══════════════════════════════════════════════════════════════════
+   KubeQuest Theme System
+   Dark mode = default (preserves existing design exactly)
+   Light mode = alternate theme
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --bg-body: #020817;
+  --bg-card: #0f172a;
+  --bg-elevated: #1e293b;
+
+  /* Text */
+  --text-bright: #f8fafc;
+  --text-primary: #e2e8f0;
+  --text-light: #cbd5e1;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+  --text-disabled: #334155;
+  --text-faint: #1e293b;
+
+  /* Code & links */
+  --code-text: #7dd3fc;
+  --link-color: #0ea5e9;
+
+  /* Glass overlays (white-based for dark backgrounds) */
+  --glass-1: rgba(255,255,255,0.01);
+  --glass-2: rgba(255,255,255,0.02);
+  --glass-3: rgba(255,255,255,0.03);
+  --glass-4: rgba(255,255,255,0.04);
+  --glass-5: rgba(255,255,255,0.05);
+  --glass-6: rgba(255,255,255,0.06);
+  --glass-7: rgba(255,255,255,0.07);
+  --glass-8: rgba(255,255,255,0.08);
+  --glass-9: rgba(255,255,255,0.09);
+  --glass-10: rgba(255,255,255,0.1);
+  --glass-12: rgba(255,255,255,0.12);
+  --glass-15: rgba(255,255,255,0.15);
+  --glass-18: rgba(255,255,255,0.18);
+  --glass-20: rgba(255,255,255,0.2);
+
+  /* Overlays & code backgrounds */
+  --overlay: rgba(0,0,0,0.75);
+  --overlay-light: rgba(0,0,0,0.7);
+  --code-bg: rgba(0,0,0,0.45);
+  --code-bg-light: rgba(0,0,0,0.35);
+  --code-bg-block: rgba(0,0,0,0.4);
+  --code-bg-block-hover: rgba(0,0,0,0.5);
+
+  /* Shadows */
+  --shadow-heavy: 0 8px 32px rgba(0,0,0,0.5);
+
+  /* Gradients */
+  --gradient-body: linear-gradient(160deg, #020817 0%, #0f172a 60%, #020817 100%);
+  --gradient-body-simple: linear-gradient(160deg, #020817, #0f172a);
+}
+
+/* ── Light theme ─────────────────────────────────────────────────── */
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-body: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-elevated: #f1f5f9;
+
+  --text-bright: #0f172a;
+  --text-primary: #1e293b;
+  --text-light: #334155;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --text-disabled: #cbd5e1;
+  --text-faint: #e2e8f0;
+
+  --code-text: #0369a1;
+  --link-color: #0284c7;
+
+  --glass-1: rgba(0,0,0,0.01);
+  --glass-2: rgba(0,0,0,0.02);
+  --glass-3: rgba(0,0,0,0.03);
+  --glass-4: rgba(0,0,0,0.04);
+  --glass-5: rgba(0,0,0,0.05);
+  --glass-6: rgba(0,0,0,0.06);
+  --glass-7: rgba(0,0,0,0.07);
+  --glass-8: rgba(0,0,0,0.08);
+  --glass-9: rgba(0,0,0,0.09);
+  --glass-10: rgba(0,0,0,0.1);
+  --glass-12: rgba(0,0,0,0.12);
+  --glass-15: rgba(0,0,0,0.15);
+  --glass-18: rgba(0,0,0,0.18);
+  --glass-20: rgba(0,0,0,0.2);
+
+  --overlay: rgba(0,0,0,0.5);
+  --overlay-light: rgba(0,0,0,0.4);
+  --code-bg: rgba(0,0,0,0.06);
+  --code-bg-light: rgba(0,0,0,0.04);
+  --code-bg-block: rgba(0,0,0,0.05);
+  --code-bg-block-hover: rgba(0,0,0,0.08);
+
+  --shadow-heavy: 0 8px 32px rgba(0,0,0,0.12);
+
+  --gradient-body: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 60%, #f8fafc 100%);
+  --gradient-body-simple: linear-gradient(160deg, #f8fafc, #e2e8f0);
+}
+
+body {
+  background: var(--bg-body);
+}

@@ -5,9 +5,9 @@ export default function SupportSection() {
         href="https://buymeacoffee.com/ocarmeli7n"
         target="_blank"
         rel="noopener noreferrer"
-        style={{color:"#475569",fontSize:11,textDecoration:"none",transition:"color 0.2s"}}
-        onMouseEnter={e=>{e.currentTarget.style.color="#64748b";}}
-        onMouseLeave={e=>{e.currentTarget.style.color="#475569";}}
+        style={{color:"var(--text-dim)",fontSize:11,textDecoration:"none",transition:"color 0.2s"}}
+        onMouseEnter={e=>{e.currentTarget.style.color="var(--text-muted)";}}
+        onMouseLeave={e=>{e.currentTarget.style.color="var(--text-dim)";}}
       >
         Enjoying KubeQuest?<br/>Support the project ☕
       </a>

@@ -39,9 +39,9 @@ export default function WeakAreaCard({ topicStats, completedTopics, onGoToTopic,
   // ── Empty state ────────────────────────────────────────────────────────────
   if (entries.length === 0 || totalAnswered < 5) {
     return (
-      <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"14px 18px",marginBottom:16,direction:dir}}>
-        <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",marginBottom:8,letterSpacing:0.5}}>{t("weakAreaTitle")}</div>
-        <p style={{color:"#475569",fontSize:13,margin:0}}>{t("weakAreaEmpty")}</p>
+      <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:"14px 18px",marginBottom:16,direction:dir}}>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)",marginBottom:8,letterSpacing:0.5}}>{t("weakAreaTitle")}</div>
+        <p style={{color:"var(--text-dim)",fontSize:13,margin:0}}>{t("weakAreaEmpty")}</p>
       </div>
     );
   }
@@ -81,9 +81,9 @@ export default function WeakAreaCard({ topicStats, completedTopics, onGoToTopic,
         border: "1px solid rgba(16,185,129,0.18)",
         borderRight: `3px solid ${color}`,
       }}>
-        <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",marginBottom:10,letterSpacing:0.5}}>{t("allPerfectTitle")}</div>
+        <div style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)",marginBottom:10,letterSpacing:0.5}}>{t("allPerfectTitle")}</div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-          <span style={{color:"#e2e8f0",fontSize:13}}>{t("allPerfectMsg")}</span>
+          <span style={{color:"var(--text-primary)",fontSize:13}}>{t("allPerfectMsg")}</span>
           <button
             onClick={() => {
               // Scroll to the top of the categories list (first topic card).
@@ -107,10 +107,10 @@ export default function WeakAreaCard({ topicStats, completedTopics, onGoToTopic,
       border: "1px solid rgba(239,68,68,0.15)",
       borderRight: `3px solid ${color}`,
     }}>
-      <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",marginBottom:10,letterSpacing:0.5}}>{t("weakAreaTitle")}</div>
+      <div style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)",marginBottom:10,letterSpacing:0.5}}>{t("weakAreaTitle")}</div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{color:"#e2e8f0",fontWeight:700,fontSize:15}}>{name}</span>
+          <span style={{color:"var(--text-primary)",fontWeight:700,fontSize:15}}>{name}</span>
           <span style={{color,fontSize:13,fontWeight:600}}>{accuracy}% {t("accuracyLabel")}</span>
         </div>
         <button onClick={() => onGoToTopic(weakId)}

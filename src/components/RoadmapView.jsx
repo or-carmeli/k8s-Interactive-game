@@ -73,17 +73,17 @@ export default function RoadmapView({
     <div style={{animation:"fadeIn 0.4s ease",direction:"ltr"}}>
 
       {/* ── Summary header ── */}
-      <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px",marginBottom:16,direction:dir}}>
-        <div style={{fontWeight:800,color:"#e2e8f0",fontSize:16,marginBottom:4}}>{t("roadmapTitle")}</div>
-        <div style={{color:"#94a3b8",fontSize:13,marginBottom:10}}>
+      <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:"16px 18px",marginBottom:16,direction:dir}}>
+        <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:16,marginBottom:4}}>{t("roadmapTitle")}</div>
+        <div style={{color:"var(--text-secondary)",fontSize:13,marginBottom:10}}>
           {allDone
             ? t("roadmapAllDone")
             : `${t("roadmapStage")} ${currentStageNum} ${t("roadmapStageOf")} ${topics.length}`}
         </div>
-        <div style={{height:6,background:"rgba(255,255,255,0.06)",borderRadius:4,marginBottom:6,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
+        <div style={{height:6,background:"var(--glass-6)",borderRadius:4,marginBottom:6,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
           <div style={{height:"100%",borderRadius:4,width:`${overallProgress}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",transition:"width 0.5s ease"}}/>
         </div>
-        <div style={{fontSize:12,color:"#94a3b8",textAlign:"center"}}>{overallProgress}% {t("roadmapCompletedPct")}</div>
+        <div style={{fontSize:12,color:"var(--text-secondary)",textAlign:"center"}}>{overallProgress}% {t("roadmapCompletedPct")}</div>
       </div>
 
       {/* ── Global start (only shown before user begins) ── */}
@@ -108,15 +108,15 @@ export default function RoadmapView({
           const isExpanded = expandedStage === topic.id && !locked;
 
           // Node visuals
-          const nodeBorder = locked ? "2px solid #1e293b" : completed ? "2px solid #10B981" : isCurrent ? `2px solid ${topic.color}` : "2px solid #334155";
+          const nodeBorder = locked ? "2px solid var(--text-faint)" : completed ? "2px solid #10B981" : isCurrent ? `2px solid ${topic.color}` : "2px solid var(--text-disabled)";
           const nodeGlow   = isCurrent && !locked ? `0 0 24px ${topic.color}88` : "none";
           const nodeLabel  = completed ? "✓" : locked ? "🔒" : String(idx + 1);
-          const nodeFg     = locked ? "#334155" : completed ? "#10B981" : isCurrent ? topic.color : "#475569";
+          const nodeFg     = locked ? "var(--text-disabled)" : completed ? "#10B981" : isCurrent ? topic.color : "var(--text-dim)";
 
           // Connector line color
           const lineColor = completed
             ? `linear-gradient(to bottom,#10B981,${topics[idx + 1]?.color ?? "#10B981"}55)`
-            : "rgba(255,255,255,0.12)";
+            : "var(--glass-12)";
 
           return (
             // Use flexDirection:row-reverse for RTL instead of direction:rtl
@@ -129,7 +129,7 @@ export default function RoadmapView({
                 <div className="roadmap-node-circle" style={{
                   width:36,height:36,borderRadius:"50%",
                   border:nodeBorder,
-                  background:completed?"rgba(16,185,129,0.15)":isCurrent&&!locked?`${topic.color}20`:"rgba(255,255,255,0.04)",
+                  background:completed?"rgba(16,185,129,0.15)":isCurrent&&!locked?`${topic.color}20`:"var(--glass-4)",
                   boxShadow:nodeGlow,
                   display:"flex",alignItems:"center",justifyContent:"center",
                   fontSize:completed?17:locked?12:13,
@@ -158,8 +158,8 @@ export default function RoadmapView({
                 minWidth:0,
                 marginBottom: isLast ? 0 : 12,
                 opacity: locked ? 0.45 : 1,
-                background: isCurrent&&!locked ? `${topic.color}10` : "rgba(255,255,255,0.04)",
-                border:`1px solid ${isCurrent&&!locked ? `${topic.color}40` : "rgba(255,255,255,0.10)"}`,
+                background: isCurrent&&!locked ? `${topic.color}10` : "var(--glass-4)",
+                border:`1px solid ${isCurrent&&!locked ? `${topic.color}40` : "var(--glass-10)"}`,
                 borderRadius:14,
                 padding:"12px 14px",
                 transition:"opacity 0.2s,border-color 0.2s",
@@ -180,11 +180,11 @@ export default function RoadmapView({
 
                   {/* Text - takes remaining space, clips instead of wrapping */}
                   <div style={{flex:1,minWidth:0,direction:"ltr",textAlign:"center"}}>
-                    <div className="roadmap-title" style={{fontWeight:700,color:"#e2e8f0",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                    <div className="roadmap-title" style={{fontWeight:700,color:"var(--text-primary)",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
                       <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{topic.name}</span>
                       {completed&&<span style={{flexShrink:0}}>✅</span>}
                     </div>
-                    <div className="roadmap-subtitle" style={{color:"#64748b",fontSize:11,marginTop:1,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",lineHeight:1.4,textAlign:"center"}}>
+                    <div className="roadmap-subtitle" style={{color:"var(--text-muted)",fontSize:11,marginTop:1,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",lineHeight:1.4,textAlign:"center"}}>
                       {STAGE_SUBTITLES[topic.id]}
                     </div>
                   </div>
@@ -192,22 +192,22 @@ export default function RoadmapView({
                   {/* Progress % + expand arrow */}
                   {!locked&&(
                     <div className="roadmap-pct" style={{flexShrink:0,textAlign:"center",minWidth:36}}>
-                      <div style={{color:completed?"#10B981":isCurrent?topic.color:"#64748b",fontWeight:700,fontSize:12}}>{progress}%</div>
-                      <div aria-hidden="true" style={{color:"#475569",fontSize:10}}>{isExpanded?"▲":"▼"}</div>
+                      <div style={{color:completed?"#10B981":isCurrent?topic.color:"var(--text-muted)",fontWeight:700,fontSize:12}}>{progress}%</div>
+                      <div aria-hidden="true" style={{color:"var(--text-dim)",fontSize:10}}>{isExpanded?"▲":"▼"}</div>
                     </div>
                   )}
                 </button>
 
                 {/* Progress bar */}
                 {!locked&&(
-                  <div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:10,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
+                  <div style={{height:3,background:"var(--glass-6)",borderRadius:2,marginBottom:10,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
                     <div style={{height:"100%",borderRadius:2,width:`${progress}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/>
                   </div>
                 )}
 
                 {/* CTA */}
                 {locked ? (
-                  <div style={{color:"#334155",fontSize:12,textAlign:"center",padding:"6px 0",direction:dir}}>
+                  <div style={{color:"var(--text-disabled)",fontSize:12,textAlign:"center",padding:"6px 0",direction:dir}}>
                     {t("roadmapLocked")}
                   </div>
                 ) : completed ? (
@@ -236,13 +236,13 @@ export default function RoadmapView({
                           onClick={()=>startTopic(topic,lvl)}
                           disabled={lvlLocked}
                           aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` – ${done.correct}/${done.total}`:""}${lvlLocked?" (locked)":""}`}
-                          style={{padding:"10px 8px",background:lvlLocked?"rgba(255,255,255,0.01)":done?`${cfg.color}12`:"rgba(255,255,255,0.03)",border:`1px solid ${lvlLocked?"rgba(255,255,255,0.04)":done?cfg.color+"44":"rgba(255,255,255,0.07)"}`,borderRadius:10,textAlign:"center",opacity:lvlLocked?0.45:1,cursor:lvlLocked?"not-allowed":"pointer"}}>
+                          style={{padding:"10px 8px",background:lvlLocked?"var(--glass-1)":done?`${cfg.color}12`:"var(--glass-3)",border:`1px solid ${lvlLocked?"var(--glass-4)":done?cfg.color+"44":"var(--glass-7)"}`,borderRadius:10,textAlign:"center",opacity:lvlLocked?0.45:1,cursor:lvlLocked?"not-allowed":"pointer"}}>
                           <div aria-hidden="true" style={{fontSize:16}}>{lvlLocked?"🔒":cfg.icon}</div>
-                          <div style={{fontSize:12,fontWeight:700,color:lvlLocked?"#334155":done?cfg.color:"#64748b"}}>
+                          <div style={{fontSize:12,fontWeight:700,color:lvlLocked?"var(--text-disabled)":done?cfg.color:"var(--text-muted)"}}>
                             {lang==="en"?cfg.labelEn:cfg.label}
                           </div>
                           {done&&!lvlLocked&&<div aria-hidden="true" style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}}>{done.correct>0?"✓":""} {done.correct}/{done.total}</div>}
-                          <div aria-hidden="true" style={{fontSize:10,color:lvlLocked?"#1e293b":"#475569"}}>+{cfg.points}{t("pts")}</div>
+                          <div aria-hidden="true" style={{fontSize:10,color:lvlLocked?"var(--text-faint)":"var(--text-dim)"}}>+{cfg.points}{t("pts")}</div>
                         </button>
                       );
                     })}

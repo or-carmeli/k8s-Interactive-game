@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Analytics } from "@vercel/analytics/react";
+import { useTheme } from "./ThemeContext";
 import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
 import { ACHIEVEMENTS } from "./topicMeta";
@@ -367,7 +368,7 @@ function Confetti() {
 function LangSwitcher({ lang, setLang }) {
   return (
     <select value={lang} onChange={e => setLang(e.target.value)}
-      style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,color:"#94a3b8",padding:"6px 10px",fontSize:13,cursor:"pointer",direction:"ltr"}}>
+      style={{background:"var(--glass-4)",border:"1px solid var(--glass-12)",borderRadius:8,color:"var(--text-secondary)",padding:"6px 10px",fontSize:13,cursor:"pointer",direction:"ltr"}}>
       <option value="he">🇮🇱 עברית</option>
       <option value="en">🇺🇸 English</option>
     </select>
@@ -376,14 +377,14 @@ function LangSwitcher({ lang, setLang }) {
 
 function GenderToggle({ gender, setGender }) {
   return (
-    <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,padding:2}}>
+    <div style={{display:"flex",gap:3,background:"var(--glass-4)",border:"1px solid var(--glass-12)",borderRadius:8,padding:2}}>
       {[{v:"f",label:"♀"},{v:"m",label:"♂"}].map(({v,label}) => (
         <button key={v} onClick={()=>setGender(v)}
           style={{width:34,height:30,padding:0,border:"none",borderRadius:6,cursor:"pointer",
             display:"flex",alignItems:"center",justifyContent:"center",
             fontFamily:"Arial,sans-serif",fontSize:16,lineHeight:"1",
             background:gender===v?"rgba(0,212,255,0.15)":"transparent",
-            color:gender===v?"#00D4FF":"#64748b",fontWeight:gender===v?700:400}}>
+            color:gender===v?"#00D4FF":"var(--text-muted)",fontWeight:gender===v?700:400}}>
           {label}
         </button>
       ))}
@@ -401,7 +402,7 @@ function renderQuestion(qText, lang) {
   if (paragraphs.length <= 1) {
     const qDir = hasHebrew(qText) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
     return (
-      <div dir={qDir} style={{color:"#e2e8f0",fontSize:18,fontWeight:700,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
+      <div dir={qDir} style={{color:"var(--text-primary)",fontSize:18,fontWeight:700,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
         {lang==="he"?renderBidi(qText,lang):qText}
       </div>
     );
@@ -415,7 +416,7 @@ function renderQuestion(qText, lang) {
         const isCode = nonEmpty.length > 1 && nonEmpty.every(l => !hasHebrew(l) && terminalPat.test(l));
         if (isCode) {
           return (
-            <pre key={idx} style={{margin:0,background:"rgba(0,0,0,0.45)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"10px 14px",fontFamily:"monospace",fontSize:13,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all",textAlign:"left",direction:"ltr",unicodeBidi:"plaintext"}}>
+            <pre key={idx} style={{margin:0,background:"var(--code-bg)",border:"1px solid var(--glass-10)",borderRadius:8,padding:"10px 14px",fontFamily:"monospace",fontSize:13,color:"var(--code-text)",overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all",textAlign:"left",direction:"ltr",unicodeBidi:"plaintext"}}>
               {para}
             </pre>
           );
@@ -423,7 +424,7 @@ function renderQuestion(qText, lang) {
         const isLast = idx === paragraphs.length - 1;
         const pDir = hasHebrew(para) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
         return (
-          <div key={idx} dir={pDir} style={{color:"#e2e8f0",fontSize:isLast?18:15,fontWeight:isLast?700:400,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:pDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
+          <div key={idx} dir={pDir} style={{color:"var(--text-primary)",fontSize:isLast?18:15,fontWeight:isLast?700:400,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:pDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
             {lang==="he"?renderBidi(para,lang):para}
           </div>
         );
@@ -486,7 +487,7 @@ function isCodeTerm(token) {
 }
 
 // Inline-code style shared between backtick spans and K8s code terms
-const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"#7dd3fc"};
+const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"var(--code-text)"};
 
 // Inner bidi logic: wraps Latin sequences in <span dir="ltr">, applies code styling to K8s terms.
 function renderBidiInner(text, lang, keyPrefix) {
@@ -577,22 +578,22 @@ function renderBidiBlock(text, lang) {
 function Footer({ lang }) {
   const txt = TRANSLATIONS[lang] || TRANSLATIONS.he;
   return (
-    <div style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+    <div style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid var(--glass-5)"}}>
       <a href="https://buymeacoffee.com/ocarmeli7n" target="_blank" rel="noopener noreferrer"
-        style={{color:"#475569",fontSize:11,textDecoration:"none",display:"block",marginBottom:8,transition:"color 0.2s",direction:lang==="en"?"ltr":"rtl"}}
-        onMouseEnter={e=>{e.currentTarget.style.color="#64748b";}}
-        onMouseLeave={e=>{e.currentTarget.style.color="#475569";}}>
+        style={{color:"var(--text-dim)",fontSize:11,textDecoration:"none",display:"block",marginBottom:8,transition:"color 0.2s",direction:lang==="en"?"ltr":"rtl"}}
+        onMouseEnter={e=>{e.currentTarget.style.color="var(--text-muted)";}}
+        onMouseLeave={e=>{e.currentTarget.style.color="var(--text-dim)";}}>
         {lang==="en"?"Enjoying KubeQuest?":"נהנים מ-KubeQuest\u200F?"}<br/>{lang==="en"?"Support the project ☕":"תמכו בפרויקט ☕"}
       </a>
-      <p style={{color:"#475569",fontSize:12,margin:"0 0 8px 0",direction:lang==="he"?"rtl":"ltr"}}>
+      <p style={{color:"var(--text-dim)",fontSize:12,margin:"0 0 8px 0",direction:lang==="he"?"rtl":"ltr"}}>
         {lang==="en" && `© ${year} `}{txt.allRightsReserved}{" "}
         <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer"
-          style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>{lang==="he" && ` \u200F© ${year}`}
+          style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>{lang==="he" && ` \u200F© ${year}`}
       </p>
       <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback"
-        style={{display:"inline-flex",alignItems:"center",gap:5,color:"#64748b",fontSize:11,textDecoration:"none",padding:"5px 12px",border:"1px solid rgba(255,255,255,0.07)",borderRadius:20,transition:"color 0.2s,border-color 0.2s"}}
-        onMouseEnter={e=>{e.currentTarget.style.color="#e2e8f0";e.currentTarget.style.borderColor="rgba(255,255,255,0.2)";}}
-        onMouseLeave={e=>{e.currentTarget.style.color="#64748b";e.currentTarget.style.borderColor="rgba(255,255,255,0.07)";}}>
+        style={{display:"inline-flex",alignItems:"center",gap:5,color:"var(--text-muted)",fontSize:11,textDecoration:"none",padding:"5px 12px",border:"1px solid var(--glass-7)",borderRadius:20,transition:"color 0.2s,border-color 0.2s"}}
+        onMouseEnter={e=>{e.currentTarget.style.color="var(--text-primary)";e.currentTarget.style.borderColor="var(--glass-20)";}}
+        onMouseLeave={e=>{e.currentTarget.style.color="var(--text-muted)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
         ✉ {lang==="en"?"Contact me":"צור קשר"}
       </a>
     </div>
@@ -600,6 +601,7 @@ function Footer({ lang }) {
 }
 
 export default function K8sQuestApp() {
+  const { theme, toggleTheme } = useTheme();
   const [lang, setLang]                   = useState("he");
   const [gender, setGender]               = useState(() => localStorage.getItem("gender_v1") || "m");
   const handleSetGender = (g) => { setGender(g); localStorage.setItem("gender_v1", g); };
@@ -2213,7 +2215,7 @@ export default function K8sQuestApp() {
         return <div key={i} style={{color:"#00D4FF",fontSize:10,fontWeight:800,marginTop:14,marginBottom:4,letterSpacing:2,opacity:0.7,direction:"ltr",textAlign:"left"}}>YAML / BASH</div>;
       }
       if (inCode) return (
-        <div key={i} style={{fontFamily:"monospace",fontSize:11,color:"#7dd3fc",lineHeight:1.8,
+        <div key={i} style={{fontFamily:"monospace",fontSize:11,color:"var(--code-text)",lineHeight:1.8,
           whiteSpace:"pre",direction:"ltr",textAlign:"left"}}>  {line}</div>
       );
       if (line.startsWith('🔹')) {
@@ -2221,12 +2223,12 @@ export default function K8sQuestApp() {
         return (
           <div key={i} style={{display:"flex",flexDirection:dir==="rtl"?"row-reverse":"row",alignItems:"flex-start",gap:6,marginBottom:5}}>
             <span style={{flexShrink:0,fontSize:13,lineHeight:1.6}}>🔹</span>
-            <span style={{color:"#94a3b8",fontSize:13,flex:1,lineHeight:1.6,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidiBlock(text,lang)}</span>
+            <span style={{color:"var(--text-secondary)",fontSize:13,flex:1,lineHeight:1.6,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidiBlock(text,lang)}</span>
           </div>
         );
       }
       if (!line.trim()) return <div key={i} style={{height:6}}/>;
-      return <div key={i} style={{color:"#e2e8f0",fontSize:15,fontWeight:700,marginBottom:8}}>{line}</div>;
+      return <div key={i} style={{color:"var(--text-primary)",fontSize:15,fontWeight:700,marginBottom:8}}>{line}</div>;
     });
   };
 
@@ -2235,7 +2237,7 @@ export default function K8sQuestApp() {
     const parts = text.split(/(`[^`]+`)/g);
     return parts.map((part, i) =>
       part.startsWith("`") && part.endsWith("`") && part.length > 2
-        ? <code key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:"0.88em",color:"#7dd3fc",background:"rgba(125,211,252,0.06)",borderRadius:4,padding:"1px 5px",direction:"ltr",unicodeBidi:"isolate"}}>{part.slice(1,-1)}</code>
+        ? <code key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:"0.88em",color:"var(--code-text)",background:"rgba(125,211,252,0.06)",borderRadius:4,padding:"1px 5px",direction:"ltr",unicodeBidi:"isolate"}}>{part.slice(1,-1)}</code>
         : part
     );
   };
@@ -2246,14 +2248,14 @@ export default function K8sQuestApp() {
     if (!text) return null;
     const sentences = text.split(/\.\s+(?=[A-Z\u0590-\u05FFa-z`])/).filter(s => s.trim());
     if (sentences.length <= 1) {
-      return <div dir="auto" style={{color:"#94a3b8",fontSize:13,lineHeight:1.8}}>{lang === "he" ? renderBidiBlock(text, lang) : renderInline(text)}</div>;
+      return <div dir="auto" style={{color:"var(--text-secondary)",fontSize:13,lineHeight:1.8}}>{lang === "he" ? renderBidiBlock(text, lang) : renderInline(text)}</div>;
     }
     return (
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {sentences.map((s, i) => {
           const cleaned = s.replace(/\.+$/, "") + ".";
           return (
-            <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,textAlign:lang==="he"?"right":"left"}}>
+            <div key={i} dir={lang==="he"?"rtl":"ltr"} style={{color:"var(--text-secondary)",fontSize:13,lineHeight:1.8,textAlign:lang==="he"?"right":"left"}}>
               {lang === "he" ? renderBidiBlock(cleaned, lang) : renderInline(cleaned)}
             </div>
           );
@@ -2274,11 +2276,11 @@ export default function K8sQuestApp() {
     return lines.map((line, i) => {
       if (!line.trim()) return <div key={i} style={{height:6}}/>;
       if (!_hasHe(line) && terminalPat.test(line)) {
-        return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"#7dd3fc",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre"}}>{line}</div>;
+        return <div key={i} style={{fontFamily:"'Fira Code','Courier New',monospace",fontSize:12,color:"var(--code-text)",lineHeight:1.9,direction:"ltr",textAlign:"left",whiteSpace:"pre"}}>{line}</div>;
       }
       const isTitle = i === titleIdx;
       const isQ = i === questionIdx && i !== titleIdx;
-      const style = isTitle ? {color:"#f8fafc",fontSize:15,fontWeight:700,lineHeight:1.6,marginBottom:2} : isQ ? {color:"#fbbf24",fontSize:14,fontWeight:600,lineHeight:1.8,marginTop:4} : {color:"#e2e8f0",fontSize:14,lineHeight:1.8,marginBottom:4};
+      const style = isTitle ? {color:"var(--text-bright)",fontSize:15,fontWeight:700,lineHeight:1.6,marginBottom:2} : isQ ? {color:"#fbbf24",fontSize:14,fontWeight:600,lineHeight:1.8,marginTop:4} : {color:"var(--text-primary)",fontSize:14,lineHeight:1.8,marginBottom:4};
       return <div key={i} dir="auto" style={style}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>;
     });
   };
@@ -2286,7 +2288,7 @@ export default function K8sQuestApp() {
 const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username || user?.email?.split("@")[0] || t("guestName"));
 
   if (!authChecked || !minLoadElapsed || (!!user && !isGuest && !dataLoaded)) return (
-    <div style={{minHeight:"100vh",background:"#020817",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"var(--bg-body)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif"}}>
       <style>{`
         @keyframes lspin  { from { transform: rotate(0deg)   } to { transform: rotate(360deg)  } }
         @keyframes lspin2 { from { transform: rotate(0deg)   } to { transform: rotate(-360deg) } }
@@ -2320,7 +2322,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
               backgroundClip:"text",backgroundSize:"300% auto",
               animation:"lshine 9s linear infinite"}}>KubeQuest</div>
-            <div style={{fontSize:11,color:"#475569",letterSpacing:0.4,marginTop:3}}>Train Your Kubernetes Skills</div>
+            <div style={{fontSize:11,color:"var(--text-dim)",letterSpacing:0.4,marginTop:3}}>Train Your Kubernetes Skills</div>
           </div>
         </div>
 
@@ -2334,7 +2336,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <stop offset="100%" stopColor="#00D4FF" stopOpacity="0"/>
               </linearGradient>
             </defs>
-            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3"/>
+            <circle cx="32" cy="32" r="28" fill="none" stroke="var(--glass-5)" strokeWidth="3"/>
             <circle cx="32" cy="32" r="28" fill="none" stroke="url(#sg1)" strokeWidth="3"
               strokeLinecap="round" strokeDasharray="90 86"/>
           </svg>
@@ -2346,7 +2348,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <stop offset="100%" stopColor="#A855F7" stopOpacity="0"/>
               </linearGradient>
             </defs>
-            <circle cx="32" cy="32" r="18" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="2.5"/>
+            <circle cx="32" cy="32" r="18" fill="none" stroke="var(--glass-4)" strokeWidth="2.5"/>
             <circle cx="32" cy="32" r="18" fill="none" stroke="url(#sg2)" strokeWidth="2.5"
               strokeLinecap="round" strokeDasharray="56 57"/>
           </svg>
@@ -2357,7 +2359,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         </div>
 
         {/* ── Loading text ── */}
-        <div style={{color:"#475569",fontSize:13,letterSpacing:0.5}}>{t("loadingText")}</div>
+        <div style={{color:"var(--text-dim)",fontSize:13,letterSpacing:0.5}}>{t("loadingText")}</div>
       </div>
     </div>
   );
@@ -2395,13 +2397,17 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
   })();
 
   if (!user) return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817,#0f172a)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,padding:"20px"}}>
+    <div style={{minHeight:"100vh",background:"var(--gradient-body-simple)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,padding:"20px"}}>
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,0.2)}70%{box-shadow:0 0 0 14px rgba(0,212,255,0)}}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF;outline-offset:2px;border-radius:4px}.gbtn:hover{background:rgba(0,212,255,0.13)!important;border-color:rgba(0,212,255,0.5)!important;color:#00D4FF!important;transform:translateY(-2px)}`}</style>
       <div style={{width:"100%",maxWidth:400,animation:"fadeIn 0.4s ease"}}>
-        {/* Language switcher */}
+        {/* Language switcher + theme toggle */}
         <div style={{display:"flex",justifyContent:"center",alignItems:"center",direction:"ltr",marginBottom:12,gap:8}}>
           {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
           <LangSwitcher lang={lang} setLang={setLang}/>
+          <button onClick={toggleTheme} aria-label={theme==="dark"?"Switch to light mode":"Switch to dark mode"}
+            style={{background:"var(--glass-4)",border:"1px solid var(--glass-12)",borderRadius:8,color:"var(--text-secondary)",padding:"6px 10px",fontSize:13,cursor:"pointer"}}>
+            {theme==="dark"?"☀️":"🌙"}
+          </button>
         </div>
 
         <div style={{textAlign:"center",marginBottom:34}}>
@@ -2417,29 +2423,29 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             {[["#00D4FF",0],["#7B9FF7",51.4],["#A855F7",102.8],["#CC60CC",154.2],["#FF6B35",205.7],["#FF8C35",257.1],["#44AAEE",308.5]].map(([c,deg],i)=><circle key={i} cx="50" cy="16" r="3.5" fill={c} transform={deg?`rotate(${deg},50,50)`:""}/>)}
           </svg>
           <h1 style={{fontSize:33,fontWeight:900,margin:"0 0 6px",background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",filter:"drop-shadow(0 0 18px rgba(0,212,255,0.35))"}}>KubeQuest</h1>
-          <p style={{color:"#94a3b8",fontSize:14,margin:0}}>{t("tagline")}</p>
+          <p style={{color:"var(--text-secondary)",fontSize:14,margin:0}}>{t("tagline")}</p>
         </div>
 
         <button className="gbtn" onClick={()=>{setUser(GUEST_USER);try{localStorage.setItem("k8s_guest_session","1")}catch{}}}
-          style={{width:"100%",padding:"18px",background:"rgba(0,212,255,0.07)",border:"2px solid rgba(0,212,255,0.3)",borderRadius:14,color:"#7dd3fc",fontSize:17,fontWeight:800,cursor:"pointer",marginBottom:6,transition:"all 0.2s",animation:"pulse 2.8s infinite"}}>
+          style={{width:"100%",padding:"18px",background:"rgba(0,212,255,0.07)",border:"2px solid rgba(0,212,255,0.3)",borderRadius:14,color:"var(--code-text)",fontSize:17,fontWeight:800,cursor:"pointer",marginBottom:6,transition:"all 0.2s",animation:"pulse 2.8s infinite"}}>
           {t("startPlaying")}
         </button>
-        <p style={{textAlign:"center",color:"#7dd3fc",opacity:0.75,fontSize:12,margin:"0 0 26px"}}>{t("noRegNoPass")}</p>
+        <p style={{textAlign:"center",color:"var(--code-text)",opacity:0.75,fontSize:12,margin:"0 0 26px"}}>{t("noRegNoPass")}</p>
 
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
-          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.1)"}}/>
-          <span style={{color:"#94a3b8",fontSize:12,whiteSpace:"nowrap"}}>{t("saveProgress")}</span>
-          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.1)"}}/>
+          <div style={{flex:1,height:1,background:"var(--glass-10)"}}/>
+          <span style={{color:"var(--text-secondary)",fontSize:12,whiteSpace:"nowrap"}}>{t("saveProgress")}</span>
+          <div style={{flex:1,height:1,background:"var(--glass-10)"}}/>
         </div>
 
-        <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:"18px 20px"}}>
-          <div style={{display:"flex",marginBottom:16,background:"rgba(255,255,255,0.04)",borderRadius:9,padding:3}}>
+        <div style={{background:"var(--glass-5)",border:"1px solid var(--glass-12)",borderRadius:14,padding:"18px 20px"}}>
+          <div style={{display:"flex",marginBottom:16,background:"var(--glass-4)",borderRadius:9,padding:3}}>
             {["login","signup"].map(s=>(
               <button key={s}
                 onClick={()=>{ setAuthScreen(s); setAuthError(""); }}
                 style={{flex:1,padding:"7px",border:"none",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700,
                   background:authScreen===s?"rgba(0,212,255,0.12)":"transparent",
-                  color:authScreen===s?"#00D4FF":"#475569",transition:"all 0.2s"}}>
+                  color:authScreen===s?"#00D4FF":"var(--text-dim)",transition:"all 0.2s"}}>
                 {s==="login"?t("loginTab"):t("signupTab")}
               </button>
             ))}
@@ -2447,24 +2453,24 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <form ref={authFormRef} onSubmit={e=>{e.preventDefault();authScreen==="login"?handleLogin():handleSignUp();}} autoComplete="on">
           {authScreen==="signup"&&(
             <div style={{marginBottom:11}}>
-              <label htmlFor="auth-username" style={{color:"#475569",fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>{t("username")}</label>
+              <label htmlFor="auth-username" style={{color:"var(--text-dim)",fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>{t("username")}</label>
               <input id="auth-username" name="username" autoComplete="username" defaultValue="" placeholder="K8s Hero"
-                style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:14,boxSizing:"border-box"}}/>
+                style={{width:"100%",padding:"12px 14px",background:"var(--glass-6)",border:"1px solid var(--glass-18)",borderRadius:8,color:"var(--text-primary)",fontSize:14,boxSizing:"border-box"}}/>
             </div>
           )}
           <div style={{marginBottom:11}}>
-            <label htmlFor="auth-email" style={{color:"#475569",fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>{t("email")}</label>
+            <label htmlFor="auth-email" style={{color:"var(--text-dim)",fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>{t("email")}</label>
             <input id="auth-email" type="email" name="email" autoComplete={authScreen==="login"?"username":"email"} defaultValue="" placeholder="you@example.com"
-              style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:14,boxSizing:"border-box",direction:"ltr"}}/>
+              style={{width:"100%",padding:"12px 14px",background:"var(--glass-6)",border:"1px solid var(--glass-18)",borderRadius:8,color:"var(--text-primary)",fontSize:14,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
           <div style={{marginBottom:14}}>
-            <label htmlFor="auth-password" style={{color:"#475569",fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>{t("password")}</label>
+            <label htmlFor="auth-password" style={{color:"var(--text-dim)",fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>{t("password")}</label>
             <input id="auth-password" type="password" name="password" autoComplete={authScreen==="login"?"current-password":"new-password"} defaultValue="" placeholder="••••••••"
-              style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:8,color:"#e2e8f0",fontSize:14,boxSizing:"border-box",direction:"ltr"}}/>
+              style={{width:"100%",padding:"12px 14px",background:"var(--glass-6)",border:"1px solid var(--glass-18)",borderRadius:8,color:"var(--text-primary)",fontSize:14,boxSizing:"border-box",direction:"ltr"}}/>
           </div>
           {authError&&<div style={{marginBottom:12}}>
             <div role="alert" aria-live="assertive" style={{color:authError.startsWith("✅")?"#10B981":"#EF4444",fontSize:12,padding:"8px 12px",background:authError.startsWith("✅")?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)",borderRadius:8}}>{authError}</div>
-            {authScreen==="signup"&&authError.startsWith("✅")&&<div style={{textAlign:"center",marginTop:8,fontSize:12,color:"#475569"}}>
+            {authScreen==="signup"&&authError.startsWith("✅")&&<div style={{textAlign:"center",marginTop:8,fontSize:12,color:"var(--text-dim)"}}>
               {t("didntReceive")}{" "}
               <button type="button" onClick={handleResend} disabled={authLoading}
                 style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:12,padding:0,textDecoration:"underline"}}>
@@ -2478,22 +2484,22 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </button>
           </form>
         </div>
-        <p style={{textAlign:"center",color:"#475569",fontSize:11,marginTop:22}}>
+        <p style={{textAlign:"center",color:"var(--text-dim)",fontSize:11,marginTop:22}}>
           © {year} {t("allRightsReserved")}{" "}
-          <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>
+          <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>
         </p>
       </div>
     </div>
   );
 
   return (
-    <div dir={isStatusDomain?"ltr":undefined} style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:isStatusDomain?"ltr":dir,position:"relative",overflowX:"hidden"}}>
+    <div dir={isStatusDomain?"ltr":undefined} style={{minHeight:"100vh",background:"var(--gradient-body)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:isStatusDomain?"ltr":dir,position:"relative",overflowX:"hidden"}}>
       {/* ── Standalone status header (status.kubequest.online only) ── */}
       {isStatusDomain && (
-        <header style={{borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"12px 24px"}}>
+        <header style={{borderBottom:"1px solid var(--glass-5)",padding:"12px 24px"}}>
           <div style={{maxWidth:720,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{fontSize:14,fontWeight:600,color:"#e2e8f0",letterSpacing:-0.2}}>KubeQuest Status</div>
-            <a href="https://kubequest.online" target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"#64748b",textDecoration:"none"}}>kubequest.online ↗</a>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--text-primary)",letterSpacing:-0.2}}>KubeQuest Status</div>
+            <a href="https://kubequest.online" target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"var(--text-muted)",textDecoration:"none"}}>kubequest.online ↗</a>
           </div>
         </header>
       )}
@@ -2504,7 +2510,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         onBlur={e=>e.currentTarget.style.top="-100px"}>
         {lang==="en"?"Skip to content":"דלג לתוכן"}
       </a>}
-      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.quiz-text{direction:rtl;unicode-bidi:plaintext;text-align:right}.quiz-text[dir="ltr"]{direction:ltr;text-align:left}.code-inline{direction:ltr;display:inline-block;unicode-bidi:isolate}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:#7dd3fc;font-size:0.88em;margin-top:4px;text-align:left}.cbr-block{background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;align-items:stretch;transition:border-color 0.15s,background 0.15s;overflow:hidden}.cbr-block:hover{border-color:rgba(255,255,255,0.12);background:rgba(0,0,0,0.5)}.cbr-code{flex:1;min-width:0;padding:10px 14px;font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:12.5px;color:#7dd3fc;line-height:1.6;white-space:pre;overflow-x:auto;direction:ltr}.cbr-copy{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:0 12px;border:none;border-left:1px solid rgba(255,255,255,0.06);background:transparent;color:#64748b;font-size:11px;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:inherit;min-width:62px;justify-content:center}.cbr-copy:hover{background:rgba(255,255,255,0.04);color:#94a3b8}.cbr-copy:focus-visible{outline:2px solid #00D4FF!important;outline-offset:-2px}.cbr-copy.copied{color:#10B981;background:rgba(16,185,129,0.08)}@media(max-width:600px){
+      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.quiz-text{direction:rtl;unicode-bidi:plaintext;text-align:right}.quiz-text[dir="ltr"]{direction:ltr;text-align:left}.code-inline{direction:ltr;display:inline-block;unicode-bidi:isolate}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:var(--code-text);font-size:0.88em;margin-top:4px;text-align:left}.cbr-block{background:var(--code-bg-block);border:1px solid var(--glass-6);border-radius:6px;display:flex;align-items:stretch;transition:border-color 0.15s,background 0.15s;overflow:hidden}.cbr-block:hover{border-color:var(--glass-12);background:var(--code-bg-block-hover)}.cbr-code{flex:1;min-width:0;padding:10px 14px;font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:12.5px;color:var(--code-text);line-height:1.6;white-space:pre;overflow-x:auto;direction:ltr}.cbr-copy{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:0 12px;border:none;border-left:1px solid var(--glass-6);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:inherit;min-width:62px;justify-content:center}.cbr-copy:hover{background:var(--glass-4);color:var(--text-secondary)}.cbr-copy:focus-visible{outline:2px solid #00D4FF!important;outline-offset:-2px}.cbr-copy.copied{color:#10B981;background:rgba(16,185,129,0.08)}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
 .quiz-bar-right{gap:8px!important}
@@ -2569,38 +2575,38 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
       {showConfetti&&!a11y.reduceMotion&&<Confetti/>}
-      {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
+      {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"var(--text-primary)",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
       {saveError&&<div role="alert" aria-live="assertive" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
-      {resumeToast&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#1e293b,#0f172a)",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,padding:"10px 20px",color:"#00D4FF",fontSize:13,fontWeight:600,zIndex:9999,boxShadow:"0 0 20px rgba(0,212,255,0.15)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap"}}>{t("resumeToast")}</div>}
+      {resumeToast&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,padding:"10px 20px",color:"#00D4FF",fontSize:13,fontWeight:600,zIndex:9999,boxShadow:"0 0 20px rgba(0,212,255,0.15)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap"}}>{t("resumeToast")}</div>}
 
       {showResumeModal&&resumeData&&(()=>{
         const answered = resumeData.questionIndex ?? 0;
         const total    = resumeData.questions?.length ?? 0;
         const pct      = total > 0 ? Math.round((answered / total) * 100) : 0;
         return (
-        <div onClick={handleResumeDismiss} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
-          <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"#0f172a",border:"1px solid rgba(0,212,255,0.25)",borderRadius:18,padding:"24px 22px",width:"min(380px,100%)",animation:"fadeIn 0.3s ease",direction:dir,position:"relative"}}>
-            <button onClick={handleResumeDismiss} aria-label={lang==="en"?"Close":"סגור"} style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
+        <div onClick={handleResumeDismiss} style={{position:"fixed",inset:0,background:"var(--overlay)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+          <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"var(--bg-card)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:18,padding:"24px 22px",width:"min(380px,100%)",animation:"fadeIn 0.3s ease",direction:dir,position:"relative"}}>
+            <button onClick={handleResumeDismiss} aria-label={lang==="en"?"Close":"סגור"} style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
             <div style={{fontSize:32,textAlign:"center",marginBottom:10}}>⏸️</div>
-            <div style={{fontWeight:800,color:"#e2e8f0",fontSize:18,marginBottom:8,textAlign:"center"}}>{t("resumeTitle")}</div>
-            <div style={{color:"#94a3b8",fontSize:13,marginBottom:16,textAlign:"center"}}>{t("resumeBody")}</div>
+            <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:18,marginBottom:8,textAlign:"center"}}>{t("resumeTitle")}</div>
+            <div style={{color:"var(--text-secondary)",fontSize:13,marginBottom:16,textAlign:"center"}}>{t("resumeBody")}</div>
             {/* Quiz info pill */}
-            <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,padding:"10px 14px",marginBottom:8,direction:"ltr"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,padding:"10px 14px",marginBottom:8,direction:"ltr"}}>
               <span style={{fontSize:22}}>{resumeData.topicIcon}</span>
               <div style={{flex:1}}>
-                <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{resumeData.topicName}</div>
-                <div style={{color:"#64748b",fontSize:12}}>
+                <div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{resumeData.topicName}</div>
+                <div style={{color:"var(--text-muted)",fontSize:12}}>
                   {lang==="en"?LEVEL_CONFIG[resumeData.level]?.labelEn:LEVEL_CONFIG[resumeData.level]?.label}
                 </div>
               </div>
             </div>
             {/* Progress display — req 6 */}
             <div style={{marginBottom:16}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#64748b",marginBottom:4}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--text-muted)",marginBottom:4}}>
                 <span>{lang==="en"?"Progress":"התקדמות"}</span>
                 <span style={{color:"#00D4FF",fontWeight:700}}>{answered} / {total} {lang==="en"?"questions answered":"שאלות נענו"}</span>
               </div>
-              <div style={{height:6,background:"rgba(255,255,255,0.07)",borderRadius:4,overflow:"hidden"}}>
+              <div style={{height:6,background:"var(--glass-7)",borderRadius:4,overflow:"hidden"}}>
                 <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",borderRadius:4,transition:"width 0.3s ease"}}/>
               </div>
             </div>
@@ -2610,11 +2616,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 ▶ {t("resumeBtn")}
               </button>
               <button onClick={handleDiscardResume}
-                style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#64748b",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                style={{width:"100%",padding:"12px",background:"var(--glass-3)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-muted)",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {t("resumeDiscard")}
               </button>
               <button onClick={handleResumeDismiss}
-                style={{width:"100%",padding:"10px",background:"none",border:"none",borderRadius:12,color:"#475569",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                style={{width:"100%",padding:"10px",background:"none",border:"none",borderRadius:12,color:"var(--text-dim)",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                 {t("back")}
               </button>
             </div>
@@ -2625,14 +2631,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {/* ── REPORT DIALOG ─────────────────────────────────── */}
       {reportDialog&&(
-        <div onClick={()=>setReportDialog(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:5010,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+        <div onClick={()=>setReportDialog(null)} style={{position:"fixed",inset:0,background:"var(--overlay)",zIndex:5010,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
           <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}
-            style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.12)",borderRadius:18,padding:"22px 20px",width:"min(400px,100%)",animation:"fadeIn 0.25s ease",direction:dir,position:"relative"}}>
+            style={{background:"var(--bg-card)",border:"1px solid var(--glass-12)",borderRadius:18,padding:"22px 20px",width:"min(400px,100%)",animation:"fadeIn 0.25s ease",direction:dir,position:"relative"}}>
             <button onClick={()=>setReportDialog(null)} aria-label={t("reportCancel")}
-              style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
-            <div style={{fontWeight:800,color:"#e2e8f0",fontSize:16,marginBottom:14}}>⚑ {t("reportTitle")}</div>
+              style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
+            <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:16,marginBottom:14}}>⚑ {t("reportTitle")}</div>
             {/* Question preview */}
-            <div style={{background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"9px 12px",marginBottom:14,color:"#94a3b8",fontSize:12,lineHeight:1.5,direction:"ltr",textAlign:"left",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>
+            <div style={{background:"var(--glass-4)",borderRadius:10,padding:"9px 12px",marginBottom:14,color:"var(--text-secondary)",fontSize:12,lineHeight:1.5,direction:"ltr",textAlign:"left",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>
               {reportDialog.qText}
             </div>
             {reportSent?(
@@ -2641,18 +2647,18 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <>
                 <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
                   {[t("reportType1"),t("reportType2"),t("reportType3"),t("reportType4")].map((label,i)=>(
-                    <label key={i} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"9px 12px",borderRadius:9,background:reportType===label?"rgba(0,212,255,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${reportType===label?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,transition:"all 0.15s"}}>
+                    <label key={i} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"9px 12px",borderRadius:9,background:reportType===label?"rgba(0,212,255,0.08)":"var(--glass-3)",border:`1px solid ${reportType===label?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,transition:"all 0.15s"}}>
                       <input type="radio" name="reportType" value={label} checked={reportType===label} onChange={()=>setReportType(label)}
                         style={{accentColor:"#00D4FF",width:15,height:15,flexShrink:0}}/>
-                      <span style={{color:reportType===label?"#e2e8f0":"#94a3b8",fontSize:14,fontWeight:reportType===label?700:400}}>{label}</span>
+                      <span style={{color:reportType===label?"#e2e8f0":"var(--text-secondary)",fontSize:14,fontWeight:reportType===label?700:400}}>{label}</span>
                     </label>
                   ))}
                 </div>
                 <textarea value={reportNote} onChange={e=>setReportNote(e.target.value)} placeholder={t("reportNote")} rows={2}
-                  style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:9,color:"#e2e8f0",fontSize:13,padding:"9px 12px",resize:"vertical",boxSizing:"border-box",outline:"none",marginBottom:14,direction:dir,fontFamily:"inherit"}}/>
+                  style={{width:"100%",background:"var(--glass-4)",border:"1px solid var(--glass-12)",borderRadius:9,color:"var(--text-primary)",fontSize:13,padding:"9px 12px",resize:"vertical",boxSizing:"border-box",outline:"none",marginBottom:14,direction:dir,fontFamily:"inherit"}}/>
                 <div style={{display:"flex",gap:8}}>
                   <button onClick={()=>setReportDialog(null)}
-                    style={{flex:1,padding:"10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:10,color:"#64748b",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                    style={{flex:1,padding:"10px",background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:10,color:"var(--text-muted)",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                     {t("reportCancel")}
                   </button>
                   <button disabled={!reportType||reportSending} onClick={async()=>{
@@ -2687,7 +2693,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     setReportSending(false);
                     setTimeout(()=>setReportDialog(null), 2000);
                   }}
-                    style={{flex:2,padding:"10px",background:reportType?"linear-gradient(135deg,rgba(239,68,68,0.2),rgba(239,68,68,0.1))":"rgba(255,255,255,0.04)",border:`1px solid ${reportType?"rgba(239,68,68,0.4)":"rgba(255,255,255,0.09)"}`,borderRadius:10,color:reportType?"#EF4444":"#475569",fontSize:13,fontWeight:700,cursor:reportType?"pointer":"default",transition:"all 0.15s",opacity:reportSending?0.7:1}}>
+                    style={{flex:2,padding:"10px",background:reportType?"linear-gradient(135deg,rgba(239,68,68,0.2),rgba(239,68,68,0.1))":"var(--glass-4)",border:`1px solid ${reportType?"rgba(239,68,68,0.4)":"var(--glass-9)"}`,borderRadius:10,color:reportType?"#EF4444":"var(--text-dim)",fontSize:13,fontWeight:700,cursor:reportType?"pointer":"default",transition:"all 0.15s",opacity:reportSending?0.7:1}}>
                     {reportSending?"...":(t("reportSend"))}
                   </button>
                 </div>
@@ -2697,30 +2703,30 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         </div>
       )}
 
-      {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h3 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><div style={{fontSize:11,color:"#475569",fontWeight:700,letterSpacing:1.5,marginTop:3}}>{lang==="en"?"TOP 10":"טופ 10"}</div></div><button autoFocus onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"#475569",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"rgba(255,255,255,0.06)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{entry.username ? (entry.username.includes("@") ? entry.username.split("@")[0] : entry.username) : t("anonymous")}</div><div style={{color:"#475569",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}{userRank&&<div style={{marginTop:4,paddingTop:12,borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"center",gap:8,color:"#94a3b8",fontSize:13,fontWeight:600}}><span>{lang==="en"?"Your Rank":"הדירוג שלך"}</span><span style={{color:"#e2e8f0",fontWeight:800}}>#{userRank.rank}</span><span style={{color:"rgba(255,255,255,0.2)"}}>|</span><span>{lang==="en"?"Score":"ניקוד"}</span><span style={{color:"#00D4FF",fontWeight:800}}>{userRank.score}</span></div>}</div></div>}
+      {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"var(--overlay-light)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h3 style={{margin:0,color:"var(--text-primary)",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><div style={{fontSize:11,color:"var(--text-dim)",fontWeight:700,letterSpacing:1.5,marginTop:3}}>{lang==="en"?"TOP 10":"טופ 10"}</div></div><button autoFocus onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"var(--text-dim)",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"var(--glass-3)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"var(--glass-6)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{entry.username ? (entry.username.includes("@") ? entry.username.split("@")[0] : entry.username) : t("anonymous")}</div><div style={{color:"var(--text-dim)",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}{userRank&&<div style={{marginTop:4,paddingTop:12,borderTop:"1px solid var(--glass-7)",display:"flex",alignItems:"center",justifyContent:"center",gap:8,color:"var(--text-secondary)",fontSize:13,fontWeight:600}}><span>{lang==="en"?"Your Rank":"הדירוג שלך"}</span><span style={{color:"var(--text-primary)",fontWeight:800}}>#{userRank.rank}</span><span style={{color:"var(--glass-20)"}}>|</span><span>{lang==="en"?"Score":"ניקוד"}</span><span style={{color:"#00D4FF",fontWeight:800}}>{userRank.score}</span></div>}</div></div>}
 
       {showBookmarks&&(
-        <div onClick={()=>setShowBookmarks(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+        <div onClick={()=>setShowBookmarks(false)} style={{position:"fixed",inset:0,background:"var(--overlay-light)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
           <div role="dialog" aria-modal="true" aria-label={t("savedQuestionsTitle")} onClick={e=>e.stopPropagation()}
-            style={{background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:20,width:"min(400px,calc(100vw - 32px))",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"fadeIn 0.3s ease",direction:dir}}>
+            style={{background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:16,padding:20,width:"min(400px,calc(100vw - 32px))",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"fadeIn 0.3s ease",direction:dir}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <h3 style={{margin:0,color:"#e2e8f0",fontSize:18,fontWeight:800}}>{t("savedQuestionsTitle")}</h3>
-              <button autoFocus onClick={()=>setShowBookmarks(false)} aria-label={lang==="en"?"Close":"סגור"} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>✕</button>
+              <h3 style={{margin:0,color:"var(--text-primary)",fontSize:18,fontWeight:800}}>{t("savedQuestionsTitle")}</h3>
+              <button autoFocus onClick={()=>setShowBookmarks(false)} aria-label={lang==="en"?"Close":"סגור"} style={{background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer"}}>✕</button>
             </div>
             {bookmarks.length === 0 ? (
-              <div style={{color:"#475569",textAlign:"center",padding:"24px 0",fontSize:13}}>{t("noBookmarks")}</div>
+              <div style={{color:"var(--text-dim)",textAlign:"center",padding:"24px 0",fontSize:13}}>{t("noBookmarks")}</div>
             ) : (<>
               <div style={{overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
                 {bookmarks.map((b, i) => (
-                  <div key={b.question_id} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"11px 13px",display:"flex",alignItems:"flex-start",gap:10}}>
+                  <div key={b.question_id} style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:10,padding:"11px 13px",display:"flex",alignItems:"flex-start",gap:10}}>
                     <div style={{flex:1}}>
                       <div style={{fontSize:11,color:b.topic_color||"#A855F7",fontWeight:700,marginBottom:4}}>{b.topic_name} · {lang==="en"?LEVEL_CONFIG[b.level]?.labelEn:LEVEL_CONFIG[b.level]?.label}</div>
-                      <div style={{color:"#cbd5e1",fontSize:13,lineHeight:1.5}}>{b.question_text}</div>
+                      <div style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5}}>{b.question_text}</div>
                     </div>
                     <button onClick={()=>{
                       setBookmarks(prev=>{const next=prev.filter((_,j)=>j!==i);try{localStorage.setItem("bookmarks_v1",JSON.stringify(next));}catch{}return next;});
-                    }} aria-label={t("removeBookmark")} style={{background:"none",border:"none",color:"#475569",fontSize:16,cursor:"pointer",padding:4,flexShrink:0,lineHeight:1}}
-                      onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="#475569"}>✕</button>
+                    }} aria-label={t("removeBookmark")} style={{background:"none",border:"none",color:"var(--text-dim)",fontSize:16,cursor:"pointer",padding:4,flexShrink:0,lineHeight:1}}
+                      onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-dim)"}>✕</button>
                   </div>
                 ))}
               </div>
@@ -2736,68 +2742,68 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* Dropdown menu - rendered outside <main> so CSS zoom never affects it */}
       {showMenu&&(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:82,right:8,background:"#0f172a",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
+        <div style={{position:"fixed",top:82,right:8,background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"var(--shadow-heavy)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
 
           {/* Language + Gender */}
-          <div style={{padding:"8px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
+          <div style={{padding:"8px 14px 10px",borderBottom:"1px solid var(--glass-6)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
             {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
             <LangSwitcher lang={lang} setLang={setLang}/>
           </div>
 
           {/* ── 1. Practice ── */}
           <div style={{padding:"10px 16px 4px"}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PRACTICE":"תרגול"}</span>
+            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PRACTICE":"תרגול"}</span>
           </div>
-          <button onClick={()=>{setScreen("incidentList");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setScreen("incidentList");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🚨 {lang==="en"?"Incident Mode":"מצב אירוע"}
           </button>
-          <button onClick={()=>{tryStartQuiz(startMixedQuiz);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{tryStartQuiz(startMixedQuiz);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("mixedQuizBtn")}
           </button>
-          <button onClick={()=>{tryStartQuiz(startDailyChallenge);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{tryStartQuiz(startDailyChallenge);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🔥 {t("dailyChallengeTitle")}
           </button>
-          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400,direction:dir}}>
+          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400,direction:dir}}>
             {t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginInlineStart:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}
           </button>
 
           {/* ── 2. Progress ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
+            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
           </div>
-          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             ⭐ {lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
           </button>
-          <button onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("mistakesBtn")}
           </button>
-          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("leaderboardBtn")}
           </button>
-          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,direction:dir}}>
+          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,direction:dir}}>
             <span>{t("savedQuestions")}</span>
             {bookmarks.length>0&&<span style={{background:"rgba(168,85,247,0.2)",color:"#A855F7",fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:10}}>{bookmarks.length}</span>}
           </button>
 
           {/* ── 3. Learning ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"LEARNING":"למידה"}</span>
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
+            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"LEARNING":"למידה"}</span>
           </div>
-          <button onClick={()=>{setExpandedGuideSection(null);setScreen("guide");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setExpandedGuideSection(null);setScreen("guide");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("guideBtn")}
           </button>
-          <button onClick={()=>{setSearchQuery("");setScreen("search");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setSearchQuery("");setScreen("search");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("searchBtn")}
           </button>
 
           {/* ── 4. Application ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APPLICATION":"האפליקציה"}</span>
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
+            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APPLICATION":"האפליקציה"}</span>
           </div>
-          <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🟢 {lang==="en"?"System Status":"סטטוס מערכת"}
           </button>
-          <button onClick={()=>{setScreen("about");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setScreen("about");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("aboutBtn")}
           </button>
           <button onClick={()=>{
@@ -2806,23 +2812,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
             else{navigator.clipboard?.writeText(url);}
             setShowMenu(false);
-          }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("shareBtn")}
           </button>
-          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
+          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
             <span>✉️</span>{lang==="en"?"Contact":"צור קשר"}
           </a>
 
           {/* ── 5. Accessibility ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4}}>
-            <span style={{fontSize:10,color:"#334155",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"ACCESSIBILITY":"נגישות"}</span>
+          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
+            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"ACCESSIBILITY":"נגישות"}</span>
           </div>
           <div style={{padding:"4px 14px 10px"}}>
             <div style={{display:"flex",gap:4}}>
               {(["highContrast","reduceMotion"]).map((key,i)=>(
                 <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
                   aria-pressed={a11y[key]}
-                  style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
+                  style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
                   {i===0?t("a11yHighContrast"):t("a11yReduceMotion")}{a11y[key]?" ✓":""}
                 </button>
               ))}
@@ -2832,25 +2838,34 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {screen==="topic"&&topicScreen==="quiz"&&(
                   <button onClick={speakQuestion}
                     aria-pressed={isSpeaking}
-                    style={{flex:1,padding:"6px 4px",background:isSpeaking?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${isSpeaking?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:isSpeaking?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:isSpeaking?700:400}}>
+                    style={{flex:1,padding:"6px 4px",background:isSpeaking?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${isSpeaking?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:isSpeaking?"#00D4FF":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:isSpeaking?700:400}}>
                     {isSpeaking?t("stopSpeech"):t("readQuestion")}
                   </button>
                 )}
                 <button onClick={()=>updateA11y("autoRead",!a11y.autoRead)}
                   aria-pressed={a11y.autoRead}
-                  style={{flex:1,padding:"6px 4px",background:a11y.autoRead?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",border:`1px solid ${a11y.autoRead?"rgba(0,212,255,0.35)":"rgba(255,255,255,0.08)"}`,borderRadius:6,color:a11y.autoRead?"#00D4FF":"#64748b",fontSize:11,cursor:"pointer",fontWeight:a11y.autoRead?700:400}}>
+                  style={{flex:1,padding:"6px 4px",background:a11y.autoRead?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${a11y.autoRead?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:a11y.autoRead?"#00D4FF":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:a11y.autoRead?700:400}}>
                   {t("autoRead")}{a11y.autoRead?" ✓":""}
                 </button>
               </div>
             )}
           </div>
 
+          {/* ── Theme toggle ── */}
+          <div style={{padding:"4px 14px 6px"}}>
+            <button onClick={toggleTheme}
+              aria-pressed={theme==="light"}
+              style={{width:"100%",padding:"6px 4px",background:theme==="light"?"rgba(245,158,11,0.1)":"var(--glass-4)",border:`1px solid ${theme==="light"?"rgba(245,158,11,0.35)":"var(--glass-8)"}`,borderRadius:6,color:theme==="light"?"#F59E0B":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:theme==="light"?700:400}}>
+              {theme==="dark"?(lang==="en"?"☀️ Light Mode":"☀️ מצב בהיר"):(lang==="en"?"🌙 Dark Mode":"🌙 מצב כהה")}
+            </button>
+          </div>
+
           {/* ── Divider + System ── */}
-          <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",marginTop:4,paddingTop:4}}>
+          <div style={{borderTop:"1px solid var(--glass-6)",marginTop:4,paddingTop:4}}>
             <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#EF4444",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
               <span aria-hidden="true">🗑</span>{t("resetProgress")}
             </button>
-            <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
+            <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
               <span aria-hidden="true">🚪</span>{t("logout")}
             </button>
           </div>
@@ -2883,7 +2898,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <div style={{textAlign:"left"}}>
                   <h1 className="home-title-text" style={{fontSize:28,fontWeight:900,margin:0,lineHeight:1,letterSpacing:-0.5,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",whiteSpace:"nowrap"}}>KubeQuest</h1>
                   <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
-                    <span style={{fontSize:11,color:"#475569",letterSpacing:0.4}}>Train Your Kubernetes Skills</span>
+                    <span style={{fontSize:11,color:"var(--text-dim)",letterSpacing:0.4}}>Train Your Kubernetes Skills</span>
                     <span style={{fontSize:10,color:"#00D4FF",background:"rgba(0,212,255,0.1)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:4,padding:"1px 5px",fontWeight:700,letterSpacing:0.3}}>v{APP_VERSION}</span>
                   </div>
                 </div>
@@ -2896,12 +2911,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               const burgerBtn=(
                 <button ref={burgerRef} onClick={()=>setShowMenu(p=>!p)} aria-label={lang==="en"?"Open menu":"פתח תפריט"} aria-expanded={showMenu} aria-haspopup="menu"
                   style={{flexShrink:0,width:46,height:46,
-                    background:showMenu?"rgba(0,212,255,0.1)":"rgba(255,255,255,0.04)",
-                    border:`1px solid ${showMenu?"rgba(0,212,255,0.3)":"rgba(255,255,255,0.1)"}`,
+                    background:showMenu?"rgba(0,212,255,0.1)":"var(--glass-4)",
+                    border:`1px solid ${showMenu?"rgba(0,212,255,0.3)":"var(--glass-10)"}`,
                     borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:5,
                     transition:"all 0.2s",
                     boxShadow:showMenu?"0 0 12px rgba(0,212,255,0.5), 0 0 24px rgba(0,212,255,0.2)":"0 0 8px rgba(0,212,255,0.15)"}}>
-                  {[0,1,2].map(i=><span key={i} aria-hidden="true" style={{display:"block",width:20,height:2,borderRadius:2,background:showMenu?"#00D4FF":"#94a3b8",transition:"background 0.2s"}}/>)}
+                  {[0,1,2].map(i=><span key={i} aria-hidden="true" style={{display:"block",width:20,height:2,borderRadius:2,background:showMenu?"#00D4FF":"var(--text-secondary)",transition:"background 0.2s"}}/>)}
                 </button>
               );
               return (
@@ -2911,16 +2926,16 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               );
             })()}
             {/* Separator */}
-            <div style={{width:"100%",borderBottom:"1px solid rgba(255,255,255,0.06)",margin:"10px 0"}}/>
+            <div style={{width:"100%",borderBottom:"1px solid var(--glass-6)",margin:"10px 0"}}/>
             {/* Greeting block - compact */}
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
               {/* Row 1: שלום / Hello + username + optional guest label - all inline */}
               <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"nowrap",justifyContent:"center",maxWidth:"100%",overflow:"hidden"}}>
-                <span style={{color:"#64748b",fontSize:13,lineHeight:1,direction:dir,flexShrink:0}}>{t("greeting")}</span>
-                <span style={{color:"#e2e8f0",fontSize:13,fontWeight:700,lineHeight:1,direction:"ltr",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{displayName}</span>
+                <span style={{color:"var(--text-muted)",fontSize:13,lineHeight:1,direction:dir,flexShrink:0}}>{t("greeting")}</span>
+                <span style={{color:"var(--text-primary)",fontSize:13,fontWeight:700,lineHeight:1,direction:"ltr",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{displayName}</span>
               </div>
               {/* Row 2: mode hint */}
-              <p style={{color:"#64748b",fontSize:11,margin:0,lineHeight:1.3,textAlign:"center",direction:dir}}>
+              <p style={{color:"var(--text-muted)",fontSize:11,margin:0,lineHeight:1.3,textAlign:"center",direction:dir}}>
                 {isInterviewMode?t("interviewModeHint"):(lang==="en"
                   ?`Timer ${timerEnabled?"on":"off"}`
                   :`טיימר ${timerEnabled?"פעיל":"כבוי"}`)}
@@ -2934,9 +2949,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
           </div>
           {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{t("signupNow")}</button></div>}
-          <div style={{display:"flex",gap:6,marginBottom:16,background:"rgba(255,255,255,0.03)",borderRadius:10,padding:3,direction:"ltr"}}>
+          <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--glass-3)",borderRadius:10,padding:3,direction:"ltr"}}>
             {[{key:"categories",label:t("tabTopics")},{key:"roadmap",label:t("tabRoadmap")}].map(tab=>(
-              <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"#475569",transition:"all 0.2s"}}>{tab.label}</button>
+              <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"var(--text-dim)",transition:"all 0.2s"}}>{tab.label}</button>
             ))}
           </div>
           {homeTab==="categories"&&(<>
@@ -2947,10 +2962,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {label:t("streak"),value:stats.current_streak,icon:"🔥",color:"#FF6B35"},
               {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF"},
             ].map((s,i)=>(
-              <div key={i} className="stats-cell" style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+              <div key={i} className="stats-cell" style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:12,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
                 <div style={{fontSize:18,lineHeight:1}}>{s.icon}</div>
                 <div style={{fontSize:22,fontWeight:700,color:s.color,lineHeight:1}}>{s.value}</div>
-                <div style={{fontSize:12,color:"#475569",opacity:0.7,lineHeight:1}}>{s.label}</div>
+                <div style={{fontSize:12,color:"var(--text-dim)",opacity:0.7,lineHeight:1}}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -2967,7 +2982,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <span style={{color:"#F59E0B",fontWeight:800,fontSize:15}}>{t("dailyChallengeTitle")}</span>
                   <span style={{background:"rgba(245,158,11,0.2)",color:"#F59E0B",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5,flexShrink:0}}>{t("dailyChallengeNew")}</span>
                 </div>
-                <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("dailyChallengeDesc")}</div>
+                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("dailyChallengeDesc")}</div>
               </div>
             </div>
             <span style={{color:"#F59E0B",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
@@ -2977,7 +2992,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <div className="action-text" style={{textAlign:"start",minWidth:0}}>
                 <div style={{color:"#A855F7",fontWeight:800,fontSize:15}}>{t("mixedQuizBtn")}</div>
-                <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("mixedQuizDesc")}</div>
+                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("mixedQuizDesc")}</div>
               </div>
             </div>
             <span style={{color:"#A855F7",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
@@ -2993,26 +3008,26 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <span style={{color:"#EF4444",fontWeight:800,fontSize:15}}>{t("incidentModeBtn")}</span>
                   <span style={{background:"rgba(239,68,68,0.15)",color:"#EF4444",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5,flexShrink:0}}>NEW</span>
                 </div>
-                <div style={{color:"#64748b",fontSize:12,marginTop:2}}>{t("incidentModeDesc")}</div>
+                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("incidentModeDesc")}</div>
               </div>
             </div>
             <span style={{color:"#EF4444",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
           </button>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {TOPICS.map(topic=>(
-              <section key={topic.id} id={`topic-card-${topic.id}`} aria-label={topic.name} className={`topic-card-section${highlightTopic===topic.id?" pulseHighlight":""}`} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"16px 18px"}}>
+              <section key={topic.id} id={`topic-card-${topic.id}`} aria-label={topic.name} className={`topic-card-section${highlightTopic===topic.id?" pulseHighlight":""}`} style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:"16px 18px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
                   <div aria-hidden="true" style={{fontSize:24,width:44,height:44,borderRadius:10,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>{topic.icon}</div>
                   <div style={{flex:1}}>
-                    <h3 style={{margin:0,fontWeight:700,color:"#e2e8f0",fontSize:15}}>{topic.name}</h3>
-                    <div style={{color:"#475569",fontSize:12}}>{lang==="en"?topic.descriptionEn:topic.description}</div>
+                    <h3 style={{margin:0,fontWeight:700,color:"var(--text-primary)",fontSize:15}}>{topic.name}</h3>
+                    <div style={{color:"var(--text-dim)",fontSize:12}}>{lang==="en"?topic.descriptionEn:topic.description}</div>
                   </div>
                   {(()=>{const done=LEVEL_ORDER.filter(lvl=>completedTopics[`${topic.id}_${lvl}`]).length;return done>0&&<div style={{display:"flex",alignItems:"center",gap:6}}>
                     <div style={{fontSize:11,color:topic.color,fontWeight:700,whiteSpace:"nowrap"}}>{done}/3</div>
-                    <button onClick={e=>{e.stopPropagation();handleResetTopic(topic.id);}} aria-label={t("resetTopic")} style={{background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",padding:"2px 4px",lineHeight:1}} onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="#475569"}>↺</button>
+                    <button onClick={e=>{e.stopPropagation();handleResetTopic(topic.id);}} aria-label={t("resetTopic")} style={{background:"none",border:"none",color:"var(--text-dim)",fontSize:13,cursor:"pointer",padding:"2px 4px",lineHeight:1}} onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-dim)"}>↺</button>
                   </div>})()}
                 </div>
-                {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:3,background:"rgba(255,255,255,0.06)",borderRadius:2,marginBottom:10}}><div style={{height:"100%",borderRadius:2,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
+                {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:3,background:"var(--glass-6)",borderRadius:2,marginBottom:10}}><div style={{height:"100%",borderRadius:2,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
                   {Object.entries(LEVEL_CONFIG).filter(([lvl])=>lvl!=="mixed"&&lvl!=="daily").map(([lvl,cfg])=>{
                     const key=`${topic.id}_${lvl}`;
@@ -3024,15 +3039,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         disabled={locked}
                         aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` – ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
                         style={{padding:"10px 8px",
-                          background:locked?"rgba(255,255,255,0.01)":done?`${cfg.color}12`:"rgba(255,255,255,0.03)",
-                          border:`1px solid ${locked?"rgba(255,255,255,0.04)":done?cfg.color+"44":"rgba(255,255,255,0.07)"}`,
+                          background:locked?"var(--glass-1)":done?`${cfg.color}12`:"var(--glass-3)",
+                          border:`1px solid ${locked?"var(--glass-4)":done?cfg.color+"44":"var(--glass-7)"}`,
                           borderRadius:10,textAlign:"center",opacity:locked?0.45:1,cursor:locked?"not-allowed":"pointer"}}>
                         <div style={{fontSize:16}} aria-hidden="true">{locked?"🔒":cfg.icon}</div>
-                        <div style={{fontSize:12,fontWeight:700,color:locked?"#334155":done?cfg.color:"#64748b"}}>{lang==="en"?cfg.labelEn:cfg.label}</div>
+                        <div style={{fontSize:12,fontWeight:700,color:locked?"#334155":done?cfg.color:"var(--text-muted)"}}>{lang==="en"?cfg.labelEn:cfg.label}</div>
                         {done&&!locked&&<div style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}} aria-hidden="true">
                           {done.correct>0?"✓":""} {done.correct}/{done.total}
                         </div>}
-                        <div style={{fontSize:10,color:locked?"#1e293b":"#475569"}} aria-hidden="true">+{cfg.points}{t("pts")}</div>
+                        <div style={{fontSize:10,color:locked?"#1e293b":"var(--text-dim)"}} aria-hidden="true">+{cfg.points}{t("pts")}</div>
                       </button>
                     );
                   })}
@@ -3040,7 +3055,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </section>
             ))}
           </div>
-          {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"#94a3b8",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.04)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"#94a3b8"}}><span>{a.icon}</span>{lang==="en"?a.nameEn:a.name}</div>)}</div></div>}
+          {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"var(--glass-2)",border:"1px solid var(--glass-5)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"var(--text-secondary)",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--glass-4)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"var(--text-secondary)"}}><span>{a.icon}</span>{lang==="en"?a.nameEn:a.name}</div>)}</div></div>}
           </>)}
           {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={(topic,lvl)=>tryStartQuiz(()=>startTopic(topic,lvl))} startMixedQuiz={()=>tryStartQuiz(startMixedQuiz)} lang={lang} t={t} dir={dir}/>}
           <Footer lang={lang}/>
@@ -3050,13 +3065,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* ── SEARCH ── */}
       {screen==="search"&&(
         <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
-          <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
+          <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
             {dir==="rtl"?"→ חזרה":"← Return"}
           </button>
-          <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:16}}>{t("searchBtn")}</h2>
+          <h2 style={{color:"var(--text-primary)",fontSize:18,fontWeight:700,marginBottom:16}}>{t("searchBtn")}</h2>
           <input type="search" autoFocus value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
             placeholder={t("searchPlaceholder")} dir={dir}
-            style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,color:"#e2e8f0",fontSize:14,marginBottom:20,outline:"none",fontFamily:"inherit"}}
+            style={{width:"100%",padding:"12px 14px",background:"var(--glass-5)",border:"1px solid var(--glass-12)",borderRadius:10,color:"var(--text-primary)",fontSize:14,marginBottom:20,outline:"none",fontFamily:"inherit"}}
           />
           {searchQuery.trim().length>=2&&(()=>{
             const q=searchQuery.toLowerCase();
@@ -3068,17 +3083,17 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               });
             }));
             const capped=results.slice(0,25);
-            if(capped.length===0) return <div style={{color:"#475569",fontSize:14,textAlign:"center",padding:"30px 0"}}>{t("searchNoResults")}</div>;
+            if(capped.length===0) return <div style={{color:"var(--text-dim)",fontSize:14,textAlign:"center",padding:"30px 0"}}>{t("searchNoResults")}</div>;
             return (<>
-              <div style={{color:"#64748b",fontSize:12,marginBottom:12}}>{capped.length} {lang==="en"?"results":"תוצאות"}</div>
+              <div style={{color:"var(--text-muted)",fontSize:12,marginBottom:12}}>{capped.length} {lang==="en"?"results":"תוצאות"}</div>
               {capped.map(({topic,level,question},i)=>(
-                <div key={i} style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${topic.color}22`,borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+                <div key={i} style={{background:"var(--glass-3)",border:`1px solid ${topic.color}22`,borderRadius:12,padding:"12px 14px",marginBottom:10}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,direction:"ltr"}}>
                     <span style={{fontSize:16}}>{topic.icon}</span>
                     <span style={{color:topic.color,fontSize:12,fontWeight:700}}>{topic.name}</span>
                     <span style={{marginLeft:"auto",background:`${LEVEL_CONFIG[level]?.color}22`,color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
                   </div>
-                  <div dir={dir} style={{color:"#cbd5e1",fontSize:13,lineHeight:1.5,marginBottom:10}}>{lang==="en"?(question.qEn||question.q):question.q}</div>
+                  <div dir={dir} style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5,marginBottom:10}}>{lang==="en"?(question.qEn||question.q):question.q}</div>
                   <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
                     {lang==="en"?"Go to Topic →":"עבור לנושא →"}
                   </button>
@@ -3107,24 +3122,24 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const anyTopicCompleted=TOPICS.some(topic=>(['easy','medium','hard']).some(lvl=>completedTopics[`${topic.id}_${lvl}`]));
         return (
           <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
-            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
+            <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
               {dir==="rtl"?"→ חזרה":"← Return"}
             </button>
-            <h2 style={{color:"#e2e8f0",fontSize:18,fontWeight:700,marginBottom:4}}>{t("mistakesBtn")}</h2>
-            <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>{t("mistakesHint")}</p>
-            {!anyTopicCompleted&&<div style={{background:"rgba(0,212,255,0.06)",border:"1px solid rgba(0,212,255,0.2)",borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:13,color:"#94a3b8",direction:dir}}>
+            <h2 style={{color:"var(--text-primary)",fontSize:18,fontWeight:700,marginBottom:4}}>{t("mistakesBtn")}</h2>
+            <p style={{color:"var(--text-muted)",fontSize:13,marginBottom:20}}>{t("mistakesHint")}</p>
+            {!anyTopicCompleted&&<div style={{background:"rgba(0,212,255,0.06)",border:"1px solid rgba(0,212,255,0.2)",borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:13,color:"var(--text-secondary)",direction:dir}}>
               {lang==="en"?"💡 Mistakes are only tracked for individual topic quizzes (Easy / Medium / Hard). Mixed Quiz and Daily Challenge are not tracked here.":"💡 טעויות נשמרות רק בחידוני נושא רגילים (קל / בינוני / קשה). חידון מיקס ואתגר יומי לא נשמרים כאן."}
             </div>}
             {wrongItems.length===0
               ? <div style={{textAlign:"center",padding:"40px 0",color:"#10B981",fontSize:16,fontWeight:700}}>{t("mistakesEmpty")}</div>
               : wrongItems.map(({topic,level,q,legacy,correct,total},i)=>
                   legacy?(
-                    <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(239,68,68,0.15)",borderRadius:12,padding:"14px 16px",marginBottom:10}}>
+                    <div key={i} style={{background:"var(--glass-3)",border:"1px solid rgba(239,68,68,0.15)",borderRadius:12,padding:"14px 16px",marginBottom:10}}>
                       <div style={{display:"flex",alignItems:"center",gap:14}}>
                         <span style={{fontSize:26,flexShrink:0}}>{topic.icon}</span>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14}}>{topic.name}</div>
-                          <div style={{color:"#64748b",fontSize:12,marginTop:2,display:"flex",alignItems:"center",gap:8,direction:"ltr"}}>
+                          <div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{topic.name}</div>
+                          <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2,display:"flex",alignItems:"center",gap:8,direction:"ltr"}}>
                             <span style={{color:LEVEL_CONFIG[level]?.color,fontWeight:600}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
                             <span>·</span>
                             <span style={{color:"#EF4444"}}>{correct}/{total} {lang==="en"?"correct":"נכון"}</span>
@@ -3134,20 +3149,20 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                           {lang==="en"?"Retry":"נסה שוב"}
                         </button>
                       </div>
-                      <div style={{color:"#64748b",fontSize:11,marginTop:8,direction:dir}}>
+                      <div style={{color:"var(--text-muted)",fontSize:11,marginTop:8,direction:dir}}>
                         {lang==="en"?"Retake this quiz to track your specific wrong questions":"שחק שוב כדי לראות את השאלות הספציפיות שטעית בהן"}
                       </div>
                     </div>
                   ):(
-                    <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(239,68,68,0.12)",borderRadius:12,padding:"14px 16px",marginBottom:10}}>
+                    <div key={i} style={{background:"var(--glass-3)",border:"1px solid rgba(239,68,68,0.12)",borderRadius:12,padding:"14px 16px",marginBottom:10}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,direction:"ltr",flexWrap:"wrap"}}>
                         <span style={{fontSize:15}}>{topic.icon}</span>
-                        <span style={{color:"#94a3b8",fontSize:12,fontWeight:600}}>{topic.name}</span>
+                        <span style={{color:"var(--text-secondary)",fontSize:12,fontWeight:600}}>{topic.name}</span>
                         <span style={{color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,background:`${LEVEL_CONFIG[level]?.color}18`,border:`1px solid ${LEVEL_CONFIG[level]?.color}44`,borderRadius:6,padding:"2px 6px"}}>
                           {lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}
                         </span>
                       </div>
-                      <div style={{color:"#e2e8f0",fontSize:14,lineHeight:1.5,marginBottom:8,direction:dir}}>{q.q}</div>
+                      <div style={{color:"var(--text-primary)",fontSize:14,lineHeight:1.5,marginBottom:8,direction:dir}}>{q.q}</div>
                       <div style={{display:"flex",alignItems:"flex-start",gap:6}}>
                         <span style={{color:"#10B981",fontSize:13,flexShrink:0,marginTop:1}}>✓</span>
                         <span style={{color:"#10B981",fontSize:13,lineHeight:1.4}}>{q.options[q.answer]}</span>
@@ -3184,7 +3199,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   {isCopied?<><span style={{fontSize:13}}>&#10003;</span> Copied</>:<>Copy</>}
                 </button>
               </div>
-              <div style={{color:"#64748b",fontSize:11.5,lineHeight:1.35,marginTop:4,
+              <div style={{color:"var(--text-muted)",fontSize:11.5,lineHeight:1.35,marginTop:4,
                 padding:isHe?"0 0 0 0":"0",direction:isHe?"rtl":"ltr",
                 textAlign:isHe?"right":"left"}}>{isHe?dHe:desc}</div>
             </div>
@@ -3194,18 +3209,18 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         return (
           <div className="page-pad" style={{maxWidth:700,margin:"0 auto",padding:"16px 14px",animation:"fadeIn 0.3s ease",direction:"ltr"}}>
             <div style={{display:"flex",justifyContent:isHe?"flex-end":"flex-start",marginBottom:16}}>
-              <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:13,display:"inline-flex",alignItems:"center",gap:5}}>
+              <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:13,display:"inline-flex",alignItems:"center",gap:5}}>
                 {isHe?"חזרה →":"← Back"}
               </button>
             </div>
 
             {/* Header */}
             <div style={{marginBottom:16}}>
-              <h2 style={{color:"#e2e8f0",fontSize:20,fontWeight:800,margin:0,letterSpacing:-0.3}}>kubectl Cheat Sheet</h2>
-              <p style={{color:"#64748b",fontSize:12,lineHeight:1.4,margin:"4px 0 0"}}>Copy-ready commands — click to expand</p>
+              <h2 style={{color:"var(--text-primary)",fontSize:20,fontWeight:800,margin:0,letterSpacing:-0.3}}>kubectl Cheat Sheet</h2>
+              <p style={{color:"var(--text-muted)",fontSize:12,lineHeight:1.4,margin:"4px 0 0"}}>Copy-ready commands — click to expand</p>
               <div style={{display:"flex",gap:6,marginTop:8}}>
-                <span style={{fontSize:11,color:"#94a3b8",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,padding:"2px 8px"}}>{CHEATSHEET.length} sections</span>
-                <span style={{fontSize:11,color:"#94a3b8",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:4,padding:"2px 8px"}}>{totalCmds} commands</span>
+                <span style={{fontSize:11,color:"var(--text-secondary)",background:"var(--glass-4)",border:"1px solid var(--glass-8)",borderRadius:4,padding:"2px 8px"}}>{CHEATSHEET.length} sections</span>
+                <span style={{fontSize:11,color:"var(--text-secondary)",background:"var(--glass-4)",border:"1px solid var(--glass-8)",borderRadius:4,padding:"2px 8px"}}>{totalCmds} commands</span>
               </div>
             </div>
 
@@ -3218,15 +3233,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {/* Section header */}
                 <button onClick={()=>setExpandedGuideSection(s=>s===section.id?null:section.id)}
                   style={{width:"100%",background:open?`${section.color}08`:"transparent",
-                    border:"none",borderBottom:`1px solid ${open?section.color+"30":"rgba(255,255,255,0.06)"}`,
+                    border:"none",borderBottom:`1px solid ${open?section.color+"30":"var(--glass-6)"}`,
                     borderRadius:0,
                     padding:"10px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,
                     transition:"all 0.15s ease"}}>
-                  <span style={{color:open?section.color:"#475569",fontSize:14,flexShrink:0,
+                  <span style={{color:open?section.color:"var(--text-dim)",fontSize:14,flexShrink:0,
                     transition:"transform 0.2s",transform:open?"rotate(90deg)":"rotate(0deg)",lineHeight:1}}>&#9656;</span>
                   <span style={{fontSize:16,flexShrink:0}}>{section.icon}</span>
-                  <span style={{flex:1,color:"#e2e8f0",fontSize:14,fontWeight:600,textAlign:"left"}}>{section.title}</span>
-                  <span style={{color:"#475569",fontSize:11,flexShrink:0}}>{cmdCount}</span>
+                  <span style={{flex:1,color:"var(--text-primary)",fontSize:14,fontWeight:600,textAlign:"left"}}>{section.title}</span>
+                  <span style={{color:"var(--text-dim)",fontSize:11,flexShrink:0}}>{cmdCount}</span>
                 </button>
 
                 {/* Expanded command list */}
@@ -3246,7 +3261,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* ── ABOUT ── */}
       {screen==="about"&&(
         <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
-          <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>
+          <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>
             {dir==="rtl"?"→ חזרה":"← Return"}
           </button>
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,marginBottom:28}}>
@@ -3264,7 +3279,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:28,fontWeight:900,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",backgroundSize:"300% auto",animation:"shine 9s linear infinite",letterSpacing:-0.5}}>KubeQuest</div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:3}}>
-                <span style={{color:"#475569",fontSize:12}}>Train Your Kubernetes Skills</span>
+                <span style={{color:"var(--text-dim)",fontSize:12}}>Train Your Kubernetes Skills</span>
                 <span style={{fontSize:10,color:"#00D4FF",background:"rgba(0,212,255,0.1)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:4,padding:"1px 5px",fontWeight:700,letterSpacing:0.3}}>v{APP_VERSION}</span>
               </div>
             </div>
@@ -3272,13 +3287,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           {[
             {icon:"🎯",title:lang==="en"?"What is this?":"מה זה?",body:lang==="en"?"An interactive Kubernetes training app. Practice real interview questions across 5 topic areas at 3 difficulty levels.":"אפליקציית אימון Kubernetes אינטראקטיבית. תרגלי שאלות ראיון אמיתיות ב-5 נושאים ו-3 רמות קושי."},
             {icon:"🚀",title:lang==="en"?"Goal":"המטרה",body:lang==="en"?"Help developers prepare confidently for Kubernetes interviews and CKA/CKAD exams.":"לעזור למפתחים להתכונן לראיונות Kubernetes ולבחינות CKA/CKAD."},
-            {icon:"👨‍💻",title:lang==="en"?"Built by":"נבנה על ידי",body:<span>{lang==="en"?"Or Carmeli · ":"Or Carmeli · "}<a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"#0ea5e9",textDecoration:"none",fontWeight:600}}>LinkedIn</a>{" · "}<a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={{color:"#e2e8f0",textDecoration:"none",fontWeight:600}}>GitHub</a></span>},
+            {icon:"👨‍💻",title:lang==="en"?"Built by":"נבנה על ידי",body:<span>{lang==="en"?"Or Carmeli · ":"Or Carmeli · "}<a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>LinkedIn</a>{" · "}<a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={{color:"var(--text-primary)",textDecoration:"none",fontWeight:600}}>GitHub</a></span>},
           ].map(({icon,title,body},i)=>(
-            <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"14px 16px",marginBottom:12,display:"flex",gap:14,alignItems:"flex-start"}}>
+            <div key={i} style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:"14px 16px",marginBottom:12,display:"flex",gap:14,alignItems:"flex-start"}}>
               <span style={{fontSize:22,flexShrink:0,marginTop:1}}>{icon}</span>
               <div>
-                <div style={{color:"#e2e8f0",fontWeight:700,fontSize:14,marginBottom:4}}>{title}</div>
-                <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.6,direction:dir}}>{body}</div>
+                <div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14,marginBottom:4}}>{title}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:13,lineHeight:1.6,direction:dir}}>{body}</div>
               </div>
             </div>
           ))}
@@ -3362,7 +3377,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           }
           return days;
         };
-        const barColor = (t) => t==="ok" ? "#10B981" : t==="incident" ? "#F59E0B" : t==="error" ? "#EF4444" : "rgba(255,255,255,0.06)";
+        const barColor = (t) => t==="ok" ? "#10B981" : t==="incident" ? "#F59E0B" : t==="error" ? "#EF4444" : "var(--glass-6)";
 
         // Determine actual monitoring span for accurate labels
         let monitoringDays = 30;
@@ -3401,22 +3416,22 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const isStaleCritical = secondsAgo !== null && secondsAgo > 900;
 
         const metricCard = (label, value, sub, accent="#94a3b8") => (
-          <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 16px",minWidth:0}}>
-            <div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:6}}>{label}</div>
+          <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:10,padding:"14px 16px",minWidth:0}}>
+            <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,marginBottom:6}}>{label}</div>
             <div style={{fontSize:18,fontWeight:700,color:accent,fontFamily:"'Fira Code','Courier New',monospace",lineHeight:1}}>{value}</div>
-            {sub&&<div style={{fontSize:11,color:"#475569",marginTop:4}}>{sub}</div>}
+            {sub&&<div style={{fontSize:11,color:"var(--text-dim)",marginTop:4}}>{sub}</div>}
           </div>
         );
 
         const infoRow = (label, value, accent="#cbd5e1", mono=false) => (
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-            <span style={{fontSize:12,color:"#64748b",fontWeight:500}}>{label}</span>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid var(--glass-4)"}}>
+            <span style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>{label}</span>
             <span style={{fontSize:12,color:accent,fontWeight:500,fontFamily:mono?"'Fira Code','Courier New',monospace":"inherit",textAlign:"end",maxWidth:"60%",wordBreak:"break-all"}}>{value}</span>
           </div>
         );
 
         const sectionTitle = (title) => (
-          <div style={{fontSize:11,color:"#64748b",fontWeight:600,letterSpacing:0.5,textTransform:"uppercase",marginBottom:10,marginTop:32}}>{title}</div>
+          <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,letterSpacing:0.5,textTransform:"uppercase",marginBottom:10,marginTop:32}}>{title}</div>
         );
 
         // Severity colors for incidents
@@ -3429,7 +3444,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             {/* Back (hidden on standalone status subdomain) */}
             {!isStatusDomain && (
               <div style={{display:"flex",justifyContent:lang==="en"?"flex-start":"flex-end",marginBottom:24}}>
-                <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",color:"#94a3b8",padding:"7px 12px",borderRadius:6,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:5}}>
+                <button onClick={()=>setScreen("home")} style={{background:"var(--glass-3)",border:"1px solid var(--glass-6)",color:"var(--text-secondary)",padding:"7px 12px",borderRadius:6,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:5}}>
                   {lang==="en"?"← Return":"חזרה →"}
                 </button>
               </div>
@@ -3442,8 +3457,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {globalOk!==false&&<div style={{position:"absolute",inset:-2,borderRadius:"50%",background:globalDot,animation:"ping 2.5s ease-out infinite",opacity:0.2}} />}
               </div>
               <div style={{flex:1,minWidth:160}}>
-                <div style={{fontSize:17,fontWeight:700,color:"#e2e8f0",letterSpacing:-0.2}}>{globalLabel}</div>
-                <div style={{fontSize:12,color:"#64748b",marginTop:3}}>
+                <div style={{fontSize:17,fontWeight:700,color:"var(--text-primary)",letterSpacing:-0.2}}>{globalLabel}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:3}}>
                   {secondsAgo !== null ? (secondsAgo < 60 ? "Updated just now" : secondsAgo < 120 ? "Updated 1 min ago" : `Updated ${Math.floor(secondsAgo/60)} min ago`) : "Checking…"}
                 </div>
               </div>
@@ -3467,15 +3482,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <span style={{fontSize:13,fontWeight:600,color:"#facc15"}}>{activeMaintenance ? "Maintenance in Progress" : "Upcoming Maintenance"}</span>
                 </div>
                 {mw.description && (
-                  <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,marginBottom:8}}>{mw.description}</div>
+                  <div style={{fontSize:12,color:"var(--text-secondary)",lineHeight:1.5,marginBottom:8}}>{mw.description}</div>
                 )}
-                <div style={{fontSize:11,color:"#64748b",fontFamily:"'Fira Code','Courier New',monospace",marginBottom:mw.affected_services?.length ? 10 : 0}}>
+                <div style={{fontSize:11,color:"var(--text-muted)",fontFamily:"'Fira Code','Courier New',monospace",marginBottom:mw.affected_services?.length ? 10 : 0}}>
                   {new Date(mw.starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"})} · {new Date(mw.starts_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})}–{new Date(mw.ends_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} UTC
                 </div>
                 {mw.affected_services?.length > 0 && (
                   <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                     {mw.affected_services.map(s=>(
-                      <span key={s} style={{fontSize:10,color:"#a3a3a3",background:"rgba(255,255,255,0.04)",borderRadius:4,padding:"2px 8px",fontWeight:500}}>{s}</span>
+                      <span key={s} style={{fontSize:10,color:"#a3a3a3",background:"var(--glass-4)",borderRadius:4,padding:"2px 8px",fontWeight:500}}>{s}</span>
                     ))}
                   </div>
                 )}
@@ -3484,14 +3499,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
             {/* ── SERVICE HEALTH ── */}
             {sectionTitle("Services")}
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,overflow:"hidden"}}>
+            <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:10,overflow:"hidden"}}>
               {services.map((svc,i)=>(
-                <div key={svc.service_name} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 16px",borderBottom:i<services.length-1?"1px solid rgba(255,255,255,0.04)":"none"}}>
+                <div key={svc.service_name} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 16px",borderBottom:i<services.length-1?"1px solid var(--glass-4)":"none"}}>
                   <div style={{display:"flex",alignItems:"center",gap:10}}>
                     <span style={{width:7,height:7,borderRadius:"50%",background:statusColor(svc.status),flexShrink:0}} />
                     <div>
-                      <span style={{fontSize:13,color:"#cbd5e1",fontWeight:500}}>{svc.service_name}</span>
-                      {svc.latency_ms!=null&&<span style={{fontSize:11,color:"#475569",fontFamily:"'Fira Code','Courier New',monospace",marginLeft:8}}>{svc.latency_ms} ms</span>}
+                      <span style={{fontSize:13,color:"var(--text-light)",fontWeight:500}}>{svc.service_name}</span>
+                      {svc.latency_ms!=null&&<span style={{fontSize:11,color:"var(--text-dim)",fontFamily:"'Fira Code','Courier New',monospace",marginLeft:8}}>{svc.latency_ms} ms</span>}
                     </div>
                   </div>
                   <span style={{fontSize:12,fontWeight:600,color:statusColor(svc.status)}}>
@@ -3510,9 +3525,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 const pct = checks && checks.total > 0 ? (checks.ok / checks.total * 100).toFixed(1) : "-";
                 const ok = svc.status === "operational";
                 return (
-                  <div key={svc.service_name} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"10px 14px"}}>
+                  <div key={svc.service_name} style={{background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:10,padding:"10px 14px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                      <span style={{fontSize:12,color:"#94a3b8",fontWeight:500}}>{svc.service_name}</span>
+                      <span style={{fontSize:12,color:"var(--text-secondary)",fontWeight:500}}>{svc.service_name}</span>
                       <span style={{fontSize:12,color:ok?"#94a3b8":"#EF4444",fontWeight:600,fontFamily:"'Fira Code','Courier New',monospace"}}>{pct=== "-" ? "-" : `${pct}%`}</span>
                     </div>
                     <div style={{display:"flex",gap:1.5,alignItems:"flex-end"}}>
@@ -3521,8 +3536,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       ))}
                     </div>
                     <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-                      <span style={{fontSize:10,color:"#334155"}}>{monitoringDays >= 30 ? "30 days ago" : `${monitoringDays}d ago`}</span>
-                      <span style={{fontSize:10,color:"#334155"}}>Today</span>
+                      <span style={{fontSize:10,color:"var(--text-disabled)"}}>{monitoringDays >= 30 ? "30 days ago" : `${monitoringDays}d ago`}</span>
+                      <span style={{fontSize:10,color:"var(--text-disabled)"}}>Today</span>
                     </div>
                   </div>
                 );
@@ -3540,22 +3555,22 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
             {/* ── DEPLOYMENT INFO ── */}
             {sectionTitle("Deployment")}
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"2px 16px"}}>
+            <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:10,padding:"2px 16px"}}>
               {infoRow("Version", `v${APP_VERSION}`, "#cbd5e1", true)}
               {infoRow("Environment", env, isProd?"#94a3b8":"#F59E0B")}
               {infoRow("Branch", "main", "#94a3b8", true)}
               {infoRow("Last Deploy", buildTime ? buildTime.toUTCString().replace(" GMT"," UTC") : "-", "#64748b", true)}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-                <span style={{fontSize:12,color:"#64748b",fontWeight:500}}>CI Status</span>
-                <span style={{fontSize:12,color:"#94a3b8",fontWeight:500,display:"flex",alignItems:"center",gap:5}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid var(--glass-4)"}}>
+                <span style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>CI Status</span>
+                <span style={{fontSize:12,color:"var(--text-secondary)",fontWeight:500,display:"flex",alignItems:"center",gap:5}}>
                   <span style={{width:6,height:6,borderRadius:"50%",background:"#10B981",display:"inline-block"}} />
                   Passing
                 </span>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0"}}>
-                <span style={{fontSize:12,color:"#64748b",fontWeight:500}}>Repository</span>
+                <span style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>Repository</span>
                 <a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer"
-                  style={{fontSize:12,color:"#94a3b8",fontWeight:500,textDecoration:"none",fontFamily:"'Fira Code','Courier New',monospace"}}>
+                  style={{fontSize:12,color:"var(--text-secondary)",fontWeight:500,textDecoration:"none",fontFamily:"'Fira Code','Courier New',monospace"}}>
                   or-carmeli/KubeQuest
                 </a>
               </div>
@@ -3570,46 +3585,46 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               const durationHrs = durationMs / 3600000;
               const durationStr = durationHrs >= 1 ? `~${Math.round(durationHrs)} hr${Math.round(durationHrs)>1?"s":""}` : `~${Math.round(durationMs/60000)} min`;
               return (
-                <div key={inc.id} dir="ltr" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"12px 16px",textAlign:"left",marginBottom:8}}>
+                <div key={inc.id} dir="ltr" style={{background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:10,padding:"12px 16px",textAlign:"left",marginBottom:8}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{inc.title}</div>
-                      <div style={{fontSize:11,color:"#64748b",marginTop:3,display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"var(--text-primary)"}}>{inc.title}</div>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3,display:"flex",flexWrap:"wrap",gap:"0 12px"}}>
                         <span>{started.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</span>
                         <span>{durationStr}</span>
                         <span style={{color:sevColor(inc.severity)}}>{inc.severity.charAt(0).toUpperCase()+inc.severity.slice(1)}</span>
                       </div>
-                      {inc.affected_services?.length>0&&<div style={{fontSize:10,color:"#475569",marginTop:3}}>{inc.affected_services.join(", ")}</div>}
+                      {inc.affected_services?.length>0&&<div style={{fontSize:10,color:"var(--text-dim)",marginTop:3}}>{inc.affected_services.join(", ")}</div>}
                     </div>
                     <span style={{fontSize:10,fontWeight:600,color:incStatusColor(inc.status),background:`${incStatusColor(inc.status)}12`,padding:"3px 8px",borderRadius:4,whiteSpace:"nowrap",flexShrink:0,marginTop:1}}>
                       {inc.status.charAt(0).toUpperCase()+inc.status.slice(1)}
                     </span>
                   </div>
                   {(inc.impact||inc.root_cause||inc.resolution||inc.prevention)&&(
-                    <div style={{marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.04)",fontSize:12,color:"#64748b",lineHeight:1.6}}>
-                      {inc.impact&&<div style={{marginBottom:6}}><span style={{color:"#94a3b8",fontWeight:600}}>Impact</span> — {inc.impact}</div>}
-                      {inc.root_cause&&<div style={{marginBottom:6}}><span style={{color:"#94a3b8",fontWeight:600}}>Root Cause</span> — {inc.root_cause}</div>}
-                      {inc.resolution&&<div style={{marginBottom:6}}><span style={{color:"#94a3b8",fontWeight:600}}>Resolution</span> — {inc.resolution}</div>}
-                      {inc.prevention&&<div><span style={{color:"#94a3b8",fontWeight:600}}>Prevention</span> — {inc.prevention}</div>}
+                    <div style={{marginTop:10,paddingTop:10,borderTop:"1px solid var(--glass-4)",fontSize:12,color:"var(--text-muted)",lineHeight:1.6}}>
+                      {inc.impact&&<div style={{marginBottom:6}}><span style={{color:"var(--text-secondary)",fontWeight:600}}>Impact</span> — {inc.impact}</div>}
+                      {inc.root_cause&&<div style={{marginBottom:6}}><span style={{color:"var(--text-secondary)",fontWeight:600}}>Root Cause</span> — {inc.root_cause}</div>}
+                      {inc.resolution&&<div style={{marginBottom:6}}><span style={{color:"var(--text-secondary)",fontWeight:600}}>Resolution</span> — {inc.resolution}</div>}
+                      {inc.prevention&&<div><span style={{color:"var(--text-secondary)",fontWeight:600}}>Prevention</span> — {inc.prevention}</div>}
                     </div>
                   )}
                 </div>
               );
             }) : (
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:16,textAlign:"center",color:"#475569",fontSize:12}}>
+              <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:10,padding:16,textAlign:"center",color:"var(--text-dim)",fontSize:12}}>
                 {loading ? "Loading incidents…" : "No incidents recorded"}
               </div>
             )}
 
             {/* ── SECURITY STATUS ── */}
             {sectionTitle("Security")}
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"2px 16px"}}>
+            <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:10,padding:"2px 16px"}}>
               {infoRow("TLS Certificate", isSecure ? "Valid · Let's Encrypt" : "Not active", isSecure?"#94a3b8":"#EF4444")}
               {infoRow("Connection",      isSecure ? "HTTPS · Encrypted" : "HTTP · Unencrypted",   isSecure?"#94a3b8":"#F59E0B")}
               {infoRow("HSTS",            "Enabled",  "#94a3b8")}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0"}}>
-                <span style={{fontSize:12,color:"#64748b",fontWeight:500}}>Security Headers</span>
-                <span style={{fontSize:12,color:"#94a3b8",fontWeight:500}}>Active</span>
+                <span style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>Security Headers</span>
+                <span style={{fontSize:12,color:"var(--text-secondary)",fontWeight:500}}>Active</span>
               </div>
             </div>
 
@@ -3624,7 +3639,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease"}}>
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",direction:dir,marginBottom:6}}>
-              <button onClick={()=>setScreen("home")} aria-label={t("back")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",width:34,height:34,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span aria-hidden="true">{dir==="rtl"?"→":"←"}</span></button>
+              <button onClick={()=>setScreen("home")} aria-label={t("back")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",width:34,height:34,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span aria-hidden="true">{dir==="rtl"?"→":"←"}</span></button>
               <span style={{fontSize:12,color:LEVEL_CONFIG[selectedLevel].color,background:`${LEVEL_CONFIG[selectedLevel].color}18`,padding:"3px 10px",borderRadius:20,fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>{LEVEL_CONFIG[selectedLevel].icon} {lang==="en"?LEVEL_CONFIG[selectedLevel].labelEn:LEVEL_CONFIG[selectedLevel].label}</span>
             </div>
             <h2 style={{margin:0,color:selectedTopic.color,fontSize:17,fontWeight:800,textAlign:"center"}}>{selectedTopic.name}</h2>
@@ -3632,9 +3647,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
           {topicScreen==="theory"?(
             <div>
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:22,marginBottom:18}}>
+              <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:22,marginBottom:18}}>
                 <div style={{fontSize:11,color:selectedTopic.color,fontWeight:800,marginBottom:16,letterSpacing:1}}>{t("theory")}</div>
-                <div style={{background:"rgba(0,0,0,0.35)",borderRadius:10,padding:"16px 20px"}}>{renderTheory(theoryContent || currentLevelData?.theory)}</div>
+                <div style={{background:"var(--code-bg-light)",borderRadius:10,padding:"16px 20px"}}>{renderTheory(theoryContent || currentLevelData?.theory)}</div>
               </div>
               <div style={{display:"flex",gap:8,marginBottom:0}}>
                 <button onClick={()=>{setTopicScreen("quiz");if(timerEnabled||isInterviewMode)setTimeLeft(isInterviewMode?(INTERVIEW_DURATIONS[selectedLevel]||25):(TIMER_DURATIONS[selectedLevel]||30));}} style={{flex:1,padding:15,background:`linear-gradient(135deg,${selectedTopic.color}dd,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontWeight:800,cursor:"pointer",boxShadow:`0 6px 24px ${selectedTopic.color}44`,lineHeight:1.4}}>
@@ -3643,7 +3658,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </button>
               </div>
               {!isInterviewMode&&<div style={{display:"flex",justifyContent:"center",marginTop:10}}>
-                <button onClick={()=>setTimerEnabled(p=>!p)} aria-pressed={timerEnabled} style={{background:"none",border:"none",color:timerEnabled?"#F59E0B":"#475569",fontSize:12,cursor:"pointer",fontWeight:timerEnabled?700:400}}>
+                <button onClick={()=>setTimerEnabled(p=>!p)} aria-pressed={timerEnabled} style={{background:"none",border:"none",color:timerEnabled?"#F59E0B":"var(--text-dim)",fontSize:12,cursor:"pointer",fontWeight:timerEnabled?700:400}}>
                   {timerEnabled?t("timerOn"):t("timerOff")}
                 </button>
               </div>}
@@ -3655,11 +3670,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <div className="quiz-bar" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,direction:dir}}>
                   {questionIndex > 0 && (
                     <button onClick={()=>setQuestionIndex(p=>p-1)}
-                      style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"5px 10px",borderRadius:7,cursor:"pointer",fontSize:12,flexShrink:0}}>
+                      style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",padding:"5px 10px",borderRadius:7,cursor:"pointer",fontSize:12,flexShrink:0}}>
                       {t("prevQuestion")}
                     </button>
                   )}
-                  <span aria-live="polite" aria-atomic="true" style={{color:"#e2e8f0",fontSize:14,fontWeight:700}}>
+                  <span aria-live="polite" aria-atomic="true" style={{color:"var(--text-primary)",fontSize:14,fontWeight:700}}>
                     {t("question")} {questionIndex+1} {t("of")} {currentQuestions.length}
                   </span>
                   {isInHistoryMode && !tryAgainActive && <span style={{fontSize:11,color:"#A855F7",fontWeight:700,background:"rgba(168,85,247,0.12)",padding:"2px 8px",borderRadius:6}}>{t("reviewing")}</span>}
@@ -3668,17 +3683,17 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {/* Row 2: stats bar — timer, streak, score */}
                 <div className="quiz-bar-right" style={{display:"flex",gap:10,alignItems:"center",justifyContent:"center",marginBottom:8,direction:"ltr"}}>
                   {!isInHistoryMode&&(timerEnabled||isInterviewMode)&&<span aria-live="off" aria-label={`${timeLeft} ${lang==="en"?"seconds":"שניות"}`} style={{display:"inline-block",color:(!isInterviewMode&&timeLeft<=10)?"#EF4444":"#F59E0B",fontSize:13,fontWeight:(isInterviewMode&&timeLeft<=5)?900:800,transform:(isInterviewMode&&timeLeft<=5)?"scale(1.05)":"none",transition:"transform 0.3s ease",minWidth:28,textAlign:"center",direction:"ltr"}}><span aria-hidden="true">⏱ {timeLeft}</span></span>}
-                  {!isInHistoryMode&&!isInterviewMode&&<button onClick={()=>setTimerEnabled(p=>!p)} aria-pressed={timerEnabled} style={{background:"none",border:"none",color:timerEnabled?"#F59E0B":"#475569",fontSize:12,cursor:"pointer",fontWeight:timerEnabled?700:400,padding:0}}>
+                  {!isInHistoryMode&&!isInterviewMode&&<button onClick={()=>setTimerEnabled(p=>!p)} aria-pressed={timerEnabled} style={{background:"none",border:"none",color:timerEnabled?"#F59E0B":"var(--text-dim)",fontSize:12,cursor:"pointer",fontWeight:timerEnabled?700:400,padding:0}}>
                     {timerEnabled?t("timerOn"):t("timerOff")}
                   </button>}
-                  {!isInHistoryMode&&<span aria-label={`${stats.current_streak} ${t("streakLabel")}`} style={{color:stats.current_streak>0?"#FF6B35":"#475569",fontSize:12,fontWeight:700}}>
+                  {!isInHistoryMode&&<span aria-label={`${stats.current_streak} ${t("streakLabel")}`} style={{color:stats.current_streak>0?"#FF6B35":"var(--text-dim)",fontSize:12,fontWeight:700}}>
                     <span aria-hidden="true">🔥 {stats.current_streak} {t("streakLabel")}</span>
                   </span>}
                   {!isInHistoryMode&&<span aria-label={`${stats.total_score} ${t("pts")}`} style={{color:"#A855F7",fontSize:12,fontWeight:700,direction:"ltr"}}>
                     <span aria-hidden="true">⭐ {stats.total_score} {t("pts")}</span>
                   </span>}
                 </div>
-                <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
+                <div style={{height:5,background:"var(--glass-6)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
                   <div style={{height:"100%",borderRadius:4,
                     width:`${((liveIndexRef.current+(submitted&&!isInHistoryMode?1:0))/currentQuestions.length)*100}%`,
                     background:`linear-gradient(90deg,${selectedTopic.color},${selectedTopic.color}88)`,
@@ -3687,13 +3702,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
 
               <div ref={questionRef} tabIndex={-1} aria-label={`${t("question")} ${questionIndex+1}: ${currentQuestions[questionIndex].q}`}
-                style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"22px 20px 24px",marginBottom:20,outline:"none",position:"relative"}}>
+                style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:14,padding:"22px 20px 24px",marginBottom:20,outline:"none",position:"relative"}}>
                 {renderQuestion(currentQuestions[questionIndex].q, lang)}
                 {!isInHistoryMode&&!tryAgainActive&&!isFreeMode(selectedTopic?.id)&&(
                   <button onClick={toggleBookmark}
                     aria-label={currentQBookmarked ? t("removeBookmark") : t("bookmark")}
                     title={currentQBookmarked ? (lang==="en"?"Remove bookmark":"הסר סימניה") : (lang==="en"?"Save question":"שמור שאלה")}
-                    style={{position:"absolute",top:10,[dir==="rtl"?"left":"right"]:10,background:"none",border:"none",cursor:"pointer",fontSize:20,color:currentQBookmarked?"#F59E0B":"#475569",transition:"color 0.2s",padding:4,lineHeight:1}}>
+                    style={{position:"absolute",top:10,[dir==="rtl"?"left":"right"]:10,background:"none",border:"none",cursor:"pointer",fontSize:20,color:currentQBookmarked?"#F59E0B":"var(--text-dim)",transition:"color 0.2s",padding:4,lineHeight:1}}>
                     {currentQBookmarked ? "★" : "☆"}
                   </button>
                 )}
@@ -3730,10 +3745,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof currentQuestions[questionIndex].answer === "number" ? i === currentQuestions[questionIndex].answer : false);
                   const isChosen  = i===dispSelectedAnswer;
                   const isEliminated = !dispSubmitted && eliminatedOption === i;
-                  let borderColor = "rgba(255,255,255,0.09)", bg = "rgba(255,255,255,0.02)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
-                  if (isEliminated)                { borderColor = "rgba(255,255,255,0.04)"; bg = "rgba(255,255,255,0.01)"; color = "#334155"; labelBg = "rgba(255,255,255,0.03)"; labelColor = "#334155"; }
-                  else if (isChosen && !dispSubmitted) { borderColor = "#00D4FF66"; bg = "rgba(0,212,255,0.06)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.15)"; labelColor = "#00D4FF"; }
-                  if (dispSubmitted && !dispAnswerResult && isChosen) { borderColor = "#00D4FF99"; bg = "rgba(0,212,255,0.10)"; color = "#7dd3fc"; labelBg = "rgba(0,212,255,0.2)"; labelColor = "#00D4FF"; }
+                  let borderColor = "var(--glass-9)", bg = "var(--glass-2)", color = "var(--text-light)", labelBg = "var(--glass-7)", labelColor = "var(--text-secondary)";
+                  if (isEliminated)                { borderColor = "var(--glass-4)"; bg = "var(--glass-1)"; color = "var(--text-disabled)"; labelBg = "var(--glass-3)"; labelColor = "var(--text-disabled)"; }
+                  else if (isChosen && !dispSubmitted) { borderColor = "#00D4FF66"; bg = "rgba(0,212,255,0.06)"; color = "var(--code-text)"; labelBg = "rgba(0,212,255,0.15)"; labelColor = "#00D4FF"; }
+                  if (dispSubmitted && !dispAnswerResult && isChosen) { borderColor = "#00D4FF99"; bg = "rgba(0,212,255,0.10)"; color = "var(--code-text)"; labelBg = "rgba(0,212,255,0.2)"; labelColor = "#00D4FF"; }
                   if (dispSubmitted && dispAnswerResult) {
                     if (isCorrect)             { borderColor = "#10B981"; bg = "rgba(16,185,129,0.1)";  color = "#10B981"; labelBg = "rgba(16,185,129,0.2)";  labelColor = "#10B981"; }
                     else if (isChosen)          { borderColor = "#EF4444"; bg = "rgba(239,68,68,0.1)";   color = "#EF4444"; labelBg = "rgba(239,68,68,0.2)";   labelColor = "#EF4444"; }
@@ -3760,8 +3775,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {!isInHistoryMode&&!tryAgainActive&&(
                 <div style={{textAlign:"center",marginBottom:8}}>
                   <button onClick={()=>{setReportDialog({qText:currentQuestions[questionIndex].q,qIndex:questionIndex});setReportType("");setReportNote("");setReportSent(false);}}
-                    style={{background:"none",border:"none",color:"#475569",fontSize:12,cursor:"pointer",padding:"4px 8px",borderRadius:6,transition:"color 0.15s"}}
-                    onMouseEnter={e=>e.currentTarget.style.color="#94a3b8"} onMouseLeave={e=>e.currentTarget.style.color="#475569"}>
+                    style={{background:"none",border:"none",color:"var(--text-dim)",fontSize:12,cursor:"pointer",padding:"4px 8px",borderRadius:6,transition:"color 0.15s"}}
+                    onMouseEnter={e=>e.currentTarget.style.color="var(--text-secondary)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-dim)"}>
                     {t("reportBtn")}
                   </button>
                 </div>
@@ -3830,7 +3845,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                           <span style={{fontSize:12,fontWeight:800,color:"#A855F7",letterSpacing:0.5}}>{lang==="he"?"תשובה אידיאלית":"Ideal Answer"}</span>
                         </div>
                         <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:14}}>
-                          <div dir="auto" style={{color:"#e2e8f0",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left"}}>{q.options[iCorrectIdx]}</div>
+                          <div dir="auto" style={{color:"var(--text-primary)",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:dir==="rtl"?"right":"left"}}>{q.options[iCorrectIdx]}</div>
                           {iParagraphs.map((s,idx)=>(
                             <div key={idx} dir={dir} style={{color:"#c8d2de",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
                               {renderBidiBlock(s,lang)}
@@ -3851,7 +3866,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         onClick={() => setTryAgainActive(true)}
                         style={{width:"100%",padding:"12px 15px",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.35)",borderRadius:12,color:"#F59E0B",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                         {t("tryAgainBtn")}
-                        <span style={{fontSize:11,color:"#94a3b8",fontWeight:500}}>{t("tryAgainBadge")}</span>
+                        <span style={{fontSize:11,color:"var(--text-secondary)",fontWeight:500}}>{t("tryAgainBadge")}</span>
                       </button>
                     );
                   })()}
@@ -3895,8 +3910,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {allCorrect?"🌟":anyCorrect?"👍":"💪"}
             </div>
             <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} – {lang==="en"?LEVEL_CONFIG[selectedLevel].labelEn:LEVEL_CONFIG[selectedLevel].label}</h2>
-            <div style={{display:"inline-flex",alignItems:"center",gap:10,marginBottom:8,background:"rgba(255,255,255,0.04)",borderRadius:30,padding:"8px 20px"}}>
-              <span style={{color:"#e2e8f0",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
+            <div style={{display:"inline-flex",alignItems:"center",gap:10,marginBottom:8,background:"var(--glass-4)",borderRadius:30,padding:"8px 20px"}}>
+              <span style={{color:"var(--text-primary)",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
               {allCorrect&&<span style={{color:"#F59E0B",fontSize:13,fontWeight:700}}>{t("perfect")}</span>}
             </div>
             {lastSessionScoreRef.current > 0 && (
@@ -3953,7 +3968,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
                 </button>
               )}
-              {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+              {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
               {(()=>{
@@ -3985,18 +4000,18 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     <button onClick={handleShare} style={{width:"100%",padding:13,background:shareCopied?"rgba(10,102,194,0.18)":"rgba(10,102,194,0.1)",border:`1px solid ${shareCopied?"rgba(10,102,194,0.6)":"rgba(10,102,194,0.35)"}`,borderRadius:12,color:"#4a9ede",fontSize:14,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
                       {shareCopied?(lang==="en"?"✓ Copied! Paste in LinkedIn":"✓ הועתק! הדבק ב-LinkedIn"):t("shareResult")}
                     </button>
-                    {shareCopied&&<div style={{fontSize:11,color:"#64748b",textAlign:"center",marginTop:5,animation:"fadeIn 0.2s ease"}}>
+                    {shareCopied&&<div style={{fontSize:11,color:"var(--text-muted)",textAlign:"center",marginTop:5,animation:"fadeIn 0.2s ease"}}>
                       {lang==="en"?"Post text copied to clipboard - just paste it in the LinkedIn dialog":"טקסט הפוסט הועתק - הדבק אותו בחלון LinkedIn"}
                     </div>}
                   </div>
                 );
               })()}
               <button onClick={()=>selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
-              <button onClick={()=>setScreen("home")} style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#e2e8f0",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
+              <button onClick={()=>setScreen("home")} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-primary)",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
             {showReview&&quizHistory.length>0&&(
               <div style={{marginTop:20,textAlign:dir==="rtl"?"right":"left",animation:"fadeIn 0.3s ease"}}>
-                <div style={{color:"#94a3b8",fontSize:12,fontWeight:700,marginBottom:12,letterSpacing:1}}>{t("reviewTitle")}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:12,fontWeight:700,marginBottom:12,letterSpacing:1}}>{t("reviewTitle")}</div>
                 <ol style={{listStyle:"none",padding:0,margin:0,display:"flex",flexDirection:"column",gap:10}}>
                   {quizHistory.map((h,i)=>{
                     const wasCorrect=h.chosen===h.answer;
@@ -4007,14 +4022,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         <div style={{fontWeight:700,fontSize:13,color:wasCorrect?"#10B981":"#EF4444",marginBottom:4}}>
                           <span aria-hidden="true">{wasCorrect?"✅":"❌"} </span>{t("question")} {i+1}
                         </div>
-                        <div style={{color:"#e2e8f0",fontSize:13,marginBottom:6}}>{renderBidiBlock(h.q,lang)}</div>
+                        <div style={{color:"var(--text-primary)",fontSize:13,marginBottom:6}}>{renderBidiBlock(h.q,lang)}</div>
                         {timedOut?<div style={{fontSize:13,color:"#F59E0B"}}>{t("timeUp")}</div>:(
                           <div style={{fontSize:13,color:wasCorrect?"#10B981":"#EF4444",marginBottom:4,dir:hasHebrew(h.options[h.chosen])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.chosen])?"right":"left"}}>
                             {t("optionLabels")[h.chosen]}. {h.options[h.chosen]}
                           </div>
                         )}
                         {!wasCorrect&&<div style={{fontSize:13,color:"#10B981",dir:hasHebrew(h.options[h.answer])?"rtl":"ltr",textAlign:hasHebrew(h.options[h.answer])?"right":"left"}}><span aria-hidden="true">✓ </span>{h.options[h.answer]}</div>}
-                        <div style={{fontSize:12,color:"#64748b",marginTop:4,lineHeight:1.6}}>{renderBidiBlock(h.explanation,lang)}</div>
+                        <div style={{fontSize:12,color:"var(--text-muted)",marginTop:4,lineHeight:1.6}}>{renderBidiBlock(h.explanation,lang)}</div>
                       </li>
                     );
                   })}
@@ -4028,23 +4043,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {screen==="incidentList"&&(
         <div style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease",direction:dir}}>
           <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
-            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <span aria-hidden="true">{dir==="rtl"?"→":"←"}</span>
             </button>
             <div>
               <h2 style={{margin:0,color:"#EF4444",fontSize:20,fontWeight:900}}>{t("incidentModeBtn")}</h2>
-              <p style={{margin:0,color:"#64748b",fontSize:13}}>{t("incidentModeDesc")}</p>
+              <p style={{margin:0,color:"var(--text-muted)",fontSize:13}}>{t("incidentModeDesc")}</p>
             </div>
           </div>
 
           {/* Resume banner */}
           {incidentResume&&(
             <div style={{padding:16,background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:14,marginBottom:12,direction:dir}}>
-              <div style={{color:"#e2e8f0",fontSize:14,fontWeight:700,marginBottom:4}}>{lang==="he"?incidentResume.incident.titleHe:incidentResume.incident.title}</div>
-              <div style={{color:"#64748b",fontSize:12,marginBottom:12}}>{t("incidentStep")} {incidentResume.stepIndex+1}/{incidentResume.incident.steps.length}</div>
+              <div style={{color:"var(--text-primary)",fontSize:14,fontWeight:700,marginBottom:4}}>{lang==="he"?incidentResume.incident.titleHe:incidentResume.incident.title}</div>
+              <div style={{color:"var(--text-muted)",fontSize:12,marginBottom:12}}>{t("incidentStep")} {incidentResume.stepIndex+1}/{incidentResume.incident.steps.length}</div>
               <div style={{display:"flex",gap:8}}>
                 <button onClick={resumeIncident} style={{flex:1,padding:"10px",background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:10,color:"#EF4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>▶ {t("incidentResumeBanner")}</button>
-                <button onClick={()=>{clearIncidentProgress();setIncidentResume(null);}} style={{padding:"10px 16px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:10,color:"#64748b",fontSize:13,cursor:"pointer"}}>{t("incidentDiscard")}</button>
+                <button onClick={()=>{clearIncidentProgress();setIncidentResume(null);}} style={{padding:"10px 16px",background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:10,color:"var(--text-muted)",fontSize:13,cursor:"pointer"}}>{t("incidentDiscard")}</button>
               </div>
             </div>
           )}
@@ -4053,17 +4068,17 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               const diff = INCIDENT_DIFFICULTY_CONFIG[incident.difficulty] || INCIDENT_DIFFICULTY_CONFIG.medium;
               return(
                 <button key={incident.id} onClick={()=>startIncident(incident)}
-                  style={{width:"100%",padding:"16px 18px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:dir==="rtl"?"right":"left",transition:"all 0.2s"}}
+                  style={{width:"100%",padding:"16px 18px",background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:dir==="rtl"?"right":"left",transition:"all 0.2s"}}
                   onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.06)";e.currentTarget.style.borderColor="rgba(239,68,68,0.3)";}}
-                  onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.02)";e.currentTarget.style.borderColor="rgba(255,255,255,0.07)";}}>
+                  onMouseLeave={e=>{e.currentTarget.style.background="var(--glass-2)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
                   <span style={{fontSize:30,flexShrink:0}}>{incident.icon}</span>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:3}}>
-                      <span style={{color:"#e2e8f0",fontWeight:800,fontSize:15}}>{lang==="he"?incident.titleHe:incident.title}</span>
+                      <span style={{color:"var(--text-primary)",fontWeight:800,fontSize:15}}>{lang==="he"?incident.titleHe:incident.title}</span>
                       <span style={{background:`${diff.color}22`,color:diff.color,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,letterSpacing:0.5}}>{lang==="he"?diff.labelHe:diff.label}</span>
                     </div>
-                    <div style={{color:"#64748b",fontSize:12,marginBottom:2}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
-                    <div style={{color:"#475569",fontSize:11}}>{incident.steps.length} {t("incidentSteps")} · {incident.estimatedTime}</div>
+                    <div style={{color:"var(--text-muted)",fontSize:12,marginBottom:2}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
+                    <div style={{color:"var(--text-dim)",fontSize:11}}>{incident.steps.length} {t("incidentSteps")} · {incident.estimatedTime}</div>
                   </div>
                   <span style={{color:"#EF4444",fontSize:18,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
                 </button>
@@ -4085,19 +4100,19 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             {/* Top bar */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8,direction:dir}}>
               <button onClick={()=>{saveIncidentProgress(selectedIncident,incidentStepIndex,incidentScore,incidentMistakes,incidentElapsed,incidentHistory);setScreen("incidentList");}}
-                style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#64748b",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13,marginLeft:dir==="rtl"?"auto":undefined}}>
+                style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-muted)",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13,marginLeft:dir==="rtl"?"auto":undefined}}>
                 {lang==="he"?"חזרה →":"← Return"}
               </button>
               <div style={{display:"flex",gap:14,alignItems:"center",fontSize:13,fontWeight:700}}>
-                <span style={{color:"#94a3b8"}}>{t("incidentStep")} <span style={{color:"#e2e8f0"}}>{incidentStepIndex+1}/{totalSteps}</span></span>
-                <span style={{color:"#A855F7"}}>⭐ {incidentScore}<span style={{color:"#475569",fontWeight:400}}>/{maxScore}</span></span>
-                <span style={{color:incidentMistakes>0?"#EF4444":"#475569"}}>❌ {incidentMistakes}</span>
+                <span style={{color:"var(--text-secondary)"}}>{t("incidentStep")} <span style={{color:"var(--text-primary)"}}>{incidentStepIndex+1}/{totalSteps}</span></span>
+                <span style={{color:"#A855F7"}}>⭐ {incidentScore}<span style={{color:"var(--text-dim)",fontWeight:400}}>/{maxScore}</span></span>
+                <span style={{color:incidentMistakes>0?"#EF4444":"var(--text-dim)"}}>❌ {incidentMistakes}</span>
                 <span style={{color:"#F59E0B"}}>⏱ {formatIncidentTime(incidentElapsed)}</span>
               </div>
             </div>
 
             {/* Progress bar */}
-            <div style={{height:4,background:"rgba(255,255,255,0.06)",borderRadius:4,marginBottom:16,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
+            <div style={{height:4,background:"var(--glass-6)",borderRadius:4,marginBottom:16,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
               <div style={{height:"100%",borderRadius:4,width:`${progress}%`,background:"linear-gradient(90deg,#EF4444,#F59E0B)",transition:"width 0.4s ease"}}/>
             </div>
 
@@ -4109,7 +4124,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
 
             {/* Prompt */}
-            <div style={{background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"18px 20px",marginBottom:14,overflowX:"auto"}}>
+            <div style={{background:"rgba(15,23,42,0.8)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"18px 20px",marginBottom:14,overflowX:"auto"}}>
               {renderIncidentPrompt(lang === "he" ? (step.promptHe || step.prompt) : step.prompt)}
             </div>
 
@@ -4118,7 +4133,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {(lang === "he" ? (step.optionsHe || step.options) : step.options).map((opt,i)=>{
                 const isCorrect  = incidentAnswerResult ? i === incidentAnswerResult.correctIndex : i === step.answer;
                 const isChosen   = i === incidentAnswer;
-                let bg = "rgba(255,255,255,0.02)", border = "rgba(255,255,255,0.09)", color = "#cbd5e1", labelBg = "rgba(255,255,255,0.07)", labelColor = "#94a3b8";
+                let bg = "var(--glass-2)", border = "var(--glass-9)", color = "var(--text-light)", labelBg = "var(--glass-7)", labelColor = "var(--text-secondary)";
                 if (!incidentSubmitted && isChosen) { bg="rgba(239,68,68,0.08)"; border="#EF444466"; color="#fca5a5"; labelBg="rgba(239,68,68,0.2)"; labelColor="#EF4444"; }
                 if (incidentSubmitted) {
                   if (isCorrect)       { bg="rgba(16,185,129,0.1)"; border="#10B981"; color="#10B981"; labelBg="rgba(16,185,129,0.2)"; labelColor="#10B981"; }
@@ -4177,7 +4192,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{maxWidth:480,margin:"30px auto",padding:"0 18px",textAlign:"center",animation:"fadeIn 0.5s ease",direction:dir}}>
             <div style={{fontSize:56,marginBottom:10}}>{perfect?"🏆":goodRun?"🎯":"💪"}</div>
             <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 6px",color:"#22C55E"}}>{t("incidentResolved")}</h2>
-            <p style={{color:"#64748b",fontSize:13,margin:"0 0 20px"}}>{lang==="he"?selectedIncident.titleHe:selectedIncident.title}</p>
+            <p style={{color:"var(--text-muted)",fontSize:13,margin:"0 0 20px"}}>{lang==="he"?selectedIncident.titleHe:selectedIncident.title}</p>
 
             {/* Stats grid */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:24}}>
@@ -4186,10 +4201,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {label:t("incidentTime"),   value:formatIncidentTime(incidentElapsed), icon:"⏱", color:"#F59E0B"},
                 {label:t("incidentMistakes"),value:incidentMistakes,               icon:"❌", color:incidentMistakes===0?"#10B981":"#EF4444"},
               ].map((s,i)=>(
-                <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 8px"}}>
+                <div key={i} style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:12,padding:"14px 8px"}}>
                   <div style={{fontSize:20}}>{s.icon}</div>
                   <div style={{fontSize:18,fontWeight:800,color:s.color,marginTop:4}}>{s.value}</div>
-                  <div style={{fontSize:12,color:"#475569",marginTop:2}}>{s.label}</div>
+                  <div style={{fontSize:12,color:"var(--text-dim)",marginTop:2}}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -4197,7 +4212,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {/* LinkedIn share */}
               <div style={{background:"rgba(10,102,194,0.06)",border:"1px solid rgba(10,102,194,0.2)",borderRadius:12,padding:"12px 14px"}}>
-                <div style={{fontSize:11,color:"#475569",marginBottom:8,textAlign:"left"}}>
+                <div style={{fontSize:11,color:"var(--text-dim)",marginBottom:8,textAlign:"left"}}>
                   {lang==="en"?"1. Copy this text  2. Open LinkedIn  3. Paste":"1. העתק את הטקסט  2. פתח LinkedIn  3. הדבק"}
                 </div>
                 <div
@@ -4207,12 +4222,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     handleIncidentShare();
                   }}
                   id="share-text-box"
-                  style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#94a3b8",direction:"ltr",textAlign:"left",lineHeight:1.7,marginBottom:10,cursor:"text",userSelect:"all",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
+                  style={{background:"var(--glass-4)",border:"1px solid var(--glass-10)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--text-secondary)",direction:"ltr",textAlign:"left",lineHeight:1.7,marginBottom:10,cursor:"text",userSelect:"all",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
                   {buildIncidentShareMsg()}
                 </div>
                 <div style={{display:"flex",gap:8}}>
                   <button onClick={handleIncidentShare}
-                    style={{flex:1,padding:"10px",background:incidentShareCopied?"rgba(16,185,129,0.15)":"rgba(255,255,255,0.06)",border:`1px solid ${incidentShareCopied?"#10B98150":"rgba(255,255,255,0.1)"}`,borderRadius:8,color:incidentShareCopied?"#10B981":"#94a3b8",fontSize:13,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
+                    style={{flex:1,padding:"10px",background:incidentShareCopied?"rgba(16,185,129,0.15)":"var(--glass-6)",border:`1px solid ${incidentShareCopied?"#10B98150":"var(--glass-10)"}`,borderRadius:8,color:incidentShareCopied?"#10B981":"var(--text-secondary)",fontSize:13,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
                     {incidentShareCopied ? "✓ "+( lang==="en"?"Copied!":"הועתק!") : "📋 "+(lang==="en"?"Copy":"העתק")}
                   </button>
                   <a href="https://www.linkedin.com/post/new" target="_blank" rel="noopener noreferrer"
@@ -4226,7 +4241,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {t("incidentTryAnother")}
               </button>
               <button onClick={()=>setScreen("home")}
-                style={{padding:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:12,color:"#94a3b8",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {t("backToTopics")}
               </button>
             </div>
