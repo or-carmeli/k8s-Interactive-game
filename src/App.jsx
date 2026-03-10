@@ -767,6 +767,7 @@ export default function K8sQuestApp() {
 
   const isGuest = user?.id === "guest";
   const achievementsLoaded = useRef(false);
+  const loadingDataRef = useRef(false); // prevents concurrent loadUserData calls
   const quizRunIdRef  = useRef(null);
   const answerCacheRef = useRef({});  // prefetched { [questionId]: { correctIndex, explanation } }
   const liveIndexRef  = useRef(0);   // highest question index reached; never decremented
@@ -852,11 +853,16 @@ export default function K8sQuestApp() {
 
   useEffect(() => { const t = setTimeout(() => setMinLoadElapsed(true), 500); return () => clearTimeout(t); }, []);
 
-  // Stuck-loading safety net: if the loading gate is still active after 10 s, show recovery UI
+  // Stuck-loading safety net: if the loading gate is still active after 10 s,
+  // try to auto-recover once, then show recovery UI on second failure.
   useEffect(() => {
     if (authChecked && (dataLoaded || !user)) return; // loading gate already passed
     const t = setTimeout(() => {
       console.error("[KubeQuest:boot] Loading stuck for 10 s — authChecked:", authChecked, "dataLoaded:", dataLoaded, "user:", !!user, "isGuest:", user?.id === "guest");
+      // First attempt: force-unblock by setting the stuck flags directly
+      // This handles the case where a promise silently never resolved
+      if (!authChecked) setAuthChecked(true);
+      if (!dataLoaded) setDataLoaded(true);
       setLoadingStuck(true);
     }, 10000);
     return () => clearTimeout(t);
@@ -908,39 +914,47 @@ export default function K8sQuestApp() {
       return;
     }
 
-    // Fallback: if Supabase never responds, unblock the UI after 5 s
-    const authTimeout = setTimeout(() => {
-      console.warn("[KubeQuest:boot] Auth timeout (5 s) — unblocking UI");
+    // Hard timeout: if auth never resolves, unblock the UI
+    const hardTimeout = setTimeout(() => {
+      console.warn("[KubeQuest:boot] Auth hard timeout (5 s) — force-unblocking UI");
       setAuthChecked(true);
       setDataLoaded(true);
     }, 5000);
-    console.info("[KubeQuest:boot] calling getSession()");
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      clearTimeout(authTimeout);
-      console.info("[KubeQuest:boot] getSession resolved, session:", !!session);
-      if (session) { setUser(session.user); loadUserData(session.user.id, session.user); }
-      else {
-        // Restore guest session if user previously chose guest mode
-        if (safeGetItem("k8s_guest_session")) setUser(GUEST_USER);
-        setDataLoaded(true);
-      }
-      setAuthChecked(true);
-    }).catch((err) => {
-      console.error("[KubeQuest:boot] getSession() FAILED:", err);
-      clearTimeout(authTimeout);
-      setAuthChecked(true);
-      setDataLoaded(true);
-    });
+
+    // Use ONLY onAuthStateChange for session initialization.
+    // In Supabase v2, it fires INITIAL_SESSION exactly once when the stored
+    // session is resolved. Using getSession() in parallel creates a race
+    // where loadUserData() is called twice with independent timeouts.
+    console.info("[KubeQuest:boot] subscribing to onAuthStateChange");
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setUser(session.user);
-        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      console.info("[KubeQuest:boot] auth event:", event, "session:", !!session);
+
+      if (event === "INITIAL_SESSION") {
+        clearTimeout(hardTimeout);
+        if (session) {
+          setUser(session.user);
           loadUserData(session.user.id, session.user);
+        } else {
+          // Restore guest session if user previously chose guest mode
+          if (safeGetItem("k8s_guest_session")) setUser(GUEST_USER);
+          setDataLoaded(true);
         }
+        setAuthChecked(true);
+      } else if (event === "SIGNED_IN") {
+        setUser(session.user);
+        loadUserData(session.user.id, session.user);
+        setAuthChecked(true);
+      } else if (event === "SIGNED_OUT") {
+        setAuthChecked(true);
+      } else if (event === "TOKEN_REFRESHED") {
+        if (session) setUser(session.user);
       }
-      setAuthChecked(true);
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      clearTimeout(hardTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Close any open overlay when the user presses Escape
@@ -1287,9 +1301,17 @@ export default function K8sQuestApp() {
     console.info("[KubeQuest:boot] loadUserData starting for", userId);
     if (!supabase) { setDataLoaded(true); return; }
 
+    // Prevent concurrent calls (race between onAuthStateChange and login flows)
+    if (loadingDataRef.current) {
+      console.info("[KubeQuest:boot] loadUserData skipped — already in progress");
+      return;
+    }
+    loadingDataRef.current = true;
+
     // Timeout guard: if data loading takes too long, unblock the UI
     const dataTimeout = setTimeout(() => {
       console.warn("[KubeQuest:boot] loadUserData timeout (5 s) — unblocking UI");
+      loadingDataRef.current = false;
       setDataLoaded(true);
     }, 5000);
 
@@ -1357,10 +1379,12 @@ export default function K8sQuestApp() {
 
       achievementsLoaded.current = true;
       clearTimeout(dataTimeout);
+      loadingDataRef.current = false;
       setDataLoaded(true);
     } catch {
       // Network error or unexpected failure — unblock the UI
       clearTimeout(dataTimeout);
+      loadingDataRef.current = false;
       achievementsLoaded.current = true;
       setDataLoaded(true);
     }
@@ -1491,13 +1515,15 @@ export default function K8sQuestApp() {
       setStats({ total_answered:0, total_correct:0, total_score:0, best_score:0, max_streak:0, current_streak:0 });
       setCompletedTopics({}); setUnlockedAchievements([]);
       achievementsLoaded.current = false;
+      loadingDataRef.current = false;
       setDataLoaded(true);
       return;
     }
     if (supabase) await supabase.auth.signOut();
     setUser(null);
     achievementsLoaded.current = false;
-    setDataLoaded(true); // user=null means loading gate won't block on dataLoaded
+    loadingDataRef.current = false;
+    setDataLoaded(true);
   };
 
   const handleResetProgress = async () => {

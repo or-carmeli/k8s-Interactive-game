@@ -68,6 +68,7 @@
 
   <body>
     <div id="root"></div>
+    <script>window.__KQ_BOOT_TIME__ = Date.now();</script>
     <script type="module" src="/src/main.jsx"></script>
 
     <!-- Blank-screen safety net: if React never renders visible content, show recovery UI -->
@@ -103,9 +104,10 @@
                 if (!newSW) return;
                 newSW.addEventListener("statechange", () => {
                   if (newSW.state === "activated" && navigator.serviceWorker.controller) {
-                    // Don't interrupt an active quiz or incident — defer reload
-                    if (window.__KQ_QUIZ_ACTIVE__) {
-                      console.log("[KubeQuest] New SW activated; deferring reload (quiz active)");
+                    // Don't reload during initial boot (first 5 s) or active quiz — defer
+                    var bootAge = Date.now() - (window.__KQ_BOOT_TIME__ || 0);
+                    if (bootAge < 5000 || window.__KQ_QUIZ_ACTIVE__) {
+                      console.log("[KubeQuest] New SW activated; deferring reload (boot:" + bootAge + "ms, quiz:" + !!window.__KQ_QUIZ_ACTIVE__ + ")");
                       window.__KQ_PENDING_RELOAD__ = true;
                       return;
                     }
