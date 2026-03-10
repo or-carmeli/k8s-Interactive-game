@@ -1404,13 +1404,16 @@ export default function K8sQuestApp() {
     setAuthLoading(false);
   };
 
+  const [resetLoading, setResetLoading] = useState(false);
   const handleResetPassword = async () => {
-    if (!supabase || !resetEmail) return;
+    if (!supabase || !resetEmail || resetLoading) return;
     setResetStatus("");
+    setResetLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: window.location.origin,
     });
     setResetStatus(error ? t("resetEmailError") : t("resetEmailSent"));
+    setResetLoading(false);
   };
 
   const handleLogout = async () => {
@@ -2565,9 +2568,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <input type="email" value={resetEmail} onChange={e=>setResetEmail(e.target.value)} placeholder="you@example.com"
               style={{width:"100%",padding:"12px 14px",background:"var(--glass-6)",border:"1px solid var(--glass-18)",borderRadius:8,color:"var(--text-primary)",fontSize:14,boxSizing:"border-box",direction:"ltr",marginBottom:14}}/>
             {resetStatus&&<div style={{marginBottom:12,fontSize:12,padding:"8px 12px",borderRadius:8,color:resetStatus.includes("\u2705")?"#10B981":"#EF4444",background:resetStatus.includes("\u2705")?"rgba(16,185,129,0.08)":"rgba(239,68,68,0.08)"}}>{resetStatus}</div>}
-            <button onClick={handleResetPassword} disabled={!resetEmail}
-              style={{width:"100%",padding:"12px",background:"linear-gradient(135deg,#00D4FF88,#A855F788)",border:"none",borderRadius:10,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",opacity:resetEmail?1:0.5}}>
-              {t("sendResetLink")}
+            <button onClick={handleResetPassword} disabled={!resetEmail||resetLoading}
+              style={{width:"100%",padding:"12px",background:"linear-gradient(135deg,#00D4FF88,#A855F788)",border:"none",borderRadius:10,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",opacity:(!resetEmail||resetLoading)?0.5:1}}>
+              {resetLoading?t("loading"):t("sendResetLink")}
             </button>
           </div>
         </div>
