@@ -80,7 +80,7 @@ export default function RoadmapView({
             ? t("roadmapAllDone")
             : `${t("roadmapStage")} ${currentStageNum} ${t("roadmapStageOf")} ${topics.length}`}
         </div>
-        <div style={{height:6,background:"var(--glass-6)",borderRadius:4,marginBottom:6,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
+        <div style={{height:8,background:"var(--glass-6)",borderRadius:4,marginBottom:6,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
           <div style={{height:"100%",borderRadius:4,width:`${overallProgress}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",transition:"width 0.5s ease"}}/>
         </div>
         <div style={{fontSize:12,color:"var(--text-secondary)",textAlign:"center"}}>{overallProgress}% {t("roadmapCompletedPct")}</div>
@@ -89,7 +89,7 @@ export default function RoadmapView({
       {/* ── Global start (only shown before user begins) ── */}
       {!allDone && overallProgress === 0 && (
         <button onClick={handleGlobalContinue}
-          style={{width:"100%",marginBottom:20,padding:"14px 20px",background:"linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1))",border:"1px solid rgba(0,212,255,0.3)",borderRadius:14,cursor:"pointer",color:"#00D4FF",fontWeight:800,fontSize:15,direction:dir,transition:"transform 0.2s"}}
+          style={{width:"100%",marginBottom:20,padding:"14px 20px",background:"linear-gradient(135deg,rgba(0,212,255,0.18),rgba(168,85,247,0.18))",border:"2px solid rgba(0,212,255,0.45)",borderRadius:14,cursor:"pointer",color:"#00D4FF",fontWeight:800,fontSize:16,direction:dir,transition:"transform 0.2s",boxShadow:"0 4px 20px rgba(0,212,255,0.2)"}}
           onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
           onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
           {t("roadmapStart")}
@@ -200,8 +200,8 @@ export default function RoadmapView({
 
                 {/* Progress bar */}
                 {!locked&&(
-                  <div style={{height:3,background:"var(--glass-6)",borderRadius:2,marginBottom:10,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
-                    <div style={{height:"100%",borderRadius:2,width:`${progress}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/>
+                  <div style={{height:6,background:"var(--glass-6)",borderRadius:3,marginBottom:10,direction:"ltr",transform:dir==="rtl"?"scaleX(-1)":undefined}}>
+                    <div style={{height:"100%",borderRadius:3,width:`${progress}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/>
                   </div>
                 )}
 
