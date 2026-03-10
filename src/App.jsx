@@ -3419,12 +3419,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const incStatusColor = (s) => s === "resolved" ? "#10B981" : s === "monitoring" ? "#3B82F6" : s === "identified" ? "#F59E0B" : "#EF4444";
 
         return (
-          <div className="page-pad" style={{maxWidth:720,margin:"0 auto",padding:isStatusDomain?"28px 16px 48px":"20px 16px 48px",animation:"fadeIn 0.3s ease"}}>
+          <div className="page-pad" dir="ltr" style={{maxWidth:720,margin:"0 auto",padding:isStatusDomain?"28px 16px 48px":"20px 16px 48px",animation:"fadeIn 0.3s ease",direction:"ltr"}}>
 
             {/* Back (hidden on standalone status subdomain) */}
             {!isStatusDomain && (
               <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",color:"#94a3b8",padding:"7px 12px",borderRadius:6,cursor:"pointer",fontSize:12,marginBottom:24,display:"flex",alignItems:"center",gap:5}}>
-                {lang==="en"?"← Return":"→ חזרה"}
+                {lang==="en"?"← Return":"← חזרה"}
               </button>
             )}
 
