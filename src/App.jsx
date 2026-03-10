@@ -908,6 +908,38 @@ export default function K8sQuestApp() {
   const currentLevelData = selectedTopic && selectedLevel && !isFreeMode(selectedTopic.id) && !retryMode ? getLevelData(selectedTopic, selectedLevel) : null;
   const currentQuestions = isFreeMode(selectedTopic?.id) || retryMode ? mixedQuestions : (topicQuestions.length > 0 ? topicQuestions : (currentLevelData?.questions || []));
 
+  // These MUST be declared before any useEffect or the loading-gate early return,
+  // because useEffect callbacks close over them. If they're declared after the early
+  // return, they stay in the Temporal Dead Zone when the loading gate is active,
+  // causing "Cannot access X before initialization" in production builds.
+  const isInHistoryMode     = questionIndex < liveIndexRef.current;
+  const currentQBookmarked  = screen === "topic" && selectedTopic && selectedLevel && currentQuestions[questionIndex]
+    ? bookmarks.some(b => b.question_id === makeQuestionId(selectedTopic.id, selectedLevel, questionIndex))
+    : false;
+  const dispSubmitted       = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : submitted);
+  const dispSelectedAnswer  = tryAgainActive ? (tryAgainSelected ?? -1) : (isInHistoryMode ? (quizHistory[questionIndex]?.chosen ?? -1) : selectedAnswer);
+  const dispShowExplanation = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : showExplanation);
+  const accuracy = stats.total_answered > 0 ? Math.round(stats.total_correct / stats.total_answered * 100) : 0;
+  const FONT_SCALES = { normal: 1, large: 1, xl: 1 }; // no zoom - original A mode is now the default
+  const fs = FONT_SCALES[a11y.fontSize] || 1;
+  const dispAnswerResult = (() => {
+    const q = currentQuestions[questionIndex];
+    if (tryAgainActive) {
+      if (tryAgainSelected === null) return null;
+      const hist = quizHistory[questionIndex];
+      if (hist) return { correct: tryAgainSelected === hist.answer, correctIndex: hist.answer, explanation: hist.explanation };
+      if (typeof q?.answer === "number") return { correct: tryAgainSelected === q.answer, correctIndex: q.answer, explanation: q.explanation };
+      return null;
+    }
+    if (isInHistoryMode) {
+      const hist = quizHistory[questionIndex];
+      if (hist) return { correct: hist.chosen === hist.answer, correctIndex: hist.answer, explanation: hist.explanation };
+      if (typeof q?.answer === "number") return { correct: false, correctIndex: q.answer, explanation: q.explanation };
+      return null;
+    }
+    return answerResult;
+  })();
+
   useEffect(() => { const t = setTimeout(() => setMinLoadElapsed(true), 500); return () => clearTimeout(t); }, []);
 
   // Boot elapsed timer — updates every second while loading gate is active (for debug panel)
@@ -2642,38 +2674,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
     </div>
   );
   }
-
-  const accuracy = stats.total_answered > 0 ? Math.round(stats.total_correct / stats.total_answered * 100) : 0;
-  const FONT_SCALES = { normal: 1, large: 1, xl: 1 }; // no zoom - original A mode is now the default
-  const fs = FONT_SCALES[a11y.fontSize] || 1;
-
-  // History navigation: questionIndex can go below liveIndexRef.current to review past answers
-  const isInHistoryMode     = questionIndex < liveIndexRef.current;
-  const currentQBookmarked  = screen === "topic" && selectedTopic && selectedLevel && currentQuestions[questionIndex]
-    ? bookmarks.some(b => b.question_id === makeQuestionId(selectedTopic.id, selectedLevel, questionIndex))
-    : false;
-  const dispSubmitted       = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : submitted);
-  const dispSelectedAnswer  = tryAgainActive ? (tryAgainSelected ?? -1) : (isInHistoryMode ? (quizHistory[questionIndex]?.chosen ?? -1) : selectedAnswer);
-  const dispShowExplanation = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : showExplanation);
-
-  // Unified answer result for display — works across live, history, try-again, and offline modes
-  const dispAnswerResult = (() => {
-    const q = currentQuestions[questionIndex];
-    if (tryAgainActive) {
-      if (tryAgainSelected === null) return null;
-      const hist = quizHistory[questionIndex];
-      if (hist) return { correct: tryAgainSelected === hist.answer, correctIndex: hist.answer, explanation: hist.explanation };
-      if (typeof q?.answer === "number") return { correct: tryAgainSelected === q.answer, correctIndex: q.answer, explanation: q.explanation };
-      return null;
-    }
-    if (isInHistoryMode) {
-      const hist = quizHistory[questionIndex];
-      if (hist) return { correct: hist.chosen === hist.answer, correctIndex: hist.answer, explanation: hist.explanation };
-      if (typeof q?.answer === "number") return { correct: false, correctIndex: q.answer, explanation: q.explanation };
-      return null;
-    }
-    return answerResult;
-  })();
 
   if (!user && !isStatusDomain) return (
     <div data-kq-rendered="auth" style={{minHeight:"100vh",background:"var(--gradient-body-simple)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,padding:"20px"}}>
