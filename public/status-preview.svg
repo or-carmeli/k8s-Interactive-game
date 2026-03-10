@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020817"/>
+      <stop offset="60%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020817"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="630" fill="none" stroke="#10B98133" stroke-width="1"/>
+  <!-- Title -->
+  <text x="600" y="240" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="52" font-weight="800" fill="#e2e8f0">KubeQuest Status</text>
+  <!-- Subtitle -->
+  <text x="600" y="290" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="22" fill="#475569">Real-time platform and service health</text>
+  <!-- Status indicator -->
+  <circle cx="508" cy="370" r="10" fill="#10B981"/>
+  <text x="530" y="378" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="700" fill="#10B981">All Systems Operational</text>
+  <!-- Divider -->
+  <line x1="400" y1="420" x2="800" y2="420" stroke="#ffffff0a" stroke-width="1"/>
+  <!-- Service dots -->
+  <circle cx="390" cy="470" r="5" fill="#10B981"/>
+  <text x="405" y="476" font-family="Segoe UI, system-ui, sans-serif" font-size="16" fill="#94a3b8">Authentication</text>
+  <circle cx="570" cy="470" r="5" fill="#10B981"/>
+  <text x="585" y="476" font-family="Segoe UI, system-ui, sans-serif" font-size="16" fill="#94a3b8">Database</text>
+  <circle cx="700" cy="470" r="5" fill="#10B981"/>
+  <text x="715" y="476" font-family="Segoe UI, system-ui, sans-serif" font-size="16" fill="#94a3b8">Quiz Engine</text>
+  <!-- URL -->
+  <text x="600" y="560" text-anchor="middle" font-family="'Fira Code', monospace" font-size="16" fill="#334155">status.kubequest.online</text>
+</svg>
