@@ -1090,6 +1090,14 @@ export default function K8sQuestApp() {
     }
   }, [dataLoaded, user, resumeData]);
 
+  // Set page title for status screen
+  useEffect(() => {
+    if (screen === "status") {
+      document.title = "KubeQuest Status";
+      return () => { document.title = "KubeQuest – Kubernetes Practice Game"; };
+    }
+  }, [screen]);
+
   // Fetch real monitoring data when status screen opens, poll every 30s
   useEffect(() => {
     if (screen !== "status") return;
