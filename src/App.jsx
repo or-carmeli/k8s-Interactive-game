@@ -3423,9 +3423,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
             {/* Back (hidden on standalone status subdomain) */}
             {!isStatusDomain && (
-              <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",color:"#94a3b8",padding:"7px 12px",borderRadius:6,cursor:"pointer",fontSize:12,marginBottom:24,display:"flex",alignItems:"center",gap:5}}>
-                {lang==="en"?"← Return":"→ חזרה"}
-              </button>
+              <div style={{display:"flex",justifyContent:lang==="en"?"flex-start":"flex-end",marginBottom:24}}>
+                <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",color:"#94a3b8",padding:"7px 12px",borderRadius:6,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:5}}>
+                  {lang==="en"?"← Return":"חזרה →"}
+                </button>
+              </div>
             )}
 
             {/* ── GLOBAL STATUS BANNER ── */}
