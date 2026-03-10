@@ -471,12 +471,10 @@ function shuffleOptions(questions) {
   });
 }
 
-// Set of Kubernetes / technical terms that should render as inline code.
-// Compared via lower-case; trailing "s" is also stripped for plural matching.
-const K8S_CODE_TERMS = new Set([
-  // CLI tools
-  "kubectl","helm","docker","kubelet","kubeadm","crictl","etcdctl",
-  // Core resource types (these are actual K8s API kinds)
+// Kubernetes concept terms — highlighted as concept tags (not code).
+// These are K8s resource types, states, and service types.
+const K8S_CONCEPT_TERMS = new Set([
+  // Core resource types
   "pod","node","namespace","deployment","replicaset",
   "statefulset","daemonset","job","cronjob","configmap","secret",
   "ingress","networkpolicy","serviceaccount",
@@ -484,8 +482,6 @@ const K8S_CODE_TERMS = new Set([
   "pv","pvc","persistentvolume","persistentvolumeclaim",
   // Scaling resources
   "hpa","vpa","pdb","poddisruptionbudget",
-  // Components
-  "api-server","kube-proxy","etcd","coredns",
   // Pod states & errors
   "oomkilled","crashloopbackoff","imagepullbackoff","errimagepull",
   "containercreating",
@@ -495,20 +491,28 @@ const K8S_CODE_TERMS = new Set([
   "resourcequota","limitrange","priorityclass",
 ]);
 
-// Check if a token (or multi-word phrase) is a known K8s / CLI term or DNS name.
-// For multi-word Latin runs, also checks each individual word so that
-// "CPU request" is recognised even if the exact phrase isn't in the set.
-function isCodeTerm(token) {
-  // Dotted paths like spec.containers or securityContext.runAsNonRoot (must have lowercase.lowercase pattern, not "e.g.")
-  if (/^[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z]/.test(token)) return true;
+// CLI tools & infrastructure components — rendered as inline code.
+const K8S_CODE_TERMS = new Set([
+  "kubectl","helm","docker","kubelet","kubeadm","crictl","etcdctl",
+  "api-server","kube-proxy","etcd","coredns",
+]);
+
+// Returns "code", "concept", or null for a given token.
+function getTermKind(token) {
+  // Dotted paths like spec.containers or securityContext.runAsNonRoot → code
+  if (/^[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z]/.test(token)) return "code";
   const lower = token.toLowerCase();
-  // Exact match only — no single-word fallback for multi-word phrases
-  if (K8S_CODE_TERMS.has(lower) || K8S_CODE_TERMS.has(lower.replace(/s$/,""))) return true;
-  return false;
+  const bare = lower.replace(/s$/, "");
+  if (K8S_CODE_TERMS.has(lower) || K8S_CODE_TERMS.has(bare)) return "code";
+  if (K8S_CONCEPT_TERMS.has(lower) || K8S_CONCEPT_TERMS.has(bare)) return "concept";
+  return null;
 }
 
-// Inline-code style shared between backtick spans and K8s code terms
+// Inline-code style for CLI tools, dotted paths, backtick spans
 const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"var(--code-text)"};
+
+// Concept tag style for K8s resource types — highlighted but not code
+const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",borderRadius:4,padding:"1px 5px",fontSize:"0.92em",fontWeight:500,color:"var(--concept-text)"};
 
 // Inner bidi logic: wraps Latin sequences in <span dir="ltr">, applies code styling to K8s terms.
 function renderBidiInner(text, lang, keyPrefix) {
@@ -519,8 +523,9 @@ function renderBidiInner(text, lang, keyPrefix) {
   return parts.map((part, idx) => {
     const k = `${keyPrefix}-${idx}`;
     if (/^[A-Za-z]/.test(part)) {
-      const codeStyle = isCodeTerm(part) ? CODE_SPAN_STYLE : undefined;
-      return [idx === 0 && startsWithLatin ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",...codeStyle}}>{part}</span>];
+      const kind = getTermKind(part);
+      const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : undefined;
+      return [idx === 0 && startsWithLatin ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{part}</span>];
     }
     if (idx > 0 && /^[A-Za-z]/.test(parts[idx - 1])) return "\u200F" + part;
     return part;
@@ -2689,7 +2694,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .stats-grid{gap:5px!important}
 .stats-cell{padding:9px 3px!important}
 .action-card{padding:11px 10px!important}
-}@media(min-width:900px){.page-pad,.home-screen{max-width:1200px!important}}`}</style>
+}@media(min-width:900px){.page-pad,.home-screen{max-width:1200px!important;padding-left:24px!important;padding-right:24px!important}.topic-card-section{transition:border-color 0.2s,box-shadow 0.2s,opacity 0.2s}.topic-next{border-color:rgba(0,212,255,0.22)!important;box-shadow:0 2px 20px rgba(0,212,255,0.07)!important}.topic-done{opacity:0.78}.home-hero{margin-bottom:10px!important}.home-screen .stats-grid{margin-bottom:18px!important}.home-screen .action-card{margin-bottom:8px!important}.topic-list{gap:10px!important}}`}</style>
       {!isStatusDomain && <>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
@@ -3000,7 +3005,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
           {/* ── Hero - centered, matches loading screen composition ── */}
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:14}}>
+          <div className="home-hero" style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:14}}>
             {/* Header row: logo+title on one side, burger on the other */}
             {(()=>{
               const logoIcon=(
@@ -3139,9 +3144,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
             <span style={{color:"#EF4444",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
           </button>
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {(()=>{const nextTopicId=TOPICS.find(t=>computeTopicProgress(t.id)<100)?.id;return(
+          <div className="topic-list" style={{display:"flex",flexDirection:"column",gap:12}}>
             {TOPICS.map(topic=>(
-              <section key={topic.id} id={`topic-card-${topic.id}`} aria-label={topic.name} className={`topic-card-section${highlightTopic===topic.id?" pulseHighlight":""}`} style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:"16px 18px"}}>
+              <section key={topic.id} id={`topic-card-${topic.id}`} aria-label={topic.name} className={`topic-card-section${highlightTopic===topic.id?" pulseHighlight":""}${topic.id===nextTopicId?" topic-next":""}${computeTopicProgress(topic.id)>=100?" topic-done":""}`} style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:"16px 18px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
                   <div aria-hidden="true" style={{fontSize:24,width:44,height:44,borderRadius:10,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>{topic.icon}</div>
                   <div style={{flex:1}}>
@@ -3180,7 +3186,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               </section>
             ))}
-          </div>
+          </div>);})()}
           {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"var(--glass-2)",border:"1px solid var(--glass-5)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"var(--text-secondary)",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--glass-4)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"var(--text-secondary)"}}><span>{a.icon}</span>{lang==="en"?a.nameEn:a.name}</div>)}</div></div>}
           </>)}
           {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={(topic,lvl)=>tryStartQuiz(()=>startTopic(topic,lvl))} startMixedQuiz={()=>tryStartQuiz(startMixedQuiz)} lang={lang} t={t} dir={dir}/>}

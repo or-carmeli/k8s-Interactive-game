@@ -26,6 +26,10 @@
   --code-text: #7dd3fc;
   --link-color: #0ea5e9;
 
+  /* Concept tags (K8s resource types — highlighted but not code) */
+  --concept-bg: rgba(139,92,246,0.10);
+  --concept-text: #c4b5fd;
+
   /* Glass overlays (white-based for dark backgrounds) */
   --glass-1: rgba(255,255,255,0.01);
   --glass-2: rgba(255,255,255,0.02);
@@ -80,6 +84,10 @@
 
   --code-text: #0369a1;
   --link-color: #0284c7;
+
+  /* Concept tags */
+  --concept-bg: rgba(139,92,246,0.08);
+  --concept-text: #7c3aed;
 
   /* Glass overlays — boosted so borders and fills are clearly visible */
   --glass-1: rgba(0,0,0,0.02);
