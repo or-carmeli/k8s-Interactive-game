@@ -31,3 +31,14 @@ export async function fetchIncidentHistory(supabase, limit = 20) {
   if (error) throw error;
   return data || [];
 }
+
+/**
+ * Fetch active and upcoming maintenance windows.
+ * Returns: [{ id, title, title_he, description, description_he,
+ *             starts_at, ends_at, affected_services, created_at }]
+ */
+export async function fetchMaintenanceWindows(supabase) {
+  const { data, error } = await supabase.rpc("get_active_maintenance");
+  if (error) throw error;
+  return data || [];
+}
