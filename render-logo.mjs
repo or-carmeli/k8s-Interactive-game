@@ -11,13 +11,13 @@ const html = `<!DOCTYPE html>
     display:flex; flex-direction:column; align-items:center; justify-content:center;
   }
   .title {
-    font-size:52px; font-weight:700; letter-spacing:-0.5px; line-height:1;
-    margin:0 0 10px;
+    font-size:64px; font-weight:700; letter-spacing:-0.5px; line-height:1;
+    margin:0 0 12px;
     color:#4ECDC4;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,Helvetica,sans-serif;
   }
   .subtitle {
-    font-size:18px; color:#64748b; letter-spacing:1.5px;
+    font-size:22px; color:#64748b; letter-spacing:1.5px;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,Helvetica,sans-serif;
   }
 </style></head><body>
