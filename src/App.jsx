@@ -3423,14 +3423,27 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 )}
               </div>
             )}
-            {upcomingMaintenance.length > 0 && !activeMaintenance && (
-              <div dir="ltr" style={{background:"rgba(250,204,21,0.04)",border:"1px solid rgba(250,204,21,0.2)",borderRadius:10,padding:"8px 16px",marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
-                <div style={{width:5,height:5,borderRadius:"50%",background:"#facc15",flexShrink:0}}/>
-                <span style={{fontSize:12,fontWeight:500,color:"#facc15"}}>
-                  {"Maintenance scheduled: "}{new Date(upcomingMaintenance[0].starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} UTC
-                </span>
+            {upcomingMaintenance.length > 0 && !activeMaintenance && (() => { const mw = upcomingMaintenance[0]; return (
+              <div dir="ltr" style={{background:"rgba(250,204,21,0.06)",border:"1px solid rgba(250,204,21,0.35)",borderRadius:10,padding:"12px 16px",marginBottom:6}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#facc15",marginBottom:6}}>Scheduled Maintenance</div>
+                {mw.description && (
+                  <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,marginBottom:8}}>{mw.description}</div>
+                )}
+                <div style={{fontSize:11,color:"#64748b",fontFamily:"'Fira Code','Courier New',monospace",marginBottom:mw.affected_services?.length ? 8 : 0}}>
+                  {new Date(mw.starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"})} · {new Date(mw.starts_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})}–{new Date(mw.ends_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} UTC
+                </div>
+                {mw.affected_services?.length > 0 && (
+                  <div>
+                    <div style={{fontSize:10,color:"#64748b",fontWeight:500,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>Affected services</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {mw.affected_services.map(s=>(
+                        <span key={s} style={{fontSize:11,color:"#facc15",background:"rgba(250,204,21,0.08)",border:"1px solid rgba(250,204,21,0.2)",borderRadius:4,padding:"2px 8px",fontWeight:500}}>{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            ); })()}
 
             {/* ── SERVICE HEALTH ── */}
             {sectionTitle(lang==="en"?"Service Health":"בריאות שירותים")}
