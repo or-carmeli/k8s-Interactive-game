@@ -20,12 +20,14 @@ const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUP
 if (!supabase) console.warn("[KubeQuest] Supabase not configured — VITE_SUPABASE_URL:", !!SUPABASE_URL, "VITE_SUPABASE_ANON_KEY:", !!SUPABASE_KEY);
 
 // Run version check before any component mounts — clears stale keys if data version changed
+console.info("[KubeQuest:boot] App.jsx module executing");
 checkDataVersion();
 console.info(
   `[KubeQuest] build: ${typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : "dev"}` +
   ` | data-v: ${typeof __APP_DATA_VERSION__ !== "undefined" ? __APP_DATA_VERSION__ : "dev"}` +
   ` | SW: ${"serviceWorker" in navigator ? "supported" : "unsupported"}`
 );
+console.info("[KubeQuest:boot] App.jsx module-level init complete");
 
 const GUEST_USER = { id: "guest", email: "guest", user_metadata: { username: "Guest" } };
 
@@ -894,9 +896,15 @@ export default function K8sQuestApp() {
     }
 
     // Fallback: if Supabase never responds, unblock the UI after 5 s
-    const authTimeout = setTimeout(() => { setAuthChecked(true); setDataLoaded(true); }, 5000);
+    const authTimeout = setTimeout(() => {
+      console.warn("[KubeQuest:boot] Auth timeout (5 s) — unblocking UI");
+      setAuthChecked(true);
+      setDataLoaded(true);
+    }, 5000);
+    console.info("[KubeQuest:boot] calling getSession()");
     supabase.auth.getSession().then(({ data: { session } }) => {
       clearTimeout(authTimeout);
+      console.info("[KubeQuest:boot] getSession resolved, session:", !!session);
       if (session) { setUser(session.user); loadUserData(session.user.id, session.user); }
       else {
         // Restore guest session if user previously chose guest mode
@@ -904,6 +912,11 @@ export default function K8sQuestApp() {
         setDataLoaded(true);
       }
       setAuthChecked(true);
+    }).catch((err) => {
+      console.error("[KubeQuest:boot] getSession() FAILED:", err);
+      clearTimeout(authTimeout);
+      setAuthChecked(true);
+      setDataLoaded(true);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
@@ -1258,10 +1271,14 @@ export default function K8sQuestApp() {
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadUserData = async (userId, sessionUser) => {
+    console.info("[KubeQuest:boot] loadUserData starting for", userId);
     if (!supabase) { setDataLoaded(true); return; }
 
     // Timeout guard: if data loading takes too long, unblock the UI
-    const dataTimeout = setTimeout(() => { setDataLoaded(true); }, 5000);
+    const dataTimeout = setTimeout(() => {
+      console.warn("[KubeQuest:boot] loadUserData timeout (5 s) — unblocking UI");
+      setDataLoaded(true);
+    }, 5000);
 
     try {
       const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
@@ -2388,7 +2405,9 @@ export default function K8sQuestApp() {
 
 const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username || user?.email?.split("@")[0] || t("guestName"));
 
-  if (!authChecked || !minLoadElapsed || (!!user && !isGuest && !dataLoaded)) return (
+  if (!authChecked || !minLoadElapsed || (!!user && !isGuest && !dataLoaded)) {
+    console.debug("[KubeQuest:boot] loading gate active — authChecked:", authChecked, "minLoadElapsed:", minLoadElapsed, "user:", !!user, "isGuest:", isGuest, "dataLoaded:", dataLoaded);
+    return (
     <div style={{minHeight:"100vh",background:"var(--bg-body)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Segoe UI, system-ui, sans-serif"}}>
       <style>{`
         @keyframes lspin  { from { transform: rotate(0deg)   } to { transform: rotate(360deg)  } }
@@ -2464,6 +2483,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       </div>
     </div>
   );
+  }
 
   const accuracy = stats.total_answered > 0 ? Math.round(stats.total_correct / stats.total_answered * 100) : 0;
   const FONT_SCALES = { normal: 1, large: 1, xl: 1 }; // no zoom - original A mode is now the default
