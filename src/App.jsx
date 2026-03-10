@@ -1029,6 +1029,7 @@ export default function K8sQuestApp() {
 
   // Persist current screen to localStorage for refresh resilience
   useEffect(() => {
+    if (isStatusDomain) return;
     try { localStorage.setItem("kq_screen_v1", screen); } catch {}
   }, [screen]);
 
@@ -1042,7 +1043,9 @@ export default function K8sQuestApp() {
   }, [screen]);
 
   // Auto-restore session on page load (refresh resilience)
+  const isStatusDomain = window.location.hostname === "status.kubequest.online";
   useEffect(() => {
+    if (isStatusDomain) return;
     if (autoResumeAttempted.current) return;
     if (!dataLoaded || !user) return;
     autoResumeAttempted.current = true;
