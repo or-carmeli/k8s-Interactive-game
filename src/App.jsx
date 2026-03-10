@@ -1090,11 +1090,16 @@ export default function K8sQuestApp() {
     }
   }, [dataLoaded, user, resumeData]);
 
-  // Set page title for status screen
+  // Set page title and favicon for status screen
   useEffect(() => {
     if (screen === "status") {
       document.title = "KubeQuest Status";
-      return () => { document.title = "KubeQuest – Kubernetes Practice Game"; };
+      const link = document.querySelector('link[rel="icon"]');
+      if (link) link.href = "/favicon-status.svg";
+      return () => {
+        document.title = "KubeQuest – Kubernetes Practice Game";
+        if (link) link.href = "/favicon.svg";
+      };
     }
   }, [screen]);
 
@@ -2458,14 +2463,26 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
   );
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:dir,position:"relative",overflowX:"hidden"}}>
+    <div dir={isStatusDomain?"ltr":undefined} style={{minHeight:"100vh",background:"linear-gradient(160deg,#020817 0%,#0f172a 60%,#020817 100%)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:isStatusDomain?"ltr":dir,position:"relative",overflowX:"hidden"}}>
+      {/* ── Standalone status header (status.kubequest.online only) ── */}
+      {isStatusDomain && (
+        <header style={{borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"16px 24px"}}>
+          <div style={{maxWidth:720,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontSize:16,fontWeight:800,color:"#e2e8f0",letterSpacing:-0.3}}>KubeQuest Status</div>
+              <div style={{fontSize:12,color:"#475569",marginTop:2}}>Real-time platform and service health</div>
+            </div>
+            <a href="https://kubequest.online" target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:"#64748b",textDecoration:"none",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"5px 10px",fontWeight:500}}>kubequest.online</a>
+          </div>
+        </header>
+      )}
       {/* Skip-to-content - invisible until focused by keyboard */}
-      <a href="#main-content"
+      {!isStatusDomain && <a href="#main-content"
         style={{position:"fixed",top:-100,left:8,zIndex:9999,padding:"8px 16px",background:"#00D4FF",color:"#020817",borderRadius:8,fontWeight:700,fontSize:14,textDecoration:"none",transition:"top 0.15s",direction:"ltr"}}
         onFocus={e=>e.currentTarget.style.top="8px"}
         onBlur={e=>e.currentTarget.style.top="-100px"}>
         {lang==="en"?"Skip to content":"דלג לתוכן"}
-      </a>
+      </a>}
       <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.quiz-text{direction:rtl;unicode-bidi:plaintext;text-align:right}.quiz-text[dir="ltr"]{direction:ltr;text-align:left}.code-inline{direction:ltr;display:inline-block;unicode-bidi:isolate}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:#7dd3fc;font-size:0.88em;margin-top:4px;text-align:left}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
@@ -2527,6 +2544,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .stats-cell{padding:9px 3px!important}
 .action-card{padding:11px 10px!important}
 }`}</style>
+      {!isStatusDomain && <>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
       {showConfetti&&!a11y.reduceMotion&&<Confetti/>}
@@ -2817,7 +2835,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>
         </div>
       </>)}
-      <main id="main-content" style={fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : undefined}>
+      </>}
+      <main id="main-content" style={isStatusDomain ? undefined : (fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : undefined)}>
+      {!isStatusDomain && <>
       {/* HOME */}
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
@@ -3249,6 +3269,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         </div>
       )}
 
+      </>}
       {/* STATUS */}
       {screen==="status"&&(()=>{
         const isProd    = import.meta.env.MODE === "production";
@@ -3380,10 +3401,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         return (
           <div className="page-pad" style={{maxWidth:720,margin:"0 auto",padding:"20px 16px 48px",animation:"fadeIn 0.3s ease"}}>
 
-            {/* Back */}
-            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:28,display:"flex",alignItems:"center",gap:6}}>
-              {lang==="en"?"← Return":"→ חזרה"}
-            </button>
+            {/* Back (hidden on standalone status subdomain) */}
+            {!isStatusDomain && (
+              <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:28,display:"flex",alignItems:"center",gap:6}}>
+                {lang==="en"?"← Return":"→ חזרה"}
+              </button>
+            )}
 
             {/* ── GLOBAL STATUS BANNER ── */}
             <div style={{background:`rgba(${globalOk===false?"239,68,68":globalOk?"16,185,129":"245,158,11"},0.06)`,border:`1px solid ${globalColor}33`,borderRadius:16,padding:"20px 24px",marginBottom:6,boxShadow:`0 0 32px ${globalGlow}`,display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
@@ -3588,6 +3611,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         );
       })()}
 
+      {!isStatusDomain && <>
       {/* TOPIC */}
       {screen==="topic"&&selectedTopic&&selectedLevel&&(
         <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease"}}>
@@ -4203,6 +4227,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>
         );
       })()}
+      </>}
 
       </main>
       <Analytics />
