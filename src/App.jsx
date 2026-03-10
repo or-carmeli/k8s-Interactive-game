@@ -620,7 +620,7 @@ export default function K8sQuestApp() {
   const [saveError, setSaveError]         = useState("");
 
   const [screen, setScreen]               = useState(()=>{
-    if (window.location.pathname==="/status") return "status";
+    if (window.location.pathname==="/status" || window.location.hostname==="status.kubequest.online") return "status";
     try { const s=localStorage.getItem("kq_screen_v1"); if (s&&["home","incidentList","incident","incidentComplete","topic"].includes(s)) return s; } catch {}
     return "home";
   });
