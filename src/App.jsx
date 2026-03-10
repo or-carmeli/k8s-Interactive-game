@@ -3955,7 +3955,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",direction:dir,marginBottom:6}}>
               <button onClick={()=>setScreen("home")} aria-label={t("back")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",width:34,height:34,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span aria-hidden="true">{dir==="rtl"?"→":"←"}</span></button>
-              <span style={{fontSize:12,color:LEVEL_CONFIG[selectedLevel].color,background:`${LEVEL_CONFIG[selectedLevel].color}18`,padding:"3px 10px",borderRadius:20,fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>{LEVEL_CONFIG[selectedLevel].icon} {lang==="en"?LEVEL_CONFIG[selectedLevel].labelEn:LEVEL_CONFIG[selectedLevel].label}</span>
+              <span style={{fontSize:12,color:LEVEL_CONFIG[selectedLevel]?.color,background:`${LEVEL_CONFIG[selectedLevel]?.color||"#888"}18`,padding:"3px 10px",borderRadius:20,fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>{LEVEL_CONFIG[selectedLevel]?.icon} {lang==="en"?LEVEL_CONFIG[selectedLevel]?.labelEn:LEVEL_CONFIG[selectedLevel]?.label}</span>
             </div>
             <h2 style={{margin:0,color:selectedTopic.color,fontSize:17,fontWeight:800,textAlign:"center"}}>{selectedTopic.name}</h2>
           </div>
@@ -3969,7 +3969,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{display:"flex",gap:8,marginBottom:0}}>
                 <button onClick={()=>{setTopicScreen("quiz");if(timerEnabled||isInterviewMode)setTimeLeft(isInterviewMode?(INTERVIEW_DURATIONS[selectedLevel]||25):(TIMER_DURATIONS[selectedLevel]||30));}} style={{flex:1,padding:15,background:`linear-gradient(135deg,${selectedTopic.color}dd,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontWeight:800,cursor:"pointer",boxShadow:`0 6px 24px ${selectedTopic.color}44`,lineHeight:1.4}}>
                   <div style={{fontSize:15}}>{t("startQuiz")}</div>
-                  <div style={{fontSize:12,opacity:0.85,fontWeight:600}}>(+{LEVEL_CONFIG[selectedLevel].points} {t("ptsPerQ")})</div>
+                  <div style={{fontSize:12,opacity:0.85,fontWeight:600}}>(+{LEVEL_CONFIG[selectedLevel]?.points ?? 0} {t("ptsPerQ")})</div>
                 </button>
               </div>
               {!isInterviewMode&&<div style={{display:"flex",justifyContent:"center",marginTop:10}}>
@@ -4064,15 +4064,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </div>
                   {hintVisible&&(
                     <div role="note" dir={dir} style={{background:"rgba(245,158,11,0.07)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:9,padding:"11px 14px",fontSize:13,color:"#fbbf24",lineHeight:1.6,direction:dir,unicodeBidi:"isolate",wordBreak:"break-word",overflowWrap:"anywhere",animation:"fadeIn 0.2s ease"}}>
-                      {renderBidiBlock(currentQuestions[questionIndex].explanation.split(/\.\s+/)[0], lang)}
+                      {renderBidiBlock((currentQuestions[questionIndex]?.explanation || "").split(/\.\s+/)[0], lang)}
                     </div>
                   )}
                 </div>
               )}
 
               <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
-                {currentQuestions[questionIndex].options.map((opt,i)=>{
-                  const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof currentQuestions[questionIndex].answer === "number" ? i === currentQuestions[questionIndex].answer : false);
+                {(currentQuestions[questionIndex]?.options || []).map((opt,i)=>{
+                  const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof currentQuestions[questionIndex]?.answer === "number" ? i === currentQuestions[questionIndex].answer : false);
                   const isChosen  = i===dispSelectedAnswer;
                   const isEliminated = !dispSubmitted && eliminatedOption === i;
                   let borderColor = "var(--glass-9)", bg = "var(--glass-2)", color = "var(--text-light)", labelBg = "var(--glass-7)", labelColor = "var(--text-secondary)";
@@ -4142,7 +4142,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         <div style={{background:isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.10)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:"flex-start",gap:8,borderBottom:`1px solid ${isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.12)"}`,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
                           <span style={{fontWeight:900,fontSize:15,color:isCorrect?"#10B981":"#EF4444",letterSpacing:0.3}}>
                             {isCorrect
-                              ? (tryAgainActive ? t("tryAgainCorrect") : `${t("correct")}${isInHistoryMode?"":" +"+LEVEL_CONFIG[selectedLevel].points+" "+t("pts")}`)
+                              ? (tryAgainActive ? t("tryAgainCorrect") : `${t("correct")}${isInHistoryMode?"":" +"+(LEVEL_CONFIG[selectedLevel]?.points??0)+" "+t("pts")}`)
                               : timedOut
                                 ? `${t("timeUp")} ${lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: ${q.options[correctIdx]}`
                                 : (tryAgainActive ? t("tryAgainWrong") : t("incorrect"))}
@@ -4239,7 +4239,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{fontSize:52,marginBottom:10,animation:"popIn 1s ease"}}>
               {allCorrect?"🌟":anyCorrect?"👍":"💪"}
             </div>
-            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} – {lang==="en"?LEVEL_CONFIG[selectedLevel].labelEn:LEVEL_CONFIG[selectedLevel].label}</h2>
+            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} – {lang==="en"?LEVEL_CONFIG[selectedLevel]?.labelEn:LEVEL_CONFIG[selectedLevel]?.label}</h2>
             <div style={{display:"inline-flex",alignItems:"center",gap:10,marginBottom:8,background:"var(--glass-4)",borderRadius:30,padding:"8px 20px"}}>
               <span style={{color:"var(--text-primary)",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
               {allCorrect&&<span style={{color:"#F59E0B",fontSize:13,fontWeight:700}}>{t("perfect")}</span>}
@@ -4323,7 +4323,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
               {(()=>{
-                const lvlLabel = lang==="en" ? LEVEL_CONFIG[selectedLevel].labelEn : LEVEL_CONFIG[selectedLevel].label;
+                const lvlLabel = lang==="en" ? LEVEL_CONFIG[selectedLevel]?.labelEn : LEVEL_CONFIG[selectedLevel]?.label;
                 const perfect = result?.correct === result?.total;
                 const isDaily = selectedTopic.id === "daily";
                 const dateStr = new Date().toLocaleDateString(lang==="en"?"en-US":"he-IL",{month:"short",day:"numeric"});
@@ -4443,7 +4443,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* ── INCIDENT PLAYING ──────────────────────────────────────────────── */}
       {screen==="incident"&&selectedIncident&&(()=>{
         const step = getIncidentStep(incidentStepIndex);
-        const totalSteps = incidentSteps ? incidentSteps.length : selectedIncident.steps.length;
+        if (!step) { return <div style={{textAlign:"center",padding:"40px 20px"}}><p style={{color:"var(--text-secondary)",fontSize:14}}>{lang==="en"?"Incident step not found. Returning...":"שלב לא נמצא. חוזר..."}</p><button onClick={()=>setScreen("incidentList")} style={{marginTop:12,padding:"10px 22px",background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:10,color:"var(--text-secondary)",fontSize:14,cursor:"pointer"}}>{lang==="en"?"Back":"חזרה"}</button></div>; }
+        const totalSteps = incidentSteps ? incidentSteps.length : (selectedIncident.steps?.length || 0);
         const maxScore = totalSteps * 10;
         const progress = totalSteps > 0 ? ((incidentStepIndex + (incidentSubmitted ? 1 : 0)) / totalSteps) * 100 : 0;
         return(
@@ -4481,8 +4482,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
             {/* Options */}
             <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
-              {(lang === "he" ? (step.optionsHe || step.options) : step.options).map((opt,i)=>{
-                const isCorrect  = incidentAnswerResult ? i === incidentAnswerResult.correctIndex : i === step.answer;
+              {(lang === "he" ? (step.optionsHe || step.options) : step.options || []).map((opt,i)=>{
+                const isCorrect  = incidentAnswerResult ? i === incidentAnswerResult.correctIndex : i === step?.answer;
                 const isChosen   = i === incidentAnswer;
                 let bg = "var(--glass-2)", border = "var(--glass-9)", color = "var(--text-light)", labelBg = "var(--glass-7)", labelColor = "var(--text-secondary)";
                 if (!incidentSubmitted && isChosen) { bg="rgba(239,68,68,0.08)"; border="#EF444466"; color="#fca5a5"; labelBg="rgba(239,68,68,0.2)"; labelColor="#EF4444"; }
@@ -4536,7 +4537,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {/* ── INCIDENT COMPLETE ─────────────────────────────────────────────── */}
       {screen==="incidentComplete"&&selectedIncident&&(()=>{
-        const maxScore = (incidentSteps ? incidentSteps.length : selectedIncident.steps.length) * 10;
+        const maxScore = (incidentSteps ? incidentSteps.length : (selectedIncident.steps?.length || 0)) * 10;
         const perfect  = incidentScore === maxScore;
         const goodRun  = incidentMistakes <= 1;
         return(
