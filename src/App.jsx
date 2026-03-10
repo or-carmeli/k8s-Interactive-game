@@ -21,8 +21,8 @@ if (!supabase) console.warn("[KubeQuest] Supabase not configured — VITE_SUPABA
 const GUEST_USER = { id: "guest", email: "guest", user_metadata: { username: "Guest" } };
 
 const LEVEL_CONFIG = {
-  easy:   { label: "קל",        labelEn: "Easy",             icon: "🌱", color: "#10B981", points: 10 },
-  medium: { label: "בינוני",    labelEn: "Medium",           icon: "⚡", color: "#F59E0B", points: 20 },
+  easy:   { label: "קל",        labelEn: "Easy",             icon: "⚡", color: "#10B981", points: 10 },
+  medium: { label: "בינוני",    labelEn: "Medium",           icon: "🔶", color: "#F59E0B", points: 20 },
   hard:   { label: "קשה",      labelEn: "Hard",             icon: "🔥", color: "#EF4444", points: 30 },
   mixed:  { label: "מיקס",     labelEn: "Mixed",            icon: "🎲", color: "#A855F7", points: 15 },
   daily:  { label: "אתגר יומי", labelEn: "Daily Challenge",  icon: "🔥", color: "#F59E0B", points: 15 },
@@ -132,7 +132,7 @@ const TRANSLATIONS = {
     roadmapCompletedPct: "הושלם",
     roadmapStart: "🗺️ התחילי את המסלול",
     roadmapStartHere: "התחילי כאן",
-    roadmapContinue: "🚀 המשיכי לשלב הבא",
+    roadmapContinue: "▶ המשיכי לשלב הבא",
     roadmapLocked: "🔒 נפתח אחרי השלמת השלב הקודם",
     roadmapDone: "✅ הושלם",
     roadmapContinueHere: "המשיכי מכאן",
@@ -179,7 +179,7 @@ const TRANSLATIONS = {
     roadmapStage_m: "אתה בשלב",
     roadmapStart_m: "התחל את המסלול",
     roadmapStartHere_m: "התחל כאן",
-    roadmapContinue_m: "🚀 המשך לשלב הבא",
+    roadmapContinue_m: "▶ המשך לשלב הבא",
     roadmapContinueHere_m: "המשך מכאן",
     weakAreaEmpty_m: "עדיין אין מספיק נתונים, התחל לענות כדי שנמליץ מה לחזק.",
     goBackToTopic_m: "חזור לנושא הזה",
@@ -280,9 +280,9 @@ const TRANSLATIONS = {
     roadmapAllDone: "🎉 You completed all stages!",
     roadmapStage: "You're on stage", roadmapStageOf: "of",
     roadmapCompletedPct: "completed",
-    roadmapStart: "🚀 Start Roadmap",
+    roadmapStart: "▶ Start Roadmap",
     roadmapStartHere: "Start here",
-    roadmapContinue: "🚀 Continue to Next Stage",
+    roadmapContinue: "▶ Continue to Next Stage",
     roadmapLocked: "🔒 Unlocks after completing the previous stage",
     roadmapDone: "✅ Completed",
     roadmapContinueHere: "Continue from here",
@@ -3322,7 +3322,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>
           {[
             {icon:"🎯",title:lang==="en"?"What is this?":"מה זה?",body:lang==="en"?"An interactive Kubernetes training app. Practice real interview questions across 5 topic areas at 3 difficulty levels.":"אפליקציית אימון Kubernetes אינטראקטיבית. תרגלי שאלות ראיון אמיתיות ב-5 נושאים ו-3 רמות קושי."},
-            {icon:"🚀",title:lang==="en"?"Goal":"המטרה",body:lang==="en"?"Help developers prepare confidently for Kubernetes interviews and CKA/CKAD exams.":"לעזור למפתחים להתכונן לראיונות Kubernetes ולבחינות CKA/CKAD."},
+            {icon:"🎯",title:lang==="en"?"Goal":"המטרה",body:lang==="en"?"Help developers prepare confidently for Kubernetes interviews and CKA/CKAD exams.":"לעזור למפתחים להתכונן לראיונות Kubernetes ולבחינות CKA/CKAD."},
             {icon:"👨‍💻",title:lang==="en"?"Built by":"נבנה על ידי",body:<span>{lang==="en"?"Or Carmeli · ":"Or Carmeli · "}<a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>LinkedIn</a>{" · "}<a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={{color:"var(--text-primary)",textDecoration:"none",fontWeight:600}}>GitHub</a></span>},
           ].map(({icon,title,body},i)=>(
             <div key={i} style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:"14px 16px",marginBottom:12,display:"flex",gap:14,alignItems:"flex-start"}}>

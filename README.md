@@ -87,7 +87,7 @@ flowchart LR
     end
 
     GHCR["📦 GHCR\nghcr.io/or-carmeli/kubequest"]
-    VERCEL["🚀 Vercel\nAuto Deploy"]
+    VERCEL["▶ Vercel\nAuto Deploy"]
 
     DEV -->|git push| REPO
     REPO -->|on PR| CI

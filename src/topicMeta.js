@@ -6,7 +6,7 @@
 export const ACHIEVEMENTS = [
   {
     id: "first",
-    icon: "🌱",
+    icon: "⚡",
     name: "ראשית הדרך",
     nameEn: "First Steps",
     condition: (s) => s.total_answered >= 1,
@@ -47,7 +47,7 @@ export const ACHIEVEMENTS = [
 export const TOPIC_META = [
   {
     id: "workloads",
-    icon: "🚀",
+    icon: "⚙️",
     name: "Workloads & Scheduling",
     color: "#00D4FF",
     description: "Pods · Deployments · StatefulSets · Scheduling · Resources",

@@ -91,7 +91,7 @@ export const CHEATSHEET = [
 
   // ── 7. Deployments & Rollouts ─────────────────────────────────────────────
   {
-    id: "deployments", icon: "🚀", color: "#6366F1",
+    id: "deployments", icon: "⚙️", color: "#6366F1",
     title: "Deployments & Rollouts", titleHe: "Deployments ו-Rollouts",
     commands: [
       { cmd: "kubectl rollout status deploy/<name> -n <ns>", desc: "Watch a deployment rollout progress", descHe: "מעקב אחרי התקדמות rollout" },
