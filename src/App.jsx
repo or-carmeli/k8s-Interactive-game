@@ -3267,12 +3267,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           : inMaintenance ? (lang==="en" ? "Scheduled Maintenance" : "תחזוקה מתוכננת")
           : allOperational ? (lang==="en" ? "All Systems Operational" : "כל המערכות פעילות")
           : (lang==="en" ? "Degraded Performance" : "ביצועים מופחתים");
-        const globalColor   = loading ? "#F59E0B" : anyDown ? "#EF4444" : inMaintenance ? "#7C3AED" : allOperational ? "#10B981" : "#F59E0B";
-        const globalGlow    = loading ? "rgba(245,158,11,0.25)" : anyDown ? "rgba(239,68,68,0.25)" : inMaintenance ? "rgba(124,58,237,0.25)" : allOperational ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)";
+        const globalColor   = loading ? "#F59E0B" : anyDown ? "#EF4444" : inMaintenance ? "#D97706" : allOperational ? "#10B981" : "#F59E0B";
+        const globalGlow    = loading ? "rgba(245,158,11,0.25)" : anyDown ? "rgba(239,68,68,0.25)" : inMaintenance ? "rgba(217,119,6,0.25)" : allOperational ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)";
         const globalDot     = globalColor;
 
         const statusLabel = (s) => s === "operational" ? (lang==="en" ? "Operational" : "פעיל") : s === "degraded" ? (lang==="en" ? "Degraded" : "מופחת") : s === "down" ? (lang==="en" ? "Down" : "מושבת") : (lang==="en" ? "Maintenance" : "תחזוקה");
-        const statusColor = (s) => s === "operational" ? "#10B981" : s === "degraded" ? "#F59E0B" : s === "down" ? "#EF4444" : "#7C3AED";
+        const statusColor = (s) => s === "operational" ? "#10B981" : s === "degraded" ? "#F59E0B" : s === "down" ? "#EF4444" : "#D97706";
 
         // Default service list (used while loading or if no data)
         const defaultSvcNames = ["Quiz Engine","Authentication","Leaderboard","Database","Content API"];
@@ -3403,36 +3403,31 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
             {/* ── MAINTENANCE BANNER ── */}
             {activeMaintenance && (
-              <div style={{background:"rgba(124,58,237,0.08)",border:"1px solid rgba(124,58,237,0.3)",borderRadius:12,padding:"16px 20px",marginBottom:6,display:"flex",flexDirection:"column",gap:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:16}}>🔧</span>
-                  <span style={{fontSize:15,fontWeight:700,color:"#A78BFA"}}>
-                    {lang==="en" ? (activeMaintenance.title || "Scheduled Maintenance") : (activeMaintenance.title_he || activeMaintenance.title || "תחזוקה מתוכננת")}
-                  </span>
+              <div dir="ltr" style={{background:"rgba(217,119,6,0.06)",border:"1px solid rgba(217,119,6,0.2)",borderRadius:10,padding:"10px 14px",marginBottom:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                  <div style={{width:6,height:6,borderRadius:"50%",background:"#D97706",flexShrink:0}}/>
+                  <span style={{fontSize:13,fontWeight:600,color:"#D97706"}}>{activeMaintenance.title || "Scheduled Maintenance"}</span>
                 </div>
-                {(activeMaintenance.description || activeMaintenance.description_he) && (
-                  <div style={{fontSize:13,color:"#94a3b8",lineHeight:1.6}}>
-                    {lang==="en" ? (activeMaintenance.description || "") : (activeMaintenance.description_he || activeMaintenance.description || "")}
-                  </div>
+                {activeMaintenance.description && (
+                  <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.5,marginBottom:4}}>{activeMaintenance.description}</div>
                 )}
-                <div style={{fontSize:12,color:"#7C3AED",fontFamily:"'Fira Code','Courier New',monospace"}}>
-                  {new Date(activeMaintenance.starts_at).toUTCString().replace(" GMT","")} — {new Date(activeMaintenance.ends_at).toUTCString().replace(" GMT","")} UTC
+                <div style={{fontSize:11,color:"#78716c",fontFamily:"'Fira Code','Courier New',monospace",marginBottom:activeMaintenance.affected_services?.length ? 6 : 0}}>
+                  {new Date(activeMaintenance.starts_at).toLocaleDateString("en-US",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"})}, {new Date(activeMaintenance.starts_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} – {new Date(activeMaintenance.ends_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} UTC
                 </div>
                 {activeMaintenance.affected_services?.length > 0 && (
-                  <div style={{fontSize:12,color:"#64748b"}}>
-                    {lang==="en" ? "Affected: " : "מושפעים: "}{activeMaintenance.affected_services.join(", ")}
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                    {activeMaintenance.affected_services.map(s=>(
+                      <span key={s} style={{fontSize:10,color:"#D97706",background:"rgba(217,119,6,0.1)",border:"1px solid rgba(217,119,6,0.15)",borderRadius:4,padding:"1px 6px",fontWeight:500}}>{s}</span>
+                    ))}
                   </div>
                 )}
               </div>
             )}
             {upcomingMaintenance.length > 0 && !activeMaintenance && (
-              <div style={{background:"rgba(124,58,237,0.04)",border:"1px solid rgba(124,58,237,0.15)",borderRadius:10,padding:"10px 16px",marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:14}}>📅</span>
-                <span style={{fontSize:13,fontWeight:600,color:"#A78BFA"}}>
-                  {lang==="en"
-                    ? `Maintenance scheduled: ${new Date(upcomingMaintenance[0].starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"})} UTC`
-                    : `תחזוקה מתוכננת: ${new Date(upcomingMaintenance[0].starts_at).toLocaleDateString("he-IL",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"})} UTC`
-                  }
+              <div dir="ltr" style={{background:"rgba(217,119,6,0.04)",border:"1px solid rgba(217,119,6,0.12)",borderRadius:10,padding:"8px 14px",marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:5,height:5,borderRadius:"50%",background:"#D97706",opacity:0.7,flexShrink:0}}/>
+                <span style={{fontSize:12,fontWeight:500,color:"#D97706"}}>
+                  {"Maintenance scheduled: "}{new Date(upcomingMaintenance[0].starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} UTC
                 </span>
               </div>
             )}
