@@ -16,7 +16,38 @@ import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory, fetchMaint
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+// Custom lock function: wraps navigator.locks with a FINITE timeout (5 s).
+// Supabase v2 defaults to infinite wait (`acquireTimeout = -1`), which can
+// deadlock if a Navigator Lock is orphaned by a crashed/closed tab.
+// See: https://github.com/supabase/supabase-js/issues/1594
+function supabaseLock(name, acquireTimeout, fn) {
+  if (typeof navigator === "undefined" || !navigator.locks) {
+    // No Web Locks API — just run without locking (same as Supabase's fallback)
+    return fn();
+  }
+  // Force a max 5 s timeout regardless of what Supabase requests (-1 = infinite)
+  const effectiveTimeout = acquireTimeout <= 0 ? 5000 : Math.min(acquireTimeout, 10000);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), effectiveTimeout);
+  return navigator.locks.request(name, { signal: controller.signal }, async (lock) => {
+    clearTimeout(timer);
+    if (!lock) throw new Error("Lock not available");
+    return await fn();
+  }).catch((err) => {
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      console.warn(`[KubeQuest] Lock "${name}" timed out after ${effectiveTimeout}ms — proceeding without lock`);
+      // Run without lock to avoid deadlock — better than hanging forever
+      return fn();
+    }
+    throw err;
+  });
+}
+
+const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { lock: supabaseLock }
+}) : null;
 if (!supabase) console.warn("[KubeQuest] Supabase not configured — VITE_SUPABASE_URL:", !!SUPABASE_URL, "VITE_SUPABASE_ANON_KEY:", !!SUPABASE_KEY);
 
 // Run version check before any component mounts — clears stale keys if data version changed
@@ -873,10 +904,18 @@ export default function K8sQuestApp() {
 
   // Boot elapsed timer — updates every second while loading gate is active (for debug panel)
   const [bootElapsed, setBootElapsed] = useState(0);
+  const [lockInfo, setLockInfo] = useState("");
   useEffect(() => {
     const gateActive = !authChecked || !minLoadElapsed || (!!user && !isGuest && !dataLoaded);
     if (!gateActive) return;
     const iv = setInterval(() => setBootElapsed(s => s + 1), 1000);
+    // Query Navigator Locks to diagnose stuck Supabase auth locks
+    if (navigator.locks?.query) {
+      navigator.locks.query().then(({ held, pending }) => {
+        const sbLocks = [...(held || []), ...(pending || [])].filter(l => l.name?.includes("auth-token"));
+        setLockInfo(sbLocks.length ? `locks: ${sbLocks.map(l => `${l.mode}${held?.includes(l) ? "(held)" : "(pending)"}`).join(",")}` : "locks: none");
+      }).catch(() => setLockInfo("locks: n/a"));
+    }
     return () => clearInterval(iv);
   }, [authChecked, minLoadElapsed, user, isGuest, dataLoaded]);
 
@@ -2559,6 +2598,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{marginTop:20,fontFamily:"monospace",fontSize:10,color:"#475569",textAlign:"left",background:"rgba(0,0,0,0.3)",padding:8,borderRadius:6,lineHeight:1.6}}>
             <div>boot: {bootElapsed}s | gate: auth={String(authChecked)} data={String(dataLoaded)} min={String(minLoadElapsed)}</div>
             <div>user: {user ? (isGuest ? "guest" : user.id?.slice(0,8)) : "null"} | supabase: {supabase ? "ok" : "none"}</div>
+            {lockInfo && <div>{lockInfo}</div>}
           </div>
         )}
 
