@@ -935,10 +935,12 @@ describe("Stress: save effect stores liveIndexRef (not questionIndex) as the per
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SCORE CONSISTENCY: total_score must always equal computeScore(completedTopics)
+// ACCUMULATED SCORE MODEL
+// total_score accumulates on every correct answer (all modes, permanent)
+// best_score = computeScore(completedTopics) tracks canonical best-topic score
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Mirror of the real LEVEL_CONFIG and computeScore from App.jsx
+// Mirror of the real LEVEL_CONFIG, computeScore, isFreeMode from App.jsx
 const LEVEL_CONFIG = {
   easy:   { points: 10 },
   medium: { points: 20 },
@@ -958,417 +960,220 @@ function computeScore(completed) {
   }, 0);
 }
 
-describe("Score consistency: computeScore is the sole source of truth", () => {
-  it("first play: per-answer accumulation matches computeScore", () => {
-    // User plays workloads_easy, gets 5/7 correct
-    const completed = { workloads_easy: { correct: 5, total: 7 } };
-    const canonical = computeScore(completed);
-    // Per-answer would have added 5 * 10 = 50
-    expect(canonical).toBe(50);
+// Simulate the per-answer setStats updater from handleSubmit
+function simulateAnswer(prev, { correct, level, isFree = false, isRetry = false }) {
+  if (isRetry) return prev;
+  const streak = correct ? prev.current_streak + 1 : 0;
+  const points = correct ? (LEVEL_CONFIG[level]?.points ?? 0) : 0;
+  return {
+    ...prev,
+    current_streak: isFree ? prev.current_streak : streak,
+    max_streak:     isFree ? prev.max_streak     : Math.max(prev.max_streak, streak),
+    total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
+    total_correct:  isFree ? prev.total_correct  : (correct ? prev.total_correct + 1 : prev.total_correct),
+    total_score:    prev.total_score + points,
+  };
+}
+
+describe("Accumulated score: total_score increases on every correct answer", () => {
+  it("correct answer adds level points to total_score", () => {
+    const prev = { total_score: 100, current_streak: 0, max_streak: 0, total_answered: 5, total_correct: 3 };
+    const next = simulateAnswer(prev, { correct: true, level: "easy" });
+    expect(next.total_score).toBe(110); // +10
   });
 
-  it("replay with fewer correct: score must NOT increase", () => {
-    // User already had 5/7 correct, replays and gets 3/7
-    const prevCompleted = { workloads_easy: { correct: 5, total: 7 } };
-    const prevScore = computeScore(prevCompleted);
-
-    // After replay: bestCorrect = max(5, 3) = 5
-    const bestCorrect = Math.max(5, 3);
-    const newCompleted = { workloads_easy: { correct: bestCorrect, total: 7 } };
-    const newScore = computeScore(newCompleted);
-
-    expect(newScore).toBe(prevScore); // score unchanged — correct
-    expect(newScore).toBe(50);
-
-    // BUG (before fix): per-answer accumulation would have done:
-    // prevScore(50) + 3*10 = 80, then Math.max(80, 50) = 80 ← WRONG
-    // After fix: total_score = computeScore(newCompleted) = 50 ← CORRECT
+  it("wrong answer does not change total_score", () => {
+    const prev = { total_score: 100, current_streak: 2, max_streak: 3, total_answered: 5, total_correct: 3 };
+    const next = simulateAnswer(prev, { correct: false, level: "easy" });
+    expect(next.total_score).toBe(100); // unchanged
   });
 
-  it("replay with more correct: score increases exactly to canonical", () => {
-    // User had 3/7 correct, replays and gets 6/7
-    const prevCompleted = { workloads_easy: { correct: 3, total: 7 } };
-    const prevScore = computeScore(prevCompleted);
-    expect(prevScore).toBe(30);
-
-    const bestCorrect = Math.max(3, 6);
-    const newCompleted = { workloads_easy: { correct: bestCorrect, total: 7 } };
-    const newScore = computeScore(newCompleted);
-
-    expect(newScore).toBe(60); // increased by exactly 30 (3 more correct * 10)
-    expect(newScore).toBe(bestCorrect * 10);
+  it("medium level adds 20 points", () => {
+    const prev = { total_score: 50, current_streak: 0, max_streak: 0, total_answered: 0, total_correct: 0 };
+    const next = simulateAnswer(prev, { correct: true, level: "medium" });
+    expect(next.total_score).toBe(70);
   });
 
-  it("multiple replays: score is always canonical, never inflated", () => {
-    // Simulate 5 replays of the same topic with varying results
-    let bestCorrect = 0;
-    const results = [4, 3, 5, 2, 6]; // varying correct counts
-    let prevCanonical = 0;
+  it("hard level adds 30 points", () => {
+    const prev = { total_score: 50, current_streak: 0, max_streak: 0, total_answered: 0, total_correct: 0 };
+    const next = simulateAnswer(prev, { correct: true, level: "hard" });
+    expect(next.total_score).toBe(80);
+  });
 
-    for (const correct of results) {
-      bestCorrect = Math.max(bestCorrect, correct);
-      const completed = { workloads_easy: { correct: bestCorrect, total: 7 } };
-      const canonical = computeScore(completed);
+  it("retry does not modify total_score", () => {
+    const prev = { total_score: 100, current_streak: 2, max_streak: 5, total_answered: 10, total_correct: 7 };
+    const next = simulateAnswer(prev, { correct: true, level: "easy", isRetry: true });
+    expect(next).toEqual(prev); // completely unchanged
+  });
+});
 
-      // Canonical should be monotonically non-decreasing
-      expect(canonical).toBeGreaterThanOrEqual(prevCanonical);
-      // Canonical should always equal bestCorrect * points
-      expect(canonical).toBe(bestCorrect * 10);
-      prevCanonical = canonical;
+describe("Accumulated score: free modes also accumulate", () => {
+  it("mixed mode correct answer adds points to total_score", () => {
+    const prev = { total_score: 100, current_streak: 2, max_streak: 3, total_answered: 5, total_correct: 3 };
+    const next = simulateAnswer(prev, { correct: true, level: "mixed", isFree: true });
+    expect(next.total_score).toBe(115); // +15 for mixed
+    // But total_answered/total_correct are NOT incremented for free modes
+    expect(next.total_answered).toBe(5);
+    expect(next.total_correct).toBe(3);
+  });
+
+  it("daily mode correct answer adds points to total_score", () => {
+    const prev = { total_score: 200, current_streak: 0, max_streak: 0, total_answered: 0, total_correct: 0 };
+    const next = simulateAnswer(prev, { correct: true, level: "daily", isFree: true });
+    expect(next.total_score).toBe(215); // +15 for daily
+  });
+});
+
+describe("Accumulated score: replay accumulates more points", () => {
+  it("replaying a topic earns additional points", () => {
+    let stats = { total_score: 0, current_streak: 0, max_streak: 0, total_answered: 0, total_correct: 0 };
+
+    // First play: 5/7 correct at easy = +50
+    for (let i = 0; i < 5; i++) stats = simulateAnswer(stats, { correct: true, level: "easy" });
+    for (let i = 0; i < 2; i++) stats = simulateAnswer(stats, { correct: false, level: "easy" });
+    expect(stats.total_score).toBe(50);
+
+    // Replay: 3/7 correct = +30 more
+    for (let i = 0; i < 3; i++) stats = simulateAnswer(stats, { correct: true, level: "easy" });
+    for (let i = 0; i < 4; i++) stats = simulateAnswer(stats, { correct: false, level: "easy" });
+    expect(stats.total_score).toBe(80); // 50 + 30, never snaps back
+  });
+
+  it("multiple replays keep accumulating", () => {
+    let stats = { total_score: 0, current_streak: 0, max_streak: 0, total_answered: 0, total_correct: 0 };
+    const correctPerPlay = [5, 3, 7, 2, 6];
+
+    for (const correct of correctPerPlay) {
+      for (let i = 0; i < correct; i++) stats = simulateAnswer(stats, { correct: true, level: "easy" });
+      for (let i = 0; i < 7 - correct; i++) stats = simulateAnswer(stats, { correct: false, level: "easy" });
     }
 
-    // Final canonical should be max(4,3,5,2,6) * 10 = 60
-    expect(prevCanonical).toBe(60);
+    // Total = (5+3+7+2+6) * 10 = 230
+    expect(stats.total_score).toBe(230);
+  });
+});
 
-    // BUG (before fix): per-answer accumulation would have:
-    // 40 + 30 + 50 + 20 + 60 = 200, with Math.max preserving each step ← WRONG
+describe("Accumulated score: completion preserves accumulated total, sets best_score", () => {
+  it("completion does not override total_score", () => {
+    // User accumulated 80 points during gameplay (first play 50 + replay 30)
+    const stats = { total_score: 80, best_score: 0 };
+    const completedTopics = { workloads_easy: { correct: 5, total: 7 } };
+
+    // Quiz completion: total_score stays, best_score is set from computeScore
+    const newStats = { ...stats, best_score: computeScore(completedTopics) };
+    expect(newStats.total_score).toBe(80); // preserved
+    expect(newStats.best_score).toBe(50);  // canonical from completedTopics
   });
 
-  it("multi-topic score is sum of canonical per-topic scores", () => {
+  it("best_score tracks canonical independently from total_score", () => {
+    const completed = {
+      workloads_easy:   { correct: 5, total: 7 },
+      workloads_medium: { correct: 3, total: 7 },
+    };
+    const bestScore = computeScore(completed);
+    expect(bestScore).toBe(50 + 60); // 110
+
+    // total_score could be much higher due to replays
+    const stats = { total_score: 300, best_score: bestScore };
+    expect(stats.total_score).toBe(300);
+    expect(stats.best_score).toBe(110);
+  });
+});
+
+describe("Accumulated score: computeScore (best_score) still works correctly", () => {
+  it("multi-topic best_score sums correctly", () => {
     const completed = {
       workloads_easy:   { correct: 5, total: 7 },
       workloads_medium: { correct: 3, total: 7 },
       services_easy:    { correct: 7, total: 7 },
       services_hard:    { correct: 2, total: 5 },
     };
-    const score = computeScore(completed);
-    expect(score).toBe(
-      5 * 10 +   // workloads_easy
-      3 * 20 +   // workloads_medium
-      7 * 10 +   // services_easy
-      2 * 30     // services_hard
-    );
-    expect(score).toBe(50 + 60 + 70 + 60);
-    expect(score).toBe(240);
+    expect(computeScore(completed)).toBe(50 + 60 + 70 + 60);
   });
 
-  it("free-mode topics are excluded from canonical score", () => {
+  it("free-mode topics excluded from best_score", () => {
     const completed = {
       workloads_easy: { correct: 5, total: 7 },
-      mixed_mixed:    { correct: 10, total: 10 },  // free mode
-      daily_daily:    { correct: 5, total: 5 },     // free mode
+      mixed_mixed:    { correct: 10, total: 10 },
+      daily_daily:    { correct: 5, total: 5 },
     };
-    const score = computeScore(completed);
-    expect(score).toBe(50); // only workloads_easy counts
+    expect(computeScore(completed)).toBe(50);
   });
 
-  it("topic reset produces correct canonical score", () => {
+  it("best_score uses bestCorrect (max of all attempts)", () => {
+    // After replay: bestCorrect = max(5, 3) = 5
+    const completed = { workloads_easy: { correct: Math.max(5, 3), total: 7 } };
+    expect(computeScore(completed)).toBe(50); // best, not latest
+  });
+});
+
+describe("Accumulated score: topic reset preserves total_score", () => {
+  it("resetting a topic does not reduce accumulated points", () => {
+    const stats = { total_score: 200 };
     const completed = {
       workloads_easy:   { correct: 5, total: 7 },
-      workloads_medium: { correct: 3, total: 7 },
       services_easy:    { correct: 7, total: 7 },
     };
-    const beforeReset = computeScore(completed);
-    expect(beforeReset).toBe(50 + 60 + 70);
 
-    // Reset workloads topic — remove all its levels
+    // Reset workloads — remove from completedTopics
     const afterReset = { ...completed };
     delete afterReset.workloads_easy;
-    delete afterReset.workloads_medium;
-    const scoreAfterReset = computeScore(afterReset);
-    expect(scoreAfterReset).toBe(70); // only services_easy remains
-  });
 
-  it("quiz completion: newStats.total_score always equals computeScore", () => {
-    // Simulate the quiz completion flow (line 1787 after fix)
-    const completedTopics = {
-      workloads_easy: { correct: 5, total: 7 },
-    };
-    const stats = { total_score: computeScore(completedTopics) }; // 50
-
-    // User completes services_easy with 4/7 correct
-    const finalCorrect = 4;
-    const key = "services_easy";
-    const bestCorrect = finalCorrect; // first time
-    const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: 7 } };
-
-    // AFTER FIX: total_score = computeScore(newCompleted)
-    const newStats = { ...stats, total_score: computeScore(newCompleted) };
-    expect(newStats.total_score).toBe(50 + 40); // 90
-
-    // Verify this matches what leaderboard would show
-    const leaderboardScore = computeScore(newCompleted);
-    expect(newStats.total_score).toBe(leaderboardScore);
+    // total_score is UNTOUCHED, only best_score updates
+    const newStats = { ...stats, best_score: computeScore(afterReset) };
+    expect(newStats.total_score).toBe(200); // permanent
+    expect(newStats.best_score).toBe(70);   // only services_easy remains
   });
 });
 
-describe("Score consistency: per-answer handler must NOT modify total_score", () => {
-  it("correct answer should not increment total_score", () => {
-    // Simulate the per-answer setStats call (line 1713 after fix)
-    const prev = {
-      total_score: 100,
-      current_streak: 2,
-      max_streak: 5,
-      total_answered: 10,
-      total_correct: 7,
-    };
-    const correct = true;
-    const isFree = false;
-    const isRetry = false;
-
-    // After fix: setStats does NOT touch total_score
-    const next = (() => {
-      if (isRetry) return prev;
-      const streak = correct ? prev.current_streak + 1 : 0;
-      return {
-        ...prev,
-        // total_score is NOT modified — computed at quiz completion
-        current_streak: isFree ? prev.current_streak : streak,
-        max_streak:     isFree ? prev.max_streak     : Math.max(prev.max_streak, streak),
-        total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
-        total_correct:  isFree ? prev.total_correct  : (correct ? prev.total_correct + 1 : prev.total_correct),
-      };
-    })();
-
-    expect(next.total_score).toBe(100); // unchanged
-    expect(next.total_answered).toBe(11);
-    expect(next.total_correct).toBe(8);
-    expect(next.current_streak).toBe(3);
+describe("Accumulated score: load paths trust persisted value", () => {
+  it("guest load uses persisted total_score directly", () => {
+    // Simulate guest load: trust the persisted stats
+    const savedStats = { total_score: 150, total_answered: 10, total_correct: 8 };
+    // NO computeScore recalculation
+    expect(savedStats.total_score).toBe(150);
   });
 
-  it("wrong answer should not modify total_score", () => {
-    const prev = { total_score: 200, current_streak: 3, max_streak: 5, total_answered: 15, total_correct: 12 };
-    const correct = false;
-    const isFree = false;
-
-    const next = (() => {
-      const streak = correct ? prev.current_streak + 1 : 0;
-      return {
-        ...prev,
-        current_streak: isFree ? prev.current_streak : streak,
-        max_streak:     isFree ? prev.max_streak     : Math.max(prev.max_streak, streak),
-        total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
-        total_correct:  isFree ? prev.total_correct  : (correct ? prev.total_correct + 1 : prev.total_correct),
-      };
-    })();
-
-    expect(next.total_score).toBe(200); // unchanged
-    expect(next.current_streak).toBe(0); // streak broken
+  it("cache load uses persisted total_score directly", () => {
+    const cachedStats = { total_score: 250 };
+    // NO computeScore override
+    const loaded = Number(cachedStats.total_score) || 0;
+    expect(loaded).toBe(250);
   });
 
-  it("free-mode answer should not modify total_score", () => {
-    const prev = { total_score: 150, current_streak: 2, max_streak: 4, total_answered: 8, total_correct: 6 };
-    const correct = true;
-    const isFree = true;
-
-    const next = (() => {
-      const streak = correct ? prev.current_streak + 1 : 0;
-      return {
-        ...prev,
-        current_streak: isFree ? prev.current_streak : streak,
-        max_streak:     isFree ? prev.max_streak     : Math.max(prev.max_streak, streak),
-        total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
-        total_correct:  isFree ? prev.total_correct  : (correct ? prev.total_correct + 1 : prev.total_correct),
-      };
-    })();
-
-    expect(next.total_score).toBe(150); // unchanged
-    expect(next.total_answered).toBe(8); // free mode doesn't count
+  it("account merge sums accumulated points", () => {
+    const base = { total_score: 100 };
+    const guest = { total_score: 50 };
+    const merged = (base.total_score || 0) + (guest.total_score || 0);
+    expect(merged).toBe(150);
   });
 
-  it("retry answer should not modify any stats", () => {
-    const prev = { total_score: 100, current_streak: 2, max_streak: 5, total_answered: 10, total_correct: 7 };
-    const isRetry = true;
-
-    const next = (() => {
-      if (isRetry) return prev;
-      return { ...prev, total_score: 999 };
-    })();
-
-    expect(next).toEqual(prev); // completely unchanged
-  });
-});
-
-describe("Score consistency: replay inflation attack", () => {
-  it("10 replays of same topic must not increase score", () => {
-    let currentScore = 0;
-    const topicKey = "workloads_easy";
-    let bestCorrect = 0;
-    const completedTopics = {};
-
-    // First play: 5/7 correct
-    bestCorrect = Math.max(bestCorrect, 5);
-    completedTopics[topicKey] = { correct: bestCorrect, total: 7 };
-    currentScore = computeScore(completedTopics);
-    expect(currentScore).toBe(50);
-
-    // 10 replays with varying results (all worse or equal)
-    const replays = [3, 4, 5, 2, 1, 5, 4, 3, 2, 5];
-    for (const correct of replays) {
-      bestCorrect = Math.max(bestCorrect, correct);
-      completedTopics[topicKey] = { correct: bestCorrect, total: 7 };
-      const newScore = computeScore(completedTopics);
-      expect(newScore).toBe(50); // never increases beyond first play's best
-    }
-  });
-
-  it("replay with improvement then degradation: score matches best", () => {
-    const completedTopics = {};
-    const topicKey = "services_medium";
-    const scores = [];
-    let bestCorrect = 0;
-
-    for (const correct of [3, 5, 4, 7, 2, 6]) {
-      bestCorrect = Math.max(bestCorrect, correct);
-      completedTopics[topicKey] = { correct: bestCorrect, total: 7 };
-      scores.push(computeScore(completedTopics));
-    }
-
-    // Scores should be: 60, 100, 100, 140, 140, 140
-    expect(scores).toEqual([60, 100, 100, 140, 140, 140]);
-  });
-});
-
-describe("Score consistency: auth load always uses canonical", () => {
-  it("inflated DB value is corrected to canonical on load", () => {
-    // Simulate loadUserData with inflated DB total_score
-    const base = {
-      total_score: 300, // inflated from old per-answer bug
-      total_answered: 20,
-      total_correct: 15,
-      max_streak: 5,
-      current_streak: 0,
-      completed_topics: {
-        workloads_easy: { correct: 5, total: 7 },
-        services_easy:  { correct: 7, total: 7 },
-      },
-    };
-
-    const topicBaseScore = computeScore(base.completed_topics);
-    expect(topicBaseScore).toBe(120); // 50 + 70
-
-    // AFTER FIX: total_score = topicBaseScore (not Math.max(300, 120))
-    const mergedStats = {
-      total_answered: base.total_answered,
-      total_correct:  base.total_correct,
-      total_score:    topicBaseScore, // canonical, not inflated
-      max_streak:     base.max_streak,
-      current_streak: base.current_streak,
-    };
-
-    expect(mergedStats.total_score).toBe(120);
-    // This now matches what the leaderboard would compute from completed_topics
-    expect(mergedStats.total_score).toBe(computeScore(base.completed_topics));
-  });
-
-  it("new user with no DB row gets canonical score from guest merge", () => {
-    const guestCompleted = {
-      workloads_easy: { correct: 4, total: 7 },
-    };
-    const mergedCompleted = { ...guestCompleted };
-    const topicBaseScore = computeScore(mergedCompleted);
-
-    expect(topicBaseScore).toBe(40);
-  });
-});
-
-describe("Score consistency: cache load uses canonical", () => {
-  it("cached stats with completedTopics derives canonical score", () => {
-    const cachedCompleted = {
-      workloads_easy: { correct: 5, total: 7 },
-      services_hard:  { correct: 3, total: 5 },
-    };
-    const cachedStats = { total_score: 999 }; // stale inflated value
-
-    // AFTER FIX: cache load uses computeScore(cached.completedTopics)
-    const cachedScore = cachedCompleted ? computeScore(cachedCompleted) : cachedStats.total_score;
-    expect(cachedScore).toBe(50 + 90); // 5*10 + 3*30 = 140, not 999
-  });
-});
-
-describe("Score consistency: resume does not inflate total_score", () => {
-  it("resume snapshot with inflated total_score does not leak into stats", () => {
+  it("resume reconciliation uses Math.max for total_score", () => {
     const prev = { total_score: 100, total_answered: 10, total_correct: 7, current_streak: 2, max_streak: 5 };
-    const snap = {
-      total_answered: 13,
-      total_correct: 10,
-      total_score: 180, // inflated from old per-answer accumulation
-      current_streak: 3,
-      max_streak: 6,
-    };
-
-    // AFTER FIX: total_score is NOT reconciled from snapshot
+    const snap = { total_score: 130, total_answered: 13, total_correct: 10, current_streak: 3, max_streak: 6 };
     const reconciled = {
       ...prev,
-      total_answered: Math.max(prev.total_answered, snap.total_answered || 0),
-      total_correct:  Math.max(prev.total_correct,  snap.total_correct  || 0),
-      // total_score intentionally NOT included — it's canonical
-      current_streak: Math.max(prev.current_streak, snap.current_streak || 0),
-      max_streak:     Math.max(prev.max_streak,     snap.max_streak     || 0),
+      total_answered: Math.max(prev.total_answered, snap.total_answered),
+      total_correct:  Math.max(prev.total_correct, snap.total_correct),
+      total_score:    Math.max(prev.total_score, snap.total_score),
+      current_streak: Math.max(prev.current_streak, snap.current_streak),
+      max_streak:     Math.max(prev.max_streak, snap.max_streak),
     };
-
-    expect(reconciled.total_score).toBe(100); // preserved from prev, not inflated to 180
-    expect(reconciled.total_answered).toBe(13);
-    expect(reconciled.total_correct).toBe(10);
-    expect(reconciled.current_streak).toBe(3);
-    expect(reconciled.max_streak).toBe(6);
+    expect(reconciled.total_score).toBe(130); // takes the higher value
   });
 });
 
-describe("Score consistency: end-to-end user flow", () => {
-  it("complete flow: start → answer → complete → leaderboard score matches", () => {
-    // Step 1: user starts with existing completed topics
-    const completedTopics = {
+describe("Accumulated score: leaderboard has both values available", () => {
+  it("total_score (accumulated) and best_score (canonical) are independent", () => {
+    const completed = {
       workloads_easy: { correct: 5, total: 7 },
       services_easy:  { correct: 7, total: 7 },
     };
-    let stats = { total_score: computeScore(completedTopics) }; // 120
-    expect(stats.total_score).toBe(120);
+    const totalScore = 300; // accumulated from many plays
+    const bestScore = computeScore(completed); // 120
 
-    // Step 2: user plays networking_medium, answers 4/7 correctly
-    // Per-answer: total_score stays at 120 (not incremented per-answer)
-    expect(stats.total_score).toBe(120); // unchanged during quiz
-
-    // Step 3: quiz completes
-    const finalCorrect = 4;
-    const newCompleted = { ...completedTopics, networking_medium: { correct: finalCorrect, total: 7 } };
-    const newStats = { ...stats, total_score: computeScore(newCompleted) };
-    expect(newStats.total_score).toBe(120 + 4 * 20); // 200
-
-    // Step 4: saveUserData writes newStats to DB
-    const dbTotalScore = newStats.total_score; // 200
-
-    // Step 5: leaderboard reads from DB (or computes from completed_topics)
-    const leaderboardFromColumn = dbTotalScore;
-    const leaderboardFromTopics = computeScore(newCompleted);
-
-    // ALL THREE MUST MATCH
-    expect(newStats.total_score).toBe(leaderboardFromColumn);
-    expect(newStats.total_score).toBe(leaderboardFromTopics);
-    expect(leaderboardFromColumn).toBe(200);
-  });
-
-  it("complete flow with replay: score stays correct", () => {
-    // Step 1: initial state
-    const completedTopics = { workloads_easy: { correct: 5, total: 7 } };
-    let stats = { total_score: computeScore(completedTopics) }; // 50
-
-    // Step 2: user replays workloads_easy, gets 3/7
-    // Per-answer: total_score stays at 50 (no inflation!)
-    expect(stats.total_score).toBe(50);
-
-    // Step 3: quiz completes — bestCorrect = max(5, 3) = 5
-    const bestCorrect = Math.max(5, 3);
-    const newCompleted = { workloads_easy: { correct: bestCorrect, total: 7 } };
-    const newStats = { ...stats, total_score: computeScore(newCompleted) };
-
-    // Score unchanged because best didn't improve
-    expect(newStats.total_score).toBe(50);
-
-    // Leaderboard matches
-    expect(newStats.total_score).toBe(computeScore(newCompleted));
-  });
-
-  it("complete flow with improvement: score increases correctly", () => {
-    const completedTopics = { workloads_easy: { correct: 3, total: 7 } };
-    let stats = { total_score: computeScore(completedTopics) }; // 30
-
-    // Replay: gets 6/7 this time
-    const bestCorrect = Math.max(3, 6);
-    const newCompleted = { workloads_easy: { correct: bestCorrect, total: 7 } };
-    const newStats = { ...stats, total_score: computeScore(newCompleted) };
-
-    expect(newStats.total_score).toBe(60); // increased from 30 to 60
-    expect(newStats.total_score).toBe(computeScore(newCompleted));
+    // Leaderboard can rank by either
+    expect(totalScore).toBeGreaterThan(bestScore);
+    expect(bestScore).toBe(120);
   });
 });

@@ -108,7 +108,6 @@ const TRANSLATIONS = {
     correct: "✅ נכון!", incorrect: "❌ לא נכון",
     finishTopic: "🎉 סיימי נושא!", nextQuestion: "שאלה הבאה ←",
     correctCount: "נכון", perfect: "מושלם!", points: "נקודות",
-    bestImproved: "שיא חדש!", alreadyBest: "כבר הניקוד הכי טוב שלך \u2014 ללא שינוי",
     guestSaveHint: "💡 הירשמי כדי לשמור את הניקוד!", signupLink: "הירשמי עכשיו",
     tryAgain: "נסי שוב", backToTopics: "חזרי לנושאים",
     nextLevelBtn: "המשיכי לרמה הבאה", locked: "🔒 נעול",
@@ -262,7 +261,6 @@ const TRANSLATIONS = {
     correct: "✅ Correct!", incorrect: "❌ Incorrect",
     finishTopic: "🎉 Finish Topic!", nextQuestion: "Next Question →",
     correctCount: "correct", perfect: "Perfect!", points: "points",
-    bestImproved: "New best!", alreadyBest: "Already your best score \u2014 no change",
     guestSaveHint: "💡 Sign up to save your score!", signupLink: "Sign up now",
     tryAgain: "Try Again", backToTopics: "Back to Topics",
     nextLevelBtn: "Next Level", locked: "🔒 Locked",
@@ -642,7 +640,6 @@ export default function K8sQuestApp() {
   const topicCorrectRef = useRef(0);
   const isRetryRef = useRef(false);
   const lastSessionScoreRef = useRef(0);
-  const prevTotalScoreRef = useRef(0);
   const submittingRef = useRef(false);
 
   // Refs for browser back-button handler and keyboard shortcuts (avoids stale closures)
@@ -657,7 +654,7 @@ export default function K8sQuestApp() {
   const burgerRef = useRef(null);
 
   const [stats, setStats] = useState({
-    total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0,
+    total_answered:0, total_correct:0, total_score:0, best_score:0, max_streak:0, current_streak:0,
   });
   const [topicStats, setTopicStats] = useState(() => {
     try { return JSON.parse(localStorage.getItem("topicStats_v1")) || {}; } catch { return {}; }
@@ -811,13 +808,13 @@ export default function K8sQuestApp() {
       }
       if (cached?.stats && typeof cached.stats === "object") {
         const s = cached.stats;
-        // total_score is derived canonically from completedTopics, not from cached value
-        const cachedScore = cached.completedTopics ? computeScore(cached.completedTopics) : (Number(s.total_score) || 0);
+        // total_score is accumulated (persisted as-is), best_score is canonical
         setStats(prev => ({
           ...prev,
           total_answered: Number(s.total_answered) || prev.total_answered,
           total_correct:  Number(s.total_correct)  || prev.total_correct,
-          total_score:    cachedScore || prev.total_score,
+          total_score:    Number(s.total_score)     || prev.total_score,
+          best_score:     Number(s.best_score)      || prev.best_score,
           max_streak:     Number(s.max_streak)      || prev.max_streak,
           current_streak: Number(s.current_streak)  || prev.current_streak,
         }));
@@ -920,7 +917,7 @@ export default function K8sQuestApp() {
       if (saved) {
         const { stats: s, completedTopics: c, unlockedAchievements: u } = JSON.parse(saved);
         if (c) setCompletedTopics(c);
-        if (s) setStats({ ...s, total_score: computeScore(c || {}) });
+        if (s) setStats(s);
         if (u) setUnlockedAchievements(u);
       }
     } catch {}
@@ -1241,12 +1238,11 @@ export default function K8sQuestApp() {
 
       const mergedAch = [...new Set([...(base.achievements || []), ...ga])];
 
-      const topicBaseScore = computeScore(mergedCompleted);
       const mergedStats = {
         total_answered: (base.total_answered || 0) + (gs.total_answered || 0),
         total_correct:  (base.total_correct  || 0) + (gs.total_correct  || 0),
-        // Canonical: always derived from completedTopics to match leaderboard
-        total_score:    topicBaseScore,
+        total_score:    (base.total_score    || 0) + (gs.total_score    || 0),
+        best_score:     computeScore(mergedCompleted),
         max_streak:     Math.max(base.max_streak || 0, gs.max_streak || 0),
         current_streak: Math.max(base.current_streak || 0, gs.current_streak || 0),
       };
@@ -1397,7 +1393,7 @@ export default function K8sQuestApp() {
     try { localStorage.removeItem("k8s_guest_session"); } catch {}
     if (isGuest) {
       setUser(null);
-      setStats({ total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0 });
+      setStats({ total_answered:0, total_correct:0, total_score:0, best_score:0, max_streak:0, current_streak:0 });
       setCompletedTopics({}); setUnlockedAchievements([]);
       achievementsLoaded.current = false;
       setDataLoaded(true); // guest has no async load
@@ -1409,7 +1405,7 @@ export default function K8sQuestApp() {
 
   const handleResetProgress = async () => {
     if (!window.confirm(t("resetConfirm"))) return;
-    const emptyStats = { total_answered:0, total_correct:0, total_score:0, max_streak:0, current_streak:0 };
+    const emptyStats = { total_answered:0, total_correct:0, total_score:0, best_score:0, max_streak:0, current_streak:0 };
     setStats(emptyStats);
     setCompletedTopics({});
     setUnlockedAchievements([]);
@@ -1440,7 +1436,8 @@ export default function K8sQuestApp() {
     });
     const newStats = {
       ...stats,
-      total_score:    computeScore(newCompleted),
+      // total_score is accumulated and permanent — never deducted on reset
+      best_score:     computeScore(newCompleted),
       total_answered: Math.max(0, stats.total_answered - removedAnswered),
       total_correct:  Math.max(0, stats.total_correct  - removedCorrect),
     };
@@ -1486,7 +1483,6 @@ export default function K8sQuestApp() {
     setAnswerResult(saved.answerResult || null);
     setQuizHistory(saved.quizHistory || []);
     setSessionScore(Number(saved.sessionScore) || 0);
-    prevTotalScoreRef.current = stats.total_score;
     setRetryMode(saved.retryMode || false);
     isRetryRef.current  = saved.isRetry  || false;
     topicCorrectRef.current = Number(saved.topicCorrect) || 0;
@@ -1515,12 +1511,11 @@ export default function K8sQuestApp() {
       const delta = saved.statsDelta || {};
       if (snap) {
         // Preferred path: use absolute snapshot with Math.max (idempotent)
-        // NOTE: total_score is NOT reconciled here — it is always derived canonically
-        // from completedTopics via computeScore() and must not be inflated by snapshots.
         setStats(prev => ({
           ...prev,
           total_answered: Math.max(prev.total_answered, snap.total_answered || 0),
           total_correct:  Math.max(prev.total_correct,  snap.total_correct  || 0),
+          total_score:    Math.max(prev.total_score,    snap.total_score    || 0),
           current_streak: Math.max(prev.current_streak, snap.current_streak || 0),
           max_streak:     Math.max(prev.max_streak,     snap.max_streak     || 0),
         }));
@@ -1705,18 +1700,19 @@ export default function K8sQuestApp() {
       });
     }
     // Single atomic setStats call — prevents React batching from clobbering streak
-    // NOTE: total_score is NOT modified here — it is computed canonically at quiz
-    // completion via computeScore(completedTopics) to prevent replay inflation.
+    // total_score accumulates on every correct answer (all modes). It never snaps back.
+    // best_score (canonical) is computed separately at quiz completion.
     setStats(prev => {
       if (isRetryRef.current) return prev;
       const streak = correct ? prev.current_streak + 1 : 0;
+      const points = correct ? (LEVEL_CONFIG[selectedLevel]?.points ?? 0) : 0;
       return {
         ...prev,
-        // Free-mode quizzes must NOT modify persistent streak
         current_streak: isFree ? prev.current_streak : streak,
         max_streak:     isFree ? prev.max_streak     : Math.max(prev.max_streak, streak),
         total_answered: isFree ? prev.total_answered : prev.total_answered + 1,
         total_correct:  isFree ? prev.total_correct  : (correct ? prev.total_correct + 1 : prev.total_correct),
+        total_score:    prev.total_score + points,
       };
     });
     if (!isRetryRef.current && !isFree) {
@@ -1779,8 +1775,9 @@ export default function K8sQuestApp() {
         ? quizHistory.filter(h=>h.chosen!==h.answer).map(h=>({q:h.q,options:h.options,answer:h.answer}))
         : (completedTopics[key]?.wrongQuestions??[]);
       const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, wrongIndices: wrongIdx, wrongQuestions, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
-      // Canonical score: always derived from completedTopics to prevent replay inflation
-      const newStats = { ...stats, total_score: computeScore(newCompleted) };
+      // total_score is already accumulated per-answer — don't override it.
+      // best_score tracks the canonical best-topic score separately.
+      const newStats = { ...stats, best_score: computeScore(newCompleted) };
       const newAch = [
         ...unlockedAchievements,
         ...ACHIEVEMENTS.filter(a => !unlockedAchievements.includes(a.id) && a.condition(newStats, newCompleted)).map(a => a.id),
@@ -1850,7 +1847,7 @@ export default function K8sQuestApp() {
     setSelectedTopic(topic); setSelectedLevel(level); setTopicScreen("theory");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);    topicCorrectRef.current = 0;
-    lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
+    lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[level] || 25) : (TIMER_DURATIONS[level] || 30));
@@ -1903,7 +1900,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -1947,7 +1944,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.daily : TIMER_DURATIONS.daily);
@@ -2019,7 +2016,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(BOOKMARKS_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -3735,9 +3732,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   {!isInHistoryMode&&<span aria-label={`${stats.current_streak||0} ${t("streakLabel")}`} style={{color:(stats.current_streak||0)>0?"#FF6B35":"var(--text-dim)",fontSize:12,fontWeight:700}}>
                     <span aria-hidden="true">🔥 {stats.current_streak||0} {t("streakLabel")}</span>
                   </span>}
-                  {!isInHistoryMode&&<span aria-label={`${sessionScore||0} ${t("pts")}`} style={{color:"#00D4FF",fontSize:12,fontWeight:700,direction:"ltr"}}>
-                    <span aria-hidden="true">🎯 {sessionScore||0} {t("pts")}</span>
-                  </span>}
                   {!isInHistoryMode&&<span aria-label={`${stats.total_score||0} ${t("pts")}`} style={{color:"#A855F7",fontSize:12,fontWeight:700,direction:"ltr"}}>
                     <span aria-hidden="true">⭐ {stats.total_score||0} {t("pts")}</span>
                   </span>}
@@ -4002,7 +3996,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   setAllowNextLevel(false);
                   setTopicScreen("quiz");
                   setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0; prevTotalScoreRef.current=stats.total_score;
+                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0;
                   liveIndexRef.current=0;
                   quizRunIdRef.current=Date.now().toString(36);
                   submittingRef.current=false;
