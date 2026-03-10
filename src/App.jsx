@@ -108,6 +108,7 @@ const TRANSLATIONS = {
     correct: "✅ נכון!", incorrect: "❌ לא נכון",
     finishTopic: "🎉 סיימי נושא!", nextQuestion: "שאלה הבאה ←",
     correctCount: "נכון", perfect: "מושלם!", points: "נקודות",
+    bestImproved: "שיא חדש!", alreadyBest: "כבר הניקוד הכי טוב שלך \u2014 ללא שינוי",
     guestSaveHint: "💡 הירשמי כדי לשמור את הניקוד!", signupLink: "הירשמי עכשיו",
     tryAgain: "נסי שוב", backToTopics: "חזרי לנושאים",
     nextLevelBtn: "המשיכי לרמה הבאה", locked: "🔒 נעול",
@@ -261,6 +262,7 @@ const TRANSLATIONS = {
     correct: "✅ Correct!", incorrect: "❌ Incorrect",
     finishTopic: "🎉 Finish Topic!", nextQuestion: "Next Question →",
     correctCount: "correct", perfect: "Perfect!", points: "points",
+    bestImproved: "New best!", alreadyBest: "Already your best score \u2014 no change",
     guestSaveHint: "💡 Sign up to save your score!", signupLink: "Sign up now",
     tryAgain: "Try Again", backToTopics: "Back to Topics",
     nextLevelBtn: "Next Level", locked: "🔒 Locked",
@@ -640,6 +642,7 @@ export default function K8sQuestApp() {
   const topicCorrectRef = useRef(0);
   const isRetryRef = useRef(false);
   const lastSessionScoreRef = useRef(0);
+  const prevTotalScoreRef = useRef(0);
   const submittingRef = useRef(false);
 
   // Refs for browser back-button handler and keyboard shortcuts (avoids stale closures)
@@ -1483,6 +1486,7 @@ export default function K8sQuestApp() {
     setAnswerResult(saved.answerResult || null);
     setQuizHistory(saved.quizHistory || []);
     setSessionScore(Number(saved.sessionScore) || 0);
+    prevTotalScoreRef.current = stats.total_score;
     setRetryMode(saved.retryMode || false);
     isRetryRef.current  = saved.isRetry  || false;
     topicCorrectRef.current = Number(saved.topicCorrect) || 0;
@@ -1846,7 +1850,7 @@ export default function K8sQuestApp() {
     setSelectedTopic(topic); setSelectedLevel(level); setTopicScreen("theory");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);    topicCorrectRef.current = 0;
-    lastSessionScoreRef.current = 0;
+    lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[level] || 25) : (TIMER_DURATIONS[level] || 30));
@@ -1899,7 +1903,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -1943,7 +1947,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.daily : TIMER_DURATIONS.daily);
@@ -2015,7 +2019,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(BOOKMARKS_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; prevTotalScoreRef.current = stats.total_score;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -3731,6 +3735,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   {!isInHistoryMode&&<span aria-label={`${stats.current_streak||0} ${t("streakLabel")}`} style={{color:(stats.current_streak||0)>0?"#FF6B35":"var(--text-dim)",fontSize:12,fontWeight:700}}>
                     <span aria-hidden="true">🔥 {stats.current_streak||0} {t("streakLabel")}</span>
                   </span>}
+                  {!isInHistoryMode&&<span aria-label={`${sessionScore||0} ${t("pts")}`} style={{color:"#00D4FF",fontSize:12,fontWeight:700,direction:"ltr"}}>
+                    <span aria-hidden="true">🎯 {sessionScore||0} {t("pts")}</span>
+                  </span>}
                   {!isInHistoryMode&&<span aria-label={`${stats.total_score||0} ${t("pts")}`} style={{color:"#A855F7",fontSize:12,fontWeight:700,direction:"ltr"}}>
                     <span aria-hidden="true">⭐ {stats.total_score||0} {t("pts")}</span>
                   </span>}
@@ -3995,7 +4002,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   setAllowNextLevel(false);
                   setTopicScreen("quiz");
                   setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0;
+                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0; prevTotalScoreRef.current=stats.total_score;
                   liveIndexRef.current=0;
                   quizRunIdRef.current=Date.now().toString(36);
                   submittingRef.current=false;
