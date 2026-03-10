@@ -2168,7 +2168,7 @@ export default function K8sQuestApp() {
     if (!selectedIncident) return "";
     const maxScore = selectedIncident.steps.length * 10;
     const time = formatIncidentTime(incidentElapsed);
-    return `KubeQuest Incident\n\n${selectedIncident.title}\nTime: ${time}\n\nScore: ${incidentScore}/${maxScore}\n\nCan you beat this?\n\nhttps://kubequest.online`;
+    return `KubeQuest Incident\n${selectedIncident.title}\nScore: ${incidentScore}/${maxScore} · Time: ${time}\n\nhttps://kubequest.online`;
   };
 
   const handleIncidentShare = () => {
