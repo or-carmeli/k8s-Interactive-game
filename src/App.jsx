@@ -3295,9 +3295,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         </span>
                       </div>
                       <div style={{color:"var(--text-primary)",fontSize:14,lineHeight:1.5,marginBottom:8,direction:dir}}>{q.q}</div>
-                      <div style={{display:"flex",alignItems:"flex-start",gap:6}}>
-                        <span style={{color:"#10B981",fontSize:13,flexShrink:0,marginTop:1}}>✓</span>
-                        <span style={{color:"#10B981",fontSize:13,lineHeight:1.4}}>{q.options[q.answer]}</span>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+                        <div style={{display:"flex",alignItems:"flex-start",gap:6}}>
+                          <span style={{color:"#10B981",fontSize:13,flexShrink:0,marginTop:1}}>✓</span>
+                          <span style={{color:"#10B981",fontSize:13,lineHeight:1.4}}>{q.options[q.answer]}</span>
+                        </div>
+                        <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{flexShrink:0,padding:"6px 12px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          {lang==="en"?"Retry":"נסה שוב"}
+                        </button>
                       </div>
                     </div>
                   )
