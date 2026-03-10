@@ -1,7 +1,13 @@
 -- ── Add best_score column ────────────────────────────────────────────────────
--- Scoring model change: total_score is now accumulated (permanent, monotonic).
--- best_score tracks the canonical best-topic score separately.
--- Leaderboard can rank by either field.
+-- Scoring model (current):
+--   total_score = accumulated per correct answer, never decreases, user-visible.
+--                 Used for leaderboard ranking (get_leaderboard ORDER BY total_score DESC).
+--   best_score  = canonical best-topic metric, derived from completed_topics JSONB.
+--                 Internal only — never shown in UI, never used for ranking.
+--                 Exists as a tamper-proof audit baseline.
+--
+-- ⚠  Do NOT use best_score for leaderboard or user-facing display.
+-- ⚠  Do NOT derive total_score from completed_topics — it is purely accumulated.
 
 ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS best_score BIGINT DEFAULT 0;
 

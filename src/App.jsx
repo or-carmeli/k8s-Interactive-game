@@ -103,6 +103,10 @@ const TRANSLATIONS = {
     guestBanner: "💡 הירשמי כדי לשמור התקדמות ולהופיע בלוח התוצאות",
     signupNow: "הירשמי",
     score: "ניקוד", accuracy: "דיוק", streak: "רצף", completed: "הושלמו",
+    scoreSub: "נצבר מכל החידונים", accuracySub: "אחוז תשובות נכונות", streakSub: "רצף נכונות נוכחי", completedSub: "רמות שהושלמו",
+    leaderboardRankedBy: "מדורג לפי סך הנקודות שנצברו", leaderboardScoreCol: "סה״כ נק׳",
+    completionNoImprovement: "התוצאה הטובה שלך בנושא הזה כבר גבוהה יותר", completionAdded: "נוספו לסך שלך",
+    freeModeBadge: "בשביל הכיף — לא ישפיע על הדירוג", freeModeTag: "בשביל הכיף",
     pts: "נק׳",
     achievementsTitle: "🏅 הישגים",
     leaderboardTitle: "🏆 לוח תוצאות", noData: "אין נתונים עדיין", anonymous: "אנונימי",
@@ -264,6 +268,10 @@ const TRANSLATIONS = {
     guestBanner: "💡 Sign up to save progress and appear on the leaderboard",
     signupNow: "Sign Up",
     score: "Score", accuracy: "Accuracy", streak: "Streak", completed: "Completed",
+    scoreSub: "Earned across all quizzes", accuracySub: "Overall correct rate", streakSub: "Current correct streak", completedSub: "Topic-levels passed",
+    leaderboardRankedBy: "Ranked by total accumulated points", leaderboardScoreCol: "Total Pts",
+    completionNoImprovement: "Your best result for this topic was already higher", completionAdded: "added to your total",
+    freeModeBadge: "Just for fun — won't affect your ranking", freeModeTag: "Just for fun",
     pts: "pts",
     achievementsTitle: "🏅 Achievements",
     leaderboardTitle: "🏆 Leaderboard", noData: "No data yet", anonymous: "Anonymous",
@@ -656,6 +664,7 @@ export default function K8sQuestApp() {
   const topicCorrectRef = useRef(0);
   const isRetryRef = useRef(false);
   const lastSessionScoreRef = useRef(0);
+  const bestImprovedRef = useRef(true); // Whether this session improved the topic's best result
   const submittingRef = useRef(false);
 
   // Refs for browser back-button handler and keyboard shortcuts (avoids stale closures)
@@ -669,6 +678,23 @@ export default function K8sQuestApp() {
   const nextQuestionRef = useRef(null);
   const burgerRef = useRef(null);
 
+  // ── Scoring Model ───────────────────────────────────────────────────────────
+  // Two score fields exist. They serve different purposes and must not be mixed.
+  //
+  // total_score  (user-visible, leaderboard-ranked)
+  //   Accumulated permanently: += points on every correct answer.
+  //   Never decreases, even on topic reset or replay.
+  //   This is the ONLY score shown in UI (dashboard, quiz header, leaderboard).
+  //
+  // best_score   (internal canonical metric, never shown to users)
+  //   Derived from completedTopics via computeScore().
+  //   Represents sum(correct * level_points) for each topic's best attempt.
+  //   Recalculated at quiz completion, topic reset, and guest merge.
+  //   Exists as a tamper-proof audit baseline — not used for ranking.
+  //
+  // ⚠  Do NOT show best_score in UI or use it for leaderboard ranking.
+  // ⚠  Do NOT derive total_score from completedTopics — it is purely accumulated.
+  // ─────────────────────────────────────────────────────────────────────────────
   const [stats, setStats] = useState({
     total_answered:0, total_correct:0, total_score:0, best_score:0, max_streak:0, current_streak:0,
   });
@@ -797,9 +823,11 @@ export default function K8sQuestApp() {
     return Math.min(100, Math.round((score / LEVEL_ORDER.length) * 100));
   };
 
-  // Derive total_score canonically from completedTopics so it can never be gamed.
-  // Each topic/level key is "topicId_level" (e.g. "workloads_easy").
-  // Free-mode keys (mixed_mixed, daily_daily) are excluded - they are session-only.
+  // Compute best_score (internal canonical metric) from completedTopics.
+  // NOT used for user-visible score or leaderboard — those use total_score.
+  // best_score = sum(correct * level_points) for each topic's best attempt.
+  // Exists as a tamper-proof baseline; never shown in UI.
+  // Free-mode keys (mixed_mixed, daily_daily, bookmarks_bookmarks) are excluded.
   const computeScore = (completed) =>
     Object.entries(completed).reduce((sum, [key, res]) => {
       const parts = key.split("_");
@@ -1305,6 +1333,9 @@ export default function K8sQuestApp() {
     if (savedQuiz && savedQuiz.userId === userId) setResumeData(savedQuiz);
   };
 
+  // Persist stats to Supabase. Writes BOTH total_score and best_score.
+  // total_score is passed through as-is (accumulated). best_score is recomputed
+  // by the caller via computeScore() before calling this function.
   const saveUserData = async (ns, nc, na) => {
     if (!user || isGuest || !supabase) return;
     setSaveError("");
@@ -1795,6 +1826,8 @@ export default function K8sQuestApp() {
       const key = `${selectedTopic.id}_${selectedLevel}`;
       const prevResult = completedTopics[key];
       const bestCorrect = prevResult ? Math.min(Math.max(prevResult.correct, finalCorrect), currentQuestions.length) : Math.min(finalCorrect, currentQuestions.length);
+      // Signal whether this session improved the stored best result (used by completion screen messaging)
+      bestImprovedRef.current = isFreeMode(selectedTopic.id) || !prevResult || finalCorrect > prevResult.correct;
       // Preserve retryComplete so replaying doesn't re-lock the next level
       const keepRetryComplete = prevResult?.retryComplete || bestCorrect === currentQuestions.length;
       const wrongIdx = !isFreeMode(selectedTopic.id) ? quizHistory.map((h,i)=>h.chosen!==h.answer?i:null).filter(v=>v!==null) : (completedTopics[key]?.wrongIndices??[]);
@@ -1875,7 +1908,7 @@ export default function K8sQuestApp() {
     setSelectedTopic(topic); setSelectedLevel(level); setTopicScreen("theory");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
     setShowExplanation(false);    topicCorrectRef.current = 0;
-    lastSessionScoreRef.current = 0;
+    lastSessionScoreRef.current = 0; bestImprovedRef.current = true;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[level] || 25) : (TIMER_DURATIONS[level] || 30));
@@ -1928,7 +1961,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(MIXED_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; bestImprovedRef.current = true;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -1972,7 +2005,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(DAILY_TOPIC); setSelectedLevel("daily"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; bestImprovedRef.current = true;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.daily : TIMER_DURATIONS.daily);
@@ -2044,7 +2077,7 @@ export default function K8sQuestApp() {
     isRetryRef.current = false;
     setSelectedTopic(BOOKMARKS_TOPIC); setSelectedLevel("mixed"); setTopicScreen("quiz");
     setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0;
+    setShowExplanation(false);    topicCorrectRef.current = 0; lastSessionScoreRef.current = 0; bestImprovedRef.current = true;
     setQuizHistory([]); setShowReview(false); setShowConfetti(false);
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
@@ -2656,7 +2689,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 .stats-grid{gap:5px!important}
 .stats-cell{padding:9px 3px!important}
 .action-card{padding:11px 10px!important}
-}`}</style>
+}@media(min-width:900px){.page-pad,.home-screen{max-width:1200px!important}}`}</style>
       {!isStatusDomain && <>
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
@@ -2789,7 +2822,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         </div>
       )}
 
-      {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"var(--overlay-light)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h3 style={{margin:0,color:"var(--text-primary)",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><div style={{fontSize:11,color:"var(--text-dim)",fontWeight:700,letterSpacing:1.5,marginTop:3}}>{lang==="en"?"TOP 10":"טופ 10"}</div></div><button autoFocus onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"var(--text-dim)",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"var(--glass-3)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"var(--glass-6)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{entry.username ? (entry.username.includes("@") ? entry.username.split("@")[0] : entry.username) : t("anonymous")}</div><div style={{color:"var(--text-dim)",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}{userRank&&<div style={{marginTop:4,paddingTop:12,borderTop:"1px solid var(--glass-7)",display:"flex",alignItems:"center",justifyContent:"center",gap:8,color:"var(--text-secondary)",fontSize:13,fontWeight:600}}><span>{lang==="en"?"Your Rank":"הדירוג שלך"}</span><span style={{color:"var(--text-primary)",fontWeight:800}}>#{userRank.rank}</span><span style={{color:"var(--glass-20)"}}>|</span><span>{lang==="en"?"Score":"ניקוד"}</span><span style={{color:"#00D4FF",fontWeight:800}}>{userRank.score}</span></div>}</div></div>}
+      {/* Leaderboard ranks by total_score (accumulated permanently, never decremented).
+           The RPC get_leaderboard orders by total_score DESC.
+           best_score is NOT used for ranking — it's a per-topic canonical metric. */}
+      {showLeaderboard&&<div onClick={()=>setShowLeaderboard(false)} style={{position:"fixed",inset:0,background:"var(--overlay-light)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center"}}><div role="dialog" aria-modal="true" aria-label={t("leaderboardTitle")} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:16,padding:20,width:"min(360px,calc(100vw - 32px))",animation:"fadeIn 0.3s ease",direction:"ltr"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h3 style={{margin:0,color:"var(--text-primary)",fontSize:18,fontWeight:800}}>{t("leaderboardTitle")}</h3><div style={{fontSize:11,color:"var(--text-dim)",fontWeight:700,letterSpacing:1.5,marginTop:3}}>{lang==="en"?"TOP 10":"טופ 10"}</div><div style={{fontSize:10,color:"var(--text-dim)",opacity:0.5,fontWeight:400,marginTop:4}}>{t("leaderboardRankedBy")}</div></div><button autoFocus onClick={()=>setShowLeaderboard(false)} aria-label={lang==="en"?"Close leaderboard":"סגור לוח תוצאות"} style={{background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer"}}>✕</button></div>{leaderboard.length===0?<div style={{color:"var(--text-dim)",textAlign:"center",padding:"20px 0"}}>{t("noData")}</div>:<>{leaderboard.length>0&&<div style={{display:"flex",alignItems:"center",gap:12,padding:"0 14px 4px",marginBottom:4}}><span style={{width:28}}></span><div style={{flex:1,fontSize:10,color:"var(--text-dim)",opacity:0.5,fontWeight:600}}>{lang==="en"?"Player":"שחקן"}</div><div style={{fontSize:10,color:"var(--text-dim)",opacity:0.5,fontWeight:600}}>{t("leaderboardScoreCol")}</div></div>}{leaderboard.map((entry,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"rgba(245,158,11,0.1)":"var(--glass-3)",borderRadius:10,marginBottom:8,border:`1px solid ${i===0?"#F59E0B44":"var(--glass-6)"}`}}><span style={{fontSize:18,width:28}}>{["🥇","🥈","🥉"][i]||`${i+1}.`}</span><div style={{flex:1}}><div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{entry.username ? (entry.username.includes("@") ? entry.username.split("@")[0] : entry.username) : t("anonymous")}</div><div style={{color:"var(--text-dim)",fontSize:11}}>🔥 {entry.max_streak}</div></div><div style={{color:"#00D4FF",fontWeight:800,fontSize:16}}>{entry.total_score}</div></div>)}</>}{userRank&&<div style={{marginTop:4,paddingTop:12,borderTop:"1px solid var(--glass-7)",display:"flex",alignItems:"center",justifyContent:"center",gap:8,color:"var(--text-secondary)",fontSize:13,fontWeight:600}}><span>{lang==="en"?"Your Rank":"הדירוג שלך"}</span><span style={{color:"var(--text-primary)",fontWeight:800}}>#{userRank.rank}</span><span style={{color:"var(--glass-20)"}}>|</span><span>{t("leaderboardScoreCol")}</span><span style={{color:"#00D4FF",fontWeight:800}}>{userRank.score}</span></div>}</div></div>}
 
       {showBookmarks&&(
         <div onClick={()=>setShowBookmarks(false)} style={{position:"fixed",inset:0,background:"var(--overlay-light)",zIndex:5000,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
@@ -2826,9 +2862,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       )}
 
       {/* Dropdown menu - rendered outside <main> so CSS zoom never affects it */}
-      {showMenu&&(<>
+      {showMenu&&(()=>{const _br=burgerRef.current?.getBoundingClientRect();const _menuRight=_br?Math.max(8,window.innerWidth-_br.right):8;return(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:82,right:8,background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"var(--shadow-heavy)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
+        <div style={{position:"fixed",top:82,right:_menuRight,background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"var(--shadow-heavy)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
 
           {/* Language + Gender */}
           <div style={{padding:"8px 14px 10px",borderBottom:"1px solid var(--glass-6)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
@@ -2956,7 +2992,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </button>
           </div>
         </div>
-      </>)}
+      </>);})()}
       </>}
       <main id="main-content" style={isStatusDomain ? undefined : (fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : undefined)}>
       {!isStatusDomain && <>
@@ -3041,17 +3077,21 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             ))}
           </div>
           {homeTab==="categories"&&(<>
+          {/* Dashboard Stats — total_score is the accumulated permanent score (leaderboard-ranked).
+               best_score (canonical topic-best via computeScore()) is separate and not shown here.
+               Subtitles clarify each metric's meaning for users. */}
           <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
             {[
-              {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B"},
-              {label:t("accuracy"),value:`${accuracy}%`,icon:"🎯",color:"#10B981"},
-              {label:t("streak"),value:stats.current_streak,icon:"🔥",color:"#FF6B35"},
-              {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF"},
+              {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B",sub:t("scoreSub")},
+              {label:t("accuracy"),value:`${accuracy}%`,icon:"🎯",color:"#10B981",sub:t("accuracySub")},
+              {label:t("streak"),value:stats.current_streak,icon:"🔥",color:"#FF6B35",sub:t("streakSub")},
+              {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF",sub:t("completedSub")},
             ].map((s,i)=>(
               <div key={i} className="stats-cell" style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:12,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
                 <div style={{fontSize:18,lineHeight:1}}>{s.icon}</div>
                 <div style={{fontSize:22,fontWeight:700,color:s.color,lineHeight:1}}>{s.value}</div>
                 <div style={{fontSize:12,color:"var(--text-dim)",opacity:0.7,lineHeight:1}}>{s.label}</div>
+                {s.sub&&<div style={{fontSize:9,color:"var(--text-dim)",opacity:0.5,lineHeight:1.2,marginTop:-2,textAlign:"center"}}>{s.sub}</div>}
               </div>
             ))}
           </div>
@@ -3068,7 +3108,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <span style={{color:"#F59E0B",fontWeight:800,fontSize:15}}>{t("dailyChallengeTitle")}</span>
                   <span style={{background:"rgba(245,158,11,0.2)",color:"#F59E0B",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5,flexShrink:0}}>{t("dailyChallengeNew")}</span>
                 </div>
-                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("dailyChallengeDesc")}</div>
+                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("dailyChallengeDesc")} · <span style={{opacity:0.6}}>{t("freeModeTag")}</span></div>
               </div>
             </div>
             <span style={{color:"#F59E0B",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
@@ -3078,7 +3118,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <div className="action-text" style={{textAlign:"start",minWidth:0}}>
                 <div style={{color:"#A855F7",fontWeight:800,fontSize:15}}>{t("mixedQuizBtn")}</div>
-                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("mixedQuizDesc")}</div>
+                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("mixedQuizDesc")} · <span style={{opacity:0.6}}>{t("freeModeTag")}</span></div>
               </div>
             </div>
             <span style={{color:"#A855F7",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
@@ -3113,7 +3153,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     <button onClick={e=>{e.stopPropagation();handleResetTopic(topic.id);}} aria-label={t("resetTopic")} style={{background:"none",border:"none",color:"var(--text-dim)",fontSize:13,cursor:"pointer",padding:"2px 4px",lineHeight:1}} onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-dim)"}>↺</button>
                   </div>})()}
                 </div>
-                {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:3,background:"var(--glass-6)",borderRadius:2,marginBottom:10}}><div style={{height:"100%",borderRadius:2,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
+                {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:6,background:"var(--glass-6)",borderRadius:3,marginBottom:10}}><div style={{height:"100%",borderRadius:3,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
                   {Object.entries(LEVEL_CONFIG).filter(([lvl])=>lvl!=="mixed"&&lvl!=="daily").map(([lvl,cfg])=>{
                     const key=`${topic.id}_${lvl}`;
@@ -3785,9 +3825,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   {!isInHistoryMode&&<span aria-label={`${stats.current_streak||0} ${t("streakLabel")}`} style={{color:(stats.current_streak||0)>0?"#FF6B35":"var(--text-dim)",fontSize:12,fontWeight:700}}>
                     <span aria-hidden="true">🔥 {stats.current_streak||0} {t("streakLabel")}</span>
                   </span>}
-                  {!isInHistoryMode&&<span aria-label={`${stats.total_score||0} ${t("pts")}`} style={{color:"#A855F7",fontSize:12,fontWeight:700,direction:"ltr"}}>
+                  {/* total_score shown live because it increments on every correct answer (immediate feedback).
+                       sessionScore (+X) tracks this-quiz-only earnings to distinguish from the cumulative total.
+                       In free mode, points go to total_score in-memory but are NOT persisted to Supabase. */}
+                  {!isInHistoryMode&&<span aria-label={`${stats.total_score||0} ${t("pts")}${sessionScore>0?`, +${sessionScore} ${t("completionAdded")}`:""}`} style={{color:"#A855F7",fontSize:12,fontWeight:700,direction:"ltr"}}>
                     <span aria-hidden="true">⭐ {stats.total_score||0} {t("pts")}</span>
+                    {sessionScore>0&&<span style={{color:"#00D4FF",fontSize:10,fontWeight:600,marginLeft:4,opacity:0.8}}>(+{sessionScore})</span>}
                   </span>}
+                  {!isInHistoryMode&&isFreeMode(selectedTopic?.id)&&<span style={{fontSize:9,color:"var(--text-dim)",fontWeight:600,opacity:0.6,background:"var(--glass-4)",padding:"2px 6px",borderRadius:4}}>{t("freeModeBadge")}</span>}
                 </div>
                 <div style={{height:5,background:"var(--glass-6)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
                   <div style={{height:"100%",borderRadius:4,
@@ -4010,9 +4055,30 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <span style={{color:"var(--text-primary)",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
               {allCorrect&&<span style={{color:"#F59E0B",fontSize:13,fontWeight:700}}>{t("perfect")}</span>}
             </div>
+            {/* Session score = points earned this quiz run only.
+                 total_score was already incremented per-answer during gameplay.
+                 best_score was recomputed from completedTopics at quiz end.
+                 If this session didn't improve the topic's best result (replay),
+                 a subtle message is shown. Replay-inflation prevention: best_score
+                 only improves when finalCorrect > prevResult.correct. */}
             {lastSessionScoreRef.current > 0 && (
-              <div style={{color:"#00D4FF",fontWeight:800,fontSize:18,marginBottom:20}}>
-                +{lastSessionScoreRef.current} {t("points")}
+              <div style={{marginBottom:20}}>
+                <div style={{color:"#00D4FF",fontWeight:800,fontSize:18}}>
+                  +{lastSessionScoreRef.current} {t("points")}
+                </div>
+                <div style={{color:"var(--text-dim)",fontSize:11,opacity:0.55,marginTop:3}}>
+                  {t("completionAdded")}
+                </div>
+              </div>
+            )}
+            {lastSessionScoreRef.current > 0 && !bestImprovedRef.current && !isFreeMode(selectedTopic.id) && (
+              <div style={{color:"var(--text-dim)",fontSize:12,opacity:0.5,marginBottom:12}}>
+                {t("completionNoImprovement")}
+              </div>
+            )}
+            {lastSessionScoreRef.current > 0 && isFreeMode(selectedTopic.id) && (
+              <div style={{color:"var(--text-dim)",fontSize:11,opacity:0.5,marginBottom:12}}>
+                {t("freeModeBadge")}
               </div>
             )}
             {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:16,fontSize:13,color:"#4a9aba"}}>
@@ -4049,7 +4115,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   setAllowNextLevel(false);
                   setTopicScreen("quiz");
                   setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0;
+                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0; bestImprovedRef.current=true;
                   liveIndexRef.current=0;
                   quizRunIdRef.current=Date.now().toString(36);
                   submittingRef.current=false;
