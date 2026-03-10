@@ -3171,9 +3171,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const totalCmds = CHEATSHEET.reduce((s,sec)=>s+sec.commands.length,0);
         return (
           <div className="page-pad" style={{maxWidth:700,margin:"0 auto",padding:"16px 14px",animation:"fadeIn 0.3s ease",direction:"ltr"}}>
-            <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:13,marginBottom:16,display:"inline-flex",alignItems:"center",gap:5}}>
-              {lang==="he"?"→ חזרה":"← Back"}
-            </button>
+            <div style={{display:"flex",justifyContent:lang==="he"?"flex-end":"flex-start",marginBottom:16}}>
+              <button onClick={()=>setScreen("home")} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",color:"#94a3b8",padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:13,display:"inline-flex",alignItems:"center",gap:5}}>
+                {lang==="he"?"חזרה →":"← Back"}
+              </button>
+            </div>
 
             {/* Header */}
             <div style={{marginBottom:16}}>
