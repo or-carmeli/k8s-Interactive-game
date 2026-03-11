@@ -607,7 +607,7 @@ function renderBidiInner(text, lang, keyPrefix) {
   // Normalize ASCII arrows to Unicode before splitting
   text = text.replace(/-->/g, "\u2192").replace(/<--/g, "\u2190").replace(/->/g, "\u2192").replace(/<-(?!-)/g, "\u2190");
   // Split on: flag sequences (--flag, -f), slash-paths (/api/v1), Latin word sequences, or arrow chars
-  const parts = text.split(/((?:--?[A-Za-z][\w\-]*(?:=[^\s\u0590-\u05FF]*)?(?:\s+(?=(?:--?)?[A-Za-z]))?)+|(?:\/[A-Za-z][A-Za-z0-9\-_/.:]*)|(?:[A-Za-z](?:[A-Za-z0-9\-_:/=]|\.[A-Za-z0-9])*(?:\s+(?=(?:--?)?[A-Za-z]))?)+|[→←])/);
+  const parts = text.split(/((?:(?<![\u0590-\u05FF])--?[A-Za-z][\w\-]*(?:=[^\s\u0590-\u05FF]*)?(?:\s+(?=(?:--?)?[A-Za-z]))?)+|(?:\/[A-Za-z][A-Za-z0-9\-_/.:]*)|(?:[A-Za-z](?:[A-Za-z0-9\-_:/=]|\.[A-Za-z0-9])*(?:\s+(?=(?:--?)?[A-Za-z]))?)+|[→←])/);
   if (parts.length <= 1) return text;
   const startsWithLatin = /^[A-Za-z]/.test(text) || /^--?[A-Za-z]/.test(text) || /^\/[A-Za-z]/.test(text);
   const isLtrPart = (p) => /^[A-Za-z]/.test(p) || /^--?[A-Za-z]/.test(p) || /^\/[A-Za-z]/.test(p) || /^[→←]$/.test(p);
@@ -3098,7 +3098,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <div key={b.question_id} style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:10,padding:"11px 13px",display:"flex",alignItems:"flex-start",gap:10}}>
                     <div style={{flex:1}}>
                       <div style={{fontSize:11,color:b.topic_color||"#A855F7",fontWeight:700,marginBottom:4}}>{b.topic_name} · {lang==="en"?LEVEL_CONFIG[b.level]?.labelEn:LEVEL_CONFIG[b.level]?.label}</div>
-                      <div style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5}}>{b.question_text}</div>
+                      <div dir={dir} style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5}}>{renderBidiBlock(b.question_text, lang)}</div>
                     </div>
                     <button onClick={()=>{
                       setBookmarks(prev=>{const next=prev.filter((_,j)=>j!==i);try{localStorage.setItem("bookmarks_v1",JSON.stringify(next));}catch{}return next;});
