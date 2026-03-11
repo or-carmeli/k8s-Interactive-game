@@ -71,59 +71,61 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  /* Page bg is slightly gray-blue so white cards pop clearly */
-  --bg-body: #f0f4f8;
-  --bg-card: #ffffff;
-  --bg-elevated: #f1f5f9;
+  /* Backgrounds - solid white cards on subtle gray */
+  --bg-body: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F1F5F9;
 
-  /* Strong text hierarchy */
-  --text-bright: #0f172a;
-  --text-primary: #1e293b;
-  --text-light: #334155;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-dim: #94a3b8;
-  --text-disabled: #cbd5e1;
-  --text-faint: #e2e8f0;
+  /* Text - high contrast hierarchy */
+  --text-bright: #030712;
+  --text-primary: #111827;
+  --text-light: #1F2937;
+  --text-secondary: #374151;
+  --text-muted: #6B7280;
+  --text-dim: #9CA3AF;
+  --text-disabled: #D1D5DB;
+  --text-faint: #E5E7EB;
 
   --code-text: #0369a1;
   --link-color: #0284c7;
 
   /* Concept tags */
-  --concept-bg: rgba(139,92,246,0.12);
+  --concept-bg: rgba(139,92,246,0.10);
   --concept-text: #7c3aed;
-  --concept-border: rgba(139,92,246,0.2);
+  --concept-border: rgba(139,92,246,0.18);
 
-  /* Glass overlays — boosted so borders and fills are clearly visible */
-  --glass-1: rgba(0,0,0,0.02);
-  --glass-2: rgba(0,0,0,0.04);
-  --glass-3: rgba(0,0,0,0.05);
-  --glass-4: rgba(0,0,0,0.06);
-  --glass-5: rgba(0,0,0,0.07);
-  --glass-6: rgba(0,0,0,0.08);
-  --glass-7: rgba(0,0,0,0.12);
-  --glass-8: rgba(0,0,0,0.14);
-  --glass-9: rgba(0,0,0,0.16);
-  --glass-10: rgba(0,0,0,0.18);
-  --glass-12: rgba(0,0,0,0.22);
-  --glass-15: rgba(0,0,0,0.26);
-  --glass-18: rgba(0,0,0,0.30);
-  --glass-20: rgba(0,0,0,0.35);
+  /* Glass overlays - replaced with solid borders/fills for light mode */
+  --glass-1: rgba(0,0,0,0.01);
+  --glass-2: rgba(0,0,0,0.02);
+  --glass-3: rgba(0,0,0,0.03);
+  --glass-4: rgba(0,0,0,0.04);
+  --glass-5: rgba(0,0,0,0.05);
+  --glass-6: rgba(0,0,0,0.06);
+  --glass-7: #E5E7EB;
+  --glass-8: #D1D5DB;
+  --glass-9: rgba(0,0,0,0.12);
+  --glass-10: #E5E7EB;
+  --glass-12: #D1D5DB;
+  --glass-15: #9CA3AF;
+  --glass-18: rgba(0,0,0,0.22);
+  --glass-20: rgba(0,0,0,0.28);
 
   --overlay: rgba(0,0,0,0.5);
-  --overlay-light: rgba(0,0,0,0.4);
-  --code-bg: rgba(0,0,0,0.08);
-  --code-bg-light: rgba(0,0,0,0.05);
-  --code-bg-block: rgba(0,0,0,0.06);
-  --code-bg-block-hover: rgba(0,0,0,0.10);
+  --overlay-light: rgba(0,0,0,0.35);
+  --code-bg: #F1F5F9;
+  --code-bg-light: #F8FAFC;
+  --code-bg-block: #F1F5F9;
+  --code-bg-block-hover: #E2E8F0;
 
-  --shadow-heavy: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+  /* Shadows - soft elevation for solid cards */
+  --shadow-heavy: 0 4px 10px rgba(0,0,0,0.06);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
 
-  --gradient-body: linear-gradient(160deg, #f0f4f8 0%, #e2e8f0 60%, #f0f4f8 100%);
-  --gradient-body-simple: linear-gradient(160deg, #f0f4f8, #e2e8f0);
+  --gradient-body: #F8FAFC;
+  --gradient-body-simple: #F8FAFC;
 
-  /* Grid overlay for light mode — invisible on light bg */
-  --grid-line: rgba(0,0,0,0.03);
+  /* Grid overlay - barely visible on light bg */
+  --grid-line: rgba(0,0,0,0.02);
 }
 
 body {
