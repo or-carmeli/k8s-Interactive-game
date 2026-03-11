@@ -58,9 +58,19 @@ export default function RoadmapView({
   const allDone = currentStageIdx === -1;
   const currentStageNum = allDone ? topics.length : currentStageIdx + 1;
 
-  const overallProgress = topics.length > 0
-    ? Math.round(topics.reduce((sum, topic) => sum + stageProgress(topic.id, completedTopics), 0) / topics.length)
-    : 0;
+  // Overall path progress = completed difficulty levels / total levels (5 topics × 3 levels = 15)
+  const overallProgress = (() => {
+    const totalUnits = topics.length * LVL_ORDER.length;
+    if (totalUnits === 0) return 0;
+    let done = 0;
+    topics.forEach(topic => {
+      LVL_ORDER.forEach(lvl => {
+        const r = completedTopics[`${topic.id}_${lvl}`];
+        if (r && r.total && (r.correct === r.total || r.retryComplete)) done++;
+      });
+    });
+    return Math.min(100, Math.round((done / totalUnits) * 100));
+  })();
 
   const handleGlobalContinue = () => {
     const idx   = allDone ? 0 : currentStageIdx;
