@@ -1306,12 +1306,12 @@ export const TOPICS = [
                 "ConfigMap נצרך כ-env variables (envFrom) או כ-volume files (volumeMounts).\nשתי הדרכים מאפשרות ל-Pod לגשת לנתוני קונפיגורציה.\nשינוי ב-volume מתעדכן אוטומטית; שינוי ב-env מצריך restart.",
             },
             {
-              q: "מה ה-ServiceAccount הברירת מחדל?",
+              q: "נניח שנוצר Namespace חדש ב-Kubernetes.\nאיזה ServiceAccount קיים בו כברירת מחדל?",
               options: [
-              "kube-proxy – ServiceAccount של רכיב הProxy ברשת",
-              "admin – ServiceAccount עם הרשאות cluster-admin מובנות",
-              "system:node – ServiceAccount שמשמש את ה-kubelet בכל Node",
-              "default – ServiceAccount שנוצר אוטומטית בכל Namespace",
+              "kube-proxy",
+              "system:node",
+              "admin",
+              "default",
 ],
               answer: 3,
               explanation:
@@ -1404,14 +1404,14 @@ export const TOPICS = [
                 "ConfigMap is consumed as env variables (envFrom) or volume files (volumeMounts).\nBoth methods let the Pod access configuration data.\nVolume changes auto-update (with delay); env changes need Pod restart.",
             },
             {
-              q: "What is the default ServiceAccount?",
+              q: "A new Namespace is created in Kubernetes.\nWhich ServiceAccount exists in it by default?",
               options: [
-              "default - a ServiceAccount auto-created in every Namespace",
-              "kube-proxy - a ServiceAccount for the kube-proxy network component",
-              "admin - a ServiceAccount with built-in cluster-admin permissions",
-              "system:node - a ServiceAccount used by the kubelet on each Node",
+              "kube-proxy",
+              "system:node",
+              "admin",
+              "default",
 ],
-              answer: 0,
+              answer: 3,
               explanation:
                 "ServiceAccount is a Pod identity — every Namespace has 'default' assigned automatically.\nPods that don't specify a ServiceAccount get the default one.\nBest practice — create dedicated ServiceAccounts with minimal permissions.",
             },
