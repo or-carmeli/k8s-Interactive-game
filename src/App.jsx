@@ -4135,7 +4135,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
                 <div style={{height:5,background:"var(--glass-6)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
                   <div style={{height:"100%",borderRadius:4,
-                    width:`${currentQuestions.length>0?((liveIndexRef.current+(submitted&&!isInHistoryMode?1:0))/currentQuestions.length)*100:0}%`,
+                    width:`${currentQuestions.length>0?((questionIndex+1)/currentQuestions.length)*100:0}%`,
                     background:`linear-gradient(90deg,${selectedTopic.color},${selectedTopic.color}88)`,
                     transition:"width 0.4s ease"}}/>
                 </div>
@@ -4252,7 +4252,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       return safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i]));
                     });
                     return (
-                      <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:18,overflow:"hidden"}}>
+                      <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:8,overflow:"hidden"}}>
                         {/* Status banner */}
                         <div style={{background:isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.10)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:"flex-start",gap:8,borderBottom:`1px solid ${isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.12)"}`,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
                           <span style={{fontWeight:900,fontSize:15,color:isCorrect?"#10B981":"#EF4444",letterSpacing:0.3}}>
@@ -4285,7 +4285,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       return safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i]));
                     });
                     return (
-                      <div dir={dir} style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:14,padding:0,marginBottom:18,direction:dir,animation:"fadeIn 0.3s ease",overflow:"hidden"}}>
+                      <div dir={dir} style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:14,padding:0,marginBottom:8,direction:dir,animation:"fadeIn 0.3s ease",overflow:"hidden"}}>
                         <div style={{background:"rgba(168,85,247,0.10)",padding:"13px 20px",borderBottom:"1px solid rgba(168,85,247,0.12)",textAlign:dir==="rtl"?"right":"left"}}>
                           <span style={{fontSize:12,fontWeight:800,color:"#A855F7",letterSpacing:0.5}}>{lang==="he"?"תשובה אידיאלית":"Ideal Answer"}</span>
                         </div>
