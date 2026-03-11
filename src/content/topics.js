@@ -83,7 +83,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "Liveness probe הוא בדיקת בריאות תקופתית על הקונטיינר.\nכשלון חוזר ← Kubernetes מניח שהקונטיינר תקוע ומפעיל אותו מחדש.\nסוגי בדיקות — HTTP GET, TCP socket, או פקודת shell (exit code 0).",
+                "Liveness probe הוא בדיקת בריאות תקופתית על הקונטיינר.\nכשלון חוזר גורם ל-Kubernetes להניח שהקונטיינר תקוע ולהפעיל אותו מחדש.\nסוגי בדיקות — HTTP GET, TCP socket, או פקודת shell (exit code 0).",
             },
             {
               q: "מה readiness probe עושה?",
@@ -119,7 +119,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "Job מריץ משימה חד-פעמית עד הצלחה; CronJob מתזמן Jobs לפי cron schedule.\nJob = run-to-completion. CronJob = תזמון חוזר (גיבוי, ניקוי, דוחות).\nכישלון ← Job יוצר Pod חדש ומנסה שוב (עד backoffLimit).",
+                "Job מריץ משימה חד-פעמית עד הצלחה; CronJob מתזמן Jobs לפי cron schedule.\nJob = run-to-completion. CronJob = תזמון חוזר (גיבוי, ניקוי, דוחות).\nבכישלון, Job יוצר Pod חדש ומנסה שוב (עד backoffLimit).",
             },
             {
               q: "מה resource requests ב-Pod?",
@@ -259,7 +259,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "Rolling Update מחליף Pods בהדרגה — חדש עולה, רק אז ישן יורד.\nתמיד יש Pods זמינים ← zero downtime.\nבשונה מ-Recreate שמוחק הכל ויוצר downtime.",
+                "Rolling Update מחליף Pods בהדרגה — חדש עולה, רק אז ישן יורד.\nתמיד יש Pods זמינים, כך שאין downtime.\nבשונה מ-Recreate שמוחק הכל ויוצר downtime.",
             },
             {
               q: "כיצד מבצעים rollback?",
@@ -307,7 +307,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "limits מגדיר תקרת משאבים מקסימלית לקונטיינר.\nחריגת memory ← OOMKill (exit code 137). חריגת CPU ← throttling בלבד.\nrequests = תזמון. limits = תקרה קשיחה.",
+                "limits מגדיר תקרת משאבים מקסימלית לקונטיינר.\nחריגת memory גורמת ל-OOMKill (exit code 137).\nחריגת CPU גורמת ל-throttling בלבד.\nrequests = תזמון. limits = תקרה קשיחה.",
             },
             {
               q: "מה taints ו-tolerations פותרים?",
@@ -331,7 +331,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "QoS class נקבע אוטומטית לפי requests ו-limits.\nGuaranteed (requests=limits) ← אחרון להיגרש. Burstable ← חלקי. BestEffort (ללא הגדרות) ← ראשון להיגרש.\nהגדרת requests=limits לכל הקונטיינרים = Guaranteed = הגנה מקסימלית.",
+                "QoS class נקבע אוטומטית לפי requests ו-limits.\nGuaranteed (requests=limits) — אחרון להיגרש.\nBurstable — חלקי.\nBestEffort (ללא הגדרות) — ראשון להיגרש.\nהגדרת requests=limits לכל הקונטיינרים = Guaranteed = הגנה מקסימלית.",
             },
             {
               q: "מה ephemeral container ב-Kubernetes?",
@@ -459,7 +459,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "DaemonSet מבטיח Pod אחד על כל Node ב-Cluster.\nNode חדש מצטרף ← Pod נוסף אוטומטית. Pod נכשל ← מופעל מחדש.\nשימושי ל-logging (Fluentd), monitoring (node-exporter), ו-CNI plugins.",
+                "DaemonSet מבטיח Pod אחד על כל Node ב-Cluster.\nכש-Node חדש מצטרף, Pod נוסף אוטומטית. כש-Pod נכשל, הוא מופעל מחדש.\nשימושי ל-logging (Fluentd), monitoring (node-exporter), ו-CNI plugins.",
             },
             {
               q: "מה תפקיד ה-HPA ב-Kubernetes?",
@@ -471,7 +471,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "HPA (Horizontal Pod Autoscaler) משנה מספר replicas אוטומטית לפי עומס.\nעומס עולה ← מוסיף Pods. עומס יורד ← מסיר Pods.\nדורש metrics-server מותקן ב-Cluster.",
+                "HPA (Horizontal Pod Autoscaler) משנה מספר replicas אוטומטית לפי עומס.\nכשהעומס עולה, HPA מוסיף Pods. כשהעומס יורד, HPA מסיר Pods.\nדורש metrics-server מותקן ב-Cluster.",
             },
             {
               q: "מה המשמעות של OOMKilled ב-Kubernetes?",
@@ -531,7 +531,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "maxUnavailable:0 מונע הורדת Pod ישן עד שהחדש עובר readiness.\nPods חדשים נכשלים ב-readiness ← ה-rollout נתקע. יש לבדוק kubectl logs.\nmaxUnavailable:0 = בטיחות מלאה, אבל readiness כושל = rollout תקוע.",
+                "maxUnavailable:0 מונע הורדת Pod ישן עד שהחדש עובר readiness.\nאם Pods חדשים נכשלים ב-readiness, ה-rollout נתקע. יש לבדוק kubectl logs.\nmaxUnavailable:0 = בטיחות מלאה, אבל readiness כושל = rollout תקוע.",
             },
             {
               q: "ה-Deployment לא מנהל Pods. kubectl get pods --show-labels מראה: app=backend-v2.\n\nה-Deployment spec:\nspec:\n  selector:\n    matchLabels:\n      app: backend\n\nמה הבעיה?",
@@ -905,7 +905,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "ניתוב לפי path: /api ← service-api, /web ← service-web ב-Ingress אחד.\nכל URL path מופנה ל-Service אחר לפי כללי ניתוב.\nמספר Services חולקים דומיין אחד.",
+                "ניתוב לפי path: /api מופנה ל-service-api, /web מופנה ל-service-web באותו Ingress.\nכל URL path מופנה ל-Service אחר לפי כללי ניתוב.\nמספר Services חולקים דומיין אחד.",
             },
             {
               q: "מה egress NetworkPolicy?",
@@ -929,7 +929,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "כל rule ב-Ingress מכיל שדה host שמגדיר hostname ספציפי.\napi.example.com ← Service אחד, web.example.com ← Service אחר.\nIngress אחד יכול לשרת מספר דומיינים.",
+                "כל rule ב-Ingress מכיל שדה host שמגדיר hostname ספציפי.\napi.example.com מופנה ל-Service אחד, web.example.com ל-Service אחר.\nIngress אחד יכול לשרת מספר דומיינים.",
             },
             {
               q: "מה ההבדל בין ExternalTrafficPolicy: Local לבין ExternalTrafficPolicy: Cluster ב-Kubernetes Service?",
@@ -1105,7 +1105,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "Labels הם case-sensitive — app: App ≠ app: app ← Endpoints ריקים.\nלתקן selector ל-app: App כדי שיתאים ל-label.\n• port שגוי — שגיאת חיבור, לא Endpoints ריקים. • Pod לא Ready — לא הבעיה כאן. • Namespace — לא רלוונטי.\nבדוק kubectl get endpoints ו-kubectl get pods --show-labels.",
+                "Labels הם case-sensitive — app: App ≠ app: app — כתוצאה מכך Endpoints ריקים.\nלתקן selector ל-app: App כדי שיתאים ל-label.\n• port שגוי — שגיאת חיבור, לא Endpoints ריקים. • Pod לא Ready — לא הבעיה כאן. • Namespace — לא רלוונטי.\nבדוק kubectl get endpoints ו-kubectl get pods --show-labels.",
             },
             {
               q: "כלל ה-NetworkPolicy חוסמת DNS. Pods לא מצליחים לפתור שמות.\n\nNetworkPolicy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n\nמה חסר?",
@@ -1129,7 +1129,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "Service קיים אבל selector לא תואם Pods ← Endpoints ריקים ← 503.\nלתקן selector או labels כך שה-Pods יתאימו ל-Service.\n• Ingress Controller חסר — לא היה מגיב בכלל. • TLS — שגיאת SSL, לא 503. • Namespace — השגיאה היא endpoints ריקים.\n503 + endpoints not found = בעיית selector/labels.",
+                "Service קיים אבל כש-selector לא תואם Pods, ה-Endpoints ריקים וזה גורם לשגיאת 503.\nלתקן selector או labels כך שה-Pods יתאימו ל-Service.\n• Ingress Controller חסר — לא היה מגיב בכלל. • TLS — שגיאת SSL, לא 503. • Namespace — השגיאה היא endpoints ריקים.\n503 + endpoints not found = בעיית selector/labels.",
             },
             {
               q: "ה-Pod מנסה לגשת ל-api-svc.backend.cluster.local ולא מצליח. מה ה-FQDN הנכון של Service בשם api-svc ב-Namespace backend?",
