@@ -167,8 +167,8 @@ const TRANSLATIONS = {
     leaderboardBtn: "🏆 דירוג", logout: "יציאה",
     guestBanner: "💡 הירשמי כדי לשמור התקדמות ולהופיע בלוח התוצאות",
     signupNow: "הירשמי",
-    score: "ניקוד", accuracy: "דיוק", streak: "רצף", completed: "הושלמו",
-    scoreSub: "נצבר מכל החידונים", accuracySub: "אחוז תשובות נכונות", streakSub: "רצף נכונות נוכחי", completedSub: "רמות שהושלמו",
+    score: "XP", accuracy: "דיוק", streak: "Combo", completed: "הושלמו",
+    scoreSub: "XP מכל החידונים", accuracySub: "אחוז תשובות נכונות", streakSub: "תשובות נכונות ברצף", completedSub: "רמות שהושלמו",
     leaderboardRankedBy: "מדורג לפי סך הנקודות שנצברו", leaderboardScoreCol: "סה״כ נק׳",
     completionNoImprovement: "התוצאה הטובה שלך בנושא הזה כבר גבוהה יותר", completionAdded: "נוספו לסך שלך",
     freeModeBadge: "סבב בונוס — צוברים נקודות!", freeModeTag: "בונוס",
@@ -332,8 +332,8 @@ const TRANSLATIONS = {
     leaderboardBtn: "🏆 Leaderboard", logout: "Logout",
     guestBanner: "💡 Sign up to save progress and appear on the leaderboard",
     signupNow: "Sign Up",
-    score: "Score", accuracy: "Accuracy", streak: "Streak", completed: "Completed",
-    scoreSub: "Earned across all quizzes", accuracySub: "Overall correct rate", streakSub: "Current correct streak", completedSub: "Topic-levels passed",
+    score: "XP", accuracy: "Accuracy", streak: "Combo", completed: "Completed",
+    scoreSub: "XP from all quizzes", accuracySub: "Overall correct rate", streakSub: "Correct answers in a row", completedSub: "Topic-levels passed",
     leaderboardRankedBy: "Ranked by total accumulated points", leaderboardScoreCol: "Total Pts",
     completionNoImprovement: "Your best result for this topic was already higher", completionAdded: "added to your total",
     freeModeBadge: "Bonus round — earns points!", freeModeTag: "Bonus",
@@ -606,14 +606,16 @@ const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",border:"1px solid var(
 
 // Inner bidi logic: wraps Latin sequences, flags, and arrows in <span dir="ltr">, applies code styling to K8s terms.
 function renderBidiInner(text, lang, keyPrefix) {
-  if (!text || (!/[A-Za-z]/.test(text) && !/[→←]/.test(text) && !/(->|<-)/.test(text))) return text;
-  // Normalize ASCII arrows to Unicode before splitting
+  if (!text || (!/[A-Za-z]/.test(text) && !/[←]/.test(text) && !/(->|<-)/.test(text))) return text;
+  // Normalize ASCII arrows to Unicode, then replace with bidi-safe alternatives:
+  // Line-start → (bullet) becomes "· ", mid-text → becomes ":"
   text = text.replace(/-->/g, "\u2192").replace(/<--/g, "\u2190").replace(/->/g, "\u2192").replace(/<-(?!-)/g, "\u2190");
-  // Split on: flag sequences (--flag, -f), slash-paths (/api/v1), Latin word sequences, or arrow chars
-  const parts = text.split(/((?:(?<![\u0590-\u05FF])--?[A-Za-z][\w\-]*(?:=[^\s\u0590-\u05FF]*)?(?:\s+(?=(?:--?)?[A-Za-z]))?)+|(?:\/[A-Za-z][A-Za-z0-9\-_/.:]*)|(?:[A-Za-z](?:[A-Za-z0-9\-_:/=]|\.[A-Za-z0-9])*(?:\s+(?=(?:--?)?[A-Za-z]))?)+|[→←])/);
+  text = text.replace(/^→\s*/gm, "· ").replace(/\s*→\s*/g, ": ");
+  // Split on: flag sequences (--flag, -f), slash-paths (/api/v1), Latin word sequences, or left-arrow
+  const parts = text.split(/((?:(?<![\u0590-\u05FF])--?[A-Za-z][\w\-]*(?:=[^\s\u0590-\u05FF]*)?(?:\s+(?=(?:--?)?[A-Za-z]))?)+|(?:\/[A-Za-z][A-Za-z0-9\-_/.:]*)|(?:[A-Za-z](?:[A-Za-z0-9\-_:/=]|\.[A-Za-z0-9])*(?:\s+(?=(?:--?)?[A-Za-z]))?)+|[←])/);
   if (parts.length <= 1) return text;
   const startsWithLatin = /^[A-Za-z]/.test(text) || /^--?[A-Za-z]/.test(text) || /^\/[A-Za-z]/.test(text);
-  const isLtrPart = (p) => /^[A-Za-z]/.test(p) || /^--?[A-Za-z]/.test(p) || /^\/[A-Za-z]/.test(p) || /^[→←]$/.test(p);
+  const isLtrPart = (p) => /^[A-Za-z]/.test(p) || /^--?[A-Za-z]/.test(p) || /^\/[A-Za-z]/.test(p) || /^[←]$/.test(p);
   return parts.map((part, idx) => {
     const k = `${keyPrefix}-${idx}`;
     if (/^[A-Za-z]/.test(part) || /^--?[A-Za-z]/.test(part) || /^\/[A-Za-z]/.test(part)) {
@@ -621,8 +623,8 @@ function renderBidiInner(text, lang, keyPrefix) {
       const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : undefined;
       return [idx === 0 && startsWithLatin ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{part}</span>];
     }
-    // Arrow characters — wrap in LTR isolation to prevent bidi reordering
-    if (/^[→←]$/.test(part)) {
+    // Left-arrow — wrap in LTR isolation to prevent bidi reordering
+    if (/^[←]$/.test(part)) {
       return <span key={k} dir="ltr" style={{unicodeBidi:"isolate",padding:"0 2px"}}>{part}</span>;
     }
     // Non-matched (RTL) text
@@ -3307,7 +3309,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {screen==="home"&&(
         <div className="page-pad home-screen" style={{maxWidth:700,margin:"0 auto",padding:"16px 12px",animation:"fadeIn 0.4s ease",overflowX:"hidden",direction:dir}}>
           {/* ── Hero - centered, matches loading screen composition ── */}
-          <div className="home-hero" style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:14}}>
+          <div className="home-hero" style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:16}}>
             {/* Header row: logo+title on one side, burger on the other */}
             {(()=>{
               const logoIcon=(
@@ -3326,9 +3328,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               const logoText=(
                 <div style={{textAlign:"left"}}>
                   <div style={{display:"inline-flex",alignItems:"center",gap:6}}><h1 className="home-title-text" style={{fontSize:28,fontWeight:900,margin:0,lineHeight:1,letterSpacing:-0.5,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",color:"transparent",backgroundSize:"300% auto",animation:"shine 9s linear infinite",whiteSpace:"nowrap"}}>KubeQuest</h1><span style={{fontSize:11,padding:"2px 6px",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"#bbb",fontWeight:600,letterSpacing:0.3,lineHeight:1,flexShrink:0}}>Beta</span></div>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
-                    <span style={{fontSize:11,color:"var(--text-dim)",letterSpacing:0.4}}>Train Your Kubernetes Skills</span>
-                    <span style={{fontSize:10,color:"#00D4FF",background:"rgba(0,212,255,0.1)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:4,padding:"1px 5px",fontWeight:700,letterSpacing:0.3}}>v{APP_VERSION}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
+                    <span style={{fontSize:12,color:"var(--text-muted)",letterSpacing:0.3}}>Train Your Kubernetes Skills</span>
+                    <span style={{fontSize:9,color:"var(--text-dim)",background:"var(--glass-5)",borderRadius:4,padding:"1px 5px",fontWeight:600,letterSpacing:0.3}}>v{APP_VERSION}</span>
                   </div>
                 </div>
               );
@@ -3355,9 +3357,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               );
             })()}
             {/* Separator */}
-            <div style={{width:"100%",borderBottom:"1px solid var(--glass-6)",margin:"10px 0"}}/>
+            <div style={{width:"100%",borderBottom:"1px solid var(--glass-6)",margin:"12px 0 10px"}}/>
             {/* Greeting block - compact */}
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
               {/* Row 1: שלום / Hello + username + optional guest label - all inline */}
               <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"nowrap",justifyContent:"center",maxWidth:"100%",overflow:"hidden"}}>
                 <span style={{color:"var(--text-muted)",fontSize:13,lineHeight:1,direction:dir,flexShrink:0}}>{t("greeting")}</span>
@@ -3378,7 +3380,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
           </div>
           {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{window.va?.track("signup_clicked",{source:"quiz_game"});setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{t("signupNow")}</button></div>}
-          <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--glass-3)",borderRadius:10,padding:3,direction:"ltr"}}>
+          <div style={{display:"flex",gap:6,marginBottom:18,background:"var(--glass-3)",borderRadius:10,padding:3,direction:"ltr"}}>
             {[{key:"categories",label:t("tabTopics")},{key:"roadmap",label:t("tabRoadmap")}].map(tab=>(
               <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"var(--text-dim)",transition:"all 0.2s"}}>{tab.label}</button>
             ))}
@@ -3387,18 +3389,18 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           {/* Dashboard Stats — total_score is the accumulated permanent score (leaderboard-ranked).
                best_score (canonical topic-best via computeScore()) is separate and not shown here.
                Subtitles clarify each metric's meaning for users. */}
-          <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+          <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
             {[
-              {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B",sub:t("scoreSub")},
+              {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B",sub:t("scoreSub"),premium:true},
               {label:t("accuracy"),value:`${accuracy}%`,icon:"🎯",color:"#10B981",sub:t("accuracySub")},
-              {label:t("streak"),value:stats.current_streak,icon:"🔥",color:"#FF6B35",sub:t("streakSub")},
+              {label:t("streak"),value:stats.current_streak,displayValue:`x${stats.current_streak}`,icon:"🔥",color:"#FF6B35",sub:t("streakSub"),premium:true},
               {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF",sub:t("completedSub")},
             ].map((s,i)=>(
-              <div key={i} className="stats-cell" style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:12,padding:"14px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-                <div style={{fontSize:18,lineHeight:1}}>{s.icon}</div>
-                <div style={{fontSize:22,fontWeight:700,color:s.color,lineHeight:1}}>{s.value}</div>
-                <div style={{fontSize:12,color:"var(--text-dim)",opacity:0.7,lineHeight:1}}>{s.label}</div>
-                {s.sub&&<div style={{fontSize:9,color:"var(--text-dim)",opacity:0.5,lineHeight:1.2,marginTop:-2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}}>{s.sub}</div>}
+              <div key={i} className="stats-cell" style={{background:s.premium?`${s.color}08`:"var(--glass-3)",border:`1px solid ${s.premium?`${s.color}30`:"var(--glass-7)"}`,borderRadius:12,padding:"12px 6px 10px",display:"flex",flexDirection:"column",alignItems:"center",gap:3,boxShadow:s.premium?`0 0 10px ${s.color}15`:"none"}}>
+                <div style={{fontSize:16,lineHeight:1}}>{s.icon}</div>
+                <div style={{fontSize:s.premium?24:20,fontWeight:800,color:s.color,lineHeight:1,letterSpacing:s.premium?-0.5:0,direction:"ltr"}}>{s.displayValue||s.value}</div>
+                <div style={{fontSize:11,fontWeight:700,color:s.premium?s.color:"var(--text-dim)",opacity:s.premium?0.85:0.7,lineHeight:1,letterSpacing:0.5,direction:"ltr"}}>{s.label}</div>
+                {s.sub&&<div style={{fontSize:9,color:"var(--text-dim)",opacity:0.45,lineHeight:1.2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%",paddingInline:2}}>{s.sub}</div>}
               </div>
             ))}
           </div>
@@ -3406,7 +3408,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const el = document.getElementById(`topic-card-${id}`);
             if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
           }}/>
-          <button onClick={()=>tryStartQuiz(startDailyChallenge)} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s",boxShadow:"0 0 12px rgba(0,212,255,0.15)"}}
+          <button onClick={()=>tryStartQuiz(startDailyChallenge)} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.14),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.4)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s",boxShadow:"0 0 16px rgba(245,158,11,0.12)"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <span className="action-emoji" style={{fontSize:28,flexShrink:0}}>🔥</span>
@@ -3415,7 +3417,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <span style={{color:"#F59E0B",fontWeight:800,fontSize:15}}>{t("dailyChallengeTitle")}</span>
                   <span style={{background:"rgba(245,158,11,0.2)",color:"#F59E0B",fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:0.5,flexShrink:0}}>{t("dailyChallengeNew")}</span>
                 </div>
-                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2}}>{t("dailyChallengeDesc")} · <span style={{opacity:0.6}}>{t("freeModeTag")}</span></div>
+                <div style={{color:"var(--text-muted)",fontSize:12,marginTop:3}}>{t("dailyChallengeDesc")}</div>
+                <div style={{color:"#F59E0B",fontSize:10,fontWeight:700,marginTop:2,opacity:0.7,letterSpacing:0.3}}>+15 XP · {t("freeModeTag")}</div>
               </div>
             </div>
             <span style={{color:"#F59E0B",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>

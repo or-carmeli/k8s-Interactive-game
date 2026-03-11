@@ -40,8 +40,8 @@ export default function WeakAreaCard({ topicStats, completedTopics, onGoToTopic,
   if (entries.length === 0 || totalAnswered < 5) {
     return (
       <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:"14px 18px",marginBottom:16,direction:dir}}>
-        <div style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)",marginBottom:8,letterSpacing:0.5}}>{t("weakAreaTitle")}</div>
-        <p style={{color:"var(--text-dim)",fontSize:13,margin:0}}>{t("weakAreaEmpty")}</p>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",marginBottom:8,letterSpacing:0.6,textTransform:"uppercase"}}>{t("weakAreaTitle")}</div>
+        <p style={{color:"var(--text-dim)",fontSize:13,margin:0,lineHeight:1.5}}>{t("weakAreaEmpty")}</p>
       </div>
     );
   }
@@ -81,9 +81,9 @@ export default function WeakAreaCard({ topicStats, completedTopics, onGoToTopic,
         border: "1px solid rgba(16,185,129,0.18)",
         borderRight: `3px solid ${color}`,
       }}>
-        <div style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)",marginBottom:10,letterSpacing:0.5}}>{t("allPerfectTitle")}</div>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",marginBottom:8,letterSpacing:0.6,textTransform:"uppercase"}}>{t("allPerfectTitle")}</div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-          <span style={{color:"var(--text-primary)",fontSize:13}}>{t("allPerfectMsg")}</span>
+          <span style={{color:"var(--text-primary)",fontSize:13,lineHeight:1.5}}>{t("allPerfectMsg")}</span>
           <button
             onClick={() => {
               // Scroll to the top of the categories list (first topic card).
@@ -107,17 +107,18 @@ export default function WeakAreaCard({ topicStats, completedTopics, onGoToTopic,
       border: "1px solid rgba(239,68,68,0.15)",
       borderRight: `3px solid ${color}`,
     }}>
-      <div style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)",marginBottom:10,letterSpacing:0.5}}>{t("weakAreaTitle")}</div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{color:"var(--text-primary)",fontWeight:700,fontSize:15}}>{name}</span>
-          <span style={{color,fontSize:13,fontWeight:600}}>{accuracy}% {t("accuracyLabel")}</span>
-        </div>
-        <button onClick={() => onGoToTopic(weakId)}
-          style={{padding:"8px 16px",background:`${color}1a`,border:`1px solid ${color}4d`,borderRadius:8,color,fontSize:13,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
-          {t("goBackToTopic")}
-        </button>
+      <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",marginBottom:8,letterSpacing:0.6,textTransform:"uppercase"}}>{t("weakAreaTitle")}</div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+        <span style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{name}</span>
+        <span style={{color,fontSize:12,fontWeight:700,background:`${color}14`,padding:"2px 8px",borderRadius:10}}>{accuracy}% {t("accuracyLabel")}</span>
       </div>
+      <button onClick={() => onGoToTopic(weakId)}
+        style={{width:"100%",padding:"10px 16px",background:`${color}14`,border:`1px solid ${color}35`,borderRadius:10,color,fontSize:13,fontWeight:700,cursor:"pointer",transition:"transform 0.15s",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}
+        onMouseEnter={e=>e.currentTarget.style.transform="translateY(-1px)"}
+        onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+        <span>{t("goBackToTopic")}</span>
+        <span aria-hidden="true" style={{fontSize:11}}>{dir==="rtl"?"◀":"▶"}</span>
+      </button>
     </div>
   );
 }
