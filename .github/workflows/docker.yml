@@ -2,42 +2,34 @@ name: Docker Build & Push
 
 on:
   push:
-    branches:
-      - main
-  # Allow manual trigger from the GitHub Actions UI
+    branches: [main]
+    tags: ["v*.*.*"]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}   # → ghcr.io/or-carmeli/kubequest
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
-    name: Build & Push to GHCR
+    name: Build, Scan & Push to GHCR
     runs-on: ubuntu-latest
 
-    # Required permissions to push to GitHub Container Registry
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # Generates image tags automatically:
-      #   - latest       (on every push to main)
-      #   - sha-<commit> (unique tag per commit, useful for rollbacks)
-      #   - v1.5.0       (when a Git tag like v1.5.0 is pushed)
-      - name: Extract image metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=sha-
-            type=semver,pattern={{version}}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
@@ -46,16 +38,62 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Caches Docker layers between runs to speed up builds
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
 
+      # --- Phase 1: Build locally for vulnerability scanning ---
+      - name: Build image for scanning
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: local-scan:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: local-scan:latest
+          format: table
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+
+      # --- Phase 2: Build, push with SBOM & provenance ---
       - name: Build and push
-        uses: docker/build-push-action@v5
+        id: push
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          sbom: true
+          provenance: mode=max
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # --- Phase 3: Sign the pushed image ---
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4
+
+      - name: Sign image with Cosign (keyless)
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: cosign sign --yes "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
+
+      - name: Verify signature
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: cosign verify --certificate-oidc-issuer https://token.actions.githubusercontent.com --certificate-identity-regexp "github\.com/or-carmeli/KubeQuest" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
+
+      - name: Print immutable image reference
+        run: echo "Image published → ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}"

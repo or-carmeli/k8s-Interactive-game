@@ -72,40 +72,12 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ## Architecture
 
-### CI/CD Pipeline
-
-```mermaid
-flowchart LR
-    DEV(["👩‍💻 Developer"])
-
-    subgraph GH["GitHub"]
-        REPO[("main / dev / feat/*")]
-        CI["CI\nBuild Check"]
-        DOCK["Docker\nBuild & Push"]
-        SEC["Security Scan\nnpm audit · Trivy · CodeQL"]
-        BOT["Dependabot\nweekly updates"]
-    end
-
-    GHCR["📦 GHCR\nghcr.io/or-carmeli/kubequest"]
-    VERCEL["▶ Vercel\nAuto Deploy"]
-
-    DEV -->|git push| REPO
-    REPO -->|on PR| CI
-    REPO -->|push to main| DOCK
-    REPO -->|push to main| SEC
-    REPO -->|push to main| VERCEL
-    BOT -.->|opens PRs| REPO
-    DOCK --> GHCR
-```
-
-### Runtime Architecture
-
 ```mermaid
 flowchart TD
     USER(["👤 User"])
 
     subgraph VERCEL["Vercel Edge Network"]
-        SPA["React SPA"]
+        SPA["React SPA\nReact 18 + Vite 5"]
     end
 
     subgraph SB["Supabase"]
@@ -115,12 +87,19 @@ flowchart TD
         CRON["pg_cron"]
     end
 
+    subgraph GH["GitHub Actions"]
+        CI["CI\nBuild Check"]
+        DOCK["Docker Pipeline\nBuild · Trivy Scan · Push\nSBOM · Provenance · Cosign Sign"]
+        SEC["Security Scan\nnpm audit · CodeQL"]
+        BOT["Dependabot"]
+    end
+
+    GHCR["📦 GHCR\nghcr.io/or-carmeli/kubequest"]
+
     subgraph K8S["Kubernetes — Optional"]
         ING["Ingress + TLS"] --> SVC["ClusterIP Service"] --> PODS["Pods ×2-10"]
         HPA["HPA"] -.->|autoscales| PODS
     end
-
-    GHCR["📦 GHCR"] -.->|kubectl apply| K8S
 
     USER -->|HTTPS| SPA
     SPA -->|auth| AUTH
@@ -129,7 +108,16 @@ flowchart TD
     EDGE -->|health checks| DB
     EDGE -->|health checks| AUTH
     SPA -->|status page| DB
+
+    DOCK -->|signed image + SBOM + provenance| GHCR
+    GHCR -.->|kubectl apply / ArgoCD| K8S
+    BOT -.->|dependency PRs| CI
 ```
+
+The application consists of:
+- **Frontend** — React SPA deployed on Vercel, with Supabase for auth, database, and edge functions
+- **CI/CD** — GitHub Actions pipeline that builds, scans, signs, and publishes container images to GHCR
+- **Kubernetes** _(optional)_ — production-ready manifests in `k8s/` for self-hosting on any cluster using the signed GHCR image
 
 > **Production** runs on Vercel + Supabase. The `k8s/` manifests and Docker image on GHCR enable self-hosting on any Kubernetes cluster.
 
@@ -244,6 +232,53 @@ kubectl apply -f k8s/
 ```
 
 > Requires: nginx ingress controller + cert-manager installed in the cluster.
+
+---
+
+## CI/CD & Supply Chain Security
+
+### Container Pipeline
+
+Every push to `main` or a version tag (`v*.*.*`) triggers the [Docker Build & Push](.github/workflows/docker.yml) workflow:
+
+```
+Build image → Trivy scan → Push to GHCR → Attach SBOM & provenance → Sign with Cosign → Verify signature
+```
+
+The workflow uses concurrency control — rapid pushes to the same ref cancel older in-progress runs. On completion, the immutable image reference (`ghcr.io/or-carmeli/kubequest@sha256:...`) is printed for use in deployments.
+
+### Image Tags
+
+| Trigger | Tag | Example |
+|---------|-----|---------|
+| Push to `main` | `latest` + `sha-<commit>` | `latest`, `sha-a1b2c3d` |
+| Git tag `v1.2.0` | Semver + `sha-<commit>` | `1.2.0`, `sha-a1b2c3d` |
+| Manual dispatch | `sha-<commit>` | `sha-a1b2c3d` |
+
+### Security Measures
+
+- **Vulnerability scanning** — [Trivy](https://trivy.dev/) scans the image before push; the workflow fails on HIGH and CRITICAL vulnerabilities (unfixed CVEs excluded)
+- **SBOM** — Software Bill of Materials attached to every published image
+- **Provenance** — build provenance attestation (`mode=max`) provides cryptographic proof of build origin
+- **Keyless signing** — [Cosign](https://docs.sigstore.dev/cosign/overview/) signs images by digest using GitHub OIDC; no secret keys to manage or rotate
+- **In-pipeline verification** — the signature is verified in CI before the workflow completes
+
+### Verify Locally
+
+```bash
+cosign verify \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp "github\.com/or-carmeli/KubeQuest" \
+  ghcr.io/or-carmeli/kubequest:latest
+```
+
+### Deploying by Digest
+
+Every workflow run outputs an immutable image reference by digest. Use it in Kubernetes manifests, Helm values, or ArgoCD application specs to pin the exact image that was built, scanned, and signed:
+
+```yaml
+image: ghcr.io/or-carmeli/kubequest@sha256:<digest>
+```
 
 ---
 
