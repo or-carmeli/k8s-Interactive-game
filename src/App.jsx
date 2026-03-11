@@ -1335,8 +1335,12 @@ export default function K8sQuestApp() {
     // Signal to SW update handler whether a quiz/incident is active
     const quizActive = (screen === "topic" && topicScreen === "quiz") || screen === "incident";
     window.__KQ_QUIZ_ACTIVE__ = quizActive;
-    // If a SW update was deferred while a quiz was active, reload now
-    if (!quizActive && window.__KQ_PENDING_RELOAD__) {
+    // If a SW update was deferred while a quiz was active, reload now —
+    // but only on truly idle screens. "topicComplete" and "incidentComplete"
+    // depend on transient React state, so reloading there sends the user to
+    // home and loses the results screen (looks like "Finish Topic" did nothing).
+    const canReload = screen === "home" || screen === "incidentList";
+    if (!quizActive && canReload && window.__KQ_PENDING_RELOAD__) {
       window.__KQ_PENDING_RELOAD__ = false;
       window.location.reload();
     }
@@ -2083,6 +2087,7 @@ export default function K8sQuestApp() {
   };
 
   const nextQuestion = async () => {
+    console.debug("[FINISH_DEBUG] nextQuestion called", { questionIndex, total: currentQuestions.length, retryMode, isLast: questionIndex >= currentQuestions.length - 1 });
     const isLast = questionIndex >= currentQuestions.length - 1;
     if (isLast) {
       const finalCorrect = topicCorrectRef.current;
@@ -2098,7 +2103,7 @@ export default function K8sQuestApp() {
           if (prevResult) {
             const newCompleted = { ...completedTopics, [key]: { ...prevResult, correct: prevResult.total, retryComplete: true, wrongIndices: [], wrongQuestions: [] } };
             setCompletedTopics(newCompleted);
-            if (!isFreeMode(selectedTopic.id)) await saveUserData(stats, newCompleted, unlockedAchievements);
+            try { if (!isFreeMode(selectedTopic.id)) await saveUserData(stats, newCompleted, unlockedAchievements); } catch (e) { console.error("[FINISH_DEBUG] saveUserData error (retry):", e.message); }
           }
           setAllowNextLevel(true);
         } else {
@@ -2106,10 +2111,12 @@ export default function K8sQuestApp() {
         }
         submittingRef.current = false;
         updateDailyStreak();
+        console.debug("[FINISH_DEBUG] setScreen topicComplete (retry path)");
         setScreen("topicComplete");
         return;
       }
 
+      try {
       const key = `${selectedTopic.id}_${selectedLevel}`;
       const prevResult = completedTopics[key];
       const bestCorrect = prevResult ? Math.min(Math.max(prevResult.correct, finalCorrect), currentQuestions.length) : Math.min(finalCorrect, currentQuestions.length);
@@ -2136,7 +2143,7 @@ export default function K8sQuestApp() {
       setSessionScore(0);
       setCompletedTopics(newCompleted); setStats(newStats); setUnlockedAchievements(newAch);
       if (!isFreeMode(selectedTopic.id)) {
-        await saveUserData(newStats, newCompleted, newAch);
+        try { await saveUserData(newStats, newCompleted, newAch); } catch (e) { console.error("[FINISH_DEBUG] saveUserData error:", e.message); }
         const allPerfect = LEVEL_ORDER.every(lvl => {
           const r = newCompleted[`${selectedTopic.id}_${lvl}`];
           return r && r.correct === r.total;
@@ -2146,6 +2153,11 @@ export default function K8sQuestApp() {
       updateDailyStreak();
       window.va?.track("quiz_completed", { score: finalCorrect, totalQuestions: currentQuestions.length, topic: selectedTopic?.name || selectedTopic?.id });
       if (finalCorrect < currentQuestions.length) window.va?.track("quiz_failed", { score: finalCorrect, topic: selectedTopic?.name || selectedTopic?.id });
+      } catch (err) {
+        console.error("[FINISH_DEBUG] nextQuestion error:", err.message);
+        submittingRef.current = false;
+      }
+      console.debug("[FINISH_DEBUG] setScreen topicComplete (normal path)");
       setScreen("topicComplete");
     } else {
       submittingRef.current = false;
