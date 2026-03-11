@@ -486,7 +486,7 @@ function renderQuestion(qText, lang) {
     const qDir = hasHebrew(qText) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
     return (
       <div dir={qDir} style={{color:"var(--text-primary)",fontSize:18,fontWeight:700,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
-        {lang==="he"?renderBidi(qText,lang):qText}
+        {lang==="he"?renderBidi(qText,lang):renderBidiInner(qText,lang,"q")}
       </div>
     );
   }
@@ -510,7 +510,7 @@ function renderQuestion(qText, lang) {
         const pDir = hasHebrew(para) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
         return (
           <div key={idx} dir={pDir} style={{color:"var(--text-primary)",fontSize:isLast?18:15,fontWeight:isLast?700:400,lineHeight:1.65,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:pDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
-            {lang==="he"?renderBidi(para,lang):para}
+            {lang==="he"?renderBidi(para,lang):renderBidiInner(para,lang,`p${idx}`)}
           </div>
         );
       })}
@@ -591,7 +591,7 @@ function getTermKind(token) {
 const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"var(--code-text)"};
 
 // Concept tag style for K8s resource types — highlighted but not code
-const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",borderRadius:4,padding:"1px 5px",fontSize:"0.92em",fontWeight:500,color:"var(--concept-text)"};
+const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",border:"1px solid var(--concept-border)",borderRadius:6,padding:"1px 6px",fontSize:"0.92em",fontWeight:600,color:"var(--concept-text)"};
 
 // Inner bidi logic: wraps Latin sequences, flags, and arrows in <span dir="ltr">, applies code styling to K8s terms.
 function renderBidiInner(text, lang, keyPrefix) {
@@ -692,7 +692,7 @@ function renderBidiBlock(text, lang) {
   const bare = text.replace(/`[^`]+`/g, "");
   const hasCli = CLI_COMMAND_RE.test(bare);
   // No CLI command: for Hebrew fall back to renderBidi; for English return plain text
-  if (!hasCli) return lang === "he" ? renderBidi(text, lang) : text;
+  if (!hasCli) return lang === "he" ? renderBidi(text, lang) : renderBidiInner(text, lang, "e");
   // CLI command found (any language): handle backtick-wrapped inline code first,
   // then CLI commands in remaining segments
   if (text.includes("`")) {
