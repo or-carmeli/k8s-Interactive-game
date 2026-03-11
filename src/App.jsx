@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useTheme } from "./ThemeContext";
 import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
@@ -4654,6 +4655,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       </main>
       <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
