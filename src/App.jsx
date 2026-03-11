@@ -895,6 +895,10 @@ export default function K8sQuestApp() {
   const [bookmarks, setBookmarks] = useState(() => safeGetJSON("bookmarks_v1", []));
   const [showBookmarks, setShowBookmarks] = useState(false);
 
+  // ── Analytics session tracking ──────────────────────────────────────────────
+  const sessionStartRef = useRef(Date.now());
+  const quizzesPlayedRef = useRef(0);
+
   // ── Incident Mode state ───────────────────────────────────────────────────
   const [selectedIncident,   setSelectedIncident]   = useState(null);
   const [incidentStepIndex,  setIncidentStepIndex]  = useState(0);
@@ -933,6 +937,9 @@ export default function K8sQuestApp() {
   };
 
   const isFreeMode = (id) => id === "mixed" || id === "daily" || id === "bookmarks";
+  const getGameMode = (topic, level) =>
+    topic?.id === "mixed" ? "mixed" : topic?.id === "daily" ? "daily"
+    : topic?.id === "bookmarks" ? "bookmarks" : isInterviewMode ? "interview" : level || "unknown";
 
   // Weighted progress % for a single topic - matches Roadmap's stageProgress logic.
   const computeTopicProgress = (topicId) => {
@@ -1151,6 +1158,18 @@ export default function K8sQuestApp() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [screen]);
+
+  // ── Analytics: quiz_abandoned + session_ended on page unload ──
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (screenRef.current === "topic" && topicScreenRef.current === "quiz" && liveIndexRef.current > 0) {
+        window.va?.track("quiz_abandoned", { topic: selectedTopic?.name || selectedTopic?.id, lastQuestion: liveIndexRef.current + 1 });
+      }
+      window.va?.track("session_ended", { durationSeconds: Math.round((Date.now() - sessionStartRef.current) / 1000), quizzesPlayed: quizzesPlayedRef.current });
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [selectedTopic]);
 
   useEffect(() => {
     if (!achievementsLoaded.current) return;
@@ -1645,7 +1664,7 @@ export default function K8sQuestApp() {
         setAuthError(t("emailAlreadySent"));
       else
         setAuthError(error.message);
-    } else setAuthError(t("emailSent"));
+    } else { setAuthError(t("emailSent")); window.va?.track("signup_completed", { source: "quiz_game" }); }
     setAuthLoading(false);
   };
 
@@ -2049,6 +2068,10 @@ export default function K8sQuestApp() {
         } catch {}
       }
     }
+    // ── Analytics ──
+    window.va?.track("question_answered", { questionNumber: questionIndex + 1, correct, topic: selectedTopic?.name || selectedTopic?.id });
+    if (!correct) window.va?.track("question_failed", { questionNumber: questionIndex + 1, topic: selectedTopic?.name || selectedTopic?.id });
+    if (correct && stats.current_streak === 0) window.va?.track("streak_started", { topic: selectedTopic?.name || selectedTopic?.id });
     } catch (err) {
       console.error("handleSubmit error:", err);
       submittingRef.current = false;
@@ -2118,6 +2141,8 @@ export default function K8sQuestApp() {
         if (allPerfect) { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 4000); }
       }
       updateDailyStreak();
+      window.va?.track("quiz_completed", { score: finalCorrect, totalQuestions: currentQuestions.length, topic: selectedTopic?.name || selectedTopic?.id });
+      if (finalCorrect < currentQuestions.length) window.va?.track("quiz_failed", { score: finalCorrect, topic: selectedTopic?.name || selectedTopic?.id });
       setScreen("topicComplete");
     } else {
       submittingRef.current = false;
@@ -2175,6 +2200,9 @@ export default function K8sQuestApp() {
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? (INTERVIEW_DURATIONS[level] || 25) : (TIMER_DURATIONS[level] || 30));
     setScreen("topic");
     if (isGuest) achievementsLoaded.current = true;
+    window.va?.track("quiz_started", { topic: topic.name || topic.id, difficulty: level, mode: getGameMode(topic, level) });
+    quizzesPlayedRef.current += 1;
+    if (isGuest) window.va?.track("guest_play_started", { topic: topic.name || topic.id });
   };
 
   const startMixedQuiz = async () => {
@@ -2227,6 +2255,9 @@ export default function K8sQuestApp() {
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
     setScreen("topic");
+    window.va?.track("quiz_started", { topic: "Mixed Quiz", difficulty: "mixed", mode: "mixed" });
+    quizzesPlayedRef.current += 1;
+    if (isGuest) window.va?.track("guest_play_started", { topic: "Mixed Quiz" });
   };
 
   const startDailyChallenge = async () => {
@@ -2271,6 +2302,9 @@ export default function K8sQuestApp() {
     setSessionScore(0); setRetryMode(false); setAllowNextLevel(false);
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.daily : TIMER_DURATIONS.daily);
     setScreen("topic");
+    window.va?.track("quiz_started", { topic: "Daily Challenge", difficulty: "daily", mode: "daily" });
+    quizzesPlayedRef.current += 1;
+    if (isGuest) window.va?.track("guest_play_started", { topic: "Daily Challenge" });
   };
 
   // Reset per-question ephemeral state when navigating to a different question
@@ -2344,6 +2378,9 @@ export default function K8sQuestApp() {
     if (timerEnabled || isInterviewMode) setTimeLeft(isInterviewMode ? INTERVIEW_DURATIONS.mixed : TIMER_DURATIONS.mixed);
     setScreen("topic");
     setShowBookmarks(false);
+    window.va?.track("quiz_started", { topic: "Saved Questions", difficulty: "mixed", mode: "bookmarks" });
+    quizzesPlayedRef.current += 1;
+    if (isGuest) window.va?.track("guest_play_started", { topic: "Saved Questions" });
   };
 
   // ── Incident Mode: persistence helpers ───────────────────────────────────
@@ -3325,7 +3362,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               )}
             </div>
           </div>
-          {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{t("signupNow")}</button></div>}
+          {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{window.va?.track("signup_clicked",{source:"quiz_game"});setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{t("signupNow")}</button></div>}
           <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--glass-3)",borderRadius:10,padding:3,direction:"ltr"}}>
             {[{key:"categories",label:t("tabTopics")},{key:"roadmap",label:t("tabRoadmap")}].map(tab=>(
               <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"var(--text-dim)",transition:"all 0.2s"}}>{tab.label}</button>
@@ -4349,7 +4386,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             )}
             {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:16,fontSize:13,color:"#4a9aba"}}>
               {t("guestSaveHint")}{" "}
-              <button onClick={()=>{setAuthScreen("signup");setUser(null);}} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
+              <button onClick={()=>{window.va?.track("signup_clicked",{source:"quiz_game"});setAuthScreen("signup");setUser(null);}} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
             </div>}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {/* Next topic button — only shown when ALL levels of current topic are mastered */}
@@ -4377,6 +4414,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   const qs=wrongQs.map(h=>({q:h.q,options:h.options,answer:h.answer,explanation:h.explanation}));
                   setMixedQuestions(qs);
                   setRetryMode(true);
+                  window.va?.track("retry_quiz", { topic: selectedTopic?.name || selectedTopic?.id });
                   isRetryRef.current=true;
                   setAllowNextLevel(false);
                   setTopicScreen("quiz");
@@ -4434,7 +4472,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </div>
                 );
               })()}
-              <button onClick={()=>selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel)} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
+              <button onClick={()=>{window.va?.track("play_again",{topic:selectedTopic?.name||selectedTopic?.id,previousScore:result?.correct});selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel);}} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
               <button onClick={()=>setScreen("home")} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-primary)",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
             {showReview&&quizHistory.length>0&&(
