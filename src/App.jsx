@@ -184,7 +184,7 @@ const TRANSLATIONS = {
     correctCount: "נכון", perfect: "מושלם!", points: "נקודות",
     guestSaveHint: "💡 הירשמי כדי לשמור את הניקוד!", signupLink: "הירשמי עכשיו",
     tryAgain: "נסי שוב", backToTopics: "חזרי לנושאים",
-    nextLevelBtn: "המשיכי לרמה הבאה", locked: "🔒 נעול",
+    nextLevelBtn: "המשיכי לרמה הבאה", locked: "🔒 נעול", completePrevLevel: "סיימו את הרמה הקודמת",
     skipTheory: "⚡ דלגי לחידון",
     timerOn: "⏱ כבי טיימר", timerOff: "⏱ הפעילי טיימר", timeUp: "⏰ הזמן נגמר!",
     reviewBtn: "צפי בסקירה", hideReview: "הסתירי סקירה", reviewTitle: "סקירת שאלות",
@@ -349,7 +349,7 @@ const TRANSLATIONS = {
     correctCount: "correct", perfect: "Perfect!", points: "points",
     guestSaveHint: "💡 Sign up to save your score!", signupLink: "Sign up now",
     tryAgain: "Try Again", backToTopics: "Back to Topics",
-    nextLevelBtn: "Next Level", locked: "🔒 Locked",
+    nextLevelBtn: "Next Level", locked: "🔒 Locked", completePrevLevel: "Complete previous level",
     skipTheory: "⚡ Skip to Quiz",
     timerOn: "⏱ Timer On", timerOff: "⏱ Timer Off", timeUp: "⏰ Time's Up!",
     reviewBtn: "View Review", hideReview: "Hide Review", reviewTitle: "Question Review",
@@ -3387,7 +3387,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           {/* Dashboard Stats — total_score is the accumulated permanent score (leaderboard-ranked).
                best_score (canonical topic-best via computeScore()) is separate and not shown here.
                Subtitles clarify each metric's meaning for users. */}
-          <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
+          <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
             {[
               {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B",sub:t("scoreSub")},
               {label:t("accuracy"),value:`${accuracy}%`,icon:"🎯",color:"#10B981",sub:t("accuracySub")},
@@ -3398,7 +3398,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <div style={{fontSize:18,lineHeight:1}}>{s.icon}</div>
                 <div style={{fontSize:22,fontWeight:700,color:s.color,lineHeight:1}}>{s.value}</div>
                 <div style={{fontSize:12,color:"var(--text-dim)",opacity:0.7,lineHeight:1}}>{s.label}</div>
-                {s.sub&&<div style={{fontSize:9,color:"var(--text-dim)",opacity:0.5,lineHeight:1.2,marginTop:-2,textAlign:"center"}}>{s.sub}</div>}
+                {s.sub&&<div style={{fontSize:9,color:"var(--text-dim)",opacity:0.5,lineHeight:1.2,marginTop:-2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}}>{s.sub}</div>}
               </div>
             ))}
           </div>
@@ -3406,7 +3406,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const el = document.getElementById(`topic-card-${id}`);
             if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
           }}/>
-          <button onClick={()=>tryStartQuiz(startDailyChallenge)} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={()=>tryStartQuiz(startDailyChallenge)} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s",boxShadow:"0 0 12px rgba(0,212,255,0.15)"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <span className="action-emoji" style={{fontSize:28,flexShrink:0}}>🔥</span>
@@ -3420,7 +3420,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
             <span style={{color:"#F59E0B",fontSize:20,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
           </button>
-          <button onClick={()=>tryStartQuiz(startMixedQuiz)} className="action-card" style={{width:"100%",marginBottom:10,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={()=>tryStartQuiz(startMixedQuiz)} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <div className="action-text" style={{textAlign:"start",minWidth:0}}>
@@ -3433,7 +3433,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
           {/* Incident Mode entry */}
           <button onClick={()=>setScreen("incidentList")} className="action-card"
-            style={{width:"100%",marginBottom:16,padding:"16px 20px",background:"linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.05))",border:"1px solid rgba(239,68,68,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+            style={{width:"100%",marginBottom:20,padding:"16px 20px",background:"linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.05))",border:"1px solid rgba(239,68,68,0.35)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <div className="action-text" style={{textAlign:"start",minWidth:0}}>
@@ -3461,7 +3461,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     <button onClick={e=>{e.stopPropagation();handleResetTopic(topic.id);}} aria-label={t("resetTopic")} style={{background:"none",border:"none",color:"var(--text-dim)",fontSize:13,cursor:"pointer",padding:"2px 4px",lineHeight:1}} onMouseEnter={e=>e.currentTarget.style.color="#EF4444"} onMouseLeave={e=>e.currentTarget.style.color="var(--text-dim)"}>↺</button>
                   </div>})()}
                 </div>
-                {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:6,background:"var(--glass-6)",borderRadius:3,marginBottom:10}}><div style={{height:"100%",borderRadius:3,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
+                {(()=>{const pct=computeTopicProgress(topic.id);return(<div style={{height:7,background:"var(--glass-6)",borderRadius:4,marginBottom:10}}><div style={{height:"100%",borderRadius:4,width:`${pct}%`,background:`linear-gradient(90deg,${topic.color},${topic.color}88)`,transition:"width 0.5s ease"}}/></div>);})()}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
                   {Object.entries(LEVEL_CONFIG).filter(([lvl])=>lvl!=="mixed"&&lvl!=="daily").map(([lvl,cfg])=>{
                     const key=`${topic.id}_${lvl}`;
@@ -3482,6 +3482,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                           {done.correct>0?"✓":""} {done.correct}/{done.total}
                         </div>}
                         <div style={{fontSize:10,color:locked?"#1e293b":"var(--text-dim)"}} aria-hidden="true">+{cfg.points}{t("pts")}</div>
+                        {locked&&<div style={{fontSize:10,color:"var(--text-muted)",marginTop:2,lineHeight:1.2}}>{t("completePrevLevel")}</div>}
                       </button>
                     );
                   })}
@@ -4147,7 +4148,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </span>}
                   {!isInHistoryMode&&isFreeMode(selectedTopic?.id)&&<span style={{fontSize:9,color:"var(--text-dim)",fontWeight:600,opacity:0.6,background:"var(--glass-4)",padding:"2px 6px",borderRadius:4}}>{t("freeModeBadge")}</span>}
                 </div>
-                <div style={{height:5,background:"var(--glass-6)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
+                <div style={{height:6,background:"var(--glass-6)",borderRadius:4,direction:"ltr",transform:lang==="he"?"scaleX(-1)":undefined}}>
                   <div style={{height:"100%",borderRadius:4,
                     width:`${currentQuestions.length>0?((questionIndex+1)/currentQuestions.length)*100:0}%`,
                     background:`linear-gradient(90deg,${selectedTopic.color},${selectedTopic.color}88)`,
@@ -4338,7 +4339,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   ) : (
                     <button ref={nextBtnRef}
                       onClick={isInHistoryMode ? ()=>setQuestionIndex(p=>Math.min(p+1, currentQuestions.length-1)) : nextQuestion}
-                      style={{width:"100%",padding:15,background:`linear-gradient(135deg,${selectedTopic.color}cc,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+                      style={{width:"100%",padding:15,background:`linear-gradient(135deg,${selectedTopic.color}cc,${selectedTopic.color}77)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.3)"}}>
                       {isInHistoryMode
                         ? (questionIndex >= liveIndexRef.current - 1 ? t("backToCurrent") : t("nextQuestion"))
                         : (questionIndex>=currentQuestions.length-1 ? t("finishTopic") : t("nextQuestion"))}
@@ -4449,7 +4450,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
                 </button>
               )}
-              {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-secondary)",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+              {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
               {(()=>{
@@ -4478,7 +4479,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 };
                 return(
                   <div>
-                    <button onClick={handleShare} style={{width:"100%",padding:13,background:shareCopied?"rgba(10,102,194,0.18)":"rgba(10,102,194,0.1)",border:`1px solid ${shareCopied?"rgba(10,102,194,0.6)":"rgba(10,102,194,0.35)"}`,borderRadius:12,color:"#4a9ede",fontSize:14,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
+                    <button onClick={handleShare} style={{width:"100%",padding:13,background:shareCopied?"rgba(10,102,194,0.18)":"rgba(10,102,194,0.1)",border:`1px solid ${shareCopied?"rgba(10,102,194,0.6)":"rgba(10,102,194,0.35)"}`,borderRadius:12,color:"#4a9ede",fontSize:13,fontWeight:600,cursor:"pointer",transition:"all 0.2s"}}>
                       {shareCopied?(lang==="en"?"✓ Copied! Paste in LinkedIn":"✓ הועתק! הדבק ב-LinkedIn"):t("shareResult")}
                     </button>
                     {shareCopied&&<div style={{fontSize:11,color:"var(--text-muted)",textAlign:"center",marginTop:5,animation:"fadeIn 0.2s ease"}}>
@@ -4488,7 +4489,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 );
               })()}
               <button onClick={()=>{window.va?.track("play_again",{topic:selectedTopic?.name||selectedTopic?.id,previousScore:result?.correct});selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel);}} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
-              <button onClick={()=>setScreen("home")} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-primary)",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("backToTopics")}</button>
+              <button onClick={()=>setScreen("home")} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-primary)",fontSize:13,fontWeight:600,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
             {showReview&&quizHistory.length>0&&(
               <div style={{marginTop:20,textAlign:dir==="rtl"?"right":"left",animation:"fadeIn 0.3s ease"}}>
