@@ -1506,7 +1506,7 @@ export const TOPICS = [
                 "ServiceAccount הוא זהות מכונה עבור Pods — לא למשתמשים אנושיים.\nKubernetes מזריק token אוטומטית ל-Pod לאימות מול API server.\nלכל Namespace יש ServiceAccount בשם default.",
             },
             {
-              q: "ב-Kubernetes, מה עושה Pod Security Admission?",
+              q: "נניח שיש לך Namespace עם ה-label הבא:\n`pod-security.kubernetes.io/enforce=restricted`\nב-Kubernetes, מה עושה Pod Security Admission?",
               options: [
               "Admission webhook שמאמת image signatures לפני deploy של Pod",
               "מנגנון מובנה שאוכף Pod Security Standards לפי labels ב-Namespace",
@@ -1604,7 +1604,7 @@ export const TOPICS = [
                 "ServiceAccount is a machine identity for Pods — not for human users.\nKubernetes auto-mounts a token for Pod-to-API authentication.\nRBAC controls what actions the ServiceAccount can perform.",
             },
             {
-              q: "In Kubernetes, what is the role of Pod Security Admission?",
+              q: "Given a Namespace with the following label:\n`pod-security.kubernetes.io/enforce=restricted`\nWhat does Pod Security Admission do?",
               options: [
               "An admission webhook that validates image signatures before running Pods",
               "A built-in mechanism that enforces Pod Security Standards via Namespace labels",
