@@ -523,14 +523,22 @@ function renderQuestion(qText, lang) {
 // When q.answer exists (offline mode), it is also remapped to the shuffled position.
 function shuffleOptions(questions) {
   return questions.map(q => {
-    if (!q.options || q.options.length <= 1) return { ...q, _optionMap: q.options?.map((_, i) => i) || [] };
+    if (!q.options || q.options.length <= 1) return { ...q, _optionMap: q.options?.map((_, i) => i) || [], _correctText: typeof q.answer === "number" ? q.options[q.answer] : undefined };
+    // Capture correct answer text BEFORE shuffling for runtime consistency checks
+    const correctText = typeof q.answer === "number" ? q.options[q.answer] : undefined;
     const indices = q.options.map((_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    const result = { ...q, options: indices.map(i => q.options[i]), _optionMap: indices };
-    if (typeof q.answer === "number") result.answer = indices.indexOf(q.answer);
+    const result = { ...q, options: indices.map(i => q.options[i]), _optionMap: indices, _correctText: correctText };
+    if (typeof q.answer === "number") {
+      result.answer = indices.indexOf(q.answer);
+      // Verify shuffle consistency: answer text must match after remap
+      if (result.options[result.answer] !== correctText) {
+        console.error("[QUIZ_DEBUG] SHUFFLE MISMATCH!", { original: q.options, shuffled: result.options, originalAnswer: q.answer, remappedAnswer: result.answer, expectedText: correctText, actualText: result.options[result.answer] });
+      }
+    }
     return result;
   });
 }
@@ -951,7 +959,9 @@ export default function K8sQuestApp() {
       return sum + (res.correct * (LEVEL_CONFIG[lvl]?.points ?? 0));
     }, 0);
   const currentLevelData = selectedTopic && selectedLevel && !isFreeMode(selectedTopic.id) && !retryMode ? getLevelData(selectedTopic, selectedLevel) : null;
-  const currentQuestions = isFreeMode(selectedTopic?.id) || retryMode ? mixedQuestions : (topicQuestions.length > 0 ? topicQuestions : (currentLevelData?.questions || []));
+  // SAFETY: never fall back to unshuffled currentLevelData.questions — that would serve
+  // raw data with original answer indices, causing answer/option mismatch after shuffle.
+  const currentQuestions = isFreeMode(selectedTopic?.id) || retryMode ? mixedQuestions : topicQuestions;
 
   // These MUST be declared before any useEffect or the loading-gate early return,
   // because useEffect callbacks close over them. If they're declared after the early
@@ -1970,6 +1980,20 @@ export default function K8sQuestApp() {
     } else {
       result = { correct: selectedAnswer === q.answer, correctIndex: q.answer, explanation: q.explanation };
     }
+
+    // Runtime consistency check: verify the correct answer text matches expectations
+    if (q._correctText && typeof result.correctIndex === "number" && q.options[result.correctIndex] !== q._correctText) {
+      console.error("[QUIZ_DEBUG] ANSWER MISMATCH at submit!", {
+        question: q.q, correctIndex: result.correctIndex,
+        optionAtIndex: q.options[result.correctIndex], expectedText: q._correctText,
+        allOptions: q.options, answerField: q.answer,
+      });
+    }
+    console.debug("[QUIZ_DEBUG] handleSubmit", {
+      question: q.q?.slice(0, 60), selectedAnswer, selectedText: q.options[selectedAnswer],
+      correctIndex: result.correctIndex, correctText: q.options[result.correctIndex],
+      storedCorrectText: q._correctText, isCorrect: result.correct,
+    });
 
     setAnswerResult(result);
     setCheckingAnswer(false);
@@ -4120,8 +4144,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
               <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
                 {(currentQuestions[questionIndex]?.options || []).map((opt,i)=>{
-                  const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof currentQuestions[questionIndex]?.answer === "number" ? i === currentQuestions[questionIndex].answer : false);
+                  const q_cur = currentQuestions[questionIndex];
+                  const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof q_cur?.answer === "number" ? i === q_cur.answer : false);
                   const isChosen  = i===dispSelectedAnswer;
+                  // Runtime consistency: verify green highlight matches expected correct text
+                  if (dispSubmitted && dispAnswerResult && isCorrect && q_cur?._correctText && opt !== q_cur._correctText) {
+                    console.error("[QUIZ_DEBUG] GREEN HIGHLIGHT MISMATCH!", { position: i, displayedOption: opt, expectedCorrect: q_cur._correctText, correctIndex: dispAnswerResult.correctIndex, answerField: q_cur.answer, allOptions: q_cur.options });
+                  }
                   const isEliminated = !dispSubmitted && eliminatedOption === i;
                   let borderColor = "var(--glass-9)", bg = "var(--glass-2)", color = "var(--text-light)", labelBg = "var(--glass-7)", labelColor = "var(--text-secondary)";
                   if (isEliminated)                { borderColor = "var(--glass-4)"; bg = "var(--glass-1)"; color = "var(--text-disabled)"; labelBg = "var(--glass-3)"; labelColor = "var(--text-disabled)"; }
@@ -4133,7 +4162,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   }
                   const optDir = (dir==="rtl" && !hasHebrew(opt)) ? "ltr" : dir;
                   return (
-                    <button key={i} className="opt-btn"
+                    <button key={opt} className="opt-btn"
                       onClick={()=>{ if (isEliminated) return; if (tryAgainActive && tryAgainSelected===null) setTryAgainSelected(i); else if (!isInHistoryMode && !tryAgainActive) handleSelectAnswer(i); }}
                       aria-pressed={!dispSubmitted ? i === dispSelectedAnswer : undefined}
                       aria-disabled={isEliminated}

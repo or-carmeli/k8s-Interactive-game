@@ -101,6 +101,7 @@ flowchart LR
     PUSH["git push"] --> BUILD["Build Image"] --> SCAN["Trivy Scan"] --> PUSH_IMG["Push to GHCR"]
     PUSH_IMG --> ATTEST["SBOM + Provenance"] --> SIGN["Cosign Sign"] --> VERIFY["Verify"]
     PUSH --> CI["CI Check"]
+    BOT["Dependabot"] -.->|weekly PRs| CI
 ```
 
 > **Production** runs on Vercel + Supabase. The `k8s/` manifests and Docker image on GHCR enable self-hosting on any Kubernetes cluster.
