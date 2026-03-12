@@ -3076,7 +3076,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               <button onClick={handleResumeQuiz} autoFocus
                 style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(0,212,255,0.15),rgba(168,85,247,0.15))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,color:"#00D4FF",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                {t("resumeBtn")} ▶
+                {t("resumeBtn")} {dir==="rtl"?"◀":"▶"}
               </button>
               <div style={{color:"var(--text-dim)",fontSize:11,textAlign:"center",marginTop:-4}}>{t("resumeHint")}</div>
               <button onClick={handleDiscardResume}
