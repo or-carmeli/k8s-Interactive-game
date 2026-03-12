@@ -295,7 +295,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "PDB מגדיר מינימום Pods זמינים בזמן disruptions מתוכננות (כמו kubectl drain).\nעם minAvailable: 2 ו-3 replicas - מקסימום Pod אחד נגרש בו-זמנית.\nמגן על זמינות אפליקציות חשובות בזמן maintenance.",
+                "PodDisruptionBudget (PDB) מגדיר את מספר ה-Pods המינימלי שחייב להישאר זמין בזמן disruptions מתוכננות, כמו `kubectl drain`.\nדוגמה: עם replicas: 3 ו-minAvailable: 2, Kubernetes יאשר פינוי רק אם לפחות 2 Pods נשארים זמינים.\nמגן על זמינות אפליקציות קריטיות בזמן maintenance.",
             },
             {
               q: "מה resource limits?",
@@ -393,7 +393,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "PDB defines minimum available Pods during planned disruptions like kubectl drain.\nWith minAvailable: 2 and 3 replicas, only one Pod can be evicted at a time.\nProtects application availability during Node maintenance.",
+                "PodDisruptionBudget (PDB) defines the minimum number of Pods that must remain available during voluntary disruptions such as `kubectl drain`.\nExample: with replicas: 3 and minAvailable: 2, Kubernetes will only allow eviction if at least 2 Pods remain available.\nProtects critical application availability during Node maintenance.",
             },
             {
               q: "What are resource limits?",
