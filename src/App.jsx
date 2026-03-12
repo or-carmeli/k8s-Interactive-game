@@ -4546,24 +4546,33 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {/* Retry wrong answers */}
               {!isFreeMode(selectedTopic.id)&&wrongQs.length>0&&(
                 <button onClick={()=>{
+                  try {
                   const qs=wrongQs.map(h=>({q:h.q,options:h.options,answer:h.answer,explanation:h.explanation}));
+                  console.debug("[RETRY] starting retry", { count: qs.length, hasOptions: qs.every(q=>Array.isArray(q.options)), hasAnswer: qs.every(q=>typeof q.answer==="number") });
+                  if (!qs.length) { console.error("[RETRY] no wrong questions to retry"); return; }
                   setMixedQuestions(qs);
                   setRetryMode(true);
-                  window.va?.track("retry_quiz", { topic: selectedTopic?.name || selectedTopic?.id });
                   isRetryRef.current=true;
                   setAllowNextLevel(false);
                   setTopicScreen("quiz");
                   setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-                  setShowExplanation(false);                  topicCorrectRef.current=0; lastSessionScoreRef.current=0; bestImprovedRef.current=true;
+                  setShowExplanation(false); setAnswerResult(null);
+                  // Reset per-question ephemeral state (hint, eliminate, try-again)
+                  setHintVisible(false); setEliminatedOption(null);
+                  setTryAgainActive(false); setTryAgainSelected(null);
+                  topicCorrectRef.current=0; lastSessionScoreRef.current=0; bestImprovedRef.current=true;
                   liveIndexRef.current=0;
                   quizRunIdRef.current=Date.now().toString(36);
                   submittingRef.current=false;
-                  setAnswerResult(null);
+                  answerCacheRef.current={};
                   setSessionScore(0);
                   setQuizHistory([]); setShowReview(false);
                   // BUG-C fix: retries must never reset streak
                   if (timerEnabled||isInterviewMode) setTimeLeft(isInterviewMode?(INTERVIEW_DURATIONS[selectedLevel]||25):(TIMER_DURATIONS[selectedLevel]||30));
                   setScreen("topic");
+                  window.va?.track("retry_quiz", { topic: selectedTopic?.name || selectedTopic?.id });
+                  console.debug("[RETRY] screen set to topic");
+                  } catch (err) { console.error("[RETRY] failed:", err); }
                 }}
                   style={{padding:13,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:12,color:"#EF4444",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                   {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
