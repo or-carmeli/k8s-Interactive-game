@@ -271,7 +271,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "kubectl rollout undo מחזיר את ה-Deployment ל-revision הקודם.\nהפקודה מפעילה מחדש את ה-ReplicaSet הקודם עם ה-image הישן.\nאפשר לציין revision ספציפי עם --to-revision=N.",
+                "הפקודה:\nkubectl rollout undo deployment/my-app\n\nמחזירה את ה-Deployment ל-revision הקודם.\nK8s שומר היסטוריה של כל ReplicaSet, כך שהוא יודע לאיזו גרסה לחזור.\n\nלחזרה ל-revision ספציפי:\nkubectl rollout undo deployment/my-app --to-revision=3",
             },
             {
               q: "מה ההבדל בין StatefulSet ל-Deployment?",
@@ -369,7 +369,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "kubectl rollout undo rolls the Deployment back to its previous revision.\nReactivates the previous ReplicaSet with the old image.\nUse --to-revision=N for a specific revision, rollout history to list them.",
+                "Command:\nkubectl rollout undo deployment/my-app\n\nRolls the Deployment back to the previous revision.\nK8s stores history via ReplicaSets, so it knows which version to restore.\n\nTo roll back to a specific revision:\nkubectl rollout undo deployment/my-app --to-revision=3",
             },
             {
               q: "What is the main difference between StatefulSet and Deployment?",
@@ -1837,7 +1837,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "my-sa lacks list pods permission in namespace prod - RBAC blocks the request.\nCreate a Role with list pods permission and a RoleBinding to my-sa.\n• Deleting SA doesn't fix missing permissions • cluster-admin is a security risk • default SA also has no permissions.\nIn RBAC, every API access requires explicit Role + RoleBinding.",
+                "my-sa lacks list pods permission in namespace prod. RBAC blocks the request.\nCreate a Role with list pods permission and a RoleBinding to my-sa.\n• Deleting SA doesn't fix missing permissions • cluster-admin is a security risk • default SA also has no permissions.\nIn RBAC, every API access requires explicit Role + RoleBinding.",
             },
             {
               q: "A Deployment fails to deploy with the error:\n\n```\nError from server: admission webhook 'validate.kyverno.svc'\ndenied the request:\nContainer image must come from 'gcr.io/'\n```\n\nWhat is happening?",
@@ -1849,7 +1849,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "Kyverno admission webhook blocks images not from gcr.io/ - policy-as-code enforcement.\nChange the image to one from gcr.io/ or update the Kyverno policy.\n• API crash = no structured error message • RBAC = \"forbidden\" not \"webhook denied\" • Missing namespace = different error.\nAdmission webhooks run before etcd save and can block any create/update request.",
+                "Kyverno admission webhook blocks images not from gcr.io/. Policy-as-code enforcement.\nChange the image to one from gcr.io/ or update the Kyverno policy.\n• API crash = no structured error message • RBAC = \"forbidden\" not \"webhook denied\" • Missing namespace = different error.\nAdmission webhooks run before etcd save and can block any create/update request.",
             },
             {
               q: "PSA is set to enforce=restricted. A Deployment is rejected:\n\nPod violates PodSecurity 'restricted:latest': allowPrivilegeEscalation != false\n\nWhat must you add to the container spec?",
@@ -1861,7 +1861,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "restricted PSA mandates explicit security hardening in every container.\nMust set allowPrivilegeEscalation: false, runAsNonRoot: true, and seccompProfile.\nprivileged: true is the opposite - it would further violate the policy.",
+                "restricted PSA mandates explicit security hardening in every container.\nMust set allowPrivilegeEscalation: false, runAsNonRoot: true, and seccompProfile.\nprivileged: true is the opposite. It would further violate the policy.",
             },
         ],
       },
@@ -1889,7 +1889,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "PV הוא יחידת אחסון שה-admin מגדיר - גודל, access modes, ו-storage backend.\nPVC היא הבקשה של ה-Pod לאחסון.\nKubernetes מחבר אוטומטית PVC ל-PV שמתאים לדרישות.",
+                "PV הוא יחידת אחסון שה-admin מגדיר: גודל, access modes, ו-storage backend.\nPVC היא הבקשה של ה-Pod לאחסון.\nKubernetes מחבר אוטומטית PVC ל-PV שמתאים לדרישות.",
             },
             {
               q: "מה AccessMode ReadWriteOnce?",
@@ -1901,7 +1901,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "RWO מאפשר mount לקריאה וכתיבה מ-Node אחד בלבד - מתאים לרוב ה-databases.\nRWX מאפשר כמה Nodes במקביל (דורש NFS/EFS).\nROX - קריאה בלבד ממספר Nodes.",
+                "RWO מאפשר mount לקריאה וכתיבה מ-Node אחד בלבד. מתאים לרוב ה-databases.\nRWX מאפשר כמה Nodes במקביל (דורש NFS/EFS).\nROX: קריאה בלבד ממספר Nodes.",
             },
             {
               q: "מה תפקיד Helm Chart?",
@@ -1913,7 +1913,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "Helm הוא package manager ל-Kubernetes - כמו apt או npm.\nChart הוא חבילה של YAML templates עם ערכי ברירת מחדל ב-values.yaml.\nבמקום לנהל עשרות קבצי YAML, מתקינים Chart אחד ומגדירים עם values.",
+                "Helm הוא package manager ל-Kubernetes. כמו apt או npm.\nChart הוא חבילה של YAML templates עם ערכי ברירת מחדל ב-values.yaml.\nבמקום לנהל עשרות קבצי YAML, מתקינים Chart אחד ומגדירים עם values.",
             },
             {
               q: "מה הפקודה להתקנת Helm Chart?",
@@ -1961,7 +1961,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "emptyDir שורד restarts של קונטיינרים בתוך אותו Pod.\nברגע שה-Pod נמחק או מועבר ל-Node אחר - הנתונים נמחקים לחלוטין.",
+                "emptyDir שורד restarts של קונטיינרים בתוך אותו Pod.\nברגע שה-Pod נמחק או מועבר ל-Node אחר, הנתונים נמחקים לחלוטין.",
             },
             {
               q: "מה תפקיד values.yaml ב-Helm Chart?",
@@ -1999,7 +1999,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "RWO allows read/write mount from a single Node at a time - suitable for most databases.\nRWX allows multiple Nodes simultaneously (requires NFS or EFS).\nROX - read-only access from multiple Nodes.",
+                "RWO allows read/write mount from a single Node at a time. Suitable for most databases.\nRWX allows multiple Nodes simultaneously (requires NFS or EFS).\nROX: read-only access from multiple Nodes.",
             },
             {
               q: "What is a Helm Chart?",
@@ -2011,7 +2011,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "Helm is Kubernetes' package manager - like apt or npm.\nA Chart bundles YAML templates with configurable defaults in values.yaml.\nInstead of managing dozens of YAML files, install one Chart and configure with values.",
+                "Helm is Kubernetes' package manager. Like apt or npm.\nA Chart bundles YAML templates with configurable defaults in values.yaml.\nInstead of managing dozens of YAML files, install one Chart and configure with values.",
             },
             {
               q: "What command installs a Helm Chart?",
@@ -2089,7 +2089,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "כש-PVC נוצר עם StorageClass, ה-provisioner יוצר PV ודיסק אמיתי אוטומטית.\nללא Dynamic Provisioning, admin חייב ליצור כל PV ידנית - לא סקיילבילי.\nזו הגישה הסטנדרטית בכל Cluster ענן.",
+                "כש-PVC נוצר עם StorageClass, ה-provisioner יוצר PV ודיסק אמיתי אוטומטית.\nללא Dynamic Provisioning, admin חייב ליצור כל PV ידנית. לא סקיילבילי.\nזו הגישה הסטנדרטית בכל Cluster ענן.",
             },
             {
               q: "מה Reclaim Policy Delete?",
@@ -2149,7 +2149,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "helm rollback מחזיר Release ל-revision ספציפי מתוך ההיסטוריה.\nהרצת helm history מציגה את כל ה-revisions עם תאריכים וסטטוסים.\nrollback הוא למעשה upgrade חדש עם manifests ישנים - נוצר revision חדש.",
+                "helm rollback מחזיר Release ל-revision ספציפי מתוך ההיסטוריה.\nהרצת helm history מציגה את כל ה-revisions עם תאריכים וסטטוסים.\nrollback הוא למעשה upgrade חדש עם manifests ישנים. נוצר revision חדש.",
             },
             {
               q: "מה אומר PVC בסטטוס Pending?",
@@ -2187,7 +2187,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "When a PVC references a StorageClass, the provisioner creates a PV and real disk automatically.\nWithout Dynamic Provisioning, an admin must create every PV manually - doesn't scale.\nThis is the standard approach in all cloud-hosted Kubernetes clusters.",
+                "When a PVC references a StorageClass, the provisioner creates a PV and real disk automatically.\nWithout Dynamic Provisioning, an admin must create every PV manually. Doesn't scale.\nThis is the standard approach in all cloud-hosted Kubernetes clusters.",
             },
             {
               q: "What does Reclaim Policy Delete do?",
@@ -2199,7 +2199,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "When the PVC is deleted, both the PV and the physical disk (EBS, GCP PD) are deleted automatically.\nThis is the default for dynamically provisioned volumes - convenient but destroys all data.\nFor databases, use Retain instead to preserve data after PVC deletion.",
+                "When the PVC is deleted, both the PV and the physical disk (EBS, GCP PD) are deleted automatically.\nThis is the default for dynamically provisioned volumes. Convenient but destroys all data.\nFor databases, use Retain instead to preserve data after PVC deletion.",
             },
             {
               q: "How do you change a Helm value from the CLI?",
@@ -2228,7 +2228,7 @@ export const TOPICS = [
             {
               q: "What does helm template do?",
               options: [
-              "Renders the Chart to YAML without installing - for pipelines and dry-runs",
+              "Renders the Chart to YAML without installing. For pipelines and dry-runs",
               "Updates the values.yaml of an existing Chart from a remote repository",
               "Creates a new Helm Chart from a built-in scaffold template",
               "Saves a snapshot of the current Chart for future rollback",
@@ -2247,7 +2247,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "helm rollback reverts a Release to a specific revision from its history.\nhelm history lists all revisions with timestamps and statuses.\nA rollback is technically a new upgrade using old manifests - it creates a new revision number.",
+                "helm rollback reverts a Release to a specific revision from its history.\nhelm history lists all revisions with timestamps and statuses.\nA rollback is technically a new upgrade using old manifests. It creates a new revision number.",
             },
             {
               q: "What does a PVC in Pending status mean?",
@@ -2255,7 +2255,7 @@ export const TOPICS = [
               "The PVC is being encrypted before it becomes available to a Pod",
               "The PVC is waiting for an existing Volume backup to complete before mounting",
               "The StorageClass is replicating to a secondary Zone before binding",
-              "No matching PV found - due to wrong AccessMode, insufficient storage, or wrong StorageClass",
+              "No matching PV found. Due to wrong AccessMode, insufficient storage, or wrong StorageClass",
 ],
               answer: 3,
               explanation:
@@ -2301,7 +2301,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "Hooks הם Jobs שרצים בשלבי מחזור חיים של Release - pre-install, post-upgrade, pre-delete ועוד.\nשימושים נפוצים: DB migrations לפני upgrade, או התראת Slack אחרי deploy.",
+                "Hooks הם Jobs שרצים בשלבי מחזור חיים של Release: pre-install, post-upgrade, pre-delete ועוד.\nשימושים נפוצים: DB migrations לפני upgrade, או התראת Slack אחרי deploy.",
             },
             {
               q: "מה תפקיד VolumeSnapshot?",
@@ -2313,7 +2313,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "VolumeSnapshot יוצר גיבוי נקודתי של PersistentVolume.\nאפשר לשחזר ממנו PVC חדש - שימושי לפני upgrade של DB.\nדורש CSI driver עם תמיכת snapshot ו-snapshot-controller.",
+                "VolumeSnapshot יוצר גיבוי נקודתי של PersistentVolume.\nאפשר לשחזר ממנו PVC חדש. שימושי לפני upgrade של DB.\nדורש CSI driver עם תמיכת snapshot ו-snapshot-controller.",
             },
             {
               q: "כיצד StatefulSet מנהל storage?",
@@ -2325,7 +2325,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "volumeClaimTemplates יוצר PVC ייחודי לכל Pod - Pod-0 מקבל data-myapp-0 וכן הלאה.\nכל PVC נשאר קשור ל-Pod שלו גם אחרי restart - כך databases שומרים נתונים.\nscale down לא מוחק PVCs; scale up מקשר PVCs ישנים מחדש.",
+                "volumeClaimTemplates יוצר PVC ייחודי לכל Pod. Pod-0 מקבל data-myapp-0 וכן הלאה.\nכל PVC נשאר קשור ל-Pod שלו גם אחרי restart. כך databases שומרים נתונים.\nscale down לא מוחק PVCs; scale up מקשר PVCs ישנים מחדש.",
             },
             {
               q: "מה volume binding mode WaitForFirstConsumer?",
@@ -2337,7 +2337,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "Immediate יוצר PV מיד - אך הוא עלול להיווצר ב-Zone שונה מה-Pod.\nWaitForFirstConsumer מעכב יצירת PV עד שה-Pod מתזמן ל-Node, ויוצר PV באותה Zone.\nקריטי בסביבות multi-AZ כמו AWS EKS.",
+                "Immediate יוצר PV מיד, אך הוא עלול להיווצר ב-Zone שונה מה-Pod.\nWaitForFirstConsumer מעכב יצירת PV עד שה-Pod מתזמן ל-Node, ויוצר PV באותה Zone.\nקריטי בסביבות multi-AZ כמו AWS EKS.",
             },
             {
               q: "ה-PVC נשאר במצב Pending.\n\nהפלט של kubectl describe pvc מציג:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io 'fast-ssd' not found\n```\n\nמה הבעיה?",
@@ -2349,7 +2349,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "ה-PVC מפנה ל-StorageClass בשם fast-ssd שלא קיים ב-Cluster.\nללא StorageClass, ה-provisioner לא יודע ליצור PV - הריצו kubectl get storageclass לראות מה קיים.\n• PVC גדול מדי = שגיאה על capacity • Node מלא = לא קשור ל-provisioning • Namespace שונה = שגיאה אחרת.",
+                "ה-PVC מפנה ל-StorageClass בשם fast-ssd שלא קיים ב-Cluster.\nללא StorageClass, ה-provisioner לא יודע ליצור PV. הריצו kubectl get storageclass לראות מה קיים.\n• PVC גדול מדי = שגיאה על capacity • Node מלא = לא קשור ל-provisioning • Namespace שונה = שגיאה אחרת.",
             },
             {
               q: "הפקודה helm upgrade כשל באמצע. Release ב-status 'failed'. ה-ConfigMap מחצית עודכן. מה הצעד הבא?",
@@ -2361,19 +2361,19 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "כש-helm upgrade נכשל, resources עלולים להיות במצב לא עקבי.\nhelm rollback מחזיר הכל ל-revision תקין - הריצו helm history קודם לראות מספרי revision.\nupgrade נוסף ללא rollback עלול להחמיר את המצב.",
+                "כש-helm upgrade נכשל, resources עלולים להיות במצב לא עקבי.\nhelm rollback מחזיר הכל ל-revision תקין. הריצו helm history קודם לראות מספרי revision.\nupgrade נוסף ללא rollback עלול להחמיר את המצב.",
             },
             {
               q: "Pod עם PVC ב-AWS EKS.\nה-Pod עבר ל-Node ב-Availability Zone אחרת.\nה-PVC מראה סטטוס Bound, אבל ה-Pod לא מצליח לעלות.\n\nמה הסיבה?",
               options: [
               "NetworkPolicy חוסמת גישה מה-Node החדש ל-storage",
-              "ה-EBS Volume נמצא ב-AZ אחרת מה-Node - EBS הוא single-AZ",
+              "ה-EBS Volume נמצא ב-AZ אחרת מה-Node. EBS הוא single-AZ",
               "ה-PVC נמחק ונוצר מחדש עם ID שונה",
               "ה-StorageClass שגוי ולא תומך ב-multi-AZ",
 ],
               answer: 1,
               explanation:
-                "EBS Volumes הם single-AZ - אפשר לחבר רק ל-Node באותה Availability Zone.\nה-PVC מראה Bound כי ה-PV קיים, אבל ה-attach נכשל כי ה-Node ב-AZ אחרת.\nהפתרון: StorageClass עם volumeBindingMode: WaitForFirstConsumer שמבטיח PV באותה AZ כמו ה-Pod.",
+                "EBS Volumes הם single-AZ. אפשר לחבר רק ל-Node באותה Availability Zone.\nה-PVC מראה Bound כי ה-PV קיים, אבל ה-attach נכשל כי ה-Node ב-AZ אחרת.\nהפתרון: StorageClass עם volumeBindingMode: WaitForFirstConsumer שמבטיח PV באותה AZ כמו ה-Pod.",
             },
         ],
         questionsEn: [
@@ -2399,7 +2399,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "Hooks are Jobs that run at specific Release lifecycle points - pre-install, post-upgrade, pre-delete, etc.\nCommon uses: DB migrations before upgrade, or Slack notifications after deploy.",
+                "Hooks are Jobs that run at specific Release lifecycle points: pre-install, post-upgrade, pre-delete, etc.\nCommon uses: DB migrations before upgrade, or Slack notifications after deploy.",
             },
             {
               q: "What is a VolumeSnapshot?",
@@ -2411,7 +2411,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "VolumeSnapshot creates a point-in-time copy of a PersistentVolume's data.\nYou can restore a new PVC from it - useful before risky DB migrations.\nRequires a snapshot-controller and a CSI driver with snapshot support.",
+                "VolumeSnapshot creates a point-in-time copy of a PersistentVolume's data.\nYou can restore a new PVC from it. Useful before risky DB migrations.\nRequires a snapshot-controller and a CSI driver with snapshot support.",
             },
             {
               q: "How does a StatefulSet manage storage?",
@@ -2423,19 +2423,19 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "volumeClaimTemplates creates a unique PVC per Pod - Pod-0 gets data-myapp-0 and so on.\nEach PVC stays bound to its Pod across restarts - how databases keep persistent data.\nScaling down doesn't delete PVCs; scaling up reconnects the existing ones.",
+                "volumeClaimTemplates creates a unique PVC per Pod. Pod-0 gets data-myapp-0 and so on.\nEach PVC stays bound to its Pod across restarts. How databases keep persistent data.\nScaling down doesn't delete PVCs; scaling up reconnects the existing ones.",
             },
             {
               q: "What does volume binding mode WaitForFirstConsumer do?",
               options: [
               "Waits for Admin RBAC approval before creating a new PV",
-              "Waits for a Pod to be scheduled before creating the PV - ensuring the PV is in the same Zone as the Pod",
+              "Waits for a Pod to be scheduled before creating the PV. Ensures the PV is in the same Zone as the Pod",
               "Waits for cross-Zone replication to complete before binding the PVC",
               "Waits for the StorageClass to finish a health check before allocating a Volume",
 ],
               answer: 1,
               explanation:
-                "Immediate creates a PV right away - but it might end up in a different Zone than the Pod.\nWaitForFirstConsumer delays PV creation until the Pod is scheduled, then creates it in the same Zone.\nCritical in multi-AZ environments like AWS EKS.",
+                "Immediate creates a PV right away, but it might end up in a different Zone than the Pod.\nWaitForFirstConsumer delays PV creation until the Pod is scheduled, then creates it in the same Zone.\nCritical in multi-AZ environments like AWS EKS.",
             },
             {
               q: "A PVC stays in Pending state.\n\nThe output of kubectl describe pvc shows:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io 'fast-ssd' not found\n```\n\nWhat is wrong?",
@@ -2447,7 +2447,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "The PVC references a StorageClass named fast-ssd that doesn't exist in the Cluster.\nWithout a valid StorageClass, the provisioner can't create a PV - run kubectl get storageclass to check.\n• Too large = capacity error • Node full = unrelated to provisioning • Different namespace = different error.",
+                "The PVC references a StorageClass named fast-ssd that doesn't exist in the Cluster.\nWithout a valid StorageClass, the provisioner can't create a PV. Run kubectl get storageclass to check.\n• Too large = capacity error • Node full = unrelated to provisioning • Different namespace = different error.",
             },
             {
               q: "helm upgrade failed midway. The Release is in 'failed' status. A ConfigMap is half-updated. What is the next step?",
@@ -2459,7 +2459,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "When helm upgrade fails midway, resources may be in an inconsistent state.\nhelm rollback restores everything to a known good revision - run helm history first.\nAnother upgrade without rollback risks making things worse.",
+                "When helm upgrade fails midway, resources may be in an inconsistent state.\nhelm rollback restores everything to a known good revision. Run helm history first.\nAnother upgrade without rollback risks making things worse.",
             },
             {
               q: "A Pod with a PVC on AWS EKS.\nThe Pod moved to a Node in a different Availability Zone.\nThe PVC shows Bound status, but the Pod fails to start.\n\nWhat is the cause?",
@@ -2467,11 +2467,11 @@ export const TOPICS = [
               "The StorageClass is wrong and does not support multi-AZ",
               "The PVC was deleted and recreated with a different ID",
               "A NetworkPolicy is blocking access from the new Node to storage",
-              "The EBS Volume is in a different AZ than the Node - EBS is single-AZ",
+              "The EBS Volume is in a different AZ than the Node. EBS is single-AZ",
 ],
               answer: 3,
               explanation:
-                "EBS Volumes are single-AZ - they can only attach to a Node in the same Availability Zone.\nThe PVC shows Bound because the PV exists, but the attach fails since the Node is in a different AZ.\nFix: Use a StorageClass with volumeBindingMode: WaitForFirstConsumer to ensure the PV is in the Pod's AZ.",
+                "EBS Volumes are single-AZ. They can only attach to a Node in the same Availability Zone.\nThe PVC shows Bound because the PV exists, but the attach fails since the Node is in a different AZ.\nFix: Use a StorageClass with volumeBindingMode: WaitForFirstConsumer to ensure the PV is in the Pod's AZ.",
             },
         ],
       },
@@ -2523,7 +2523,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "מציג את כל האירועים ב-Namespace הנוכחי - scheduling, image pull, probe failures.\nEvents מגיעים מ-Kubernetes עצמו, בניגוד ל-logs שמגיעים מהאפליקציה.\nהוסף --sort-by=.metadata.creationTimestamp לסדר לפי זמן.",
+                "מציג את כל האירועים ב-Namespace הנוכחי: scheduling, image pull, probe failures.\nEvents מגיעים מ-Kubernetes עצמו, בניגוד ל-logs שמגיעים מהאפליקציה.\nהוסף --sort-by=.metadata.creationTimestamp לסדר לפי זמן.",
             },
             {
               q: "מה ההבדל בין Running ל-Ready?",
@@ -2547,7 +2547,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "כשקונטיינר קורס, Kubernetes מפעיל instance חדש שה-logs שלו כמעט ריקים.\n--previous שולף logs מה-instance שקרס - בדיוק מה שצריך לאבחון.",
+                "כשקונטיינר קורס, Kubernetes מפעיל instance חדש שה-logs שלו כמעט ריקים.\n--previous שולף logs מה-instance שקרס. בדיוק מה שצריך לאבחון.",
             },
             {
               q: "מה kubectl top nodes מציג?",
@@ -2571,7 +2571,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "kubectl get --raw='/healthz' מחזיר ok אם ה-API server בריא.\ncomponentstatuses הוסרה ב-K8s 1.26 - השתמשו ב-/healthz, /readyz, /livez במקום.",
+                "kubectl get --raw='/healthz' מחזיר ok אם ה-API server בריא.\ncomponentstatuses הוסרה ב-K8s 1.26. השתמשו ב-/healthz, /readyz, /livez במקום.",
             },
             {
               q: "מה kubectl config get-contexts עושה?",
@@ -2583,7 +2583,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "מציג את כל ה-contexts ב-kubeconfig - כל context מכיל cluster, user, ו-namespace.\nהנוכחי מסומן בכוכבית (*). use-context מחליף context, set-context משנה namespace.",
+                "מציג את כל ה-contexts ב-kubeconfig. כל context מכיל cluster, user, ו-namespace.\nהנוכחי מסומן בכוכבית (*). use-context מחליף context, set-context משנה namespace.",
             },
         ],
         questionsEn: [
@@ -2616,19 +2616,19 @@ export const TOPICS = [
               options: [
               "Only Pod logs",
               "Only Node events",
-              "Namespace events - Pod scheduling, image pulls, probe failures",
+              "Namespace events: Pod scheduling, image pulls, probe failures",
               "Only errors",
 ],
               answer: 2,
               explanation:
-                "Lists all events in the current Namespace - scheduling, image pulls, probe failures.\nEvents come from Kubernetes itself, unlike logs which come from your app.\nAdd --sort-by=.metadata.creationTimestamp to see the most recent first.",
+                "Lists all events in the current Namespace: scheduling, image pulls, probe failures.\nEvents come from Kubernetes itself, unlike logs which come from your app.\nAdd --sort-by=.metadata.creationTimestamp to see the most recent first.",
             },
             {
               q: "What is the difference between Running and Ready?",
               options: [
-              "Ready - production only",
-              "Running - before deploy",
-              "Running - container is active. Ready - Pod passed readiness probe and can receive traffic",
+              "Ready: production only",
+              "Running: before deploy",
+              "Running: container is active. Ready: Pod passed readiness probe and can receive traffic",
               "No difference",
 ],
               answer: 2,
@@ -2645,7 +2645,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "When a container crashes, Kubernetes starts a new instance whose logs may be nearly empty.\n--previous fetches logs from the crashed run - exactly what you need to diagnose the cause.",
+                "When a container crashes, Kubernetes starts a new instance whose logs may be nearly empty.\n--previous fetches logs from the crashed run. Exactly what you need to diagnose the cause.",
             },
             {
               q: "What does kubectl top nodes show?",
@@ -2669,7 +2669,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "kubectl get --raw='/healthz' returns 'ok' if the API server is healthy.\ncomponentstatuses was removed in K8s 1.26 - use /healthz, /readyz, /livez instead.",
+                "kubectl get --raw='/healthz' returns 'ok' if the API server is healthy.\ncomponentstatuses was removed in K8s 1.26. Use /healthz, /readyz, /livez instead.",
             },
             {
               q: "What does kubectl config get-contexts do?",
@@ -2677,11 +2677,11 @@ export const TOPICS = [
               "Shows Docker contexts",
               "Shows Namespaces",
               "Shows Node contexts",
-              "Lists all kubeconfig contexts - configured clusters and users",
+              "Lists all kubeconfig contexts: configured clusters and users",
 ],
               answer: 3,
               explanation:
-                "Lists all contexts in kubeconfig - each bundles a cluster, user, and default namespace.\nCurrent context is marked with *. use-context switches context, set-context changes namespace.",
+                "Lists all contexts in kubeconfig. Each bundles a cluster, user, and default namespace.\nCurrent context is marked with *. use-context switches context, set-context changes namespace.",
             },
         ],
       },
@@ -2747,7 +2747,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "כשה-probe נכשל failureThreshold פעמים ברציפות, Kubernetes ממית ומפעיל מחדש את הקונטיינר.\nreadiness probe לעומת זאת רק מסיר מה-Service Endpoints - ללא restart.",
+                "כשה-probe נכשל failureThreshold פעמים ברציפות, Kubernetes ממית ומפעיל מחדש את הקונטיינר.\nreadiness probe לעומת זאת רק מסיר מה-Service Endpoints. ללא restart.",
             },
             {
               q: "ה-Pod נמצא ב-ContainerCreating זמן רב. מה הסיבות האפשריות?",
@@ -2771,7 +2771,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "Finalizer מונע מחיקה עד ש-controller חיצוני מנקה אותו - אפילו --force לא עוזר.\nכשה-controller לא זמין, ה-Pod תקוע.\nפתרון: kubectl patch pod my-pod -p '{\"metadata\":{\"finalizers\":null}}' מסיר finalizers ידנית.",
+                "Finalizer מונע מחיקה עד ש-controller חיצוני מנקה אותו. אפילו --force לא עוזר.\nכשה-controller לא זמין, ה-Pod תקוע.\nפתרון: kubectl patch pod my-pod -p '{\"metadata\":{\"finalizers\":null}}' מסיר finalizers ידנית.",
             },
             {
               q: "ה-Node ב-DiskPressure.\n\nkubectl describe node מציג:\nConditions:\n  DiskPressure True\n\nמה הסיבות הנפוצות?",
@@ -2845,7 +2845,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "When the probe fails failureThreshold times consecutively, Kubernetes kills and restarts the container.\nA readiness probe failure only removes the Pod from Service Endpoints - no restart.",
+                "When the probe fails failureThreshold times consecutively, Kubernetes kills and restarts the container.\nA readiness probe failure only removes the Pod from Service Endpoints. No restart.",
             },
             {
               q: "A Pod is in ContainerCreating for a long time. What are the likely causes?",
@@ -2864,12 +2864,12 @@ export const TOPICS = [
               options: [
               "Node is down",
               "Namespace is locked",
-              "The Pod has a finalizer that was not cleared - must be removed manually",
+              "The Pod has a finalizer that was not cleared. Must be removed manually",
               "RBAC is blocking",
 ],
               answer: 2,
               explanation:
-                "A finalizer blocks deletion until an external controller clears it - even --force can't bypass it.\nIf the controller is unavailable, the Pod stays stuck.\nFix: kubectl patch pod my-pod -p '{\"metadata\":{\"finalizers\":null}}' removes finalizers manually.",
+                "A finalizer blocks deletion until an external controller clears it. Even --force can't bypass it.\nIf the controller is unavailable, the Pod stays stuck.\nFix: kubectl patch pod my-pod -p '{\"metadata\":{\"finalizers\":null}}' removes finalizers manually.",
             },
             {
               q: "A Node shows DiskPressure.\n\nkubectl describe node shows:\nConditions:\n  DiskPressure True\n\nWhat are the common causes?",
@@ -2899,7 +2899,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "לפני rollback חשוב להבין מה השתנה.\nlogs --previous מציג output מה-crash, ו-describe pod מציג Events.\nרק אחרי שמבינים את הסיבה - מחליטים לתקן code או לעשות rollout undo.",
+                "לפני rollback חשוב להבין מה השתנה.\nlogs --previous מציג output מה-crash, ו-describe pod מציג Events.\nרק אחרי שמבינים את הסיבה, מחליטים לתקן code או לעשות rollout undo.",
             },
             {
               q: "ה-Node מראה NotReady ב-kubectl get nodes. Pods מפונים ממנו. מה שתי הפעולות הראשונות שלך?",
@@ -2911,7 +2911,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "describe node מציג Conditions ו-Events - המקום הראשון לחפש.\nSSH ל-Node ו-systemctl status kubelet לוודא שרץ.\nסיבות נפוצות: kubelet נפל, TLS cert פג, או disk/memory pressure.",
+                "describe node מציג Conditions ו-Events. המקום הראשון לחפש.\nSSH ל-Node ו-systemctl status kubelet לוודא שרץ.\nסיבות נפוצות: kubelet נפל, TLS cert פג, או disk/memory pressure.",
             },
             {
               q: "מה kubectl drain עושה ומתי משתמשים בו?",
