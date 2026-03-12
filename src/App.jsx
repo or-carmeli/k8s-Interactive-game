@@ -2002,7 +2002,7 @@ export default function K8sQuestApp() {
   // Returns true if the resume modal should be shown for the given saved quiz data
   const shouldShowResumeModal = (saved) => {
     if (!saved) return false;
-    const answered = saved.questionIndex ?? 0;
+    const answered = Math.max(saved.questionIndex ?? 0, saved.quizHistory?.length ?? 0);
     const total    = saved.questions?.length ?? 0;
     if (answered <= 0 || answered >= total) return false;          // req 1
     if (answered / total < RESUME_MIN_PROGRESS) return false;      // req 5: <20% → skip
@@ -3124,7 +3124,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {resumeToast&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,padding:"10px 20px",color:"#00D4FF",fontSize:13,fontWeight:600,zIndex:9999,boxShadow:"0 0 20px rgba(0,212,255,0.15)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap"}}>{t("resumeToast")}</div>}
 
       {showResumeModal&&resumeData&&(()=>{
-        const answered = resumeData.questionIndex ?? 0;
+        const answered = Math.max(resumeData.questionIndex ?? 0, resumeData.quizHistory?.length ?? 0);
         const total    = resumeData.questions?.length ?? 0;
         const pct      = total > 0 ? Math.round((answered / total) * 100) : 0;
         return (
