@@ -287,6 +287,9 @@ const TRANSLATIONS = {
     incidentShareCopied: "✓ הועתק! הדבק ב-LinkedIn",
     incidentResumeBanner: "המשיכי את האירוע", incidentResumeBanner_m: "המשך את האירוע",
     incidentDiscard: "נטשי", incidentDiscard_m: "נטוש",
+    incidentActiveLabel: "אירוע פעיל", incidentAvailableLabel: "אירועים זמינים",
+    incidentHeaderSub: "תרגלו תרחישי Troubleshooting אמיתיים ב-Kubernetes.\nחקרו סימפטומים, זהו את שורש הבעיה ופתרו את האירוע.",
+    incidentResumeBtn: "המשיכי את האירוע", incidentResumeBtn_m: "המשך את האירוע",
     reportBtn: "⚑ דווחי על שגיאה", reportBtn_m: "⚑ דווח על שגיאה",
     reportTitle: "דיווח על שגיאה בשאלה",
     reportType1: "התשובה הנכונה שגויה", reportType2: "השאלה לא ברורה",
@@ -411,6 +414,9 @@ const TRANSLATIONS = {
     incidentShareCopied: "✓ Copied! Paste in LinkedIn",
     incidentResumeBanner: "Continue Incident",
     incidentDiscard: "Discard",
+    incidentActiveLabel: "Active Incident", incidentAvailableLabel: "Available Incidents",
+    incidentHeaderSub: "Practice real Kubernetes troubleshooting scenarios.\nInvestigate symptoms, identify the root cause, and resolve the incident.",
+    incidentResumeBtn: "Resume Incident",
     reportBtn: "⚑ Report an error",
     reportTitle: "Report a question error",
     reportType1: "Wrong answer marked correct", reportType2: "Question is unclear",
@@ -4637,28 +4643,35 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* ── INCIDENT LIST ─────────────────────────────────────────────────── */}
       {screen==="incidentList"&&(
         <div style={{maxWidth:660,margin:"0 auto",padding:"24px 20px",animation:"fadeIn 0.3s ease",direction:dir}}>
-          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:28}}>
             <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <span aria-hidden="true">{dir==="rtl"?"→":"←"}</span>
             </button>
             <div>
               <h2 style={{margin:0,color:"#EF4444",fontSize:20,fontWeight:900}}>{t("incidentModeBtn")}</h2>
-              <p style={{margin:0,color:"var(--text-muted)",fontSize:13}}>{t("incidentModeDesc")}</p>
+              <p style={{margin:"4px 0 0",color:"var(--text-dim)",fontSize:12,lineHeight:1.5,whiteSpace:"pre-line"}}>{t("incidentHeaderSub")}</p>
             </div>
           </div>
 
-          {/* Resume banner */}
+          {/* Active incident */}
           {incidentResume&&(
-            <div style={{padding:16,background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:14,marginBottom:12,direction:dir}}>
-              <div style={{color:"var(--text-primary)",fontSize:14,fontWeight:700,marginBottom:4}}>{lang==="he"?incidentResume.incident.titleHe:incidentResume.incident.title}</div>
-              <div style={{color:"var(--text-muted)",fontSize:12,marginBottom:12}}>{t("incidentStep")} {incidentResume.stepIndex+1}/{incidentResume.incident.steps.length}</div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={resumeIncident} style={{flex:1,padding:"10px",background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:10,color:"#EF4444",fontSize:13,fontWeight:700,cursor:"pointer"}}>▶ {t("incidentResumeBanner")}</button>
-                <button onClick={()=>{clearIncidentProgress();setIncidentResume(null);}} style={{padding:"10px 16px",background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:10,color:"var(--text-muted)",fontSize:13,cursor:"pointer"}}>{t("incidentDiscard")}</button>
+            <div style={{marginBottom:28}}>
+              <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--text-dim)",marginBottom:10}}>{t("incidentActiveLabel")}</div>
+              <div style={{padding:18,background:"rgba(239,68,68,0.06)",border:"1px solid rgba(239,68,68,0.25)",borderInlineStart:"3px solid #EF4444",borderRadius:14,direction:dir}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                  <span style={{fontSize:22}}>{incidentResume.incident.icon}</span>
+                  <span style={{color:"var(--text-primary)",fontWeight:800,fontSize:15}}>{lang==="he"?incidentResume.incident.titleHe:incidentResume.incident.title}</span>
+                </div>
+                <div style={{color:"var(--text-muted)",fontSize:12,marginBottom:14}}>{t("incidentStep")} {incidentResume.stepIndex+1}/{incidentResume.incident.steps.length}</div>
+                <button onClick={resumeIncident} style={{width:"100%",padding:"12px 20px",background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:10,color:"#EF4444",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:8}}>{t("incidentResumeBtn")}</button>
+                <button onClick={()=>{clearIncidentProgress();setIncidentResume(null);}} style={{width:"100%",padding:"8px",background:"none",border:"none",color:"var(--text-dim)",fontSize:12,cursor:"pointer"}}>{t("incidentDiscard")}</button>
               </div>
             </div>
           )}
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+
+          {/* Available incidents */}
+          <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--text-dim)",marginBottom:10}}>{t("incidentAvailableLabel")}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
             {INCIDENTS.map(incident=>{
               const diff = INCIDENT_DIFFICULTY_CONFIG[incident.difficulty] || INCIDENT_DIFFICULTY_CONFIG.medium;
               return(
@@ -4668,14 +4681,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   onMouseLeave={e=>{e.currentTarget.style.background="var(--glass-2)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
                   <span style={{fontSize:30,flexShrink:0}}>{incident.icon}</span>
                   <div style={{flex:1}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:3}}>
-                      <span style={{color:"var(--text-primary)",fontWeight:800,fontSize:15}}>{lang==="he"?incident.titleHe:incident.title}</span>
+                    <div style={{color:"var(--text-primary)",fontWeight:800,fontSize:15,marginBottom:4}}>{lang==="he"?incident.titleHe:incident.title}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",color:"var(--text-muted)",fontSize:12}}>
                       <span style={{background:`${diff.color}22`,color:diff.color,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,letterSpacing:0.5}}>{lang==="he"?diff.labelHe:diff.label}</span>
+                      <span style={{color:"var(--text-dim)"}}>·</span>
+                      <span>{incident.steps.length} {t("incidentSteps")}</span>
+                      <span style={{color:"var(--text-dim)"}}>·</span>
+                      <span>{incident.estimatedTime}</span>
                     </div>
-                    <div style={{color:"var(--text-muted)",fontSize:12,marginBottom:2}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
-                    <div style={{color:"var(--text-dim)",fontSize:11}}>{incident.steps.length} {t("incidentSteps")} · {incident.estimatedTime}</div>
                   </div>
-                  <span style={{color:"#EF4444",fontSize:18,flexShrink:0}}>{dir==="rtl"?"←":"→"}</span>
                 </button>
               );
             })}
