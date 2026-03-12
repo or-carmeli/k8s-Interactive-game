@@ -183,7 +183,7 @@ const TRANSLATIONS = {
     finishTopic: "🎉 סיימי נושא!", nextQuestion: "שאלה הבאה ←",
     correctCount: "נכון", perfect: "מושלם!", points: "נקודות",
     guestSaveHint: "💡 הירשמי כדי לשמור את הניקוד!", signupLink: "הירשמי עכשיו",
-    tryAgain: "נסי שוב", backToTopics: "חזרי לנושאים",
+    tryAgain: "נסי שוב", restartFullQuiz: "🔄 שחקי מחדש את כל החידון", backToTopics: "חזרי לנושאים",
     nextLevelBtn: "המשיכי לרמה הבאה", locked: "🔒 נעול", completePrevLevel: "סיימו את הרמה הקודמת",
     skipTheory: "⚡ דלגי לחידון",
     timerOn: "⏱ כבי טיימר", timerOff: "⏱ הפעילי טיימר", timeUp: "⏰ הזמן נגמר!",
@@ -242,7 +242,7 @@ const TRANSLATIONS = {
     confirmAnswer_m: "✔ אשר תשובה",
     finishTopic_m: "🎉 סיים נושא!",
     guestSaveHint_m: "💡 הרשם כדי לשמור את הניקוד!", signupLink_m: "הרשם עכשיו",
-    tryAgain_m: "נסה שוב", backToTopics_m: "חזור לנושאים",
+    tryAgain_m: "נסה שוב", restartFullQuiz_m: "🔄 שחק מחדש את כל החידון", backToTopics_m: "חזור לנושאים",
     nextLevelBtn_m: "המשך לרמה הבאה",
     skipTheory_m: "⚡ דלג לחידון",
     timerOn_m: "⏱ כבה טיימר", timerOff_m: "⏱ הפעל טיימר",
@@ -348,7 +348,7 @@ const TRANSLATIONS = {
     finishTopic: "🎉 Finish Topic!", nextQuestion: "Next Question →",
     correctCount: "correct", perfect: "Perfect!", points: "points",
     guestSaveHint: "💡 Sign up to save your score!", signupLink: "Sign up now",
-    tryAgain: "Try Again", backToTopics: "Back to Topics",
+    tryAgain: "Try Again", restartFullQuiz: "Restart Full Quiz", backToTopics: "Back to Topics",
     nextLevelBtn: "Next Level", locked: "🔒 Locked", completePrevLevel: "Complete previous level",
     skipTheory: "⚡ Skip to Quiz",
     timerOn: "⏱ Timer On", timerOff: "⏱ Timer Off", timeUp: "⏰ Time's Up!",
@@ -3339,7 +3339,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         </div>
       </>);})()}
       </>}
-      <main id="main-content" style={isStatusDomain ? undefined : (fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : undefined)}>
+      <main id="main-content" style={isStatusDomain ? undefined : {position:"relative",...(fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : {})}}>
       {!isStatusDomain && <>
       {/* HOME */}
       {screen==="home"&&(
@@ -4527,7 +4527,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </div>
                 );
               })()}
-              <button onClick={()=>{window.va?.track("play_again",{topic:selectedTopic?.name||selectedTopic?.id,previousScore:result?.correct});selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel);}} style={{padding:13,background:`${selectedTopic.color}18`,border:`1px solid ${selectedTopic.color}40`,borderRadius:12,color:selectedTopic.color,fontSize:14,fontWeight:700,cursor:"pointer"}}>{t("tryAgain")}</button>
+              <button onClick={()=>{window.va?.track("restart_full_quiz",{topic:selectedTopic?.name||selectedTopic?.id,previousScore:result?.correct});selectedTopic.id==="mixed"?startMixedQuiz():selectedTopic.id==="daily"?startDailyChallenge():startTopic(selectedTopic,selectedLevel);}} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer"}}>{t("restartFullQuiz")}</button>
               <button onClick={()=>setScreen("home")} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-primary)",fontSize:13,fontWeight:600,cursor:"pointer"}}>{t("backToTopics")}</button>
             </div>
             {showReview&&quizHistory.length>0&&(
