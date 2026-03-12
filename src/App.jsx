@@ -259,13 +259,14 @@ const TRANSLATIONS = {
     roadmapContinueHere_m: "המשך מכאן",
     weakAreaEmpty_m: "עדיין אין מספיק נתונים, התחל לענות כדי שנמליץ מה לחזק.",
     goBackToTopic_m: "חזור לנושא הזה",
-    resumeTitle: "המשך חידון?", resumeTitle_m: "המשך חידון?",
-    resumeBody: "נמצא חידון שלא הסתיים. רוצה להמשיך מאיפה שהפסקת?",
-    resumeBody_m: "נמצא חידון שלא הסתיים. רוצה להמשיך מאיפה שהפסקת?",
-    resumeBtn: "המשיכי", resumeBtn_m: "המשך",
+    resumeTitle: "נמצא חידון שלא הסתיים", resumeTitle_m: "נמצא חידון שלא הסתיים",
+    resumeBody: "רוצה להמשיך את החידון מהנקודה שבה הפסקת?",
+    resumeBody_m: "רוצה להמשיך את החידון מהנקודה שבה הפסקת?",
+    resumeBtn: "◀ המשיכי חידון", resumeBtn_m: "◀ המשך חידון",
     resumeHint: "החידון ייפתח מהשאלה שבה עצרת", resumeHint_m: "החידון ייפתח מהשאלה שבה עצרת",
     resumeToast: "ממשיכים מאיפה שהפסקת.", resumeToast_m: "ממשיכים מאיפה שהפסקת.",
-    resumeDiscard: "התחילי מחדש", resumeDiscard_m: "התחל מחדש",
+    resumeDiscard: "⟳ התחילי מחדש", resumeDiscard_m: "⟳ התחל מחדש",
+    resumeProgressLabel: "התקדמות בחידון", resumeBackLink: "חזרה ▶", resumeSaveHint: "החידון נשמר אוטומטית",
     prevQuestion: "→ שאלה קודמת", backToCurrent: "→ חזרי לחידון", backToCurrent_m: "→ חזור לחידון",
     reviewing: "📖 סקירה",
     tryAgainBtn: "🔁 נסי שוב", tryAgainBtn_m: "🔁 נסה שוב",
@@ -393,12 +394,13 @@ const TRANSLATIONS = {
     readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop", autoRead: "Auto Read",
     hint: "💡 Hint", eliminate: "❌ Eliminate Wrong",
     shareResult: "Share Result",
-    resumeTitle: "Resume Quiz?",
-    resumeBody: "You have an unfinished quiz. Continue where you left off?",
-    resumeBtn: "Continue",
+    resumeTitle: "Unfinished Quiz Found",
+    resumeBody: "Would you like to continue the quiz from where you left off?",
+    resumeBtn: "Resume Quiz ▶",
     resumeHint: "You'll pick up from the exact question you stopped at",
     resumeToast: "Resuming your quiz where you left off.",
-    resumeDiscard: "Start Fresh",
+    resumeDiscard: "⟳ Start Fresh",
+    resumeProgressLabel: "Quiz Progress", resumeBackLink: "◀ Back to main screen", resumeSaveHint: "Quiz is saved automatically",
     prevQuestion: "← Previous Question", backToCurrent: "Back to Quiz →",
     reviewing: "📖 Review",
     tryAgainBtn: "🔁 Try Again",
@@ -3129,11 +3131,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         <div onClick={handleResumeDismiss} style={{position:"fixed",inset:0,background:"var(--overlay)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
           <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"var(--bg-card)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:18,padding:"24px 22px",width:"min(380px,100%)",animation:"fadeIn 0.3s ease",direction:dir,position:"relative"}}>
             <button onClick={handleResumeDismiss} aria-label={lang==="en"?"Close":"סגור"} style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
+            {/* Title */}
             <div style={{fontSize:32,textAlign:"center",marginBottom:10}}>⏸️</div>
-            <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:18,marginBottom:8,textAlign:"center"}}>{t("resumeTitle")}</div>
-            <div style={{color:"var(--text-secondary)",fontSize:13,marginBottom:16,textAlign:"center"}}>{t("resumeBody")}</div>
-            {/* Quiz info pill */}
-            <div style={{display:"flex",alignItems:"center",gap:10,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,padding:"10px 14px",marginBottom:8,direction:"ltr"}}>
+            <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:18,marginBottom:6,textAlign:"center"}}>{t("resumeTitle")}</div>
+            {/* Subtitle */}
+            <div style={{color:"var(--text-secondary)",fontSize:13,marginBottom:16,textAlign:"center",lineHeight:1.5}}>{t("resumeBody")}</div>
+            {/* Topic card */}
+            <div style={{display:"flex",alignItems:"center",gap:10,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,padding:"10px 14px",marginBottom:14,direction:"ltr"}}>
               <span style={{fontSize:22}}>{resumeData.topicIcon}</span>
               <div style={{flex:1}}>
                 <div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{resumeData.topicName}</div>
@@ -3142,30 +3146,29 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               </div>
             </div>
-            {/* Progress display - req 6 */}
-            <div style={{marginBottom:16}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--text-muted)",marginBottom:4}}>
-                <span>{lang==="en"?"Progress":"התקדמות"}</span>
-                <span style={{color:"#00D4FF",fontWeight:700}}>{lang==="en"?`${answered} / ${total} questions answered`:`ענית על ${answered} מתוך ${total} שאלות`}</span>
-              </div>
-              <div style={{height:6,background:"var(--glass-7)",borderRadius:4,overflow:"hidden"}}>
+            {/* Progress section */}
+            <div style={{marginBottom:18}}>
+              <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:5,fontWeight:600}}>{t("resumeProgressLabel")}</div>
+              <div style={{height:6,background:"var(--glass-7)",borderRadius:4,overflow:"hidden",marginBottom:6}}>
                 <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",borderRadius:4,transition:"width 0.3s ease"}}/>
               </div>
+              <div style={{fontSize:14,color:"#00D4FF",fontWeight:700,textAlign:"center"}}>{lang==="en"?`Progress: ${answered} / ${total} questions`:`התקדמות: ${answered} / ${total} שאלות`}</div>
             </div>
+            {/* Buttons */}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               <button onClick={handleResumeQuiz} autoFocus
                 style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(0,212,255,0.15),rgba(168,85,247,0.15))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,color:"#00D4FF",fontSize:15,fontWeight:800,cursor:"pointer"}}>
-                {t("resumeBtn")} {dir==="rtl"?"◀":"▶"}
+                {t("resumeBtn")}
               </button>
-              <div style={{color:"var(--text-dim)",fontSize:11,textAlign:"center",marginTop:-4}}>{t("resumeHint")}</div>
               <button onClick={handleDiscardResume}
                 style={{width:"100%",padding:"12px",background:"var(--glass-3)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-muted)",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {t("resumeDiscard")}
               </button>
               <button onClick={handleResumeDismiss}
-                style={{width:"100%",padding:"10px",background:"none",border:"none",borderRadius:12,color:"var(--text-dim)",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-                {t("back")}
+                style={{background:"none",border:"none",color:"var(--text-dim)",fontSize:12,cursor:"pointer",padding:"4px 0",textDecoration:"underline",textUnderlineOffset:2}}>
+                {t("resumeBackLink")}
               </button>
+              <div style={{color:"var(--text-dim)",fontSize:11,textAlign:"center",opacity:0.6,marginTop:-2}}>{t("resumeSaveHint")}</div>
             </div>
           </div>
         </div>
