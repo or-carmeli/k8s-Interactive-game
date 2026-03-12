@@ -3501,7 +3501,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               )}
             </div>
           </div>
-          {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{window.va?.track("signup_clicked",{source:"quiz_game"});setAuthScreen("signup");setUser(null);}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{t("signupNow")}</button></div>}
+          {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{try{localStorage.removeItem("k8s_guest_session")}catch{}setAuthScreen("signup");setUser(null);try{window.va?.track("signup_clicked",{source:"quiz_game"})}catch{}}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{t("signupNow")}</button></div>}
           <div style={{display:"flex",gap:6,marginBottom:18,background:"var(--glass-3)",borderRadius:10,padding:3,direction:"ltr"}}>
             {[{key:"categories",label:t("tabTopics")},{key:"roadmap",label:t("tabRoadmap")}].map(tab=>(
               <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"var(--text-dim)",transition:"all 0.2s"}}>{tab.label}</button>
@@ -4544,7 +4544,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             )}
             {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:16,fontSize:13,color:"#4a9aba"}}>
               {t("guestSaveHint")}{" "}
-              <button onClick={()=>{window.va?.track("signup_clicked",{source:"quiz_game"});setAuthScreen("signup");setUser(null);}} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
+              <button onClick={()=>{try{localStorage.removeItem("k8s_guest_session")}catch{}setAuthScreen("signup");setUser(null);try{window.va?.track("signup_clicked",{source:"quiz_game"})}catch{}}} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
             </div>}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {/* Next topic button - only shown when ALL levels of current topic are mastered */}
