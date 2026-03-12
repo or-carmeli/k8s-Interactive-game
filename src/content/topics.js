@@ -334,16 +334,16 @@ export const TOPICS = [
                 "`QoS` (Quality of Service) קובע את סדר העדיפויות של `Pods` כש-`Node` נמצא בלחץ משאבים, בעיקר לחץ זיכרון.\nKubernetes קובע את ה-`QoS` class באופן אוטומטי לפי ה-`requests` וה-`limits` שמוגדרים לקונטיינרים.\n\n`Guaranteed`: `requests` ו-`limits` מוגדרים ושווים בכל הקונטיינרים. הגנה מקסימלית מפינוי.\n`Burstable`: `requests` מוגדרים אבל `limits` גבוהים יותר. הגנה חלקית.\n`BestEffort`: אין `requests` ואין `limits`. `Pods` אלו יפונו ראשונים כש-`Node` חווה לחץ זיכרון.",
             },
             {
-              q: "מה ephemeral container ב-Kubernetes?",
+              q: "מה `ephemeral container` ב-Kubernetes?",
               options: [
-              "Pod זמני שנוצר אוטומטית כש-Deployment מתזמן על Node חדש",
-              "קונטיינר שמוסיפים לPod רץ לdebug ללא restart של ה-Pod",
-              "גרסה מוקטנת של Pod שמשמשת לbatch jobs קצרים",
-              "init container שמוגדר עם ttl קצוב לניקוי אוטומטי",
+              "קונטיינר זמני שמוסיפים ל-`Pod` רץ לצורך debugging",
+              "`Pod` זמני שנוצר אוטומטית כש-Deployment מתזמן על `Node` חדש",
+              "גרסה מוקטנת של `Pod` שמשמשת ל-batch jobs קצרים",
+              "init container שמוגדר עם TTL קצוב לניקוי אוטומטי",
 ],
-              answer: 1,
+              answer: 0,
               explanation:
-                "Ephemeral containers מוזרקים ל-Pod רץ דרך kubectl debug לחקירה בזמן אמת.\nשימושי כשה-image הראשי הוא distroless וחסר shell או curl.\nחד-פעמי בלבד - לא מופיע ב-Pod spec ולא מאותחל מחדש.",
+                "`ephemeral container` הוא קונטיינר זמני שניתן להוסיף ל-`Pod` רץ לצורך debugging או troubleshooting.\nבדרך כלל מוזרק באמצעות `kubectl debug`.\n\nהוא לא חלק מה-spec המקורי של ה-`Pod`.\nהוא מתווסף באופן דינמי לצורך חקירה.\nהוא לא מאותחל מחדש עם ה-`Pod`.",
             },
         ],
         questionsEn: [
@@ -432,16 +432,16 @@ export const TOPICS = [
                 "`QoS` (Quality of Service) determines the priority of `Pods` when a `Node` experiences resource pressure, especially memory pressure.\nKubernetes determines the `QoS` class automatically based on the `requests` and `limits` defined for containers.\n\n`Guaranteed`: `requests` and `limits` are defined and equal for all containers. Highest protection from eviction.\n`Burstable`: `requests` are defined but `limits` are higher. Partial protection.\n`BestEffort`: no `requests` and no `limits` defined. These `Pods` are the first to be evicted when the `Node` experiences memory pressure.",
             },
             {
-              q: "What is an ephemeral container in Kubernetes?",
+              q: "What is an `ephemeral container` in Kubernetes?",
               options: [
-              "A stripped-down Pod variant used for short-lived batch jobs",
-              "A container added to a running Pod for debugging without restarting it",
+              "A temporary `Pod` automatically created when a Deployment targets a new `Node`",
+              "A temporary container added to a running `Pod` for debugging",
+              "A stripped-down `Pod` variant used for short-lived batch jobs",
               "An init container configured with a TTL for automatic cleanup",
-              "A temporary Pod automatically created when a Deployment targets a new Node",
 ],
               answer: 1,
               explanation:
-                "Ephemeral containers are injected into a running Pod via kubectl debug.\nUseful when the main image is distroless and lacks shell or curl.\nOne-time use only - not in Pod spec, never restarted.",
+                "An `ephemeral container` is a temporary container that can be added to a running `Pod` for debugging or troubleshooting.\nIt is usually injected using `kubectl debug`.\n\nIt is not part of the original `Pod` spec.\nIt is added dynamically for troubleshooting.\nIt is not restarted with the `Pod`.",
             },
         ],
       },
