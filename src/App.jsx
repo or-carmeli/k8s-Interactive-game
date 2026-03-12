@@ -3844,15 +3844,16 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:28,fontWeight:900,background:"linear-gradient(90deg,#00D4FF,#A855F7,#FF6B35,#00D4FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",backgroundSize:"300% auto",animation:"shine 9s linear infinite",letterSpacing:-0.5}}>KubeQuest</div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:3}}>
-                <span style={{color:"var(--text-dim)",fontSize:12}}>Train Your Kubernetes Skills</span>
+                <span style={{color:"var(--text-dim)",fontSize:12}}>Train Kubernetes Through Real Troubleshooting Scenarios</span>
                 <span style={{fontSize:10,color:"#00D4FF",background:"rgba(0,212,255,0.1)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:4,padding:"1px 5px",fontWeight:700,letterSpacing:0.3}}>v{APP_VERSION}</span>
               </div>
             </div>
           </div>
           {[
-            {icon:"🎯",title:lang==="en"?"What is this?":"מה זה?",body:lang==="en"?"An interactive Kubernetes training app. Practice real interview questions across 5 topic areas at 3 difficulty levels.":"אפליקציית אימון Kubernetes אינטראקטיבית. תרגלי שאלות ראיון אמיתיות ב-5 נושאים ו-3 רמות קושי."},
-            {icon:"🎯",title:lang==="en"?"Goal":"המטרה",body:lang==="en"?"Help developers prepare confidently for Kubernetes interviews and CKA/CKAD exams.":"לעזור למפתחים להתכונן לראיונות Kubernetes ולבחינות CKA/CKAD."},
-            {icon:"👨‍💻",title:lang==="en"?"Built by":"נבנה על ידי",body:<span>{lang==="en"?"Or Carmeli · ":"Or Carmeli · "}<a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>LinkedIn</a>{" · "}<a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={{color:"var(--text-primary)",textDecoration:"none",fontWeight:600}}>GitHub</a></span>},
+            {icon:"📚",title:lang==="en"?"What is this?":"מה זה?",body:lang==="en"?<>KubeQuest is an interactive app for practicing Kubernetes through questions and real troubleshooting scenarios.<br/><br/>The goal is not just memorizing commands, but understanding how to diagnose real cluster issues.<br/><br/>Topics include:<br/>• Pods<br/>• Networking<br/>• Scheduling<br/>• Storage<br/>• Troubleshooting</>:<>KubeQuest היא אפליקציה אינטראקטיבית לתרגול Kubernetes דרך שאלות ותרחישי תקלות.<br/><br/>המטרה היא לא רק לזכור פקודות אלא להבין איך לאבחן בעיות אמיתיות בקלאסטר.<br/><br/>Topics include:<br/>• Pods<br/>• Networking<br/>• Scheduling<br/>• Storage<br/>• Troubleshooting</>},
+            {icon:"⚙️",title:lang==="en"?"How it works":"איך זה עובד",body:lang==="en"?<>The app includes several practice modes:<br/><br/><span style={{fontWeight:600}}>Topic Practice</span><br/>Practice questions by topic.<br/><br/><span style={{fontWeight:600}}>Daily Challenge</span><br/>Daily challenge with random questions.<br/><br/><span style={{fontWeight:600}}>Incident Mode</span><br/>Troubleshooting scenarios that simulate real Kubernetes cluster issues.</>:<>האפליקציה כוללת מספר מצבי תרגול:<br/><br/><span style={{fontWeight:600}}>Topic Practice</span><br/>תרגול שאלות לפי נושא.<br/><br/><span style={{fontWeight:600}}>Daily Challenge</span><br/>אתגר יומי של שאלות אקראיות.<br/><br/><span style={{fontWeight:600}}>Incident Mode</span><br/>תרחישי תקלות שמדמים בעיות אמיתיות בקלאסטר Kubernetes.</>},
+            {icon:"🎯",title:lang==="en"?"Who is it for":"המטרה",body:lang==="en"?<>• DevOps Engineers<br/>• SRE Engineers<br/>• Developers working with Kubernetes<br/>• Anyone preparing for CKA or CKAD certifications</>:<>האפליקציה מתאימה ל:<br/><br/>• DevOps Engineers<br/>• SRE Engineers<br/>• Developers שעובדים עם Kubernetes<br/>• אנשים שמתכוננים להסמכות CKA או CKAD</>},
+            {icon:"👨‍💻",title:lang==="en"?"Built by":"נבנה על ידי",body:<span>Or Carmeli<br/><span style={{color:"var(--text-dim)",fontSize:12}}>DevOps Engineer</span><br/><br/><a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>LinkedIn</a>{" · "}<a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={{color:"var(--text-primary)",textDecoration:"none",fontWeight:600}}>GitHub</a></span>},
           ].map(({icon,title,body},i)=>(
             <div key={i} style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:"14px 16px",marginBottom:12,display:"flex",gap:14,alignItems:"flex-start"}}>
               <span style={{fontSize:22,flexShrink:0,marginTop:1}}>{icon}</span>
@@ -3863,13 +3864,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
           ))}
           <div style={{marginTop:16,textAlign:"center"}}>
-            <button onClick={()=>{
-              const url="https://kubequest.online";
-              const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
-              if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
-              else{navigator.clipboard?.writeText(url);}
-            }} style={{padding:"10px 24px",background:"linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1))",border:"1px solid rgba(0,212,255,0.25)",borderRadius:10,color:"#00D4FF",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-              {t("shareBtn")}
+            <button onClick={()=>setScreen("home")} style={{padding:"10px 24px",background:"linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1))",border:"1px solid rgba(0,212,255,0.25)",borderRadius:10,color:"#00D4FF",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              {lang==="en"?"Start Practicing":"התחל לתרגל"}
             </button>
           </div>
         </div>
