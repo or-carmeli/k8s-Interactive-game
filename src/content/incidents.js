@@ -20,7 +20,7 @@ export const INCIDENTS = [
     titleHe: "API בפרודקשן: ריסטארטים אינסופיים תחת עומס",
     description: "A critical API pod keeps restarting every 2 minutes under load",
     descriptionHe: "Pod של API קריטי מתאפס כל 2 דקות תחת עומס",
-    difficulty: "medium",
+    difficulty: "intermediate",
     estimatedTime: "5-7 min",
     steps: [
       {
@@ -436,7 +436,7 @@ export const INCIDENTS = [
     titleHe: "פרונטאנד לבאקאנד: חיבור נדחה",
     description: "Frontend gets 'connection refused' calling the backend - pods look healthy",
     descriptionHe: "הפרונטאנד מקבל 'connection refused' מהבאקאנד - פודים נראים תקינים",
-    difficulty: "medium",
+    difficulty: "intermediate",
     estimatedTime: "5-7 min",
     steps: [
       {

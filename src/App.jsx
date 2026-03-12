@@ -95,9 +95,9 @@ const LEVEL_ORDER = ["easy", "medium", "hard"];
 
 // Incident mode difficulty colours (intentionally separate from LEVEL_CONFIG)
 const INCIDENT_DIFFICULTY_CONFIG = {
-  easy:   { label: "Easy",   labelHe: "קל",    color: "#10B981" },
-  medium: { label: "Medium", labelHe: "בינוני", color: "#F59E0B" },
-  hard:   { label: "Hard",   labelHe: "קשה",   color: "#EF4444" },
+  easy:         { label: "Easy",         labelHe: "קל",     color: "#10B981" },
+  intermediate: { label: "Intermediate", labelHe: "בינוני", color: "#F59E0B" },
+  hard:         { label: "Hard",         labelHe: "קשה",    color: "#EF4444" },
 };
 
 const INCIDENT_SAVE_KEY = "incident_progress_v1";
@@ -290,6 +290,10 @@ const TRANSLATIONS = {
     incidentActiveLabel: "אירוע פעיל", incidentAvailableLabel: "אירועים זמינים",
     incidentHeaderSub: "תרגלו תרחישי Troubleshooting אמיתיים ב-Kubernetes.\nחקרו סימפטומים, זהו את שורש הבעיה ופתרו את האירוע.",
     incidentResumeBtn: "המשיכי את האירוע", incidentResumeBtn_m: "המשך את האירוע",
+    incidentUnlockIntermediate: "השלימו 2 אירועים קלים כדי לפתוח",
+    incidentUnlockHard: "השלימו 2 אירועים בינוניים כדי לפתוח",
+    incidentLocked: "נעול",
+    incidentCompleted: "הושלם",
     reportBtn: "⚑ דווחי על שגיאה", reportBtn_m: "⚑ דווח על שגיאה",
     reportTitle: "דיווח על שגיאה בשאלה",
     reportType1: "התשובה הנכונה שגויה", reportType2: "השאלה לא ברורה",
@@ -417,6 +421,10 @@ const TRANSLATIONS = {
     incidentActiveLabel: "Active Incident", incidentAvailableLabel: "Available Incidents",
     incidentHeaderSub: "Practice real Kubernetes troubleshooting scenarios.\nInvestigate symptoms, identify the root cause, and resolve the incident.",
     incidentResumeBtn: "Resume Incident",
+    incidentUnlockIntermediate: "Complete 2 Easy incidents to unlock",
+    incidentUnlockHard: "Complete 2 Intermediate incidents to unlock",
+    incidentLocked: "Locked",
+    incidentCompleted: "Completed",
     reportBtn: "⚑ Report an error",
     reportTitle: "Report a question error",
     reportType1: "Wrong answer marked correct", reportType2: "Question is unclear",
@@ -998,6 +1006,9 @@ export default function K8sQuestApp() {
   const [incidentHistory,    setIncidentHistory]    = useState([]);
   const [incidentResume,     setIncidentResume]     = useState(null); // saved state for resume banner
   const [incidentShareCopied,setIncidentShareCopied]= useState(false);
+  const [completedIncidentIds, setCompletedIncidentIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("incident_completed_v1")) || []; } catch { return []; }
+  });
   const incidentTimerRef = useRef(null);
   const incidentCheckingRef = useRef(false);
   const [reportDialog,  setReportDialog]  = useState(null); // {qText, qIndex} | null
@@ -1071,6 +1082,16 @@ export default function K8sQuestApp() {
   const dispSelectedAnswer  = tryAgainActive ? (tryAgainSelected ?? -1) : (isInHistoryMode ? (quizHistory[questionIndex]?.chosen ?? -1) : selectedAnswer);
   const dispShowExplanation = tryAgainActive ? (tryAgainSelected !== null) : (isInHistoryMode ? true : showExplanation);
   const accuracy = stats.total_answered > 0 ? Math.round(stats.total_correct / stats.total_answered * 100) : 0;
+
+  // ── Incident difficulty progression ─────────────────────────────────────────
+  const incidentProgress = {
+    easyCompleted: INCIDENTS.filter(i => i.difficulty === "easy" && completedIncidentIds.includes(i.id)).length,
+    intermediateCompleted: INCIDENTS.filter(i => i.difficulty === "intermediate" && completedIncidentIds.includes(i.id)).length,
+    hardCompleted: INCIDENTS.filter(i => i.difficulty === "hard" && completedIncidentIds.includes(i.id)).length,
+  };
+  const intermediateUnlocked = incidentProgress.easyCompleted >= 2;
+  const hardUnlocked = incidentProgress.intermediateCompleted >= 2;
+
   const FONT_SCALES = { normal: 1, large: 1, xl: 1 }; // no zoom - original A mode is now the default
   const fs = FONT_SCALES[a11y.fontSize] || 1;
   const dispAnswerResult = (() => {
@@ -1595,6 +1616,11 @@ export default function K8sQuestApp() {
     } catch {}
     setIncidentResume(null);
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist incident completion IDs to localStorage
+  useEffect(() => {
+    try { localStorage.setItem("incident_completed_v1", JSON.stringify(completedIncidentIds)); } catch {}
+  }, [completedIncidentIds]);
 
   const loadUserData = async (userId, sessionUser) => {
     console.info("[KubeQuest:boot] loadUserData starting for", userId);
@@ -2572,6 +2598,7 @@ export default function K8sQuestApp() {
     const isLast = incidentStepIndex >= totalSteps - 1;
     if (isLast) {
       clearIncidentProgress();
+      setCompletedIncidentIds(prev => prev.includes(selectedIncident.id) ? prev : [...prev, selectedIncident.id]);
       setScreen("incidentComplete");
     } else {
       const nextIdx = incidentStepIndex + 1;
@@ -4678,31 +4705,46 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
           )}
 
-          {/* Available incidents */}
-          <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--text-dim)",marginBottom:10}}>{t("incidentAvailableLabel")}</div>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            {INCIDENTS.map(incident=>{
-              const diff = INCIDENT_DIFFICULTY_CONFIG[incident.difficulty] || INCIDENT_DIFFICULTY_CONFIG.medium;
-              return(
-                <button key={incident.id} onClick={()=>startIncident(incident)}
-                  style={{width:"100%",padding:"16px 18px",background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:dir==="rtl"?"right":"left",transition:"all 0.2s"}}
-                  onMouseEnter={e=>{e.currentTarget.style.background="rgba(239,68,68,0.06)";e.currentTarget.style.borderColor="rgba(239,68,68,0.3)";}}
-                  onMouseLeave={e=>{e.currentTarget.style.background="var(--glass-2)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
-                  <span style={{fontSize:30,flexShrink:0}}>{incident.icon}</span>
-                  <div style={{flex:1}}>
-                    <div style={{color:"var(--text-primary)",fontWeight:800,fontSize:15,marginBottom:4}}>{lang==="he"?incident.titleHe:incident.title}</div>
-                    <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",color:"var(--text-muted)",fontSize:12}}>
-                      <span style={{background:`${diff.color}22`,color:diff.color,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,letterSpacing:0.5}}>{lang==="he"?diff.labelHe:diff.label}</span>
-                      <span style={{color:"var(--text-dim)"}}>·</span>
-                      <span>{incident.steps.length} {t("incidentSteps")}</span>
-                      <span style={{color:"var(--text-dim)"}}>·</span>
-                      <span>{incident.estimatedTime}</span>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {/* Incidents grouped by difficulty */}
+          {["easy","intermediate","hard"].map(difficulty=>{
+            const incidents = INCIDENTS.filter(i=>i.difficulty===difficulty);
+            const config = INCIDENT_DIFFICULTY_CONFIG[difficulty];
+            const locked = (difficulty==="intermediate"&&!intermediateUnlocked)||(difficulty==="hard"&&!hardUnlocked);
+            const unlockMsg = difficulty==="intermediate"?t("incidentUnlockIntermediate"):difficulty==="hard"?t("incidentUnlockHard"):null;
+            return(
+              <div key={difficulty} style={{marginBottom:24}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:config.color}}>{lang==="he"?config.labelHe:config.label}</span>
+                  {locked&&<span style={{fontSize:12,color:"var(--text-dim)"}}>🔒</span>}
+                </div>
+                {locked&&unlockMsg&&(
+                  <div style={{fontSize:12,color:"var(--text-dim)",marginBottom:10,marginTop:-4}}>{unlockMsg}</div>
+                )}
+                <div style={{display:"flex",flexDirection:"column",gap:16}}>
+                  {incidents.map(incident=>{
+                    const completed = completedIncidentIds.includes(incident.id);
+                    return(
+                      <button key={incident.id} onClick={locked?undefined:()=>startIncident(incident)} disabled={locked}
+                        style={{width:"100%",padding:"16px 18px",background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,cursor:locked?"default":"pointer",display:"flex",alignItems:"center",gap:14,textAlign:dir==="rtl"?"right":"left",transition:"all 0.2s",opacity:locked?0.45:1}}
+                        onMouseEnter={locked?undefined:e=>{e.currentTarget.style.background="rgba(239,68,68,0.06)";e.currentTarget.style.borderColor="rgba(239,68,68,0.3)";}}
+                        onMouseLeave={locked?undefined:e=>{e.currentTarget.style.background="var(--glass-2)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
+                        <span style={{fontSize:30,flexShrink:0}}>{incident.icon}</span>
+                        <div style={{flex:1}}>
+                          <div style={{color:"var(--text-primary)",fontWeight:800,fontSize:15,marginBottom:4}}>{lang==="he"?incident.titleHe:incident.title}</div>
+                          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",color:"var(--text-muted)",fontSize:12}}>
+                            <span>{incident.steps.length} {t("incidentSteps")}</span>
+                            <span style={{color:"var(--text-dim)"}}>·</span>
+                            <span>{incident.estimatedTime}</span>
+                          </div>
+                        </div>
+                        {completed&&<span style={{color:"#10B981",fontSize:14,flexShrink:0}}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
           <Footer lang={lang}/>
         </div>
       )}
