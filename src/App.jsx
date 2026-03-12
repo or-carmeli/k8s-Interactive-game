@@ -3129,6 +3129,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const pct      = total > 0 ? Math.round((answered / total) * 100) : 0;
         return (
         <div onClick={handleResumeDismiss} style={{position:"fixed",inset:0,background:"var(--overlay)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+          <style>{`@keyframes resumeBarFill{from{width:0%}to{width:${pct}%}}`}</style>
           <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key!=="Tab")return;const f=[...e.currentTarget.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];if(!f.length)return;const[first,last]=[f[0],f[f.length-1]];if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}else{if(document.activeElement===last){e.preventDefault();first.focus();}}}} style={{background:"var(--bg-card)",border:"1px solid rgba(0,212,255,0.25)",borderRadius:18,padding:"24px 22px",width:"min(380px,100%)",animation:"fadeIn 0.3s ease",direction:dir,position:"relative"}}>
             <button onClick={handleResumeDismiss} aria-label={lang==="en"?"Close":"סגור"} style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
             {/* Title */}
@@ -3151,7 +3152,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{fontSize:14,color:"#00D4FF",fontWeight:700,textAlign:"center",marginBottom:4}}>{lang==="en"?`Progress: ${answered} / ${total} questions`:`התקדמות: ${answered} / ${total} שאלות`}</div>
               <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",marginBottom:8}}>{lang==="en"?`${total-answered} questions left to finish`:`נשארו עוד ${total-answered} שאלות לסיום`}</div>
               <div style={{height:6,background:"var(--glass-7)",borderRadius:4,overflow:"hidden"}}>
-                <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",borderRadius:4,transition:"width 0.3s ease"}}/>
+                <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",borderRadius:4,animation:"resumeBarFill 0.7s ease-out"}}/>
               </div>
             </div>
             {/* Buttons */}
