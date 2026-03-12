@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useTheme } from "./ThemeContext";
+import { useAccessibility } from "./AccessibilityContext";
 import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
 import { ACHIEVEMENTS } from "./topicMeta";
@@ -217,6 +218,8 @@ const TRANSLATIONS = {
     accuracyLabel: "דיוק",
     goBackToTopic: "חזרי לנושא הזה",
     a11yTitle: "♿ נגישות", a11yFontSize: "גודל טקסט", a11yReduceMotion: "הפחת תנועה", a11yHighContrast: "ניגודיות גבוהה",
+    a11yLargeTap: "מטרות גדולות", a11yFocusHighlight: "הדגשת מיקוד", a11yReset: "איפוס נגישות",
+    a11yTextSmall: "קטן", a11yTextDefault: "רגיל", a11yTextLarge: "גדול", a11yTextXlarge: "גדול מאוד",
     readQuestion: "🔊 קראי שאלה", stopSpeech: "⏹ עצרי", autoRead: "קריאה אוטומטית",
     hint: "💡 רמז", eliminate: "❌ הסרי תשובה שגויה",
     shareResult: "שתפי תוצאה",
@@ -390,6 +393,8 @@ const TRANSLATIONS = {
     dailyChallengeTitle: "Daily Challenge", dailyChallengeNew: "NEW DAILY",
     dailyChallengeDesc: "5 mixed questions · resets every day",
     a11yTitle: "♿ Accessibility", a11yFontSize: "Text Size", a11yReduceMotion: "Reduce Motion", a11yHighContrast: "High Contrast",
+    a11yLargeTap: "Large Targets", a11yFocusHighlight: "Focus Highlight", a11yReset: "Reset Accessibility",
+    a11yTextSmall: "Small", a11yTextDefault: "Default", a11yTextLarge: "Large", a11yTextXlarge: "X-Large",
     readQuestion: "🔊 Read Question", stopSpeech: "⏹ Stop", autoRead: "Auto Read",
     hint: "💡 Hint", eliminate: "❌ Eliminate Wrong",
     shareResult: "Share Result",
@@ -840,6 +845,7 @@ function Footer({ lang }) {
 export default function K8sQuestApp() {
   console.info("[KubeQuest:boot] K8sQuestApp render");
   const { theme, toggleTheme } = useTheme();
+  const { a11y, updateA11y, resetAccessibility } = useAccessibility();
   const [lang, setLang]                   = useState("he");
   const [gender, setGender]               = useState(() => safeGetItem("gender_v1", "m"));
   const handleSetGender = (g) => { setGender(g); localStorage.setItem("gender_v1", g); };
@@ -960,16 +966,7 @@ export default function K8sQuestApp() {
   const [loadingQuestions, setLoadingQuestions]          = useState(false);
   const [incidentSteps, setIncidentSteps]               = useState(null); // fetched steps for online mode
   const [incidentAnswerResult, setIncidentAnswerResult] = useState(null); // { correct, correctIndex, explanation, explanationHe }
-  const [a11y, setA11y] = useState(() => {
-    const saved = safeGetJSON("a11y_v1");
-    if (saved) return saved;
-    return {
-      fontSize: "normal",
-      reduceMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
-      highContrast: window.matchMedia?.("(prefers-contrast: more)").matches ?? false,
-      autoRead: false,
-    };
-  });
+  // a11y state provided by AccessibilityContext
 
   const isGuest = user?.id === "guest";
   const achievementsLoaded = useRef(false);
@@ -1092,8 +1089,7 @@ export default function K8sQuestApp() {
   const intermediateUnlocked = incidentProgress.easyCompleted >= 2;
   const hardUnlocked = incidentProgress.intermediateCompleted >= 2;
 
-  const FONT_SCALES = { normal: 1, large: 1, xl: 1 }; // no zoom - original A mode is now the default
-  const fs = FONT_SCALES[a11y.fontSize] || 1;
+  // Font scaling now handled by CSS variables via AccessibilityContext (data-text-size attribute)
   const dispAnswerResult = (() => {
     const q = currentQuestions[questionIndex];
     if (tryAgainActive) {
@@ -2032,11 +2028,7 @@ export default function K8sQuestApp() {
     try { localStorage.setItem(RESUME_DISMISS_KEY, Date.now().toString()); } catch {}
   };
 
-  const updateA11y = (key, val) => setA11y(prev => {
-    const next = { ...prev, [key]: val };
-    try { localStorage.setItem("a11y_v1", JSON.stringify(next)); } catch {}
-    return next;
-  });
+  // updateA11y provided by AccessibilityContext
 
   const buildQuestionText = (qObj) => {
     if (!qObj) return null;
@@ -3051,7 +3043,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         onBlur={e=>e.currentTarget.style.top="-100px"}>
         {lang==="en"?"Skip to content":"דלג לתוכן"}
       </a>}
-      <style>{`${a11y.reduceMotion?"*{animation:none!important;transition:none!important}":""}${a11y.highContrast?"#main-content{filter:contrast(1.4) brightness(1.06)}":""}@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:var(--code-text);font-size:0.88em;margin-top:4px;text-align:left}.cbr-block{background:var(--code-bg-block);border:1px solid var(--glass-6);border-radius:6px;display:flex;align-items:stretch;transition:border-color 0.15s,background 0.15s;overflow:hidden}.cbr-block:hover{border-color:var(--glass-12);background:var(--code-bg-block-hover)}.cbr-code{flex:1;min-width:0;padding:10px 14px;font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:12.5px;color:var(--code-text);line-height:1.6;white-space:pre;overflow-x:auto;direction:ltr}.cbr-copy{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:0 12px;border:none;border-left:1px solid var(--glass-6);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:inherit;min-width:62px;justify-content:center}.cbr-copy:hover{background:var(--glass-4);color:var(--text-secondary)}.cbr-copy:focus-visible{outline:2px solid #00D4FF!important;outline-offset:-2px}.cbr-copy.copied{color:#10B981;background:rgba(16,185,129,0.08)}@media(max-width:600px){
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes shine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes toast{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes correctFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}@keyframes popIn{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes confettiFall{from{top:-20px;transform:rotate(0deg);opacity:1}to{top:100vh;transform:rotate(720deg);opacity:0}}@keyframes pulseHighlight{0%{box-shadow:0 0 0 0 rgba(239,68,68,0)}60%{box-shadow:0 0 0 8px rgba(239,68,68,0.2)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}@keyframes nodePulse{0%,100%{box-shadow:0 0 10px var(--nc,#00D4FF)}50%{box-shadow:0 0 22px var(--nc,#00D4FF)}}.pulseHighlight{animation:pulseHighlight 0.5s ease 3;border-color:rgba(239,68,68,0.45)!important}.card-hover{transition:transform 0.2s;cursor:pointer}.card-hover:hover{transform:translateY(-3px)}.opt-btn{transition:all 0.15s;cursor:pointer}.opt-btn:hover{transform:translateX(-2px)}.explanation-card ul[dir="rtl"]{direction:rtl;text-align:right}.explanation-card ul[dir="rtl"] li::marker{unicode-bidi:isolate}button,input{font-family:inherit}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #00D4FF!important;outline-offset:2px;border-radius:4px}.cli-command{direction:ltr;unicode-bidi:isolate;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;display:block;background:rgba(0,212,255,0.06);border-radius:6px;padding:4px 10px;color:var(--code-text);font-size:0.88em;margin-top:4px;text-align:left}.cbr-block{background:var(--code-bg-block);border:1px solid var(--glass-6);border-radius:6px;display:flex;align-items:stretch;transition:border-color 0.15s,background 0.15s;overflow:hidden}.cbr-block:hover{border-color:var(--glass-12);background:var(--code-bg-block-hover)}.cbr-code{flex:1;min-width:0;padding:10px 14px;font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:12.5px;color:var(--code-text);line-height:1.6;white-space:pre;overflow-x:auto;direction:ltr}.cbr-copy{flex-shrink:0;display:flex;align-items:center;gap:4px;padding:0 12px;border:none;border-left:1px solid var(--glass-6);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:inherit;min-width:62px;justify-content:center}.cbr-copy:hover{background:var(--glass-4);color:var(--text-secondary)}.cbr-copy:focus-visible{outline:2px solid #00D4FF!important;outline-offset:-2px}.cbr-copy.copied{color:#10B981;background:rgba(16,185,129,0.08)}@media(max-width:600px){
 .stats-grid{grid-template-columns:repeat(2,1fr)!important}
 .page-pad{padding:12px 14px!important}
 .quiz-bar-right{gap:8px!important}
@@ -3288,7 +3280,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {/* Dropdown menu - rendered outside <main> so CSS zoom never affects it */}
       {showMenu&&(()=>{const _br=burgerRef.current?.getBoundingClientRect();const _menuRight=_br?Math.max(8,window.innerWidth-_br.right):8;return(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:82,right:_menuRight,background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"var(--shadow-heavy)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
+        <nav role="navigation" aria-label={lang==="en"?"Main menu":"תפריט ראשי"} style={{position:"fixed",top:82,right:_menuRight,background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"var(--shadow-heavy)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
 
           {/* Language + Gender */}
           <div style={{padding:"8px 14px 10px",borderBottom:"1px solid var(--glass-6)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
@@ -3367,9 +3359,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
           {/* ── 5. Accessibility ── */}
           <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
-            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"ACCESSIBILITY":"נגישות"}</span>
+            <span id="a11y-section-title" style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"ACCESSIBILITY":"נגישות"}</span>
           </div>
-          <div style={{padding:"4px 14px 10px"}}>
+          <div role="group" aria-labelledby="a11y-section-title" style={{padding:"4px 14px 10px"}}>
+            {/* Text size selector */}
+            <div style={{marginBottom:7}}>
+              <span style={{fontSize:10,color:"var(--text-muted)",fontWeight:600,direction:dir,display:"block",marginBottom:4}}>{t("a11yFontSize")}</span>
+              <div style={{display:"flex",gap:3}}>
+                {(["small","default","large","xlarge"]).map(size=>(
+                  <button key={size} onClick={()=>updateA11y("textSize",size)}
+                    aria-pressed={a11y.textSize===size}
+                    style={{flex:1,padding:"5px 2px",background:a11y.textSize===size?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${a11y.textSize===size?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:a11y.textSize===size?"#00D4FF":"var(--text-muted)",fontSize:10,cursor:"pointer",fontWeight:a11y.textSize===size?700:400}}>
+                    {t(`a11yText${size.charAt(0).toUpperCase()+size.slice(1)}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* High Contrast + Reduce Motion */}
             <div style={{display:"flex",gap:4}}>
               {(["highContrast","reduceMotion"]).map((key,i)=>(
                 <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
@@ -3379,6 +3385,17 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </button>
               ))}
             </div>
+            {/* Large Tap Targets + Focus Highlight */}
+            <div style={{display:"flex",gap:4,marginTop:4}}>
+              {(["largeTapTargets","focusHighlight"]).map((key,i)=>(
+                <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
+                  aria-pressed={a11y[key]}
+                  style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
+                  {i===0?t("a11yLargeTap"):t("a11yFocusHighlight")}{a11y[key]?" ✓":""}
+                </button>
+              ))}
+            </div>
+            {/* Speech controls */}
             {window.speechSynthesis&&(
               <div style={{display:"flex",gap:4,marginTop:7}}>
                 {screen==="topic"&&topicScreen==="quiz"&&(
@@ -3395,6 +3412,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </button>
               </div>
             )}
+            {/* Reset accessibility */}
+            <button onClick={resetAccessibility}
+              style={{width:"100%",marginTop:7,padding:"6px 4px",background:"var(--glass-4)",border:"1px solid var(--glass-8)",borderRadius:6,color:"var(--text-muted)",fontSize:10,cursor:"pointer",fontWeight:400}}>
+              {t("a11yReset")}
+            </button>
           </div>
 
           {/* ── Theme toggle ── */}
@@ -3422,10 +3444,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <span aria-hidden="true">🚪</span>{t("logout")}
             </button>
           </div>
-        </div>
+        </nav>
       </>);})()}
       </>}
-      <main id="main-content" style={isStatusDomain ? undefined : {position:"relative",...(fs !== 1 ? {zoom: fs, width: `${+(100/fs).toFixed(4)}%`} : {})}}>
+      <main id="main-content" style={isStatusDomain ? undefined : {position:"relative"}}>
       {!isStatusDomain && <>
       {/* HOME */}
       {screen==="home"&&(

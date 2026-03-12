@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import { ThemeProvider } from './ThemeContext.jsx'
+import { AccessibilityProvider } from './AccessibilityContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './theme.css'
 
@@ -15,7 +16,9 @@ try {
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
-        <ThemeProvider><App /></ThemeProvider>
+        <AccessibilityProvider>
+          <ThemeProvider><App /></ThemeProvider>
+        </AccessibilityProvider>
       </ErrorBoundary>
     </React.StrictMode>
   );
