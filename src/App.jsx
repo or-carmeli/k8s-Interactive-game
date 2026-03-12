@@ -668,6 +668,34 @@ function renderBidiInner(text, lang, keyPrefix) {
   });
 }
 
+// Hebrew prefix+hyphen+English term pattern (ה-Deployment, ב-namespace, ל-Service)
+// Renders the Hebrew prefix attached to RTL flow with a non-breaking hyphen,
+// followed by the English term in an isolated LTR span with concept/code styling.
+const HE_PREFIX_TERM_RE = /([\u0590-\u05FF])-([A-Za-z][A-Za-z0-9\-_./]*)/g;
+
+function renderHebrewPrefixTerms(text, lang, keyPrefix) {
+  if (lang !== "he" || !HE_PREFIX_TERM_RE.test(text)) return null;
+  HE_PREFIX_TERM_RE.lastIndex = 0;
+  const parts = [];
+  let last = 0;
+  let m;
+  while ((m = HE_PREFIX_TERM_RE.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: "text", value: text.slice(last, m.index) });
+    parts.push({ type: "prefixTerm", prefix: m[1], term: m[2] });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ type: "text", value: text.slice(last) });
+  if (parts.length <= 1 && parts[0]?.type === "text") return null;
+  return parts.map((p, i) => {
+    if (p.type === "prefixTerm") {
+      const kind = getTermKind(p.term);
+      const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : CONCEPT_TAG_STYLE;
+      return <span key={`${keyPrefix}-hp${i}`}>{p.prefix}{"\u2011"}<span dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{p.term}</span></span>;
+    }
+    return <span key={`${keyPrefix}-ht${i}`}>{renderBidiInner(p.value, lang, `${keyPrefix}h${i}`)}</span>;
+  });
+}
+
 // Wraps inline English/Latin sequences in <span dir="ltr"> for correct bidi rendering
 // in RTL Hebrew paragraphs. K8s terms get inline-code styling.
 // Also handles backtick-wrapped inline code (`command`) for consistency.
@@ -685,6 +713,9 @@ function renderBidi(text, lang) {
           return <span key={`bt-${i}`} dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{part}</span>;
         }
         if (!part) return null;
+        // Process Hebrew-prefix+English-term patterns in text segments
+        const prefixed = renderHebrewPrefixTerms(part, lang, `s${i}`);
+        if (prefixed) return <span key={`seg-${i}`}>{prefixed}</span>;
         return <span key={`seg-${i}`}>{renderBidiInner(part, lang, `s${i}`)}</span>;
       });
     }
@@ -700,10 +731,17 @@ function renderBidi(text, lang) {
         if (!part) return null;
         if (i % 2 === 1) return <span key={`cli-${i}`} dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{part}</span>;
         const trimmed = part.trim();
-        return trimmed ? <span key={`seg-${i}`}>{renderBidiInner(trimmed, lang, `b${i}`)}</span> : null;
+        if (!trimmed) return null;
+        const prefixed = renderHebrewPrefixTerms(trimmed, lang, `b${i}`);
+        if (prefixed) return <span key={`seg-${i}`}>{prefixed}</span>;
+        return <span key={`seg-${i}`}>{renderBidiInner(trimmed, lang, `b${i}`)}</span>;
       });
     }
   }
+
+  // Process Hebrew-prefix+English-term patterns before falling back to renderBidiInner
+  const prefixed = renderHebrewPrefixTerms(text, lang, "b");
+  if (prefixed) return prefixed;
 
   return renderBidiInner(text, lang, "b");
 }
@@ -4325,12 +4363,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                           </span>
                         </div>
                         {/* Explanation body */}
-                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:10}}>
-                          {paragraphs.map((s,idx)=>(
-                            <div key={idx} dir={dir} style={{color:"var(--text-light)",fontSize:14,lineHeight:1.75,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
-                              {renderBidiBlock(s,lang)}
-                            </div>
-                          ))}
+                        {!isInterviewMode&&<div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:12}}>
+                          {paragraphs.map((s,idx)=>{
+                            // Standalone CLI command or backtick-wrapped code block → render as code block
+                            const stripped = s.replace(/`([^`]+)`/g, "$1").trim();
+                            const isCodeOnly = (!(/[\u0590-\u05FF]/).test(stripped) && CLI_COMMAND_RE.test(stripped))
+                              || (s.startsWith("```") && s.endsWith("```"))
+                              || (s.startsWith("`") && s.endsWith("`") && !(/[\u0590-\u05FF]/).test(s));
+                            if (isCodeOnly) {
+                              const code = s.replace(/^```\s*|```$/g, "").replace(/^`|`$/g, "").trim();
+                              return <code key={idx} dir="ltr" style={{display:"block",background:"rgba(0,212,255,0.08)",border:"1px solid rgba(0,212,255,0.12)",borderRadius:8,padding:"10px 16px",fontSize:13,fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"var(--code-text)",lineHeight:1.7,overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{code}</code>;
+                            }
+                            return (
+                              <div key={idx} dir={dir} style={{color:"var(--text-light)",fontSize:14,lineHeight:1.75,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
+                                {renderBidiBlock(s,lang)}
+                              </div>
+                            );
+                          })}
                         </div>}
                       </div>
                     );
@@ -4352,11 +4401,21 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         </div>
                         <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:14}}>
                           {(()=>{const idDir=hasHebrew(q.options[iCorrectIdx])?"rtl":"ltr";return <div dir={idDir} style={{color:"var(--text-primary)",fontWeight:700,fontSize:14,lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",direction:idDir,textAlign:idDir==="rtl"?"right":"left",unicodeBidi:"isolate"}}>{lang==="he"?renderBidi(q.options[iCorrectIdx],lang):q.options[iCorrectIdx]}</div>;})()}
-                          {iParagraphs.map((s,idx)=>(
-                            <div key={idx} dir={dir} style={{color:"var(--text-light)",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
-                              {renderBidiBlock(s,lang)}
-                            </div>
-                          ))}
+                          {iParagraphs.map((s,idx)=>{
+                            const stripped = s.replace(/`([^`]+)`/g, "$1").trim();
+                            const isCodeOnly = (!(/[\u0590-\u05FF]/).test(stripped) && CLI_COMMAND_RE.test(stripped))
+                              || (s.startsWith("```") && s.endsWith("```"))
+                              || (s.startsWith("`") && s.endsWith("`") && !(/[\u0590-\u05FF]/).test(s));
+                            if (isCodeOnly) {
+                              const code = s.replace(/^```\s*|```$/g, "").replace(/^`|`$/g, "").trim();
+                              return <code key={idx} dir="ltr" style={{display:"block",background:"rgba(168,85,247,0.08)",border:"1px solid rgba(168,85,247,0.15)",borderRadius:8,padding:"10px 16px",fontSize:13,fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"var(--code-text)",lineHeight:1.7,overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{code}</code>;
+                            }
+                            return (
+                              <div key={idx} dir={dir} style={{color:"var(--text-light)",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
+                                {renderBidiBlock(s,lang)}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
