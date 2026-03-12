@@ -266,7 +266,7 @@ const TRANSLATIONS = {
     resumeHint: "החידון ייפתח מהשאלה שבה עצרת", resumeHint_m: "החידון ייפתח מהשאלה שבה עצרת",
     resumeToast: "ממשיכים מאיפה שהפסקת.", resumeToast_m: "ממשיכים מאיפה שהפסקת.",
     resumeDiscard: "התחילי מחדש", resumeDiscard_m: "התחל מחדש",
-    resumeProgressLabel: "התקדמות בחידון", resumeBackLink: "▶ חזרה", resumeSaveHint: "החידון נשמר אוטומטית",
+    resumeBackLink: "▶ חזרה", resumeSaveHint: "החידון נשמר אוטומטית",
     prevQuestion: "→ שאלה קודמת", backToCurrent: "→ חזרי לחידון", backToCurrent_m: "→ חזור לחידון",
     reviewing: "📖 סקירה",
     tryAgainBtn: "🔁 נסי שוב", tryAgainBtn_m: "🔁 נסה שוב",
@@ -400,7 +400,7 @@ const TRANSLATIONS = {
     resumeHint: "You'll pick up from the exact question you stopped at",
     resumeToast: "Resuming your quiz where you left off.",
     resumeDiscard: "Start Fresh",
-    resumeProgressLabel: "Quiz Progress", resumeBackLink: "◀ Back to main screen", resumeSaveHint: "Quiz is saved automatically",
+    resumeBackLink: "◀ Back to main screen", resumeSaveHint: "Quiz is saved automatically",
     prevQuestion: "← Previous Question", backToCurrent: "Back to Quiz →",
     reviewing: "📖 Review",
     tryAgainBtn: "🔁 Try Again",
@@ -3147,12 +3147,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             </div>
             {/* Progress section */}
-            <div style={{marginBottom:18}}>
-              <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:5,fontWeight:600}}>{t("resumeProgressLabel")}</div>
-              <div style={{height:6,background:"var(--glass-7)",borderRadius:4,overflow:"hidden",marginBottom:6}}>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:14,color:"#00D4FF",fontWeight:700,textAlign:"center",marginBottom:4}}>{lang==="en"?`Progress: ${answered} / ${total} questions`:`התקדמות: ${answered} / ${total} שאלות`}</div>
+              <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",marginBottom:8}}>{lang==="en"?`${total-answered} questions left to finish`:`נשארו עוד ${total-answered} שאלות לסיום`}</div>
+              <div style={{height:6,background:"var(--glass-7)",borderRadius:4,overflow:"hidden"}}>
                 <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",borderRadius:4,transition:"width 0.3s ease"}}/>
               </div>
-              <div style={{fontSize:14,color:"#00D4FF",fontWeight:700,textAlign:"center"}}>{lang==="en"?`Progress: ${answered} / ${total} questions`:`התקדמות: ${answered} / ${total} שאלות`}</div>
             </div>
             {/* Buttons */}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -3160,6 +3160,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(0,212,255,0.15),rgba(168,85,247,0.15))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,color:"#00D4FF",fontSize:15,fontWeight:800,cursor:"pointer"}}>
                 {t("resumeBtn")}
               </button>
+              <div style={{color:"var(--text-dim)",fontSize:11,textAlign:"center",marginTop:-4}}>{lang==="en"?`Only ${total-answered} questions left`:`נשארו רק ${total-answered} שאלות`}</div>
               <button onClick={handleDiscardResume}
                 style={{width:"100%",padding:"12px",background:"var(--glass-3)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-muted)",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {t("resumeDiscard")}
