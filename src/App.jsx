@@ -119,6 +119,17 @@ const MIXED_TOPIC     = { id: "mixed",     icon: "🎲", name: "Mixed Quiz",    
 const DAILY_TOPIC     = { id: "daily",     icon: "🔥", name: "Daily Challenge",    color: "#F59E0B", levels: {} };
 const BOOKMARKS_TOPIC = { id: "bookmarks", icon: "🔖", name: "Saved Questions",    color: "#A855F7", levels: {} };
 
+// Centralized resume progress calculation.
+// quizHistory tracks answered questions even if the user leaves before clicking Next.
+function getResumeProgress(saved) {
+  const total = saved?.questions?.length ?? 0;
+  if (total <= 0) return { answered: 0, total: 0, pct: 0 };
+  const raw = Math.max(saved.questionIndex ?? 0, saved.quizHistory?.length ?? 0);
+  const answered = Math.min(Math.max(Number.isFinite(raw) ? raw : 0, 0), total);
+  const pct = Math.max(0, Math.min(100, Math.round((answered / total) * 100)));
+  return { answered, total, pct };
+}
+
 function formatIncidentTime(secs) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
@@ -2002,10 +2013,9 @@ export default function K8sQuestApp() {
   // Returns true if the resume modal should be shown for the given saved quiz data
   const shouldShowResumeModal = (saved) => {
     if (!saved) return false;
-    const answered = Math.max(saved.questionIndex ?? 0, saved.quizHistory?.length ?? 0);
-    const total    = saved.questions?.length ?? 0;
+    const { answered, total } = getResumeProgress(saved);
     if (answered <= 0 || answered >= total) return false;          // req 1
-    if (answered / total < RESUME_MIN_PROGRESS) return false;      // req 5: <20% → skip
+    if (total > 0 && answered / total < RESUME_MIN_PROGRESS) return false; // req 5
     try {
       if (sessionStorage.getItem(RESUME_SESSION_KEY)) return false; // req 3: once per session
       const dismissedAt = safeGetItem(RESUME_DISMISS_KEY);
@@ -3124,9 +3134,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {resumeToast&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,padding:"10px 20px",color:"#00D4FF",fontSize:13,fontWeight:600,zIndex:9999,boxShadow:"0 0 20px rgba(0,212,255,0.15)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap"}}>{t("resumeToast")}</div>}
 
       {showResumeModal&&resumeData&&(()=>{
-        const answered = Math.max(resumeData.questionIndex ?? 0, resumeData.quizHistory?.length ?? 0);
-        const total    = resumeData.questions?.length ?? 0;
-        const pct      = total > 0 ? Math.round((answered / total) * 100) : 0;
+        const { answered, total, pct } = getResumeProgress(resumeData);
+        const remaining = total - answered;
         return (
         <div onClick={handleResumeDismiss} style={{position:"fixed",inset:0,background:"var(--overlay)",zIndex:5002,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
           <style>{`@keyframes resumeBarFill{from{width:0%}to{width:${pct}%}}`}</style>
@@ -3147,21 +3156,21 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               </div>
             </div>
-            {/* Progress section */}
-            <div style={{marginBottom:16}}>
+            {/* Progress section — hidden if totalQuestions is missing */}
+            {total>0&&<div style={{marginBottom:16}}>
               <div style={{fontSize:14,color:"#00D4FF",fontWeight:700,textAlign:"center",marginBottom:4}}>{lang==="en"?`Progress: ${answered} / ${total} questions`:`התקדמות: ${answered} / ${total} שאלות`}</div>
-              <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",marginBottom:8}}>{lang==="en"?`${total-answered} questions left to finish`:`נשארו עוד ${total-answered} שאלות לסיום`}</div>
+              <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",marginBottom:8}}>{lang==="en"?`${remaining} questions left to finish`:`נשארו עוד ${remaining} שאלות לסיום`}</div>
               <div style={{height:6,background:"var(--glass-7)",borderRadius:4,overflow:"hidden"}}>
                 <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D4FF,#A855F7)",borderRadius:4,animation:"resumeBarFill 0.7s ease-out"}}/>
               </div>
-            </div>
+            </div>}
             {/* Buttons */}
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               <button onClick={handleResumeQuiz} autoFocus
                 style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(0,212,255,0.15),rgba(168,85,247,0.15))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,color:"#00D4FF",fontSize:15,fontWeight:800,cursor:"pointer"}}>
                 {t("resumeBtn")}
               </button>
-              <div style={{color:"var(--text-dim)",fontSize:11,textAlign:"center",marginTop:-4}}>{lang==="en"?`Only ${total-answered} questions left`:`נשארו רק ${total-answered} שאלות`}</div>
+              <div style={{color:"var(--text-dim)",fontSize:11,textAlign:"center",marginTop:-4}}>{lang==="en"?`Only ${remaining} questions left`:`נשארו רק ${remaining} שאלות`}</div>
               <button onClick={handleDiscardResume}
                 style={{width:"100%",padding:"12px",background:"var(--glass-3)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-muted)",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 {t("resumeDiscard")}
