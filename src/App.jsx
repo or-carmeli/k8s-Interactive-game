@@ -713,10 +713,13 @@ function renderBidi(text, lang) {
           return <span key={`bt-${i}`} dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{part}</span>;
         }
         if (!part) return null;
+        // Anchor leading punctuation to RTL context when following an LTR code span
+        let seg = part;
+        if (i > 0 && /^[\s]*[.,;:!?)}\]>]/.test(seg)) seg = "\u200F" + seg;
         // Process Hebrew-prefix+English-term patterns in text segments
-        const prefixed = renderHebrewPrefixTerms(part, lang, `s${i}`);
+        const prefixed = renderHebrewPrefixTerms(seg, lang, `s${i}`);
         if (prefixed) return <span key={`seg-${i}`}>{prefixed}</span>;
-        return <span key={`seg-${i}`}>{renderBidiInner(part, lang, `s${i}`)}</span>;
+        return <span key={`seg-${i}`}>{renderBidiInner(seg, lang, `s${i}`)}</span>;
       });
     }
   }
@@ -730,8 +733,10 @@ function renderBidi(text, lang) {
       return cliParts.map((part, i) => {
         if (!part) return null;
         if (i % 2 === 1) return <span key={`cli-${i}`} dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{part}</span>;
-        const trimmed = part.trim();
+        // Anchor leading punctuation to RTL context when following an LTR CLI span
+        let trimmed = part.trim();
         if (!trimmed) return null;
+        if (i > 0 && /^[.,;:!?)}\]>]/.test(trimmed)) trimmed = "\u200F" + trimmed;
         const prefixed = renderHebrewPrefixTerms(trimmed, lang, `b${i}`);
         if (prefixed) return <span key={`seg-${i}`}>{prefixed}</span>;
         return <span key={`seg-${i}`}>{renderBidiInner(trimmed, lang, `b${i}`)}</span>;
@@ -783,7 +788,10 @@ function renderBidiBlock(text, lang) {
       return btParts.map((part, i) => {
         if (i % 2 === 1) return <span key={`bt-${i}`} dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{part}</span>;
         if (!part) return null;
-        return <span key={`seg-${i}`}>{splitCliParts(part, lang, `s${i}`)}</span>;
+        // Anchor leading punctuation to RTL context when following an LTR code span
+        let seg = part;
+        if (i > 0 && lang === "he" && /^[\s]*[.,;:!?)}\]>]/.test(seg)) seg = "\u200F" + seg;
+        return <span key={`seg-${i}`}>{splitCliParts(seg, lang, `s${i}`)}</span>;
       });
     }
   }
