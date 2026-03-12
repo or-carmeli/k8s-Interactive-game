@@ -80,13 +80,13 @@ flowchart TB
 
     subgraph Frontend["Frontend"]
         SPA["React SPA (Vercel)"]
-        PWA["PWA Service Worker\nOffline Cache"]
+        PWA["PWA Service Worker<br/>Offline Cache"]
     end
 
     subgraph Backend["Supabase Backend"]
         AUTH["Authentication"]
         API["API / Data Access"]
-        EDGE["Edge Functions\nHealth Checks"]
+        EDGE["Edge Functions<br/>Health Checks"]
     end
 
     subgraph Database["Database"]
@@ -111,7 +111,7 @@ flowchart TB
 ```mermaid
 flowchart LR
     PUSH["git push"] --> CI["CI Check"] --> BUILD["Build Image"] --> SCAN["Trivy Scan"]
-    SCAN --> PUSH_IMG["Push to GHCR"] --> ATTEST["SBOM +\nProvenance"] --> SIGN["Cosign Sign"] --> VERIFY["Verify"]
+    SCAN --> PUSH_IMG["Push to GHCR"] --> ATTEST["SBOM +<br/>Provenance"] --> SIGN["Cosign Sign"] --> VERIFY["Verify"]
     BOT["Dependabot"] -.->|weekly PRs| CI
 
     style PUSH fill:#1a1a2e,stroke:#00D4FF,stroke-width:2px,color:#fff
