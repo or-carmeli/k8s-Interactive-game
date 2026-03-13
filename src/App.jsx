@@ -833,7 +833,7 @@ function Footer({ lang, onPrivacy, onTerms }) {
       <p style={{color:"var(--text-dim)",fontSize:12,margin:"0 0 10px 0",direction:"ltr"}}>
         © {year} KubeQuest
       </p>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,flexWrap:"wrap",fontSize:11}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,fontSize:11,marginBottom:6}}>
         {onPrivacy&&<><button onClick={onPrivacy} style={btnStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           {lang==="en"?"Privacy Policy":"מדיניות פרטיות"}
         </button>{dot}</>}
@@ -843,7 +843,8 @@ function Footer({ lang, onPrivacy, onTerms }) {
         <a href="mailto:contact@kubequest.online?subject=KubeQuest%20Feedback" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           {lang==="en"?"Contact":"צור קשר"}
         </a>
-        {dot}
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,fontSize:11}}>
         <a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={{...linkStyle,direction:"ltr",unicodeBidi:"isolate"}} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           GitHub
         </a>
@@ -3533,7 +3534,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"var(--text-dim)",transition:"all 0.2s"}}>{tab.label}</button>
             ))}
           </div>
-          {homeTab==="categories"&&(<>
           {/* Dashboard Stats - total_score is the accumulated permanent score (leaderboard-ranked).
                best_score (canonical topic-best via computeScore()) is separate and not shown here.
                Subtitles clarify each metric's meaning for users. */}
@@ -3552,6 +3552,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             ))}
           </div>
+          {homeTab==="categories"&&(<>
           <WeakAreaCard topicStats={topicStats} completedTopics={completedTopics} t={t} dir={dir} onGoToTopic={(id) => {
             const el = document.getElementById(`topic-card-${id}`);
             if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
