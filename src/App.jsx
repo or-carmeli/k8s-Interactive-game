@@ -828,35 +828,27 @@ function renderBidiBlock(text, lang) {
 }
 
 function Footer({ lang, onPrivacy }) {
-  const txt = TRANSLATIONS[lang] || TRANSLATIONS.he;
+  const linkStyle = {color:"var(--text-muted)",fontSize:11,textDecoration:"none",transition:"color 0.2s"};
+  const hoverIn = e=>{e.currentTarget.style.color="var(--text-primary)";};
+  const hoverOut = e=>{e.currentTarget.style.color="var(--text-muted)";};
   return (
-    <div style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid var(--glass-5)"}}>
-      <a href="https://buymeacoffee.com/ocarmeli7n" target="_blank" rel="noopener noreferrer"
-        style={{color:"var(--text-dim)",fontSize:11,textDecoration:"none",display:"block",marginBottom:8,transition:"color 0.2s",direction:lang==="en"?"ltr":"rtl"}}
-        onMouseEnter={e=>{e.currentTarget.style.color="var(--text-muted)";}}
-        onMouseLeave={e=>{e.currentTarget.style.color="var(--text-dim)";}}>
-        {lang==="en"?"Enjoying KubeQuest?":"נהנים מ-KubeQuest\u200F?"}<br/>{lang==="en"?"Support the project ☕":"תמכו בפרויקט ☕"}
-      </a>
-      <p style={{color:"var(--text-dim)",fontSize:12,margin:"0 0 8px 0",direction:lang==="he"?"rtl":"ltr"}}>
-        {lang==="en" && `© ${year} `}{txt.allRightsReserved}{" "}
-        <a href="https://www.linkedin.com/in/orcarmeli/" target="_blank" rel="noopener noreferrer"
-          style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>Or Carmeli</a>{lang==="he" && ` \u200F© ${year}`}
+    <footer style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid var(--glass-5)"}}>
+      <p style={{color:"var(--text-dim)",fontSize:12,margin:"0 0 10px 0"}}>
+        © {year} KubeQuest
       </p>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
-        <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback"
-          style={{display:"inline-flex",alignItems:"center",gap:5,color:"var(--text-muted)",fontSize:11,textDecoration:"none",padding:"5px 12px",border:"1px solid var(--glass-7)",borderRadius:20,transition:"color 0.2s,border-color 0.2s"}}
-          onMouseEnter={e=>{e.currentTarget.style.color="var(--text-primary)";e.currentTarget.style.borderColor="var(--glass-20)";}}
-          onMouseLeave={e=>{e.currentTarget.style.color="var(--text-muted)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
-          ✉ {lang==="en"?"Contact me":"צור קשר"}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",fontSize:11}}>
+        {onPrivacy&&<><button onClick={onPrivacy} style={{...linkStyle,background:"none",border:"none",cursor:"pointer",padding:0}} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+          {lang==="en"?"Privacy Policy":"מדיניות פרטיות"}
+        </button><span style={{color:"var(--text-disabled)"}}>·</span></>}
+        <a href="mailto:contact@kubequest.online?subject=KubeQuest%20Feedback" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+          {lang==="en"?"Contact":"צור קשר"}
         </a>
-        {onPrivacy&&<button onClick={onPrivacy}
-          style={{display:"inline-flex",alignItems:"center",gap:5,color:"var(--text-muted)",fontSize:11,background:"none",border:"1px solid var(--glass-7)",borderRadius:20,padding:"5px 12px",cursor:"pointer",transition:"color 0.2s,border-color 0.2s"}}
-          onMouseEnter={e=>{e.currentTarget.style.color="var(--text-primary)";e.currentTarget.style.borderColor="var(--glass-20)";}}
-          onMouseLeave={e=>{e.currentTarget.style.color="var(--text-muted)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
-          🔒 {lang==="en"?"Privacy Policy":"מדיניות פרטיות"}
-        </button>}
+        <span style={{color:"var(--text-disabled)"}}>·</span>
+        <a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+          GitHub
+        </a>
       </div>
-    </div>
+    </footer>
   );
 }
 
@@ -3862,23 +3854,25 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <p style={{color:"var(--text-muted)",fontSize:12,margin:0}}>{lang==="en"?"Last updated: March 2026":"עדכון אחרון: מרץ 2026"}</p>
           </div>
           {(lang==="en"?[
-            {icon:"📋",title:"Introduction",body:<>KubeQuest is a free, open-source Kubernetes learning application. Your privacy is important to us. This policy explains what data we collect, how we use it, and your rights regarding your information.</>},
-            {icon:"📊",title:"Information We Collect",body:<><span style={{fontWeight:600}}>Account Data (optional)</span><br/>If you sign up via Supabase Auth, we store your email address and a unique user ID for authentication purposes.<br/><br/><span style={{fontWeight:600}}>Progress Data</span><br/>Quiz scores, accuracy, streaks, completed topics, and achievements. This data is stored locally in your browser and optionally synced to our database if you create an account.<br/><br/><span style={{fontWeight:600}}>Technical Data</span><br/>We do not collect IP addresses, device fingerprints, or browsing history. No analytics or tracking scripts are used.</>},
-            {icon:"🎯",title:"How We Use Information",body:<>• Saving and displaying your learning progress<br/>• Powering the global leaderboard (username and score only)<br/>• Syncing progress across devices when signed in<br/><br/>We do not use your data for advertising, profiling, or any purpose beyond the app's core functionality.</>},
-            {icon:"🍪",title:"Cookies and Local Storage",body:<>KubeQuest does not use cookies for tracking. We use browser localStorage to save:<br/><br/>• Your quiz progress and scores<br/>• Theme preference (dark/light)<br/>• Accessibility settings<br/>• Language preference<br/><br/>This data never leaves your browser unless you create an account to sync it.</>},
+            {icon:"📋",title:"Introduction",body:<>KubeQuest is a free, open-source interactive platform for learning and practicing Kubernetes through questions and real-world troubleshooting scenarios. Your privacy is important to us. This policy explains what data we collect, how we use it, and your rights regarding your information.</>},
+            {icon:"📊",title:"Information We Collect",body:<>We collect only the minimum information needed to provide the service.<br/><br/><span style={{fontWeight:600}}>Account Data (optional)</span><br/>If you sign up via Supabase Auth, we store your email address and a unique user ID for authentication purposes. No sensitive personal information is collected.<br/><br/><span style={{fontWeight:600}}>Progress Data</span><br/>Quiz scores, accuracy, streaks, completed topics, and achievements. This data is stored locally in your browser and optionally synced to our database if you create an account.<br/><br/><span style={{fontWeight:600}}>Technical Data</span><br/>We do not collect IP addresses, device fingerprints, or browsing history. No analytics or tracking scripts are used.</>},
+            {icon:"🎯",title:"How We Use Information",body:<>• Saving and displaying your learning progress<br/>• Powering the global leaderboard (username and score only)<br/>• Syncing progress across devices when signed in<br/><br/>We do not use your data for advertising, profiling, or any purpose beyond the app's core functionality. We do not use advertising trackers and we do not sell user data.</>},
+            {icon:"🍪",title:"Cookies and Local Storage",body:<>KubeQuest does not use cookies for tracking. We use browser localStorage only to save user preferences and practice progress:<br/><br/>• Quiz progress and scores<br/>• Theme preference (dark/light)<br/>• Accessibility settings<br/>• Language preference<br/><br/>This data never leaves your browser unless you create an account to sync it.</>},
             {icon:"🔗",title:"Third-Party Services",body:<><span style={{fontWeight:600}}>Supabase</span><br/>Used for authentication and database storage. Supabase processes data under their <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>Privacy Policy</a>.<br/><br/><span style={{fontWeight:600}}>Vercel</span><br/>Used for hosting. Vercel processes data under their <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>Privacy Policy</a>.<br/><br/>No other third-party services, analytics, or advertising networks are used.</>},
             {icon:"🛡️",title:"Data Protection",body:<>• All data is transmitted over HTTPS<br/>• Database access is protected by Row Level Security (RLS). Users can only access their own data<br/>• No sensitive personal information is collected<br/>• Guest mode requires no personal data at all</>},
             {icon:"🤝",title:"Data Sharing",body:<>We do not sell, trade, or share your personal data with any third parties. The only publicly visible data is your username and score on the leaderboard, which is opt-in through account creation.</>},
-            {icon:"✉️",title:"Contact",body:<>If you have questions about this privacy policy or your data, contact us at:<br/><br/><a href="mailto:contact@kubequest.online?subject=KubeQuest%20Privacy" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>contact@kubequest.online</a></>},
+            {icon:"🗑️",title:"Data Deletion",body:<>You can request deletion of all data associated with your account at any time by contacting us. Guest mode data is stored only in your browser and can be cleared at any time through your browser settings.</>},
+            {icon:"✉️",title:"Contact",body:<>If you have questions about this privacy policy or requests related to your data, contact us at:<br/><br/><a href="mailto:contact@kubequest.online?subject=KubeQuest%20Privacy" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>contact@kubequest.online</a></>},
           ]:[
-            {icon:"📋",title:"מבוא",body:<>KubeQuest היא אפליקציה חינמית וקוד פתוח ללימוד Kubernetes. הפרטיות שלכם חשובה לנו. מדיניות זו מסבירה אילו נתונים אנחנו אוספים, כיצד אנחנו משתמשים בהם ומהן הזכויות שלכם.</>},
-            {icon:"📊",title:"מידע שאנחנו אוספים",body:<><span style={{fontWeight:600}}>נתוני חשבון (אופציונלי)</span><br/>אם נרשמתם דרך Supabase Auth, אנחנו שומרים את כתובת האימייל ומזהה ייחודי לצורך אימות.<br/><br/><span style={{fontWeight:600}}>נתוני התקדמות</span><br/>ציונים, דיוק, רצפים, נושאים שהושלמו והישגים. המידע נשמר מקומית בדפדפן ומסונכרן לבסיס הנתונים רק אם יצרתם חשבון.<br/><br/><span style={{fontWeight:600}}>נתונים טכניים</span><br/>איננו אוספים כתובות IP, טביעות אצבע של מכשירים או היסטוריית גלישה. לא נעשה שימוש בכלי מעקב או אנליטיקה.</>},
-            {icon:"🎯",title:"כיצד אנחנו משתמשים במידע",body:<>• שמירה והצגה של התקדמות הלמידה שלכם<br/>• הפעלת לוח המובילים הגלובלי (שם משתמש וציון בלבד)<br/>• סנכרון התקדמות בין מכשירים כשאתם מחוברים<br/><br/>איננו משתמשים במידע שלכם לפרסום, יצירת פרופילים או כל מטרה מעבר לפונקציונליות הליבה של האפליקציה.</>},
-            {icon:"🍪",title:"עוגיות ואחסון מקומי",body:<>KubeQuest לא משתמשת בעוגיות למעקב. אנחנו משתמשים ב-localStorage של הדפדפן כדי לשמור:<br/><br/>• התקדמות וציונים בחידונים<br/>• העדפת ערכת נושא (כהה/בהיר)<br/>• הגדרות נגישות<br/>• העדפת שפה<br/><br/>מידע זה לעולם לא יוצא מהדפדפן שלכם אלא אם יצרתם חשבון לסנכרון.</>},
+            {icon:"📋",title:"מבוא",body:<>KubeQuest היא פלטפורמה אינטראקטיבית ללימוד ותרגול Kubernetes באמצעות שאלות ותרחישי troubleshooting. הפרטיות שלכם חשובה לנו. מדיניות זו מסבירה אילו נתונים אנחנו אוספים, כיצד אנחנו משתמשים בהם ומהן הזכויות שלכם.</>},
+            {icon:"📊",title:"מידע שאנו אוספים",body:<>אנו אוספים רק את המידע המינימלי הנדרש לפעולת השירות. לא נאסף מידע אישי רגיש.<br/><br/><span style={{fontWeight:600}}>נתוני חשבון (אופציונלי)</span><br/>אם נרשמתם דרך Supabase Auth, אנחנו שומרים את כתובת האימייל ומזהה ייחודי לצורך אימות.<br/><br/><span style={{fontWeight:600}}>נתוני התקדמות</span><br/>ציונים, דיוק, רצפים, נושאים שהושלמו והישגים. המידע נשמר מקומית בדפדפן ומסונכרן לבסיס הנתונים רק אם יצרתם חשבון.<br/><br/><span style={{fontWeight:600}}>נתונים טכניים</span><br/>איננו אוספים כתובות IP, טביעות אצבע של מכשירים או היסטוריית גלישה. לא נעשה שימוש בכלי מעקב או אנליטיקה.</>},
+            {icon:"🎯",title:"כיצד אנחנו משתמשים במידע",body:<>• שמירה והצגה של התקדמות הלמידה שלכם<br/>• הפעלת לוח המובילים הגלובלי (שם משתמש וציון בלבד)<br/>• סנכרון התקדמות בין מכשירים כשאתם מחוברים<br/><br/>איננו משתמשים במידע שלכם לפרסום, יצירת פרופילים או כל מטרה מעבר לפונקציונליות הליבה של האפליקציה.<br/><br/>אנחנו לא משתמשים בכלי פרסום או מעקב ואיננו מוכרים מידע אישי.</>},
+            {icon:"🍪",title:"עוגיות ואחסון מקומי",body:<>KubeQuest אינה משתמשת בעוגיות למעקב. אנו משתמשים ב-localStorage בדפדפן רק לשמירת העדפות משתמש והתקדמות בתרגול:<br/><br/>• התקדמות וציונים בחידונים<br/>• העדפת ערכת נושא (כהה/בהיר)<br/>• הגדרות נגישות<br/>• העדפת שפה<br/><br/>מידע זה לעולם לא יוצא מהדפדפן שלכם אלא אם יצרתם חשבון לסנכרון.</>},
             {icon:"🔗",title:"שירותי צד שלישי",body:<><span style={{fontWeight:600}}>Supabase</span><br/>משמש לאימות ואחסון בבסיס נתונים. Supabase מעבדת נתונים בהתאם ל<a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>מדיניות הפרטיות</a> שלהם.<br/><br/><span style={{fontWeight:600}}>Vercel</span><br/>משמש לאירוח. Vercel מעבדת נתונים בהתאם ל<a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>מדיניות הפרטיות</a> שלהם.<br/><br/>לא נעשה שימוש בשירותי צד שלישי, אנליטיקה או רשתות פרסום נוספים.</>},
             {icon:"🛡️",title:"הגנה על נתונים",body:<>• כל המידע מועבר דרך HTTPS<br/>• הגישה לבסיס הנתונים מוגנת באמצעות Row Level Security. משתמשים יכולים לגשת רק לנתונים שלהם<br/>• לא נאסף מידע אישי רגיש<br/>• מצב אורח לא דורש מידע אישי כלל</>},
             {icon:"🤝",title:"שיתוף מידע",body:<>איננו מוכרים, סוחרים או משתפים את המידע האישי שלכם עם צד שלישי. המידע הציבורי היחיד הוא שם המשתמש והציון בלוח המובילים, שהוא בהסכמה בלבד דרך יצירת חשבון.</>},
-            {icon:"✉️",title:"יצירת קשר",body:<>לשאלות בנוגע למדיניות פרטיות זו או למידע שלכם, פנו אלינו:<br/><br/><a href="mailto:contact@kubequest.online?subject=KubeQuest%20Privacy" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>contact@kubequest.online</a></>},
+            {icon:"🗑️",title:"מחיקת מידע",body:<>משתמשים יכולים לבקש מחיקה של המידע המשויך לחשבונם בכל עת באמצעות יצירת קשר. מידע במצב אורח נשמר רק בדפדפן שלכם וניתן למחיקה בכל עת דרך הגדרות הדפדפן.</>},
+            {icon:"✉️",title:"יצירת קשר",body:<>אם יש לכם שאלות לגבי פרטיות או בקשות הקשורות למידע שלכם, ניתן ליצור קשר בכתובת:<br/><br/><a href="mailto:contact@kubequest.online?subject=KubeQuest%20Privacy" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>contact@kubequest.online</a></>},
           ]).map(({icon,title,body},i)=>(
             <div key={i} style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:"10px 16px",marginBottom:8,display:"flex",gap:14,alignItems:"flex-start"}}>
               <span style={{fontSize:22,flexShrink:0,marginTop:1}}>{icon}</span>
