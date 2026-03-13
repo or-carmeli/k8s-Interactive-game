@@ -3731,14 +3731,14 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                Subtitles clarify each metric's meaning for users. */}
           <div className="stats-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
             {[
-              {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B",sub:t("scoreSub"),premium:true},
-              {label:t("accuracy"),value:`${accuracy}%`,icon:"🎯",color:"#10B981",sub:t("accuracySub")},
-              {label:t("streak"),value:stats.current_streak,displayValue:`x${stats.current_streak}`,icon:"🔥",color:"#FF6B35",sub:t("streakSub"),premium:true},
-              {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF",sub:t("completedSub")},
+              {label:t("score"),value:stats.total_score,icon:"⭐",color:"#F59E0B",glow:"rgba(250,204,21,0.35)",sub:t("scoreSub"),premium:true},
+              {label:t("accuracy"),value:`${accuracy}%`,icon:"🎯",color:"#10B981",glow:"rgba(34,197,94,0.35)",sub:t("accuracySub")},
+              {label:t("streak"),value:stats.current_streak,displayValue:`x${stats.current_streak}`,icon:"🔥",color:"#FF6B35",glow:"rgba(249,115,22,0.35)",sub:t("streakSub"),premium:true},
+              {label:t("completed"),value:Object.keys(completedTopics).filter(k=>!isFreeMode(k.split("_")[0])).length,icon:"📚",color:"#00D4FF",glow:"rgba(56,189,248,0.35)",sub:t("completedSub")},
             ].map((s,i)=>(
               <div key={i} className="stats-cell" style={{background:s.premium?`${s.color}08`:"var(--glass-3)",border:`1px solid ${s.premium?`${s.color}30`:"var(--glass-7)"}`,borderRadius:12,padding:"12px 6px 10px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,boxShadow:s.premium?`0 0 10px ${s.color}15`:"none"}}>
                 <div style={{fontSize:17,lineHeight:1}}>{s.icon}</div>
-                <div style={{fontSize:22,fontWeight:800,color:s.color,lineHeight:1,letterSpacing:-0.5,direction:"ltr"}}>{s.displayValue||s.value}</div>
+                <div style={{fontSize:22,fontWeight:800,color:s.color,lineHeight:1,letterSpacing:-0.5,direction:"ltr",textShadow:`0 0 8px ${s.glow}`}}>{s.displayValue||s.value}</div>
                 <div style={{fontSize:11,fontWeight:700,color:s.color,opacity:0.65,lineHeight:1,letterSpacing:0.5,direction:"ltr"}}>{s.label}</div>
                 {s.sub&&<div style={{fontSize:9,color:"rgba(255,255,255,0.55)",lineHeight:1.2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%",paddingInline:2}}>{s.sub}</div>}
               </div>
