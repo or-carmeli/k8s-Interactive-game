@@ -864,9 +864,10 @@ function renderBidiInner(text, lang, keyPrefix) {
     if (/^[←]$/.test(part)) {
       return <span key={k} dir="ltr" style={{unicodeBidi:"isolate",padding:"0 2px"}}>{part}</span>;
     }
-    // Non-matched (RTL) text — wrap in RTL isolation so Hebrew at bidi boundaries
-    // (e.g. "או" between two LTR-isolated terms) doesn't get visually corrupted
-    return part ? <span key={k} dir="rtl" style={{unicodeBidi:"isolate"}}>{"\u2067"}{part}{"\u2069"}</span> : null;
+    // Non-matched (RTL) text — keep in natural RTL flow.
+    // Using dir="rtl" + unicodeBidi:"isolate" (no extra Unicode chars) prevents
+    // short Hebrew words like "או" from being visually corrupted at line-wrap boundaries.
+    return part ? <span key={k} dir="rtl" style={{unicodeBidi:"isolate"}}>{part}</span> : null;
   });
 }
 
@@ -892,9 +893,9 @@ function renderHebrewPrefixTerms(text, lang, keyPrefix) {
     if (p.type === "prefixTerm") {
       const kind = getTermKind(p.term);
       const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : CONCEPT_TAG_STYLE;
-      return <span key={`${keyPrefix}-hp${i}`}>{p.prefix}{"\u2011"}<span dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{p.term}</span></span>;
+      return <span key={`${keyPrefix}-hp${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{p.prefix}{"\u2011"}<span dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{p.term}</span></span>;
     }
-    return <span key={`${keyPrefix}-ht${i}`}>{renderBidiInner(p.value, lang, `${keyPrefix}h${i}`)}</span>;
+    return <span key={`${keyPrefix}-ht${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{renderBidiInner(p.value, lang, `${keyPrefix}h${i}`)}</span>;
   });
 }
 
