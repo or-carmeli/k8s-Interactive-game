@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useTheme } from "./ThemeContext";
 import WeakAreaCard from "./components/WeakAreaCard";
 import RoadmapView from "./components/RoadmapView";
+import StatsView from "./components/StatsView";
 import { ACHIEVEMENTS } from "./topicMeta";
 import { TOPICS } from "./content/topics";
 import { DAILY_QUESTIONS } from "./content/dailyQuestions";
@@ -327,6 +328,24 @@ const TRANSLATIONS = {
     privacyBtn: "🔒 מדיניות פרטיות", termsBtn: "📄 תנאי שימוש",
     shareBtn: "📤 שתפי עם חבר", shareBtn_m: "📤 שתף עם חבר",
     dailyStreak: "ימים ברצף",
+    statsTitle: "הסטטיסטיקות שלי",
+    statsOverview: "סקירה כללית",
+    statsCorrectAnswers: "נכונות",
+    statsWrongAnswers: "שגויות",
+    statsBestStreak: "שיא",
+    statsCompletedLevels: "רמות הושלמו",
+    statsTopicBreakdown: "ביצועים לפי נושא",
+    statsNotStarted: "לא התחיל",
+    statsInProgress: "בתהליך",
+    statsCompleted: "הושלם",
+    statsAnswered: "תשובות",
+    statsIncidents: "אירועים",
+    statsAchievements: "הישגים",
+    statsEmptyTitle: "אין נתונים עדיין",
+    statsEmptyBody: "התחילו לענות על שאלות כדי לראות סטטיסטיקות",
+    statsLearningProgress: "התקדמות בלמידה",
+    statsAccuracy: "דיוק",
+    statsTotalAnswered: "סה״כ תשובות",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -458,6 +477,24 @@ const TRANSLATIONS = {
     privacyBtn: "🔒 Privacy Policy", termsBtn: "📄 Terms of Service",
     shareBtn: "📤 Share with a Friend",
     dailyStreak: "day streak",
+    statsTitle: "My Statistics",
+    statsOverview: "Overview",
+    statsCorrectAnswers: "Correct",
+    statsWrongAnswers: "Wrong",
+    statsBestStreak: "Best",
+    statsCompletedLevels: "levels completed",
+    statsTopicBreakdown: "Performance by Topic",
+    statsNotStarted: "Not Started",
+    statsInProgress: "In Progress",
+    statsCompleted: "Completed",
+    statsAnswered: "answered",
+    statsIncidents: "Incidents",
+    statsAchievements: "Achievements",
+    statsEmptyTitle: "No data yet",
+    statsEmptyBody: "Start answering questions to see your statistics",
+    statsLearningProgress: "Learning Progress",
+    statsAccuracy: "Accuracy",
+    statsTotalAnswered: "Total Answered",
   },
 };
 
@@ -1465,7 +1502,7 @@ export default function K8sQuestApp() {
     // but only on truly idle screens. "topicComplete" and "incidentComplete"
     // depend on transient React state, so reloading there sends the user to
     // home and loses the results screen (looks like "Finish Topic" did nothing).
-    const canReload = screen === "home" || screen === "incidentList" || screen === "privacy" || screen === "terms";
+    const canReload = screen === "home" || screen === "incidentList" || screen === "privacy" || screen === "terms" || screen === "stats";
     if (!quizActive && canReload && window.__KQ_PENDING_RELOAD__) {
       window.__KQ_PENDING_RELOAD__ = false;
       window.location.reload();
@@ -3338,7 +3375,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
             <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
           </div>
-          <button onClick={()=>{setScreen("home");setHomeTab("categories");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{setScreen("stats");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             ⭐ {lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
           </button>
           <button onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
@@ -3992,6 +4029,17 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </button>
           </div>
         </div>
+      )}
+
+      {/* STATS */}
+      {screen==="stats"&&(
+        <StatsView
+          stats={stats} completedTopics={completedTopics} topicStats={topicStats}
+          topics={TOPICS} achievements={ACHIEVEMENTS} unlockedAchievements={unlockedAchievements}
+          completedIncidentIds={completedIncidentIds} incidents={INCIDENTS}
+          dailyStreak={dailyStreak} levelOrder={LEVEL_ORDER} levelConfig={LEVEL_CONFIG}
+          lang={lang} dir={dir} t={t} onBack={()=>setScreen("home")}
+        />
       )}
 
       </>}
