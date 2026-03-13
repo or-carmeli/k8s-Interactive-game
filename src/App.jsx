@@ -2947,7 +2947,7 @@ export default function K8sQuestApp() {
       if (line.startsWith('🔹')) {
         const text = line.slice(2).trimStart();
         return (
-          <div key={i} style={{display:"flex",flexDirection:dir==="rtl"?"row-reverse":"row",alignItems:"flex-start",gap:6,marginBottom:5}}>
+          <div key={i} dir={dir} style={{display:"flex",flexDirection:"row",alignItems:"flex-start",gap:6,marginBottom:5,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
             <span style={{flexShrink:0,fontSize:13,lineHeight:1.6}}>🔹</span>
             <span style={{color:"var(--text-secondary)",fontSize:13,flex:1,lineHeight:1.6,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidiBlock(text,lang)}</span>
           </div>
