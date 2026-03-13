@@ -131,12 +131,3 @@
 body {
   background: var(--bg-body);
 }
-
-/* Menu item tap feedback */
-.menu-item-tap {
-  transition: background 0.1s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.menu-item-tap:active {
-  background: rgba(0,212,255,0.15) !important;
-}
