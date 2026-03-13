@@ -3482,7 +3482,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("shareBtn")}
           </button>
-          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
+          <a href="mailto:contact@kubequest.online?subject=KubeQuest%20Support" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
             <span>✉️</span>{lang==="en"?"Contact":"צור קשר"}
           </a>
 
