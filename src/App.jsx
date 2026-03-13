@@ -324,7 +324,7 @@ const TRANSLATIONS = {
     searchBtn: "🔎 חיפוש שאלה", searchPlaceholder: "חפשי לפי מילת מפתח...", searchNoResults: "לא נמצאו תוצאות",
     mistakesBtn: "❌ טעויות שלי", mistakesEmpty: "אין טעויות! כל הכבוד 🎉", mistakesHint: "שאלות שטעית בהן",
     guideBtn: "📘 פקודות", guideSub: "פקודות kubectl מוכנות להעתקה. לחצו לפתיחה", aboutBtn: "ℹ️ אודות האפליקציה",
-    privacyBtn: "🔒 מדיניות פרטיות",
+    privacyBtn: "🔒 מדיניות פרטיות", termsBtn: "📄 תנאי שימוש",
     shareBtn: "📤 שתפי עם חבר", shareBtn_m: "📤 שתף עם חבר",
     dailyStreak: "ימים ברצף",
   },
@@ -455,7 +455,7 @@ const TRANSLATIONS = {
     searchBtn: "🔎 Search Question", searchPlaceholder: "Search by keyword...", searchNoResults: "No results found",
     mistakesBtn: "❌ My Mistakes", mistakesEmpty: "No mistakes! Great job 🎉", mistakesHint: "Questions you answered incorrectly",
     guideBtn: "📘 Commands", guideSub: "Copy-ready kubectl commands. Tap to expand", aboutBtn: "ℹ️ About the App",
-    privacyBtn: "🔒 Privacy Policy",
+    privacyBtn: "🔒 Privacy Policy", termsBtn: "📄 Terms of Service",
     shareBtn: "📤 Share with a Friend",
     dailyStreak: "day streak",
   },
@@ -827,23 +827,28 @@ function renderBidiBlock(text, lang) {
   return splitCliParts(text, lang, "b");
 }
 
-function Footer({ lang, onPrivacy }) {
+function Footer({ lang, onPrivacy, onTerms }) {
   const linkStyle = {color:"var(--text-muted)",fontSize:11,textDecoration:"none",transition:"color 0.2s"};
+  const btnStyle = {...linkStyle,background:"none",border:"none",cursor:"pointer",padding:0};
   const hoverIn = e=>{e.currentTarget.style.color="var(--text-primary)";};
   const hoverOut = e=>{e.currentTarget.style.color="var(--text-muted)";};
+  const dot = <span style={{color:"var(--text-disabled)"}}>·</span>;
   return (
     <footer style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid var(--glass-5)"}}>
       <p style={{color:"var(--text-dim)",fontSize:12,margin:"0 0 10px 0"}}>
         © {year} KubeQuest
       </p>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",fontSize:11}}>
-        {onPrivacy&&<><button onClick={onPrivacy} style={{...linkStyle,background:"none",border:"none",cursor:"pointer",padding:0}} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+        {onPrivacy&&<><button onClick={onPrivacy} style={btnStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           {lang==="en"?"Privacy Policy":"מדיניות פרטיות"}
-        </button><span style={{color:"var(--text-disabled)"}}>·</span></>}
+        </button>{dot}</>}
+        {onTerms&&<><button onClick={onTerms} style={btnStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+          {lang==="en"?"Terms of Service":"תנאי שימוש"}
+        </button>{dot}</>}
         <a href="mailto:contact@kubequest.online?subject=KubeQuest%20Feedback" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           {lang==="en"?"Contact":"צור קשר"}
         </a>
-        <span style={{color:"var(--text-disabled)"}}>·</span>
+        {dot}
         <a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           GitHub
         </a>
@@ -887,7 +892,7 @@ export default function K8sQuestApp() {
       console.info("[KubeQuest:boot] Screen was", s, "- falling back to home (transient state lost on refresh)");
       return "home";
     }
-    if (s && ["home","incidentList","incident","privacy"].includes(s)) return s;
+    if (s && ["home","incidentList","incident","privacy","terms"].includes(s)) return s;
     return "home";
   });
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -1460,7 +1465,7 @@ export default function K8sQuestApp() {
     // but only on truly idle screens. "topicComplete" and "incidentComplete"
     // depend on transient React state, so reloading there sends the user to
     // home and loses the results screen (looks like "Finish Topic" did nothing).
-    const canReload = screen === "home" || screen === "incidentList" || screen === "privacy";
+    const canReload = screen === "home" || screen === "incidentList" || screen === "privacy" || screen === "terms";
     if (!quizActive && canReload && window.__KQ_PENDING_RELOAD__) {
       window.__KQ_PENDING_RELOAD__ = false;
       window.location.reload();
@@ -3371,6 +3376,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <button onClick={()=>{setScreen("privacy");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("privacyBtn")}
           </button>
+          <button onClick={()=>{setScreen("terms");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("termsBtn")}
+          </button>
           <button onClick={()=>{
             const url="https://kubequest.online";
             const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
@@ -3637,7 +3645,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"var(--glass-2)",border:"1px solid var(--glass-5)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"var(--text-secondary)",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--glass-4)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"var(--text-secondary)"}}><span>{a.icon}</span>{lang==="en"?a.nameEn:a.name}</div>)}</div></div>}
           </>)}
           {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={(topic,lvl)=>tryStartQuiz(()=>startTopic(topic,lvl))} startMixedQuiz={()=>tryStartQuiz(startMixedQuiz)} lang={lang} t={t} dir={dir}/>}
-          <Footer lang={lang} onPrivacy={()=>setScreen("privacy")}/>
+          <Footer lang={lang} onPrivacy={()=>setScreen("privacy")} onTerms={()=>setScreen("terms")}/>
         </div>
       )}
 
@@ -3887,7 +3895,54 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {lang==="en"?"Back to Home":"חזרה לדף הבית"}
             </button>
           </div>
-          <Footer lang={lang} onPrivacy={()=>setScreen("privacy")}/>
+          <Footer lang={lang} onPrivacy={()=>setScreen("privacy")} onTerms={()=>setScreen("terms")}/>
+        </div>
+      )}
+
+      {/* ── TERMS OF SERVICE ── */}
+      {screen==="terms"&&(
+        <div className="page-pad" style={{maxWidth:660,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
+          <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>
+            {dir==="rtl"?"→ חזרה":"← Return"}
+          </button>
+          <div style={{textAlign:"center",marginBottom:28}}>
+            <div style={{fontSize:40,marginBottom:8}}>📄</div>
+            <h1 style={{fontSize:24,fontWeight:900,color:"var(--text-bright)",margin:"0 0 4px"}}>{lang==="en"?"Terms of Service":"תנאי שימוש"}</h1>
+            <p style={{color:"var(--text-muted)",fontSize:12,margin:0}}>{lang==="en"?"Last updated: March 2026":"עודכן לאחרונה: מרץ 2026"}</p>
+          </div>
+          {(lang==="en"?[
+            {icon:"📋",title:"Introduction",body:<>KubeQuest is an interactive educational platform for learning and practicing Kubernetes through questions and real-world troubleshooting scenarios. By using the platform, you agree to these terms of service.</>},
+            {icon:"🎓",title:"Use of the Platform",body:<>The service is intended for educational and personal development purposes only. The content provided is designed to help users learn Kubernetes concepts and prepare for professional certifications.</>},
+            {icon:"👤",title:"User Accounts",body:<>Account creation is optional. If you create an account, you are responsible for all activity that occurs under it. Keep your login credentials secure. Guest mode is available without registration.</>},
+            {icon:"📝",title:"Content Accuracy",body:<>We make every effort to provide accurate and up-to-date content. However, we cannot guarantee that all questions, answers, and explanations are completely error-free. The content is for educational purposes and should not be treated as official documentation.</>},
+            {icon:"⚖️",title:"Fair Use",body:<>Users must not:<br/><br/>• Attempt to exploit vulnerabilities in the platform<br/>• Disrupt or interfere with the service<br/>• Use automated tools to scrape content<br/>• Misrepresent their identity or affiliation<br/><br/>We reserve the right to restrict access for users who violate these terms.</>},
+            {icon:"🔄",title:"Changes to the Service",body:<>KubeQuest may update, modify, or discontinue any part of the platform or its content at any time without prior notice. We are not obligated to maintain any specific feature or content.</>},
+            {icon:"⚠️",title:"Limitation of Liability",body:<>The platform is provided "as is" without warranties of any kind, express or implied. KubeQuest is not liable for any damages arising from the use of the platform, including but not limited to errors in content, service interruptions, or data loss.</>},
+            {icon:"✉️",title:"Contact",body:<>For questions regarding these terms of service, contact us at:<br/><br/><a href="mailto:contact@kubequest.online?subject=KubeQuest%20Terms" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>contact@kubequest.online</a></>},
+          ]:[
+            {icon:"📋",title:"מבוא",body:<>KubeQuest היא פלטפורמה חינוכית אינטראקטיבית ללימוד ותרגול Kubernetes באמצעות שאלות ותרחישי troubleshooting מהעולם האמיתי. השימוש בפלטפורמה מהווה הסכמה לתנאי שימוש אלו.</>},
+            {icon:"🎓",title:"שימוש בפלטפורמה",body:<>השירות מיועד למטרות לימוד והתפתחות מקצועית בלבד. התוכן שמוצג נועד לסייע למשתמשים ללמוד מושגי Kubernetes ולהתכונן להסמכות מקצועיות.</>},
+            {icon:"👤",title:"חשבונות משתמש",body:<>יצירת חשבון היא אופציונלית. אם יצרתם חשבון, אתם אחראים על כל הפעילות המתבצעת תחתיו. שמרו על פרטי ההתחברות שלכם מאובטחים. מצב אורח זמין ללא הרשמה.</>},
+            {icon:"📝",title:"דיוק המידע",body:<>אנו משקיעים מאמצים רבים בכתיבת תוכן מדויק ועדכני. עם זאת, לא ניתן להבטיח שכל השאלות, התשובות וההסברים חפים לחלוטין משגיאות. התוכן מיועד ללמידה ואינו מהווה תחליף לתיעוד רשמי.</>},
+            {icon:"⚖️",title:"שימוש הוגן",body:<>אין לבצע את הפעולות הבאות:<br/><br/>• ניסיון לנצל חולשות או פרצות בפלטפורמה<br/>• שיבוש או הפרעה לשירות<br/>• שימוש בכלים אוטומטיים לשאיבת תוכן<br/>• התחזות או הצגה כוזבת של זהות<br/><br/>אנו שומרים לעצמנו את הזכות להגביל גישה למשתמשים שמפרים תנאים אלו.</>},
+            {icon:"🔄",title:"שינויים בשירות",body:<>KubeQuest עשויה לעדכן, לשנות או להפסיק כל חלק מהפלטפורמה או מהתוכן בכל עת ללא הודעה מוקדמת. איננו מחויבים לשמור על תכונה או תוכן ספציפי.</>},
+            {icon:"⚠️",title:"הגבלת אחריות",body:<>הפלטפורמה מסופקת "כמות שהיא" (as is) ללא אחריות מכל סוג, מפורשת או משתמעת. KubeQuest אינה אחראית לכל נזק הנובע מהשימוש בפלטפורמה, לרבות שגיאות בתוכן, הפסקות שירות או אובדן מידע.</>},
+            {icon:"✉️",title:"יצירת קשר",body:<>לשאלות בנוגע לתנאי שימוש אלו, ניתן ליצור קשר בכתובת:<br/><br/><a href="mailto:contact@kubequest.online?subject=KubeQuest%20Terms" style={{color:"var(--link-color)",textDecoration:"none",fontWeight:600}}>contact@kubequest.online</a></>},
+          ]).map(({icon,title,body},i)=>(
+            <div key={i} style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:"10px 16px",marginBottom:8,display:"flex",gap:14,alignItems:"flex-start"}}>
+              <span style={{fontSize:22,flexShrink:0,marginTop:1}}>{icon}</span>
+              <div>
+                <div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14,marginBottom:4}}>{title}</div>
+                <div style={{color:"var(--text-secondary)",fontSize:13,lineHeight:1.6,direction:dir}}>{body}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{marginTop:16,textAlign:"center"}}>
+            <button onClick={()=>setScreen("home")} style={{padding:"10px 24px",background:"linear-gradient(135deg,rgba(0,212,255,0.1),rgba(168,85,247,0.1))",border:"1px solid rgba(0,212,255,0.25)",borderRadius:10,color:"#00D4FF",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              {lang==="en"?"Back to Home":"חזרה לדף הבית"}
+            </button>
+          </div>
+          <Footer lang={lang} onPrivacy={()=>setScreen("privacy")} onTerms={()=>setScreen("terms")}/>
         </div>
       )}
 
@@ -4809,7 +4864,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </div>
             );
           })}
-          <Footer lang={lang} onPrivacy={()=>setScreen("privacy")}/>
+          <Footer lang={lang} onPrivacy={()=>setScreen("privacy")} onTerms={()=>setScreen("terms")}/>
         </div>
       )}
 
@@ -4971,7 +5026,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {t("backToTopics")}
               </button>
             </div>
-            <Footer lang={lang} onPrivacy={()=>setScreen("privacy")}/>
+            <Footer lang={lang} onPrivacy={()=>setScreen("privacy")} onTerms={()=>setScreen("terms")}/>
           </div>
         );
       })()}
