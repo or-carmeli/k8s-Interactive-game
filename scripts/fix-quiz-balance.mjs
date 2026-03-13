@@ -42,7 +42,7 @@ const FIXES = {
   // config/medium — RoleBinding (HE)
   'מה תפקיד RoleBinding': [
     ["הגדרת כללי RBAC חדשים בתוך Namespace",
-     "חיבור בין Role למשתמש/ServiceAccount בתוך Namespace",
+     "חיבור בין Role למשתמש או ServiceAccount בתוך Namespace",
      "שכפול הרשאות Role אחד ל-Namespace אחר",
      "הסלמת הרשאות Role קיים לרמת ClusterRole"],
     1],
@@ -56,7 +56,7 @@ const FIXES = {
   // config/medium — ServiceAccount role (HE)
   'מה תפקיד ServiceAccount ב-Kubernetes': [
     ["זהות למשתמש אנושי שמתחבר דרך kubectl",
-     "זהות לPod/תהליך בתוך הCluster לאימות מול API server",
+     "זהות ל-Pod או תהליך בתוך ה-Cluster לאימות מול API server",
      "שם DNS פנימי שה-Service מקבל בתוך ה-Namespace",
      "token חד-פעמי שנוצר בעת Deployment חדש"],
     1],
