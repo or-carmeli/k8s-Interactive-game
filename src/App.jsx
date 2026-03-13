@@ -3158,8 +3158,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
             <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:16,marginBottom:14}}>⚑ {t("reportTitle")}</div>
             {/* Question preview */}
-            <div style={{background:"var(--glass-4)",borderRadius:10,padding:"9px 12px",marginBottom:14,color:"var(--text-secondary)",fontSize:12,lineHeight:1.5,direction:"ltr",textAlign:"left",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>
-              {reportDialog.qText}
+            <div dir={dir} style={{background:"var(--glass-4)",borderRadius:10,padding:"9px 12px",marginBottom:14,color:"var(--text-secondary)",fontSize:12,lineHeight:1.5,direction:dir,textAlign:dir==="rtl"?"right":"left",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",unicodeBidi:"isolate"}}>
+              {renderBidiBlock(reportDialog.qText, lang)}
             </div>
             {reportSent?(
               <div style={{textAlign:"center",padding:"16px 0",color:"#10B981",fontWeight:700,fontSize:15}}>{t("reportThanks")}</div>
