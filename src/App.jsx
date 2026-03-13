@@ -178,7 +178,7 @@ const TRANSLATIONS = {
     greeting: "שלום", playingAsGuest: "· משחקת כאורחת",
     leaderboardBtn: "🏆 דירוג", logout: "יציאה",
     guestBanner: "💡 הירשמי כדי לשמור התקדמות ולהופיע בלוח התוצאות",
-    signupNow: "הירשמי", loginNow: "התחברי",
+    signupNow: "הירשמי", loginNow: "התחברי", alreadyHaveAccount: "יש לך כבר משתמש?",
     score: "XP", accuracy: "דיוק", streak: "Combo", completed: "הושלמו",
     scoreSub: "XP מכל החידונים", accuracySub: "אחוז תשובות נכונות", streakSub: "תשובות נכונות ברצף", completedSub: "רמות שהושלמו",
     leaderboardRankedBy: "מדורג לפי סך הנקודות שנצברו", leaderboardScoreCol: "סה״כ נק׳",
@@ -248,7 +248,7 @@ const TRANSLATIONS = {
     resetEmailError_m: "❌ שגיאה בשליחת קישור איפוס. נסה שוב.",
     playingAsGuest_m: "· משחק כאורח",
     guestBanner_m: "💡 הרשם כדי לשמור התקדמות ולהופיע בלוח התוצאות",
-    signupNow_m: "הרשם", loginNow_m: "התחבר",
+    signupNow_m: "הרשם", loginNow_m: "התחבר", alreadyHaveAccount_m: "יש לך כבר משתמש?",
     back_m: "→ חזרה",
     startQuiz_m: "🎯 התחל חידון!",
     confirmAnswer_m: "✔ אשר תשובה",
@@ -371,7 +371,7 @@ const TRANSLATIONS = {
     greeting: "Hello", playingAsGuest: "· Playing as guest",
     leaderboardBtn: "🏆 Leaderboard", logout: "Logout",
     guestBanner: "💡 Sign up to save progress and appear on the leaderboard",
-    signupNow: "Sign Up", loginNow: "Log In",
+    signupNow: "Sign Up", loginNow: "Log In", alreadyHaveAccount: "Already have an account?",
     score: "XP", accuracy: "Accuracy", streak: "Combo", completed: "Completed",
     scoreSub: "XP from all quizzes", accuracySub: "Overall correct rate", streakSub: "Correct answers in a row", completedSub: "Topic-levels passed",
     leaderboardRankedBy: "Ranked by total accumulated points", leaderboardScoreCol: "Total Pts",
@@ -3720,7 +3720,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               )}
             </div>
           </div>
-          {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span style={{color:"#4a9aba",fontSize:13,flex:1,minWidth:0}}>{t("guestBanner")}</span><div style={{display:"flex",gap:6,flexShrink:0}}><button className="guest-banner-btn" onClick={()=>{try{localStorage.removeItem("k8s_guest_session")}catch{}setAuthScreen("signup");setUser(null);try{window.va?.track("signup_clicked",{source:"quiz_game"})}catch{}}} style={{padding:"6px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>{t("signupNow")}</button><button className="guest-banner-btn" onClick={()=>{try{localStorage.removeItem("k8s_guest_session")}catch{}setAuthScreen("login");setUser(null);try{window.va?.track("login_clicked",{source:"quiz_game"})}catch{}}} style={{padding:"6px 14px",background:"none",border:"1px solid rgba(0,212,255,0.15)",borderRadius:8,color:"rgba(0,212,255,0.6)",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>{t("loginNow")}</button></div></div>}
+          {isGuest&&<div className="guest-banner" style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"14px 16px",marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}><span style={{color:"#4a9aba",fontSize:13,textAlign:"center"}}>{t("guestBanner")}</span><button className="guest-banner-btn" onClick={()=>{try{localStorage.removeItem("k8s_guest_session")}catch{}setAuthScreen("signup");setUser(null);try{window.va?.track("signup_clicked",{source:"quiz_game"})}catch{}}} style={{width:"100%",padding:"10px 14px",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.3)",borderRadius:8,color:"#00D4FF",fontSize:14,fontWeight:700,cursor:"pointer",textAlign:"center"}}>{t("signupNow")}</button><span style={{fontSize:12,color:"rgba(255,255,255,0.45)"}}>{t("alreadyHaveAccount")}{" "}<span onClick={()=>{try{localStorage.removeItem("k8s_guest_session")}catch{}setAuthScreen("login");setUser(null);try{window.va?.track("login_clicked",{source:"quiz_game"})}catch{}}} style={{color:"#00D4FF",cursor:"pointer",fontWeight:600,textDecoration:"underline"}}>{t("loginNow")}</span></span></div>}
           <div style={{display:"flex",gap:6,marginBottom:18,background:"var(--glass-3)",borderRadius:10,padding:3,direction:"ltr"}}>
             {[{key:"categories",label:t("tabTopics")},{key:"roadmap",label:t("tabRoadmap")}].map(tab=>(
               <button key={tab.key} onClick={()=>setHomeTab(tab.key)} style={{flex:1,padding:"8px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,background:homeTab===tab.key?"rgba(0,212,255,0.12)":"transparent",color:homeTab===tab.key?"#00D4FF":"var(--text-dim)",transition:"all 0.2s"}}>{tab.label}</button>
