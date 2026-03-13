@@ -852,6 +852,10 @@ function Footer({ lang, onPrivacy, onTerms }) {
         <a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           GitHub
         </a>
+        {dot}
+        <a href="https://buymeacoffee.com/ocarmeli7n" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+          ☕ {lang==="en"?"Support":"תמיכה"}
+        </a>
       </div>
     </footer>
   );
