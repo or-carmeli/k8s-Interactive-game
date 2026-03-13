@@ -2761,28 +2761,42 @@ export default function K8sQuestApp() {
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderTheory = (text) => {
+    const lines = text.split('\n');
+    const elements = [];
+    let codeLines = [];
     let inCode = false;
-    return text.split('\n').map((line, i) => {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       if (line === 'CODE:') {
         inCode = true;
-        return <div key={i} style={{color:"#00D4FF",fontSize:10,fontWeight:800,marginTop:14,marginBottom:4,letterSpacing:2,opacity:0.7,direction:"ltr",textAlign:"left"}}>YAML / BASH</div>;
+        elements.push(<div key={i} style={{color:"#00D4FF",fontSize:10,fontWeight:800,marginTop:14,marginBottom:4,letterSpacing:2,opacity:0.7,direction:"ltr",textAlign:"left"}}>YAML / BASH</div>);
+        continue;
       }
-      if (inCode) return (
-        <div key={i} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:11,color:"var(--code-text)",lineHeight:1.8,
-          whiteSpace:"pre",direction:"ltr",textAlign:"left"}}>  {line}</div>
-      );
+      if (inCode) {
+        codeLines.push(<div key={i} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:11,color:"var(--code-text)",lineHeight:1.8,whiteSpace:"pre",direction:"ltr",textAlign:"left"}}>  {line}</div>);
+        continue;
+      }
       if (line.startsWith('🔹')) {
         const text = line.slice(2).trimStart();
-        return (
-          <div key={i} dir={dir} style={{display:"flex",flexDirection:"row",alignItems:"flex-start",gap:6,marginBottom:5,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
-            <span style={{flexShrink:0,fontSize:13,lineHeight:1.6}}>🔹</span>
-            <span style={{color:"var(--text-secondary)",fontSize:13,flex:1,lineHeight:1.6,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidiBlock(text,lang)}</span>
+        elements.push(
+          <div key={i} dir={dir} style={{display:"flex",flexDirection:"row",alignItems:"flex-start",gap:6,marginBottom:8,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
+            <span style={{flexShrink:0,fontSize:13,lineHeight:1.5}}>🔹</span>
+            <span style={{color:"var(--text-secondary)",fontSize:13,flex:1,lineHeight:1.5,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{renderBidiBlock(text,lang)}</span>
           </div>
         );
+        continue;
       }
-      if (!line.trim()) return <div key={i} style={{height:6}}/>;
-      return <div key={i} style={{color:"var(--text-primary)",fontSize:15,fontWeight:700,marginBottom:8}}>{line}</div>;
-    });
+      if (!line.trim()) { elements.push(<div key={i} style={{height:6}}/>); continue; }
+      elements.push(<div key={i} style={{color:"var(--text-primary)",fontSize:15,fontWeight:700,marginBottom:8}}>{line}</div>);
+    }
+    if (codeLines.length > 0) {
+      elements.push(
+        <div key="code-block" style={{maxWidth:"100%",overflowX:"auto",whiteSpace:"nowrap",boxSizing:"border-box",padding:"10px 12px",borderRadius:8}}>
+          {codeLines}
+        </div>
+      );
+    }
+    return elements;
   };
 
   // Renders inline backtick code spans: `command` → <code>command</code>
@@ -4418,7 +4432,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
           {topicScreen==="theory"?(
             <div>
-              <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:22,marginBottom:18}}>
+              <div style={{background:"var(--glass-2)",border:"1px solid var(--glass-7)",borderRadius:14,padding:"14px 16px",marginBottom:10,overflowWrap:"break-word"}}>
                 <div style={{fontSize:11,color:selectedTopic.color,fontWeight:800,marginBottom:16,letterSpacing:1}}>{t("theory")}</div>
                 <div style={{background:"var(--code-bg-light)",borderRadius:10,padding:"16px 20px"}}>{renderTheory(theoryContent || currentLevelData?.theory)}</div>
               </div>

@@ -26,7 +26,7 @@ function flattenText(node) {
   if (typeof node === "string") return node;
   if (typeof node === "number") return String(node);
   if (Array.isArray(node)) return node.map(flattenText).join("");
-  // React element — recurse into children
+  // React element - recurse into children
   if (node.props?.children != null) return flattenText(node.props.children);
   return "";
 }
@@ -357,5 +357,56 @@ describe("rendering path integrity", () => {
 
     expect(ltrs.some((t) => t === "/ServiceAccount")).toBe(false);
     expect(ltrs.some((t) => t.includes("kubectl"))).toBe(true);
+  });
+});
+
+// ─── REGRESSION: CLI colon-separator handling ────────────────────────────────
+
+describe("CLI colon-separator regression", () => {
+  it("kubectl describe: does NOT capture colon as part of command", () => {
+    const input = "kubectl describe: events ומידע מפורט על resource";
+    const result = renderBidiBlock(input, "he");
+    const text = flattenText(result);
+
+    // Command and description text should both be present
+    expect(text).toContain("kubectl describe");
+    expect(text).toContain("events");
+
+    // Find cli-command code elements
+    const cliElements = findElements(result, (el) => el.props?.className === "cli-command");
+    expect(cliElements.length).toBe(1);
+
+    // The CLI command should be just "kubectl describe" without trailing colon
+    const cliText = flattenText(cliElements[0]).trim();
+    expect(cliText).toBe("kubectl describe");
+  });
+
+  it("kubectl logs: does NOT capture colon as part of command", () => {
+    const input = "kubectl logs: לוגים של קונטיינר";
+    const result = renderBidiBlock(input, "he");
+
+    const cliElements = findElements(result, (el) => el.props?.className === "cli-command");
+    expect(cliElements.length).toBe(1);
+    const cliText = flattenText(cliElements[0]).trim();
+    expect(cliText).toBe("kubectl logs");
+  });
+
+  it("kubectl get pods -A: does NOT capture colon as part of command", () => {
+    const input = "kubectl get pods -A: כל ה-Pods בכל ה-Namespaces";
+    const result = renderBidiBlock(input, "he");
+
+    const cliElements = findElements(result, (el) => el.props?.className === "cli-command");
+    expect(cliElements.length).toBe(1);
+    const cliText = flattenText(cliElements[0]).trim();
+    expect(cliText).toBe("kubectl get pods -A");
+  });
+
+  it("port numbers with colon (8080:80) are still captured correctly in renderBidi", () => {
+    const input = "הרץ kubectl port-forward pod/my-pod 8080:80 לגישה";
+    const result = renderBidi(input, "he");
+    const ltrs = ltrTexts(result);
+
+    // The port-forward command with port mapping should be together
+    expect(ltrs.some((t) => t.includes("8080:80"))).toBe(true);
   });
 });

@@ -71,7 +71,7 @@ export function getTermKind(token) {
 export const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"var(--code-text)"};
 
 // Concept tag style for K8s resource types - highlighted but not code
-export const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",border:"1px solid var(--concept-border)",borderRadius:6,padding:"1px 6px",fontSize:"0.92em",fontWeight:600,color:"var(--concept-text)"};
+export const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",border:"1px solid var(--concept-border)",borderRadius:6,padding:"1px 6px",fontSize:"0.92em",fontWeight:600,color:"var(--concept-text)",marginInline:4};
 
 // ─── renderBidiInner ──────────────────────────────────────────────────────────
 
@@ -82,7 +82,7 @@ export function renderBidiInner(text, lang, keyPrefix) {
   // Line-start → (bullet) becomes "· ", mid-text → becomes ":"
   text = text.replace(/-->/g, "\u2192").replace(/<--/g, "\u2190").replace(/->/g, "\u2192").replace(/<-(?!-)/g, "\u2190");
   text = text.replace(/^→\s*/gm, "· ").replace(/\s*→\s*/g, ": ");
-  // @regression — Hebrew↔Latin slash normalization
+  // @regression - Hebrew↔Latin slash normalization
   // Prevents the bidi bug where "משתמש/ServiceAccount" was rendered as a "/ServiceAccount"
   // badge because the regex captured it as a slash-path (like /api/v1).
   // Inserts spaces around slashes at Hebrew↔Latin boundaries so each side is a separate
@@ -106,7 +106,7 @@ export function renderBidiInner(text, lang, keyPrefix) {
     if (/^[←]$/.test(part)) {
       return <span key={k} dir="ltr" style={{unicodeBidi:"isolate",padding:"0 2px"}}>{part}</span>;
     }
-    // Non-matched (RTL) text — keep in natural RTL flow.
+    // Non-matched (RTL) text - keep in natural RTL flow.
     // Using dir="rtl" + unicodeBidi:"isolate" (no extra Unicode chars) prevents
     // short Hebrew words like "או" from being visually corrupted at line-wrap boundaries.
     // Prepend RTL mark (U+200F) to punctuation-only segments following an LTR span
@@ -124,7 +124,7 @@ export function renderBidiInner(text, lang, keyPrefix) {
 // followed by the English term in an isolated LTR span with concept/code styling.
 // Trailing dots that are sentence punctuation (before whitespace, end, or another punct)
 // are excluded from the term capture so "ב-v1.25." keeps "." outside the term.
-// Dots inside tokens (v1.25, svc.cluster.local) are fine — they're followed by alphanumeric.
+// Dots inside tokens (v1.25, svc.cluster.local) are fine - they're followed by alphanumeric.
 export const HE_PREFIX_TERM_RE = /([\u0590-\u05FF])-([A-Za-z][A-Za-z0-9\-_./]*[A-Za-z0-9]|[A-Za-z])/g;
 
 export function renderHebrewPrefixTerms(text, lang, keyPrefix) {
@@ -159,7 +159,7 @@ export function renderHebrewPrefixTerms(text, lang, keyPrefix) {
 export function renderBidi(text, lang) {
   if (!text || lang !== "he") return text;
 
-  // @regression — Hebrew↔Latin slash normalization (see also renderBidiInner).
+  // @regression - Hebrew↔Latin slash normalization (see also renderBidiInner).
   // Prevents the bidi bug where "משתמש/ServiceAccount" was rendered as a "/ServiceAccount"
   // badge. Applied here BEFORE any splitting (backtick, CLI) so all code paths are covered.
   // Latin/Latin slashes (CPU/Memory) are untouched.
@@ -226,7 +226,7 @@ export function renderBidi(text, lang) {
 // Regex to detect CLI commands in mixed text.
 // Matches: CLI tool name + one or more argument tokens (excludes Hebrew chars and opening parens
 // so parenthetical explanations like "(see memory usage)" are not captured as part of the command).
-export const CLI_COMMAND_RE = /((?:kubectl|docker|helm|aws|git|kubeadm|kubelet|crictl|etcdctl|curl|wget)(?:\s+[^\s\u0590-\u05FF(]+)+)/;
+export const CLI_COMMAND_RE = /((?:kubectl|docker|helm|aws|git|kubeadm|kubelet|crictl|etcdctl|curl|wget)(?:\s+(?::[^\s]|[^\s\u0590-\u05FF(:])+)+)/;
 
 // Splits text on CLI commands and renders commands as LTR code blocks on separate lines.
 export function splitCliParts(text, lang, keyPrefix) {
