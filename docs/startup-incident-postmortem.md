@@ -1,7 +1,7 @@
 # Startup Incident Postmortem: Stuck Loading Screen
 
 **Date**: March 2026
-**Severity**: High — app unusable for returning users in normal browser profiles
+**Severity**: High - app unusable for returning users in normal browser profiles
 **Status**: Resolved
 
 ---
@@ -78,20 +78,20 @@ This is safe because:
 | # | Layer | Timeout | What it does |
 |---|-------|---------|--------------|
 | 1 | `supabaseLock` | 5 s | Custom lock with finite timeout, falls back to no-lock |
-| 2 | `createClient({ auth: { lock } })` | — | Wires custom lock into Supabase |
-| 3 | Stale token cleanup | — | Clears Supabase auth tokens expired >24h at module load |
+| 2 | `createClient({ auth: { lock } })` | - | Wires custom lock into Supabase |
+| 3 | Stale token cleanup | - | Clears Supabase auth tokens expired >24h at module load |
 | 4 | Auth hard timeout | 3 s | Forces `authChecked=true` if `INITIAL_SESSION` never fires |
 | 5 | `loadUserData` guard | 5 s | Prevents concurrent calls, has own timeout |
 | 6 | Loading gate safety net | 5 s | Force-unblocks all gate flags, clears stale user |
 | 7 | Debug panel | 2 s | Shows gate values + Navigator Lock diagnostics |
-| 8 | `data-kq-rendered` attr | — | All 3 render paths (loading/auth/app) set this attribute |
+| 8 | `data-kq-rendered` attr | - | All 3 render paths (loading/auth/app) set this attribute |
 | 9 | HTML safety net | 8 s | Injects recovery UI if React never renders visible content |
 | 10 | SW reload deferral | 5 s | Prevents SW-triggered reload during boot |
 
 ### Timeout Cascade
 
 ```
-0 s   createClient() — supabaseLock starts (max 5 s)
+0 s   createClient() - supabaseLock starts (max 5 s)
 0.5 s minLoadElapsed = true
 2 s   Debug panel appears on loading screen
 3 s   Auth hard timeout fires (if INITIAL_SESSION still pending)
@@ -103,18 +103,18 @@ This is safe because:
 
 ## Files Changed
 
-- `src/App.jsx` — Custom `supabaseLock` function, `createClient()` config,
+- `src/App.jsx` - Custom `supabaseLock` function, `createClient()` config,
   debug panel with lock diagnostics, stale token cleanup, auth flow rewrite,
   loading gate safety net, `data-kq-rendered` attributes
-- `src/main.jsx` — Bootstrap try/catch with fallback UI
-- `src/utils/storage.js` — Safe localStorage wrappers, version check, nuclear
+- `src/main.jsx` - Bootstrap try/catch with fallback UI
+- `src/utils/storage.js` - Safe localStorage wrappers, version check, nuclear
   recovery function
-- `src/components/ErrorBoundary.jsx` — "Clear app data & reload" recovery
-- `index.html` — 8s safety net, SW reload deferral, boot time marker
-- `public/sw.js` — Build-stamped cache name, `cache: "no-store"` for
+- `src/components/ErrorBoundary.jsx` - "Clear app data & reload" recovery
+- `index.html` - 8s safety net, SW reload deferral, boot time marker
+- `public/sw.js` - Build-stamped cache name, `cache: "no-store"` for
   navigations
-- `vite.config.js` — SW cache version stamping plugin
-- `vercel.json` — Cache-control headers for `/` and `sw.js`
+- `vite.config.js` - SW cache version stamping plugin
+- `vercel.json` - Cache-control headers for `/` and `sw.js`
 
 ## Lessons Learned
 
@@ -123,7 +123,7 @@ This is safe because:
    caused a deadlock that was extremely difficult to diagnose.
 
 2. **"Works in Incognito, fails in normal profile" is a strong signal** for
-   persisted browser state issues beyond just localStorage and cookies —
+   persisted browser state issues beyond just localStorage and cookies - 
    Navigator Locks, IndexedDB, Cache Storage, and Web Locks are all candidates.
 
 3. **Defense-in-depth with timeout cascades** ensures that even if the primary

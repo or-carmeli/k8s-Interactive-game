@@ -2,7 +2,7 @@
 
 **A Kubernetes learning and interview practice game for DevOps engineers.**
 
-Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, and prepare for CKA-level interviews — through interactive quizzes, incident simulations, and daily challenges.
+Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, and prepare for CKA-level interviews - through interactive quizzes, incident simulations, and daily challenges.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-kubequest.online-00D4FF?style=flat-square&logo=vercel)](https://www.kubequest.online/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
@@ -17,7 +17,7 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ## Live Demo
 
-[kubequest.online](https://www.kubequest.online/) — no registration required, works instantly in guest mode.
+[kubequest.online](https://www.kubequest.online/) - no registration required, works instantly in guest mode.
 
 ---
 
@@ -33,30 +33,30 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ## How It Works
 
-1. **Pick a topic** — Workloads, Networking, Config & Security, Storage & Helm, or Troubleshooting
-2. **Choose a difficulty** — Easy, Medium, or Hard (levels unlock as you progress)
-3. **Answer questions** — multiple choice with instant feedback and detailed explanations
-4. **Practice incidents** — step through multi-step real-world failure scenarios (CrashLoopBackOff, ImagePullBackOff, misconfigured NetworkPolicy, and more)
-5. **Track your progress** — score, accuracy, streaks, weak areas, and achievements
+1. **Pick a topic** - Workloads, Networking, Config & Security, Storage & Helm, or Troubleshooting
+2. **Choose a difficulty** - Easy, Medium, or Hard (levels unlock as you progress)
+3. **Answer questions** - multiple choice with instant feedback and detailed explanations
+4. **Practice incidents** - step through multi-step real-world failure scenarios (CrashLoopBackOff, ImagePullBackOff, misconfigured NetworkPolicy, and more)
+5. **Track your progress** - score, accuracy, streaks, weak areas, and achievements
 
 ---
 
 ## Features
 
-- **🚨 Incident Mode** — multi-step Kubernetes failure scenarios with step-by-step diagnosis and scoring
-- **🧠 Topic Quizzes** — 5 topics × 3 difficulty levels, progressively unlocked
-- **🔥 Daily Challenge** — 5 fresh questions every day
-- **🎲 Mixed Quiz** — random questions across all topics
-- **🎯 Interview Mode** — mandatory timer, hints disabled, exam pressure
-- **📖 Kubernetes Guide** — built-in cheatsheet for quick lookup while practicing
-- **🗺️ Roadmap View** — visual learning path through all topics and levels
-- **📉 Weak Area Card** — surfaces your lowest-accuracy topic automatically
-- **↩️ Quiz Resume** — continue where you left off after refresh or navigation
-- **🏆 Leaderboard** — global top scores
-- **🏅 Achievements** — milestone-based reward system
-- **🌐 Hebrew / English** — full bilingual support with RTL layout
-- **👤 Guest Mode** — no account needed; sign up to sync progress across devices
-- **📊 Real-Time Monitoring** — live system status page with service health checks, uptime history, and incident tracking ([docs](docs/monitoring.md))
+- **🚨 Incident Mode** - multi-step Kubernetes failure scenarios with step-by-step diagnosis and scoring
+- **🧠 Topic Quizzes** - 5 topics × 3 difficulty levels, progressively unlocked
+- **🔥 Daily Challenge** - 5 fresh questions every day
+- **🎲 Mixed Quiz** - random questions across all topics
+- **🎯 Interview Mode** - mandatory timer, hints disabled, exam pressure
+- **📖 Kubernetes Guide** - built-in cheatsheet for quick lookup while practicing
+- **🗺️ Roadmap View** - visual learning path through all topics and levels
+- **📉 Weak Area Card** - surfaces your lowest-accuracy topic automatically
+- **↩️ Quiz Resume** - continue where you left off after refresh or navigation
+- **🏆 Leaderboard** - global top scores
+- **🏅 Achievements** - milestone-based reward system
+- **🌐 Hebrew / English** - full bilingual support with RTL layout
+- **👤 Guest Mode** - no account needed; sign up to sync progress across devices
+- **📊 Real-Time Monitoring** - live system status page with service health checks, uptime history, and incident tracking ([docs](docs/monitoring.md))
 
 ---
 
@@ -125,7 +125,7 @@ flowchart LR
     style BOT fill:#1a1a2e,stroke:#00D4FF,stroke-dasharray:5 5,color:#fff
 ```
 
-**Dependabot** runs weekly and opens PRs automatically when newer versions are available for npm packages, the Dockerfile base image, or GitHub Actions — keeping dependencies up to date and patching known vulnerabilities.
+**Dependabot** runs weekly and opens PRs automatically when newer versions are available for npm packages, the Dockerfile base image, or GitHub Actions - keeping dependencies up to date and patching known vulnerabilities.
 
 > **Production** runs on Vercel + Supabase. The `k8s/` manifests and Docker image on GHCR enable self-hosting on any Kubernetes cluster.
 
@@ -136,7 +136,7 @@ flowchart LR
 ### Prerequisites
 
 - Node.js 18+
-- A free [Supabase](https://supabase.com) account _(optional — guest mode works without it)_
+- A free [Supabase](https://supabase.com) account _(optional - guest mode works without it)_
 
 ### Setup
 
@@ -167,16 +167,16 @@ npm run preview  # preview production build locally
 
 ### Docker
 
-KubeQuest is a **Single Page Application (SPA)** — React handles all navigation client-side from a single `index.html` file. The web server must serve `index.html` for every URL so React can take over routing.
+KubeQuest is a **Single Page Application (SPA)** - React handles all navigation client-side from a single `index.html` file. The web server must serve `index.html` for every URL so React can take over routing.
 
 The Dockerfile uses a **multi-stage build** to keep the production image small and clean:
 
 ```
-Stage 1 — Builder  (node:20-alpine)
+Stage 1 - Builder  (node:20-alpine)
   npm ci              → install dependencies
   npm run build       → compile React source → static HTML/CSS/JS in /dist
 
-Stage 2 — Runner   (nginx:alpine)
+Stage 2 - Runner   (nginx:alpine)
   copies /dist        → only the built output (no Node.js, no source code)
   serves via nginx    → fast, lightweight web server with SPA routing
 ```
@@ -197,7 +197,7 @@ Create a `user_stats` table:
 
 | Column | Type |
 |--------|------|
-| `user_id` | `uuid` — unique, references `auth.users` |
+| `user_id` | `uuid` - unique, references `auth.users` |
 | `username` | `text` |
 | `total_answered` | `int4` |
 | `total_correct` | `int4` |
@@ -253,7 +253,7 @@ Every push to `main` or a version tag (`v*.*.*`) triggers the [Docker Build & Pu
 Build image → Trivy scan → Push to GHCR → Attach SBOM & provenance → Sign with Cosign → Verify signature
 ```
 
-The workflow uses concurrency control — rapid pushes to the same ref cancel older in-progress runs. On completion, the immutable image reference (`ghcr.io/or-carmeli/kubequest@sha256:...`) is printed for use in deployments.
+The workflow uses concurrency control - rapid pushes to the same ref cancel older in-progress runs. On completion, the immutable image reference (`ghcr.io/or-carmeli/kubequest@sha256:...`) is printed for use in deployments.
 
 ### Image Tags
 
@@ -265,11 +265,11 @@ The workflow uses concurrency control — rapid pushes to the same ref cancel ol
 
 ### Security Measures
 
-- **Vulnerability scanning** — [Trivy](https://trivy.dev/) scans the image before push; the workflow fails on HIGH and CRITICAL vulnerabilities (unfixed CVEs excluded)
-- **SBOM** — Software Bill of Materials attached to every published image
-- **Provenance** — build provenance attestation (`mode=max`) provides cryptographic proof of build origin
-- **Keyless signing** — [Cosign](https://docs.sigstore.dev/cosign/overview/) signs images by digest using GitHub OIDC; no secret keys to manage or rotate
-- **In-pipeline verification** — the signature is verified in CI before the workflow completes
+- **Vulnerability scanning** - [Trivy](https://trivy.dev/) scans the image before push; the workflow fails on HIGH and CRITICAL vulnerabilities (unfixed CVEs excluded)
+- **SBOM** - Software Bill of Materials attached to every published image
+- **Provenance** - build provenance attestation (`mode=max`) provides cryptographic proof of build origin
+- **Keyless signing** - [Cosign](https://docs.sigstore.dev/cosign/overview/) signs images by digest using GitHub OIDC; no secret keys to manage or rotate
+- **In-pipeline verification** - the signature is verified in CI before the workflow completes
 
 ### Verify Locally
 
@@ -310,7 +310,7 @@ src/
 supabase/
   migrations/          # Database schema and RPCs
   functions/
-    health-check/      # Edge Function — real-time service health checks
+    health-check/      # Edge Function - real-time service health checks
 docs/
   monitoring.md        # Monitoring system documentation
 ```
@@ -325,7 +325,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 
 ## Contributing
 
-Contributions are welcome — new questions, bug fixes, UI improvements.
+Contributions are welcome - new questions, bug fixes, UI improvements.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and question format guidelines.
 
 ---

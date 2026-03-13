@@ -26,7 +26,7 @@
   --code-text: #7dd3fc;
   --link-color: #0ea5e9;
 
-  /* Concept tags (K8s resource types — highlighted but not code) */
+  /* Concept tags (K8s resource types - highlighted but not code) */
   --concept-bg: rgba(139,92,246,0.15);
   --concept-text: #c4b5fd;
   --concept-border: rgba(139,92,246,0.25);

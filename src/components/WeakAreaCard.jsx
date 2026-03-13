@@ -6,7 +6,7 @@ const TOPIC_NAMES = {
   troubleshooting: "Cluster Operations & Troubleshooting",
 };
 
-// Returns the hex color for the side-bar indicator based on accuracy (0–100).
+// Returns the hex color for the side-bar indicator based on accuracy (0-100).
 function indicatorColor(accuracy) {
   if (accuracy < 70) return "#EF4444";
   if (accuracy < 85) return "#F59E0B";

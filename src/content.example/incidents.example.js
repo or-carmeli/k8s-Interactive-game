@@ -4,10 +4,10 @@
 //
 // Each incident simulates a real production troubleshooting workflow.
 // Steps are linear. Each step has:
-//   prompt/promptHe      — what you observe (may include terminal output)
-//   options/optionsHe    — 4 possible actions
-//   answer               — index of the correct option (0-3)
-//   explanation/explanationHe — why the correct answer is right
+//   prompt/promptHe - what you observe (may include terminal output)
+//   options/optionsHe - 4 possible actions
+//   answer - index of the correct option (0-3)
+//   explanation/explanationHe - why the correct answer is right
 
 export const INCIDENTS = [
   {

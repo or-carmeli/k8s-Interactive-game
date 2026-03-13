@@ -1,6 +1,6 @@
 // ── Quiz API ────────────────────────────────────────────────────────────────
 // All quiz content is fetched from Supabase. Answers and explanations are
-// never shipped in the client bundle — they're returned only after the user
+// never shipped in the client bundle - they're returned only after the user
 // submits an answer, via server-side RPC validation.
 
 /**

@@ -1,17 +1,17 @@
 // ── Kubernetes Incident Mode Scenarios ───────────────────────────────────────
 // Each incident simulates a real production troubleshooting workflow.
 // Steps are linear (v1). Each step has:
-//   prompt     – structured: Title / • Facts / Question (English)
-//   promptHe   – Hebrew version of prompt
-//   options[4] – possible actions (English)
-//   optionsHe  – Hebrew version of options
-//   answer     – index of the correct option (0-3)
-//   explanation– structured: ✓ correct / → verifies / ✗ others (English)
-//   explanationHe – Hebrew explanation
+//   prompt - structured: Title / • Facts / Question (English)
+//   promptHe - Hebrew version of prompt
+//   options[4] - possible actions (English)
+//   optionsHe - Hebrew version of options
+//   answer - index of the correct option (0-3)
+//   explanation- structured: ✓ correct / → verifies / ✗ others (English)
+//   explanationHe - Hebrew explanation
 
 export const INCIDENTS = [
   // ─────────────────────────────────────────────────────────────────────────
-  // 1. OOMKilled – memory limits too low
+  // 1. OOMKilled - memory limits too low
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "oom-killed",
@@ -165,7 +165,7 @@ export const INCIDENTS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2. CrashLoopBackOff – missing ConfigMap / env var
+  // 2. CrashLoopBackOff - missing ConfigMap / env var
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "crashloop-config",
@@ -296,7 +296,7 @@ export const INCIDENTS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 3. ImagePullBackOff – private registry auth
+  // 3. ImagePullBackOff - private registry auth
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "imagepull-auth",
@@ -427,7 +427,7 @@ export const INCIDENTS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 4. Service unreachable – wrong selector / port mismatch
+  // 4. Service unreachable - wrong selector / port mismatch
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "service-no-endpoints",
@@ -581,7 +581,7 @@ export const INCIDENTS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 5. DNS resolution failures – CoreDNS OOMKilled
+  // 5. DNS resolution failures - CoreDNS OOMKilled
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "dns-coredns",

@@ -9,7 +9,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    // Log diagnostics to console only — never expose to UI
+    // Log diagnostics to console only - never expose to UI
     const diag = {
       error: error?.message,
       stack: error?.stack,

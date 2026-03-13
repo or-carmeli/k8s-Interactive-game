@@ -202,7 +202,7 @@ const TRANSLATIONS = {
     timerOn: "⏱ כבי טיימר", timerOff: "⏱ הפעילי טיימר", timeUp: "⏰ הזמן נגמר!",
     reviewBtn: "צפי בסקירה", hideReview: "הסתירי סקירה", reviewTitle: "סקירת שאלות",
     loadingText: "טוען...",
-    saveErrorText: "⚠️ הנתונים לא נשמרו – בדקי חיבור לאינטרנט",
+    saveErrorText: "⚠️ הנתונים לא נשמרו - בדקי חיבור לאינטרנט",
     newAchievement: "הישג חדש!", allRightsReserved: "כל הזכויות שמורות ל",
     optionLabels: ["א","ב","ג","ד"], guestName: "אורחת",
     resetProgress: "אפסי התקדמות", resetConfirm: "האם את בטוחה? פעולה זו תמחק את כל ההתקדמות ולא ניתן לבטלה.",
@@ -260,7 +260,7 @@ const TRANSLATIONS = {
     skipTheory_m: "⚡ דלג לחידון",
     timerOn_m: "⏱ כבה טיימר", timerOff_m: "⏱ הפעל טיימר",
     reviewBtn_m: "צפה בסקירה", hideReview_m: "הסתר סקירה",
-    saveErrorText_m: "⚠️ הנתונים לא נשמרו – בדוק חיבור לאינטרנט",
+    saveErrorText_m: "⚠️ הנתונים לא נשמרו - בדוק חיבור לאינטרנט",
     guestName_m: "אורח",
     resetProgress_m: "אפס התקדמות", resetConfirm_m: "האם אתה בטוח? פעולה זו תמחק את כל ההתקדמות ולא ניתן לבטלה.",
     resetTopic_m: "אפס נושא",
@@ -414,7 +414,7 @@ const TRANSLATIONS = {
     timerOn: "⏱ Timer On", timerOff: "⏱ Timer Off", timeUp: "⏰ Time's Up!",
     reviewBtn: "View Review", hideReview: "Hide Review", reviewTitle: "Question Review",
     loadingText: "Loading...",
-    saveErrorText: "⚠️ Data not saved – check your internet connection",
+    saveErrorText: "⚠️ Data not saved - check your internet connection",
     newAchievement: "New Achievement!", allRightsReserved: "All rights reserved to",
     optionLabels: ["A","B","C","D"], guestName: "Guest",
     resetProgress: "Reset Progress", resetConfirm: "Are you sure? This will erase all your progress and cannot be undone.",
@@ -615,7 +615,7 @@ function splitQuestionSegments(qText) {
   }
 
   if (matches.length === 0) {
-    // No quoted blocks — return as single segment
+    // No quoted blocks - return as single segment
     return [{ type: "question", content: qText }];
   }
 
@@ -640,7 +640,7 @@ function splitQuestionSegments(qText) {
   for (let i = 0; i < segments.length; i++) {
     const s = segments[i];
     if (s.type === "text" && s.content.replace(/[.\s,:;?!]/g, "").length < 3) {
-      // Too short to stand alone — merge with nearest text neighbor
+      // Too short to stand alone - merge with nearest text neighbor
       if (merged.length > 0 && merged[merged.length - 1].type === "text") {
         merged[merged.length - 1].content += " " + s.content;
       } else if (i + 1 < segments.length && segments[i + 1].type === "text") {
@@ -681,7 +681,7 @@ function renderQuestion(qText, lang) {
   if (!qText) return null;
   const paragraphs = qText.split(/\n\n+/);
 
-  // Single paragraph — try structured split for mixed Hebrew+command+error questions
+  // Single paragraph - try structured split for mixed Hebrew+command+error questions
   if (paragraphs.length <= 1) {
     const segments = splitQuestionSegments(qText);
     const qDir = hasHebrew(qText) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
@@ -695,7 +695,7 @@ function renderQuestion(qText, lang) {
       );
     }
 
-    // Multiple segments — render structured layout
+    // Multiple segments - render structured layout
     return (
       <div dir={qDir} style={{display:"flex",flexDirection:"column",gap:10}}>
         {segments.map((seg, idx) => {
@@ -1561,12 +1561,12 @@ export default function K8sQuestApp() {
           'meta[property="og:description"]': "Real-time platform and service health for KubeQuest.",
           'meta[property="og:image"]': "https://status.kubequest.online/status-preview.png",
           'meta[property="og:image:secure_url"]': "https://status.kubequest.online/status-preview.png",
-          'meta[property="og:image:alt"]': "KubeQuest Status – All Systems Operational",
+          'meta[property="og:image:alt"]': "KubeQuest Status - All Systems Operational",
           'meta[property="og:url"]': "https://status.kubequest.online",
           'meta[name="twitter:title"]': "KubeQuest Status",
           'meta[name="twitter:description"]': "Real-time platform and service health for KubeQuest.",
           'meta[name="twitter:image"]': "https://status.kubequest.online/status-preview.png",
-          'meta[name="twitter:image:alt"]': "KubeQuest Status – All Systems Operational",
+          'meta[name="twitter:image:alt"]': "KubeQuest Status - All Systems Operational",
           'meta[name="description"]': "Live service status, incidents, and maintenance updates for KubeQuest.",
         };
         for (const [sel, val] of Object.entries(metaUpdates)) {
@@ -1578,7 +1578,7 @@ export default function K8sQuestApp() {
       }
 
       return () => {
-        document.title = "KubeQuest – Kubernetes Practice Game";
+        document.title = "KubeQuest - Kubernetes Practice Game";
         if (link) link.href = "/favicon.svg";
       };
     }
@@ -1909,7 +1909,7 @@ export default function K8sQuestApp() {
       // total_score is accumulated and permanent - never deducted on reset
       best_score:     computeScore(newCompleted),
       total_answered: Math.max(0, stats.total_answered - removedAnswered),
-      total_correct:  Math.max(0, stats.total_correct  - removedCorrect),
+      total_correct:  Math.max(0, stats.total_correct - removedCorrect),
     };
     // Also clear per-topic weak-area data for this topic
     const newTopicStats = { ...topicStats };
@@ -2683,7 +2683,7 @@ export default function K8sQuestApp() {
     return () => clearTimeout(id);
   }, [screen, topicScreen, timerEnabled, isInterviewMode, submitted, timeLeft, tryAgainActive]);
 
-  // Timer expired – force-submit as missed
+  // Timer expired - force-submit as missed
   useEffect(() => {
     if (timeLeft !== 0 || submitted || screen !== "topic" || topicScreen !== "quiz" || (!timerEnabled && !isInterviewMode) || isInHistoryMode || tryAgainActive) return;
     if (submittingRef.current) return; // guard against race with manual submit
@@ -3176,7 +3176,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               </div>
             </div>
-            {/* Progress section — hidden if totalQuestions is missing */}
+            {/* Progress section - hidden if totalQuestions is missing */}
             {total>0&&<div style={{marginBottom:16}}>
               <div style={{fontSize:14,color:"#00D4FF",fontWeight:700,textAlign:"center",marginBottom:4}}>{lang==="en"?`Progress: ${answered} / ${total} questions`:`התקדמות: ${answered} / ${total} שאלות`}</div>
               <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",marginBottom:8}}>{lang==="en"?`${remaining} questions left to finish`:`נשארו עוד ${remaining} שאלות לסיום`}</div>
@@ -3457,7 +3457,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </button>
           <button onClick={()=>{
             const url="https://kubequest.online";
-            const text=lang==="en"?"KubeQuest – Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
+            const text=lang==="en"?"KubeQuest - Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
             if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
             else{navigator.clipboard?.writeText(url);}
             setShowMenu(false);
@@ -3699,7 +3699,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       <button key={lvl} className={locked?"":"card-hover"}
                         onClick={()=>tryStartQuiz(()=>startTopic(topic,lvl))}
                         disabled={locked}
-                        aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` – ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
+                        aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` - ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
                         style={{padding:"10px 8px",
                           background:locked?"var(--glass-1)":done?`${cfg.color}12`:"var(--glass-3)",
                           border:`1px solid ${locked?"var(--glass-4)":done?cfg.color+"44":"var(--glass-7)"}`,
@@ -4256,7 +4256,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <div style={{fontSize:12,color:"var(--text-secondary)",lineHeight:1.5,marginBottom:8}}>{mw.description}</div>
                 )}
                 <div style={{fontSize:11,color:"var(--text-muted)",fontFamily:"'Fira Code','Courier New',monospace",marginBottom:mw.affected_services?.length ? 10 : 0}}>
-                  {new Date(mw.starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"})} · {new Date(mw.starts_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})}–{new Date(mw.ends_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} UTC
+                  {new Date(mw.starts_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"})} · {new Date(mw.starts_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})}-{new Date(mw.ends_at).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"UTC"})} UTC
                 </div>
                 {mw.affected_services?.length > 0 && (
                   <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
@@ -4722,7 +4722,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{fontSize:52,marginBottom:10,animation:"popIn 1s ease"}}>
               {allCorrect?"🌟":anyCorrect?"👍":"💪"}
             </div>
-            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} – {lang==="en"?LEVEL_CONFIG[selectedLevel]?.labelEn:LEVEL_CONFIG[selectedLevel]?.label}</h2>
+            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} - {lang==="en"?LEVEL_CONFIG[selectedLevel]?.labelEn:LEVEL_CONFIG[selectedLevel]?.label}</h2>
             <div style={{display:"inline-flex",alignItems:"center",gap:10,marginBottom:8,background:"var(--glass-4)",borderRadius:30,padding:"8px 20px"}}>
               <span style={{color:"var(--text-primary)",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
               {allCorrect&&<span style={{color:"#F59E0B",fontSize:13,fontWeight:700}}>{t("perfect")}</span>}

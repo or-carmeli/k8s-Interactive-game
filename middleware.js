@@ -1,4 +1,4 @@
-// Vercel Edge Middleware — rewrite OG meta tags for status.kubequest.online
+// Vercel Edge Middleware - rewrite OG meta tags for status.kubequest.online
 // so social-media crawlers (which don't run JS) see the correct preview.
 
 export const config = { matcher: "/" };
@@ -7,15 +7,15 @@ const STATUS_HOST = "status.kubequest.online";
 
 const STATUS_META = {
   "og:url":             `https://${STATUS_HOST}`,
-  "og:title":           "KubeQuest Status – Service Health",
+  "og:title":           "KubeQuest Status - Service Health",
   "og:description":     "Real-time platform and service health for KubeQuest.",
   "og:image":           `https://${STATUS_HOST}/status-preview.png`,
   "og:image:secure_url":`https://${STATUS_HOST}/status-preview.png`,
-  "og:image:alt":       "KubeQuest Status – All Systems Operational",
-  "twitter:title":      "KubeQuest Status – Service Health",
+  "og:image:alt":       "KubeQuest Status - All Systems Operational",
+  "twitter:title":      "KubeQuest Status - Service Health",
   "twitter:description":"Real-time platform and service health for KubeQuest.",
   "twitter:image":      `https://${STATUS_HOST}/status-preview.png`,
-  "twitter:image:alt":  "KubeQuest Status – All Systems Operational",
+  "twitter:image:alt":  "KubeQuest Status - All Systems Operational",
 };
 
 export default async function middleware(request) {
@@ -46,7 +46,7 @@ export default async function middleware(request) {
   );
   html = html.replace(
     /<title>[^<]*<\/title>/,
-    `<title>KubeQuest Status – Service Health</title>`
+    `<title>KubeQuest Status - Service Health</title>`
   );
 
   return new Response(html, {

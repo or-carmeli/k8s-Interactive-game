@@ -10,7 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Service-key client bypasses RLS — needed for writing to monitoring tables
+// Service-key client bypasses RLS - needed for writing to monitoring tables
 const adminClient = createClient(SUPABASE_URL, SERVICE_KEY);
 
 // Anon-key client simulates real user experience for health checks
@@ -80,7 +80,7 @@ async function checkQuizEngine(): Promise<{ ok: boolean; details?: Record<string
     p_question_id: -1,
     p_selected: 0,
   });
-  // "Question not found" is the expected error — means the function ran successfully
+  // "Question not found" is the expected error - means the function ran successfully
   if (error && error.message?.includes("Question not found")) {
     return { ok: true, details: { note: "RPC reachable (expected error for invalid ID)" } };
   }
@@ -94,7 +94,7 @@ async function checkQuizEngine(): Promise<{ ok: boolean; details?: Record<string
 /** Leaderboard: real leaderboard read path (get_leaderboard) */
 async function checkLeaderboard(): Promise<{ ok: boolean; details?: Record<string, unknown> }> {
   const { data, error } = await anonClient.rpc("get_leaderboard", { p_limit: 1 });
-  // Empty leaderboard is fine — the RPC just needs to not error
+  // Empty leaderboard is fine - the RPC just needs to not error
   return {
     ok: !error,
     details: error ? { error: error.message } : { entries: data?.length ?? 0 },
@@ -103,7 +103,7 @@ async function checkLeaderboard(): Promise<{ ok: boolean; details?: Record<strin
 
 /** Authentication: check that Supabase Auth is responding */
 async function checkAuthentication(): Promise<{ ok: boolean; details?: Record<string, unknown> }> {
-  // Use the GoTrue health endpoint — simplest way to verify auth is up
+  // Use the GoTrue health endpoint - simplest way to verify auth is up
   const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
     headers: { apikey: ANON_KEY },
   });
@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
 
         if (!existing || existing.length === 0) {
           await adminClient.rpc("manage_incident", {
-            p_title: `${r.service_name} — Service Down`,
+            p_title: `${r.service_name} - Service Down`,
             p_severity: "high",
             p_status: "investigating",
             p_affected_services: [r.service_name],

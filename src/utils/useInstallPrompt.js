@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 
 /**
  * Detects the user's platform from the user-agent string.
- * Used only for showing relevant install instructions first — not for feature gating.
+ * Used only for showing relevant install instructions first - not for feature gating.
  */
 function detectPlatform() {
   const ua = navigator.userAgent || "";
@@ -15,10 +15,10 @@ function detectPlatform() {
  * Custom hook that encapsulates all PWA install prompt logic.
  *
  * Returns:
- *   platform        — "ios" | "android" | "desktop"
- *   isInstalled     — true if already running as installed PWA
- *   canPrompt       — true if the browser's native install prompt is available
- *   promptInstall() — triggers the native install prompt (only when canPrompt is true)
+ *   platform - "ios" | "android" | "desktop"
+ *   isInstalled - true if already running as installed PWA
+ *   canPrompt - true if the browser's native install prompt is available
+ *   promptInstall() - triggers the native install prompt (only when canPrompt is true)
  */
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);

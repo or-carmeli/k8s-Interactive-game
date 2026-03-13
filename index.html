@@ -20,7 +20,7 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
 
     <!-- SEO -->
-    <title>KubeQuest – Kubernetes Practice Game</title>
+    <title>KubeQuest - Kubernetes Practice Game</title>
     <meta name="description" content="Practice Kubernetes through real DevOps troubleshooting scenarios. Designed for engineers preparing for Kubernetes interviews and CKA." />
 
     <!-- Open Graph (WhatsApp, LinkedIn, Facebook, Slack) -->
@@ -28,22 +28,22 @@
     <meta property="og:site_name" content="KubeQuest" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://kubequest.online" />
-    <meta property="og:title" content="KubeQuest – Kubernetes Practice Game" />
+    <meta property="og:title" content="KubeQuest - Kubernetes Practice Game" />
     <meta property="og:description" content="Practice Kubernetes through real DevOps troubleshooting scenarios. Designed for engineers preparing for Kubernetes interviews and CKA." />
     <meta property="og:image" content="https://kubequest.online/share-preview.png" />
     <meta property="og:image:secure_url" content="https://kubequest.online/share-preview.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="KubeQuest – Kubernetes Practice Game" />
+    <meta property="og:image:alt" content="KubeQuest - Kubernetes Practice Game" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@KubeQuest" />
-    <meta name="twitter:title" content="KubeQuest – Kubernetes Practice Game" />
+    <meta name="twitter:title" content="KubeQuest - Kubernetes Practice Game" />
     <meta name="twitter:description" content="Practice Kubernetes through real DevOps troubleshooting scenarios. Designed for engineers preparing for Kubernetes interviews and CKA." />
     <meta name="twitter:image" content="https://kubequest.online/share-preview.png" />
-    <meta name="twitter:image:alt" content="KubeQuest – Kubernetes Practice Game" />
+    <meta name="twitter:image:alt" content="KubeQuest - Kubernetes Practice Game" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <style>
@@ -77,7 +77,7 @@
         var root = document.getElementById("root");
         // Check both: React never mounted (no children) OR mounted but rendered nothing visible (no data-kq-rendered)
         if (root && (root.children.length === 0 || !root.querySelector("[data-kq-rendered]"))) {
-          console.error("[KubeQuest:boot] No visible content after 8 s — children:", root.children.length, "kq-rendered:", !!root.querySelector("[data-kq-rendered]"));
+          console.error("[KubeQuest:boot] No visible content after 8 s - children:", root.children.length, "kq-rendered:", !!root.querySelector("[data-kq-rendered]"));
           root.innerHTML = '<div style="min-height:100vh;background:#020817;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;padding:24px">' +
             '<div style="max-width:420px;text-align:center;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:40px 32px">' +
             '<div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div>' +
@@ -104,7 +104,7 @@
                 if (!newSW) return;
                 newSW.addEventListener("statechange", () => {
                   if (newSW.state === "activated" && navigator.serviceWorker.controller) {
-                    // Don't reload during initial boot (first 5 s) or active quiz — defer
+                    // Don't reload during initial boot (first 5 s) or active quiz - defer
                     var bootAge = Date.now() - (window.__KQ_BOOT_TIME__ || 0);
                     if (bootAge < 5000 || window.__KQ_QUIZ_ACTIVE__) {
                       console.log("[KubeQuest] New SW activated; deferring reload (boot:" + bootAge + "ms, quiz:" + !!window.__KQ_QUIZ_ACTIVE__ + ")");

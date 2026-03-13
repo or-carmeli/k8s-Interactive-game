@@ -41,7 +41,7 @@ export const ACHIEVEMENTS = [
   },
 ];
 
-// Topic shells — used for home screen rendering, roadmap, and navigation.
+// Topic shells - used for home screen rendering, roadmap, and navigation.
 // The full topic objects (with levels.questions, theory, etc.) are loaded
 // from src/content/topics.js at build time.
 export const TOPIC_META = [

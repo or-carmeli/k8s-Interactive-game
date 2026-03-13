@@ -1,6 +1,6 @@
 # System Status Monitoring
 
-KubeQuest includes a real-time monitoring system that tracks service health, uptime history, and incidents — all powered by Supabase.
+KubeQuest includes a real-time monitoring system that tracks service health, uptime history, and incidents - all powered by Supabase.
 
 ## Architecture
 
@@ -43,7 +43,7 @@ One row per service, upserted on each health check.
 
 ### `system_status_history`
 
-Append-only log — one row per service per check. Used to compute daily uptime percentages.
+Append-only log - one row per service per check. Used to compute daily uptime percentages.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -55,7 +55,7 @@ Append-only log — one row per service per check. Used to compute daily uptime 
 
 ### `system_incidents`
 
-Stores incidents — created automatically or manually.
+Stores incidents - created automatically or manually.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -73,7 +73,7 @@ Stores incidents — created automatically or manually.
 
 ## RPC Functions
 
-### Read (STABLE) — called by the frontend
+### Read (STABLE) - called by the frontend
 
 | Function | Returns | Description |
 |----------|---------|-------------|
@@ -81,7 +81,7 @@ Stores incidents — created automatically or manually.
 | `get_uptime_history(p_days)` | `TABLE(service_name, day, total_checks, ok_checks, uptime_pct)` | Daily uptime aggregation |
 | `get_incidents(p_limit)` | `SETOF system_incidents` | Active incidents first, then recent resolved |
 
-### Write (VOLATILE) — called by the Edge Function
+### Write (VOLATILE) - called by the Edge Function
 
 | Function | Returns | Description |
 |----------|---------|-------------|
@@ -105,9 +105,9 @@ Each check validates the **actual production path** used by the app:
 
 ### Status determination
 
-- **operational** — check passed, latency < 2000ms
-- **degraded** — check passed, latency > 2000ms
-- **down** — check threw an error or failed
+- **operational** - check passed, latency < 2000ms
+- **degraded** - check passed, latency > 2000ms
+- **down** - check threw an error or failed
 
 ### Auto-incident detection
 
@@ -122,7 +122,7 @@ The health check runs every 60 seconds via `pg_cron` + `pg_net`:
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
 
--- Schedule (run in Supabase SQL Editor — not in a migration file)
+-- Schedule (run in Supabase SQL Editor - not in a migration file)
 SELECT cron.schedule(
   'health-check-worker',
   '* * * * *',
@@ -139,7 +139,7 @@ SELECT cron.schedule(
 );
 ```
 
-> **Important:** Run this SQL directly in the Supabase SQL Editor — do not put the service role key in a migration file.
+> **Important:** Run this SQL directly in the Supabase SQL Editor - do not put the service role key in a migration file.
 
 ### Useful cron queries
 
@@ -156,7 +156,7 @@ SELECT cron.unschedule('health-check-worker');
 
 ## Frontend
 
-**API layer:** `src/api/monitoring.js` — 3 functions wrapping the read RPCs.
+**API layer:** `src/api/monitoring.js` - 3 functions wrapping the read RPCs.
 
 **Status page behavior:**
 1. On open: fetches all 3 endpoints in parallel
@@ -164,17 +164,17 @@ SELECT cron.unschedule('health-check-worker');
 3. Cleans up the interval on navigation away
 
 **Rendered sections:**
-- **Global status banner** — derived from service statuses (all operational / degraded / major outage)
-- **Service health table** — real status + per-service latency
-- **Uptime bars (30 days)** — daily bars from history (>99% green, >90% yellow, <90% red, no data = dim)
-- **Performance metrics** — avg latency, max latency, overall uptime %, active incident count
-- **Incident history** — dynamically rendered from `system_incidents` with structured post-mortem fields
+- **Global status banner** - derived from service statuses (all operational / degraded / major outage)
+- **Service health table** - real status + per-service latency
+- **Uptime bars (30 days)** - daily bars from history (>99% green, >90% yellow, <90% red, no data = dim)
+- **Performance metrics** - avg latency, max latency, overall uptime %, active incident count
+- **Incident history** - dynamically rendered from `system_incidents` with structured post-mortem fields
 
 ## Row-Level Security
 
 - All 3 tables have RLS enabled
-- **Public read** — the status page is visible to everyone (no auth required)
-- **No direct writes** — all writes go through SECURITY DEFINER RPCs (called only by the Edge Function with the service role key)
+- **Public read** - the status page is visible to everyone (no auth required)
+- **No direct writes** - all writes go through SECURITY DEFINER RPCs (called only by the Edge Function with the service role key)
 
 ## Maintenance
 
@@ -211,7 +211,7 @@ supabase/
     20260311_monitoring.sql       # Tables, RLS, RPCs, seed data
   functions/
     health-check/
-      index.ts                    # Edge Function — 5 real health checks
+      index.ts                    # Edge Function - 5 real health checks
 src/
   api/
     monitoring.js                 # Frontend API layer (3 read functions)

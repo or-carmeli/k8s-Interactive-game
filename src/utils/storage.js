@@ -1,23 +1,23 @@
 // ── Startup Resilience (2026-03) ────────────────────────────────────────────
 //
-// Problem: After deploys users saw blank pages — stale SW cache served old
+// Problem: After deploys users saw blank pages - stale SW cache served old
 // index.html referencing deleted JS bundles, and corrupt/incompatible
 // localStorage could crash the React tree.
 //
 // Defence layers:
-//  1. SW cache busting — public/sw.js cache name is build-stamped via
+//  1. SW cache busting - public/sw.js cache name is build-stamped via
 //     vite.config.js closeBundle plugin; old caches purged on activate.
-//  2. Navigation cache bypass — SW uses { cache: "no-store" } for navigation
+//  2. Navigation cache bypass - SW uses { cache: "no-store" } for navigation
 //     fetches so the browser HTTP cache can't serve stale index.html.
-//  3. Cache-Control headers — vercel.json sets no-cache on / and sw.js.
-//  4. Safe storage reads — safeGetItem / safeGetJSON wrap every localStorage
+//  3. Cache-Control headers - vercel.json sets no-cache on / and sw.js.
+//  4. Safe storage reads - safeGetItem / safeGetJSON wrap every localStorage
 //     read; corrupt JSON is auto-removed and replaced with fallback defaults.
-//  5. Data versioning — checkDataVersion() compares __APP_DATA_VERSION__
+//  5. Data versioning - checkDataVersion() compares __APP_DATA_VERSION__
 //     (bumped only on schema breaks) and clears transient keys on mismatch
 //     while preserving user progress.
-//  6. ErrorBoundary recovery — components/ErrorBoundary.jsx catches render
+//  6. ErrorBoundary recovery - components/ErrorBoundary.jsx catches render
 //     errors and offers "Clear app data & reload" which calls clearAppData().
-//  7. Deferred SW reload — index.html SW updatefound handler checks
+//  7. Deferred SW reload - index.html SW updatefound handler checks
 //     window.__KQ_QUIZ_ACTIVE__ and defers page reload until the user
 //     finishes an active quiz or incident.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ const KQ_STORAGE_KEYS = [
   "resumeDismissedAt",
 ];
 
-// Keys safe to clear on version mismatch — transient/reconstructible data only.
+// Keys safe to clear on version mismatch - transient/reconstructible data only.
 // User progress (k8s_progress_v2, k8s_quest_guest, bookmarks_v1, daily_streak_v1) is preserved.
 const CLEARABLE_ON_VERSION_BUMP = [
   "kq_screen_v1",

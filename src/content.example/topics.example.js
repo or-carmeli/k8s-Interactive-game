@@ -4,8 +4,8 @@
 //
 // Each topic must match an entry in TOPIC_META (src/topicMeta.js) by `id`.
 // Each level (easy, medium, hard) contains:
-//   - theory / theoryEn     — learning material shown before the quiz
-//   - questions / questionsEn — array of quiz questions
+// - theory / theoryEn - learning material shown before the quiz
+// - questions / questionsEn - array of quiz questions
 //
 // Question shape:
 //   { q: string, options: string[4], answer: 0|1|2|3, explanation: string }

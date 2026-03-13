@@ -19,7 +19,7 @@ try {
       </ErrorBoundary>
     </React.StrictMode>
   );
-  console.info("[KubeQuest:boot] render() called — React is mounting");
+  console.info("[KubeQuest:boot] render() called - React is mounting");
 } catch (err) {
   console.error("[KubeQuest:boot] FATAL bootstrap error:", err);
   const el = document.getElementById('root');

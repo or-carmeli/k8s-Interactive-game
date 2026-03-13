@@ -12,7 +12,7 @@ const SHELL_ASSETS = [
   "/icon-512.png"
 ];
 
-// Install – pre-cache shell assets
+// Install - pre-cache shell assets
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(SHELL_ASSETS))
@@ -20,7 +20,7 @@ self.addEventListener("install", e => {
   self.skipWaiting();
 });
 
-// Activate – delete every cache that isn't the current version
+// Activate - delete every cache that isn't the current version
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -30,7 +30,7 @@ self.addEventListener("activate", e => {
   self.clients.claim();
 });
 
-// Fetch – network first, fallback to cache
+// Fetch - network first, fallback to cache
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);

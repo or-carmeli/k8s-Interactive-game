@@ -45,7 +45,7 @@ npm run dev
 ```
 
 The app runs at `http://localhost:5173`.
-The app works in **guest mode** even without Supabase credentials — most features are available.
+The app works in **guest mode** even without Supabase credentials - most features are available.
 
 ---
 
@@ -98,15 +98,15 @@ Questions live in `src/topics.js`. Each question follows this structure:
 ```
 
 Rules:
-- Correct answer must be factually accurate — double-check against official Kubernetes docs
+- Correct answer must be factually accurate - double-check against official Kubernetes docs
 - Wrong answers should be plausible (common misconceptions, not obviously wrong)
-- Explanations should be beginner-friendly — define any term you use inline
+- Explanations should be beginner-friendly - define any term you use inline
 
 ---
 
 ## Code Style
 
-- The project currently uses inline React styles — follow that pattern when editing existing components
+- The project currently uses inline React styles - follow that pattern when editing existing components
 - Keep components focused; avoid adding unrelated logic to a component
 - No new dependencies without discussion
 
@@ -115,7 +115,7 @@ Rules:
 ## Submitting a Pull Request
 
 1. Make sure `npm run build` passes with no errors
-2. Keep PRs focused — one feature or fix per PR
+2. Keep PRs focused - one feature or fix per PR
 3. Fill out the PR template
 4. Link any related issue in the PR description (`Closes #123`)
 

@@ -358,7 +358,7 @@ describe("Scenario 5: Math.max stats reconciliation prevents double-counting", (
     const saved = makeValidState(); // savedStats has total_answered: 13
 
     const result = simulateStatsResume(prevStats, saved);
-    // Math.max(60, 13) = 60 — other tab's progress is preserved
+    // Math.max(60, 13) = 60 - other tab's progress is preserved
     expect(result.total_answered).toBe(60);
     expect(result.total_correct).toBe(50);
     expect(result.total_score).toBe(500);
@@ -391,7 +391,7 @@ describe("Scenario 5: Math.max stats reconciliation prevents double-counting", (
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
-// SCENARIO 6: Progress percentage always returns a valid number 0–100
+// SCENARIO 6: Progress percentage always returns a valid number 0-100
 // ═════════════════════════════════════════════════════════════════════════════
 describe("Scenario 6: progress percentage is always valid", () => {
   // Mirrors the progress bar width calculation in App.jsx
@@ -883,7 +883,7 @@ describe("Stress: partially corrupted localStorage payloads", () => {
   });
 
   it("state with mismatched topicId (topic removed from app) → loadQuizState succeeds but handleResumeQuiz should reject", () => {
-    // loadQuizState doesn't validate topicId against the topic list — that's handleResumeQuiz's job
+    // loadQuizState doesn't validate topicId against the topic list - that's handleResumeQuiz's job
     saveQuizState(makeValidState({ topicId: "nonexistent_topic_xyz" }));
     const loaded = loadQuizState();
     expect(loaded).not.toBeNull(); // loadQuizState doesn't validate topic existence
@@ -1115,7 +1115,7 @@ describe("Accumulated score: topic reset preserves total_score", () => {
       services_easy:    { correct: 7, total: 7 },
     };
 
-    // Reset workloads — remove from completedTopics
+    // Reset workloads - remove from completedTopics
     const afterReset = { ...completed };
     delete afterReset.workloads_easy;
 
