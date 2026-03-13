@@ -14,6 +14,7 @@ import { CHEATSHEET } from "./content/cheatsheet";
 import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from "./utils/quizPersistence";
 import { safeGetItem, safeGetJSON, checkDataVersion } from "./utils/storage";
 import { hasHebrew, getTermKind, K8S_CONCEPT_TERMS, K8S_CODE_TERMS, CODE_SPAN_STYLE, CONCEPT_TAG_STYLE, renderBidiInner, HE_PREFIX_TERM_RE, renderHebrewPrefixTerms, renderBidi, CLI_COMMAND_RE, splitCliParts, renderBidiBlock } from "./utils/bidi";
+import { useInstallPrompt } from "./utils/useInstallPrompt";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory, fetchMaintenanceWindows } from "./api/monitoring";
 
@@ -350,6 +351,7 @@ const TRANSLATIONS = {
     installTitle: "התקנת האפליקציה",
     installDesc: "ניתן להוסיף את KubeQuest למסך הבית ולהשתמש בה כמו אפליקציה רגילה.",
     installNow: "התקיני עכשיו", installNow_m: "התקן עכשיו",
+    installHow: "איך להתקין",
     installIphone: "iPhone (Safari)",
     installAndroid: "Android (Chrome)",
     installDesktop: "מחשב (Chrome)",
@@ -517,6 +519,7 @@ const TRANSLATIONS = {
     installTitle: "Install the App",
     installDesc: "Add KubeQuest to your home screen and use it like a regular app.",
     installNow: "Install Now",
+    installHow: "How to Install",
     installIphone: "iPhone (Safari)",
     installAndroid: "Android (Chrome)",
     installDesktop: "Desktop (Chrome)",
@@ -962,8 +965,7 @@ export default function K8sQuestApp() {
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
   const [showMenu, setShowMenu]                         = useState(false);
   const [showInstall, setShowInstall]                   = useState(false);
-  const [deferredPrompt, setDeferredPrompt]             = useState(null);
-  const [isAppInstalled, setIsAppInstalled]             = useState(false);
+  const install = useInstallPrompt();
   const [dbStatus, setDbStatus]                         = useState(null); // null | "ok" | "error"
   const [monitorServices, setMonitorServices]           = useState(null); // null = loading, [] = loaded
   const [monitorUptime, setMonitorUptime]               = useState(null);
@@ -1274,20 +1276,6 @@ export default function K8sQuestApp() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [showInstall, showMenu, showLeaderboard, showResumeModal]);
 
-  // PWA install prompt capture
-  useEffect(() => {
-    const onBeforeInstall = (e) => { e.preventDefault(); setDeferredPrompt(e); };
-    const onInstalled = () => { setDeferredPrompt(null); setIsAppInstalled(true); };
-    window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    window.addEventListener("appinstalled", onInstalled);
-    if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
-      setIsAppInstalled(true);
-    }
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
 
   // Guard browser back button during active quiz/incident sessions
   useEffect(() => {
@@ -3280,18 +3268,12 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
       {/* ── INSTALL APP MODAL ────────────────────────────── */}
       {showInstall&&(()=>{
-        const platform=(()=>{
-          const ua=navigator.userAgent||"";
-          if(/iPad|iPhone|iPod/.test(ua)&&!window.MSStream) return "ios";
-          if(/Android/i.test(ua)) return "android";
-          return "desktop";
-        })();
+        const {platform,canPrompt,isInstalled,promptInstall}=install;
         const sections=[
           {id:"ios",label:t("installIphone"),steps:[t("installStepIphoneSafari"),t("installStepIphoneShare"),t("installStepIphoneAdd"),t("installStepConfirm")]},
           {id:"android",label:t("installAndroid"),steps:[t("installStepAndroidChrome"),t("installStepAndroidMenu"),t("installStepAndroidAdd"),t("installStepConfirm")]},
           {id:"desktop",label:t("installDesktop"),steps:[t("installStepDesktopChrome"),t("installStepDesktopIcon"),t("installStepDesktopConfirm")]},
         ];
-        // Show detected platform first
         const ordered=[...sections].sort((a,b)=>a.id===platform?-1:b.id===platform?1:0);
         return (
         <div onClick={()=>setShowInstall(false)} style={{position:"fixed",inset:0,background:"var(--overlay)",zIndex:5010,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
@@ -3302,18 +3284,16 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:16,marginBottom:6}}>{t("installTitle")}</div>
             <div style={{color:"var(--text-secondary)",fontSize:13,lineHeight:1.5,marginBottom:16}}>{t("installDesc")}</div>
 
-            {isAppInstalled&&(
+            {isInstalled&&(
               <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:10,padding:"10px 14px",marginBottom:14,color:"#10B981",fontSize:13,fontWeight:700,textAlign:"center"}}>
                 ✓ {t("installAlreadyInstalled")}
               </div>
             )}
 
-            {deferredPrompt&&!isAppInstalled&&(
+            {canPrompt&&!isInstalled&&(
               <button onClick={async()=>{
-                deferredPrompt.prompt();
-                const{outcome}=await deferredPrompt.userChoice;
-                if(outcome==="accepted"){setIsAppInstalled(true);}
-                setDeferredPrompt(null);
+                const accepted=await promptInstall();
+                if(accepted) setShowInstall(false);
               }} style={{width:"100%",padding:"12px",background:"linear-gradient(135deg,#00D4FF 0%,#A855F7 100%)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:16,letterSpacing:0.5}}>
                 {t("installNow")}
               </button>
@@ -3440,9 +3420,15 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
             <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APPLICATION":"האפליקציה"}</span>
           </div>
-          <button onClick={()=>{setShowInstall(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("installApp")}
+          {!install.isInstalled&&(
+          <button onClick={async()=>{
+            setShowMenu(false);
+            if(install.canPrompt){await install.promptInstall();}
+            else{setShowInstall(true);}
+          }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {install.canPrompt?t("installNow"):t("installHow")}
           </button>
+          )}
           <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🟢 {lang==="en"?"System Status":"סטטוס מערכת"}
           </button>
