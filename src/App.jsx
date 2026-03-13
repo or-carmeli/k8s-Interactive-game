@@ -3398,151 +3398,123 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       )}
 
       {/* Dropdown menu - rendered outside <main> so CSS zoom never affects it */}
-      {showMenu&&(()=>{const _br=burgerRef.current?.getBoundingClientRect();const _menuRight=_br?Math.max(8,window.innerWidth-_br.right):8;return(<>
+      {showMenu&&(()=>{const _br=burgerRef.current?.getBoundingClientRect();const _menuRight=_br?Math.max(8,window.innerWidth-_br.right):8;
+        const _mBtn={width:"100%",padding:"14px 18px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir};
+        const _mIcon={fontSize:18,flexShrink:0,lineHeight:1};
+        const _mSec=(first)=>({padding:`${first?10:18}px 18px 8px`,borderTop:first?"none":"1px solid var(--glass-6)"});
+        const _mSecLabel={fontSize:12,color:"var(--text-secondary)",opacity:0.7,fontWeight:700,letterSpacing:"0.08em",direction:dir};
+        return(<>
         <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:199}}/>
-        <div style={{position:"fixed",top:82,right:_menuRight,background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"var(--shadow-heavy)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)"}}>
+        <div style={{position:"fixed",top:82,right:_menuRight,background:"var(--bg-card)",border:"1px solid var(--glass-10)",borderRadius:14,padding:"8px 0",zIndex:200,minWidth:234,boxShadow:"var(--shadow-heavy)",animation:"fadeIn 0.15s ease",direction:"ltr",overflowY:"auto",maxHeight:"calc(100dvh - 110px)",WebkitOverflowScrolling:"touch",scrollbarWidth:"thin"}}>
 
-          {/* Language + Gender */}
-          <div style={{padding:"8px 14px 10px",borderBottom:"1px solid var(--glass-6)",display:"flex",gap:8,alignItems:"center",justifyContent:"center"}}>
-            {lang==="he"&&<GenderToggle gender={gender} setGender={handleSetGender}/>}
-            <LangSwitcher lang={lang} setLang={setLang}/>
+          {/* ── Quick Actions ── */}
+          <div style={{padding:"8px 14px 10px",borderBottom:"1px solid var(--glass-6)",display:"flex",gap:8,direction:dir}}>
+            {resumeData&&(
+              <button className="menu-item-tap" onClick={()=>{handleResumeQuiz();setShowMenu(false);}} style={{flex:1,padding:"8px 12px",background:"linear-gradient(135deg,rgba(0,212,255,0.08),rgba(168,85,247,0.08))",border:"1px solid rgba(0,212,255,0.2)",borderRadius:8,color:"#00D4FF",cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+                <span style={{fontSize:14}}>▶</span>{lang==="en"?"Continue":"המשך תרגול"}
+              </button>
+            )}
+            <button className="menu-item-tap" onClick={()=>{tryStartQuiz(startDailyChallenge);setShowMenu(false);}} style={{flex:1,padding:"8px 12px",background:"linear-gradient(135deg,rgba(255,107,53,0.08),rgba(245,158,11,0.08))",border:"1px solid rgba(255,107,53,0.2)",borderRadius:8,color:"#FF6B35",cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+              <span style={{fontSize:14}}>🔥</span>{lang==="en"?"Daily":"אתגר יומי"}
+            </button>
           </div>
 
           {/* ── 1. Practice ── */}
-          <div style={{padding:"10px 16px 4px"}}>
-            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PRACTICE":"תרגול"}</span>
+          <div style={_mSec(true)}>
+            <span style={_mSecLabel}>{lang==="en"?"PRACTICE":"תרגול"}</span>
           </div>
-          <button onClick={()=>{setScreen("incidentList");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            🚨 {lang==="en"?"Incident Mode":"מצב אירוע"}
+          <button className="menu-item-tap" onClick={()=>{setScreen("incidentList");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🚨</span>{lang==="en"?"Incident Mode":"מצב אירוע"}
           </button>
-          <button onClick={()=>{tryStartQuiz(startMixedQuiz);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("mixedQuizBtn")}
+          <button className="menu-item-tap" onClick={()=>{tryStartQuiz(startMixedQuiz);setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🎲</span>{t("mixedQuizBtn")}
           </button>
-          <button onClick={()=>{tryStartQuiz(startDailyChallenge);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            🔥 {t("dailyChallengeTitle")}
+          <button className="menu-item-tap" onClick={()=>{tryStartQuiz(startDailyChallenge);setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🔥</span>{t("dailyChallengeTitle")}
           </button>
-          <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400,direction:dir}}>
-            {t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginInlineStart:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}
+          <button className="menu-item-tap" onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{..._mBtn,color:isInterviewMode?"#A855F7":"var(--text-secondary)",fontWeight:isInterviewMode?700:400}}>
+            <span style={_mIcon} aria-hidden="true">🎯</span>{t("interviewMode")}{isInterviewMode&&<span aria-hidden="true" style={{marginInlineStart:"auto",fontSize:10,color:"#A855F7"}}>ON</span>}
           </button>
 
-          {/* ── 2. Progress ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
-            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"PROGRESS":"התקדמות"}</span>
+          {/* ── 2. My Progress ── */}
+          <div style={_mSec(false)}>
+            <span style={_mSecLabel}>{lang==="en"?"MY PROGRESS":"ההתקדמות שלי"}</span>
           </div>
-          <button onClick={()=>{setScreen("stats");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            ⭐ {lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
+          <button className="menu-item-tap" onClick={()=>{setScreen("stats");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">⭐</span>{lang==="en"?"My Stats":"הסטטיסטיקות שלי"}
           </button>
-          <button onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("mistakesBtn")}
+          <button className="menu-item-tap" onClick={()=>{setScreen("mistakes");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">❌</span>{t("mistakesBtn")}
           </button>
-          <button onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("leaderboardBtn")}
-          </button>
-          <button onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,direction:dir}}>
-            <span>{t("savedQuestions")}</span>
+          <button className="menu-item-tap" onClick={()=>{setShowBookmarks(true);setShowMenu(false);}} style={{..._mBtn,justifyContent:"space-between"}}>
+            <span style={{display:"flex",alignItems:"center",gap:10}}><span style={_mIcon} aria-hidden="true">📌</span>{t("savedQuestions")}</span>
             {bookmarks.length>0&&<span style={{background:"rgba(168,85,247,0.2)",color:"#A855F7",fontSize:11,fontWeight:700,padding:"2px 7px",borderRadius:10}}>{bookmarks.length}</span>}
+          </button>
+          <button className="menu-item-tap" onClick={()=>{loadLeaderboard();setShowLeaderboard(true);setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🏆</span>{t("leaderboardBtn")}
           </button>
 
           {/* ── 3. Learning ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
-            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"LEARNING":"למידה"}</span>
+          <div style={_mSec(false)}>
+            <span style={_mSecLabel}>{lang==="en"?"LEARNING":"לימוד"}</span>
           </div>
-          <button onClick={()=>{setExpandedGuideSection(null);setScreen("guide");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("guideBtn")}
+          <button className="menu-item-tap" onClick={()=>{setExpandedGuideSection(null);setScreen("guide");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">📘</span>{t("guideBtn")}
           </button>
-          <button onClick={()=>{setSearchQuery("");setScreen("search");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("searchBtn")}
+          <button className="menu-item-tap" onClick={()=>{setSearchQuery("");setScreen("search");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🔎</span>{t("searchBtn")}
           </button>
 
-          {/* ── 4. Application ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
-            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APPLICATION":"האפליקציה"}</span>
+          {/* ── 4. App ── */}
+          <div style={_mSec(false)}>
+            <span style={_mSecLabel}>{lang==="en"?"APP":"האפליקציה"}</span>
           </div>
-          <button onClick={()=>{setShowInstall(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("installApp")}
+          <button className="menu-item-tap" onClick={()=>{setShowInstall(true);setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">📱</span>{t("installApp")}
           </button>
-          <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            🟢 {lang==="en"?"System Status":"סטטוס מערכת"}
+          <button className="menu-item-tap" onClick={()=>{setScreen("status");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🟢</span>{lang==="en"?"System Status":"סטטוס מערכת"}
           </button>
-          <button onClick={()=>{setScreen("about");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("aboutBtn")}
+          <button className="menu-item-tap" onClick={()=>{setScreen("settings");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">⚙️</span>{lang==="en"?"Settings":"הגדרות"}
           </button>
-          <button onClick={()=>{setScreen("privacy");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("privacyBtn")}
+
+          {/* ── 5. Information ── */}
+          <div style={_mSec(false)}>
+            <span style={_mSecLabel}>{lang==="en"?"INFORMATION":"מידע"}</span>
+          </div>
+          <button className="menu-item-tap" onClick={()=>{setScreen("about");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">ℹ️</span>{t("aboutBtn")}
           </button>
-          <button onClick={()=>{setScreen("terms");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("termsBtn")}
+          <button className="menu-item-tap" onClick={()=>{setScreen("privacy");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🔒</span>{t("privacyBtn")}
           </button>
-          <button onClick={()=>{
+          <button className="menu-item-tap" onClick={()=>{setScreen("terms");setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">📄</span>{t("termsBtn")}
+          </button>
+          <button className="menu-item-tap" onClick={()=>{
             const url="https://kubequest.online";
             const text=lang==="en"?"KubeQuest - Practice Kubernetes Through Real DevOps Scenarios":"מצאתי דרך נחמדה לתרגל Kubernetes. משחק עם שאלות DevOps ותרחישי troubleshooting אמיתיים";
             if(navigator.share){navigator.share({title:"KubeQuest",text,url}).catch(()=>{});}
             else{navigator.clipboard?.writeText(url);}
             setShowMenu(false);
-          }} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
-            {t("shareBtn")}
+          }} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">📤</span>{t("shareBtn")}
           </button>
-          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-muted)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,textDecoration:"none",direction:dir}}>
-            <span>✉️</span>{lang==="en"?"Contact":"צור קשר"}
+          <a href="mailto:ocarmeli7@gmail.com?subject=KubeQuest%20Feedback" className="menu-item-tap" style={{..._mBtn,textDecoration:"none",color:"var(--text-muted)"}}>
+            <span style={_mIcon} aria-hidden="true">✉️</span>{lang==="en"?"Contact":"צור קשר"}
           </a>
 
-          {/* ── 5. Accessibility ── */}
-          <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
-            <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"ACCESSIBILITY":"נגישות"}</span>
+          {/* ── 6. System ── */}
+          <div style={_mSec(false)}>
+            <span style={_mSecLabel}>{lang==="en"?"SYSTEM":"מערכת"}</span>
           </div>
-          <div style={{padding:"4px 14px 10px"}}>
-            <div style={{display:"flex",gap:4}}>
-              {(["highContrast","reduceMotion"]).map((key,i)=>(
-                <button key={key} onClick={()=>updateA11y(key,!a11y[key])}
-                  aria-pressed={a11y[key]}
-                  style={{flex:1,padding:"6px 4px",background:a11y[key]?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:a11y[key]?"#00D4FF":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:a11y[key]?700:400}}>
-                  {i===0?t("a11yHighContrast"):t("a11yReduceMotion")}{a11y[key]?" ✓":""}
-                </button>
-              ))}
-            </div>
-            {window.speechSynthesis&&(
-              <div style={{display:"flex",gap:4,marginTop:7}}>
-                {screen==="topic"&&topicScreen==="quiz"&&(
-                  <button onClick={speakQuestion}
-                    aria-pressed={isSpeaking}
-                    style={{flex:1,padding:"6px 4px",background:isSpeaking?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${isSpeaking?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:isSpeaking?"#00D4FF":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:isSpeaking?700:400}}>
-                    {isSpeaking?t("stopSpeech"):t("readQuestion")}
-                  </button>
-                )}
-                <button onClick={()=>updateA11y("autoRead",!a11y.autoRead)}
-                  aria-pressed={a11y.autoRead}
-                  style={{flex:1,padding:"6px 4px",background:a11y.autoRead?"rgba(0,212,255,0.1)":"var(--glass-4)",border:`1px solid ${a11y.autoRead?"rgba(0,212,255,0.35)":"var(--glass-8)"}`,borderRadius:6,color:a11y.autoRead?"#00D4FF":"var(--text-muted)",fontSize:11,cursor:"pointer",fontWeight:a11y.autoRead?700:400}}>
-                  {t("autoRead")}{a11y.autoRead?" ✓":""}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* ── Theme toggle ── */}
-          <div style={{padding:"6px 14px 8px"}}>
-            <button onClick={toggleTheme}
-              role="switch"
-              aria-checked={theme==="light"}
-              aria-label={theme==="dark"?"Switch to light mode":"Switch to dark mode"}
-              style={{width:"100%",padding:"8px 12px",background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:8,cursor:"pointer",display:"flex",alignItems:dir==="rtl"?"center":"center",justifyContent:"space-between",flexDirection:dir==="rtl"?"row-reverse":"row",gap:10}}>
-              <span style={{fontSize:12,color:"var(--text-secondary)",fontWeight:600,direction:dir}}>
-                {lang==="en"?(theme==="dark"?"Dark Mode":"Light Mode"):(theme==="dark"?"מצב כהה":"מצב בהיר")}
-              </span>
-              <span style={{position:"relative",width:36,height:20,borderRadius:10,background:theme==="light"?"#F59E0B":"var(--glass-15)",border:`1px solid ${theme==="light"?"rgba(245,158,11,0.4)":"var(--glass-10)"}`,transition:"background 0.2s,border-color 0.2s",flexShrink:0,display:"inline-block"}}>
-                <span style={{position:"absolute",top:2,left:theme==="light"?18:2,width:14,height:14,borderRadius:"50%",background:theme==="light"?"#fff":"var(--text-muted)",transition:"left 0.2s,background 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
-              </span>
-            </button>
-          </div>
-
-          {/* ── Divider + System ── */}
-          <div style={{borderTop:"1px solid var(--glass-6)",marginTop:4,paddingTop:4}}>
-            <button onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"#EF4444",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
-              <span aria-hidden="true">🗑</span>{t("resetProgress")}
-            </button>
-            <button onClick={()=>{handleLogout();setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10}}>
-              <span aria-hidden="true">🚪</span>{t("logout")}
-            </button>
-          </div>
+          <button className="menu-item-tap" onClick={()=>{handleResetProgress();setShowMenu(false);}} style={{..._mBtn,color:"#EF4444"}}>
+            <span style={_mIcon} aria-hidden="true">🗑</span>{t("resetProgress")}
+          </button>
+          <button className="menu-item-tap" onClick={()=>{handleLogout();setShowMenu(false);}} style={_mBtn}>
+            <span style={_mIcon} aria-hidden="true">🚪</span>{t("logout")}
+          </button>
         </div>
       </>);})()}
       </>}
@@ -4085,6 +4057,80 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {lang==="en"?"Start Practicing":"התחל לתרגל"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* SETTINGS */}
+      {screen==="settings"&&(
+        <div className="page-pad" style={{maxWidth:560,margin:"0 auto",padding:"20px 16px",animation:"fadeIn 0.3s ease",direction:dir}}>
+          <button onClick={()=>setScreen("home")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>
+            {dir==="rtl"?"→ חזרה":"← Return"}
+          </button>
+          <div style={{textAlign:"center",marginBottom:28}}>
+            <div style={{fontSize:22,fontWeight:800,color:"var(--text-primary)",marginBottom:4}}>{lang==="en"?"Settings":"הגדרות"}</div>
+            <div style={{fontSize:13,color:"var(--text-muted)"}}>{lang==="en"?"Personalization & Accessibility":"התאמה אישית ונגישות"}</div>
+          </div>
+
+          {/* Appearance */}
+          <div style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:16,marginBottom:12}}>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--text-secondary)",opacity:0.7,letterSpacing:"0.08em",marginBottom:12,direction:dir}}>{lang==="en"?"APPEARANCE":"מראה"}</div>
+            <button onClick={toggleTheme} role="switch" aria-checked={theme==="light"} aria-label={theme==="dark"?(lang==="en"?"Switch to light mode":"עבור למצב בהיר"):(lang==="en"?"Switch to dark mode":"עבור למצב כהה")}
+              style={{width:"100%",padding:"12px 14px",background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",flexDirection:dir==="rtl"?"row-reverse":"row",gap:10}}>
+              <div style={{direction:dir}}>
+                <div style={{fontSize:14,color:"var(--text-primary)",fontWeight:600}}>{lang==="en"?(theme==="dark"?"Dark Mode":"Light Mode"):(theme==="dark"?"מצב כהה":"מצב בהיר")}</div>
+                <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{lang==="en"?"Choose your preferred theme":"בחר את ערכת הנושא המועדפת"}</div>
+              </div>
+              <span style={{position:"relative",width:40,height:22,borderRadius:11,background:theme==="light"?"#F59E0B":"var(--glass-15)",border:`1px solid ${theme==="light"?"rgba(245,158,11,0.4)":"var(--glass-10)"}`,transition:"background 0.2s,border-color 0.2s",flexShrink:0,display:"inline-block"}}>
+                <span style={{position:"absolute",top:2,left:theme==="light"?20:2,width:16,height:16,borderRadius:"50%",background:theme==="light"?"#fff":"var(--text-muted)",transition:"left 0.2s,background 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
+              </span>
+            </button>
+          </div>
+
+          {/* Language */}
+          <div style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:16,marginBottom:12}}>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--text-secondary)",opacity:0.7,letterSpacing:"0.08em",marginBottom:12,direction:dir}}>{lang==="en"?"LANGUAGE":"שפה"}</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexDirection:dir==="rtl"?"row-reverse":"row",padding:"8px 0"}}>
+              <div style={{direction:dir}}>
+                <div style={{fontSize:14,color:"var(--text-primary)",fontWeight:600}}>{lang==="en"?"App Language":"שפת האפליקציה"}</div>
+              </div>
+              <LangSwitcher lang={lang} setLang={setLang}/>
+            </div>
+          </div>
+
+          {/* Accessibility */}
+          <div style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:16,marginBottom:12}}>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--text-secondary)",opacity:0.7,letterSpacing:"0.08em",marginBottom:12,direction:dir}}>{lang==="en"?"ACCESSIBILITY":"נגישות"}</div>
+            {[
+              {key:"highContrast",label:t("a11yHighContrast"),desc:lang==="en"?"Increase color contrast":"הגדל ניגודיות צבעים"},
+              {key:"reduceMotion",label:t("a11yReduceMotion"),desc:lang==="en"?"Minimize animations":"הפחת אנימציות"},
+              ...(window.speechSynthesis?[{key:"autoRead",label:t("autoRead"),desc:lang==="en"?"Read questions aloud automatically":"קרא שאלות בקול אוטומטית"}]:[]),
+            ].map(({key,label,desc},i,arr)=>(
+              <button key={key} onClick={()=>updateA11y(key,!a11y[key])} aria-pressed={a11y[key]}
+                style={{width:"100%",padding:"12px 14px",background:"var(--glass-2)",border:"1px solid var(--glass-6)",borderRadius:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",flexDirection:dir==="rtl"?"row-reverse":"row",gap:10,marginBottom:i<arr.length-1?8:0}}>
+                <div style={{direction:dir}}>
+                  <div style={{fontSize:14,color:"var(--text-primary)",fontWeight:600}}>{label}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{desc}</div>
+                </div>
+                <span style={{position:"relative",width:40,height:22,borderRadius:11,background:a11y[key]?"#00D4FF":"var(--glass-15)",border:`1px solid ${a11y[key]?"rgba(0,212,255,0.4)":"var(--glass-10)"}`,transition:"background 0.2s,border-color 0.2s",flexShrink:0,display:"inline-block"}}>
+                  <span style={{position:"absolute",top:2,left:a11y[key]?20:2,width:16,height:16,borderRadius:"50%",background:a11y[key]?"#fff":"var(--text-muted)",transition:"left 0.2s,background 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Profile */}
+          {lang==="he"&&(
+            <div style={{background:"var(--glass-3)",border:"1px solid var(--glass-8)",borderRadius:12,padding:16,marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:"var(--text-secondary)",opacity:0.7,letterSpacing:"0.08em",marginBottom:12,direction:dir}}>פרופיל</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexDirection:"row-reverse",padding:"8px 0"}}>
+                <div style={{direction:dir}}>
+                  <div style={{fontSize:14,color:"var(--text-primary)",fontWeight:600}}>מגדר</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>התאמת לשון פנייה</div>
+                </div>
+                <GenderToggle gender={gender} setGender={handleSetGender}/>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
