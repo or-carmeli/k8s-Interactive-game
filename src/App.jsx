@@ -867,14 +867,21 @@ function renderBidiInner(text, lang, keyPrefix) {
     // Non-matched (RTL) text — keep in natural RTL flow.
     // Using dir="rtl" + unicodeBidi:"isolate" (no extra Unicode chars) prevents
     // short Hebrew words like "או" from being visually corrupted at line-wrap boundaries.
-    return part ? <span key={k} dir="rtl" style={{unicodeBidi:"isolate"}}>{part}</span> : null;
+    // Prepend RTL mark (U+200F) to punctuation-only segments following an LTR span
+    // so neutral chars like "." don't get visually absorbed by the preceding LTR run.
+    if (!part) return null;
+    const needsAnchor = idx > 0 && /^[\s]*[.,;:!?)}\]>]/.test(part);
+    return <span key={k} dir="rtl" style={{unicodeBidi:"isolate"}}>{needsAnchor ? "\u200F" : ""}{part}</span>;
   });
 }
 
 // Hebrew prefix+hyphen+English term pattern (ה-Deployment, ב-namespace, ל-Service)
 // Renders the Hebrew prefix attached to RTL flow with a non-breaking hyphen,
 // followed by the English term in an isolated LTR span with concept/code styling.
-const HE_PREFIX_TERM_RE = /([\u0590-\u05FF])-([A-Za-z][A-Za-z0-9\-_./]*)/g;
+// Trailing dots that are sentence punctuation (before whitespace, end, or another punct)
+// are excluded from the term capture so "ב-v1.25." keeps "." outside the term.
+// Dots inside tokens (v1.25, svc.cluster.local) are fine — they're followed by alphanumeric.
+const HE_PREFIX_TERM_RE = /([\u0590-\u05FF])-([A-Za-z][A-Za-z0-9\-_./]*[A-Za-z0-9]|[A-Za-z])/g;
 
 function renderHebrewPrefixTerms(text, lang, keyPrefix) {
   if (lang !== "he" || !HE_PREFIX_TERM_RE.test(text)) return null;
