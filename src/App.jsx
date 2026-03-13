@@ -346,6 +346,24 @@ const TRANSLATIONS = {
     statsLearningProgress: "התקדמות בלמידה",
     statsAccuracy: "דיוק",
     statsTotalAnswered: "סה״כ תשובות",
+    installApp: "📲 התקנה לנייד",
+    installTitle: "התקנת האפליקציה",
+    installDesc: "ניתן להוסיף את KubeQuest למסך הבית ולהשתמש בה כמו אפליקציה רגילה.",
+    installNow: "התקיני עכשיו", installNow_m: "התקן עכשיו",
+    installIphone: "iPhone (Safari)",
+    installAndroid: "Android (Chrome)",
+    installDesktop: "מחשב (Chrome)",
+    installStepIphoneSafari: "פתחי את האתר ב-Safari", installStepIphoneSafari_m: "פתח את האתר ב-Safari",
+    installStepIphoneShare: "לחצי על כפתור השיתוף (⎙)", installStepIphoneShare_m: "לחץ על כפתור השיתוף (⎙)",
+    installStepIphoneAdd: "בחרי \"Add to Home Screen\"", installStepIphoneAdd_m: "בחר \"Add to Home Screen\"",
+    installStepConfirm: "אשרי", installStepConfirm_m: "אשר",
+    installStepAndroidChrome: "פתחי את האתר ב-Chrome", installStepAndroidChrome_m: "פתח את האתר ב-Chrome",
+    installStepAndroidMenu: "לחצי על תפריט שלוש הנקודות (⋮)", installStepAndroidMenu_m: "לחץ על תפריט שלוש הנקודות (⋮)",
+    installStepAndroidAdd: "בחרי \"Add to Home Screen\" או \"Install app\"", installStepAndroidAdd_m: "בחר \"Add to Home Screen\" או \"Install app\"",
+    installStepDesktopChrome: "פתחי את האתר ב-Chrome", installStepDesktopChrome_m: "פתח את האתר ב-Chrome",
+    installStepDesktopIcon: "לחצי על אייקון ההתקנה (⊕) בשורת הכתובת", installStepDesktopIcon_m: "לחץ על אייקון ההתקנה (⊕) בשורת הכתובת",
+    installStepDesktopConfirm: "לחצי \"Install\" בחלון שנפתח", installStepDesktopConfirm_m: "לחץ \"Install\" בחלון שנפתח",
+    installAlreadyInstalled: "האפליקציה כבר מותקנת!",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -495,6 +513,24 @@ const TRANSLATIONS = {
     statsLearningProgress: "Learning Progress",
     statsAccuracy: "Accuracy",
     statsTotalAnswered: "Total Answered",
+    installApp: "📲 Install App",
+    installTitle: "Install the App",
+    installDesc: "Add KubeQuest to your home screen and use it like a regular app.",
+    installNow: "Install Now",
+    installIphone: "iPhone (Safari)",
+    installAndroid: "Android (Chrome)",
+    installDesktop: "Desktop (Chrome)",
+    installStepIphoneSafari: "Open the site in Safari",
+    installStepIphoneShare: "Tap the Share button (⎙)",
+    installStepIphoneAdd: "Select \"Add to Home Screen\"",
+    installStepConfirm: "Confirm",
+    installStepAndroidChrome: "Open the site in Chrome",
+    installStepAndroidMenu: "Tap the three-dot menu (⋮)",
+    installStepAndroidAdd: "Select \"Add to Home Screen\" or \"Install app\"",
+    installStepDesktopChrome: "Open the site in Chrome",
+    installStepDesktopIcon: "Click the install icon (⊕) in the address bar",
+    installStepDesktopConfirm: "Click \"Install\" in the popup",
+    installAlreadyInstalled: "The app is already installed!",
   },
 };
 
@@ -925,6 +961,9 @@ export default function K8sQuestApp() {
   const [topicQuestions, setTopicQuestions]             = useState([]);
   const [allowNextLevel, setAllowNextLevel]             = useState(false);
   const [showMenu, setShowMenu]                         = useState(false);
+  const [showInstall, setShowInstall]                   = useState(false);
+  const [deferredPrompt, setDeferredPrompt]             = useState(null);
+  const [isAppInstalled, setIsAppInstalled]             = useState(false);
   const [dbStatus, setDbStatus]                         = useState(null); // null | "ok" | "error"
   const [monitorServices, setMonitorServices]           = useState(null); // null = loading, [] = loaded
   const [monitorUptime, setMonitorUptime]               = useState(null);
@@ -1226,13 +1265,29 @@ export default function K8sQuestApp() {
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key !== "Escape") return;
+      if (showInstall)     { setShowInstall(false);    return; }
       if (showMenu)        { setShowMenu(false);       return; }
       if (showLeaderboard) { setShowLeaderboard(false); return; }
       if (showResumeModal) { handleResumeDismiss(); }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [showMenu, showLeaderboard, showResumeModal]);
+  }, [showInstall, showMenu, showLeaderboard, showResumeModal]);
+
+  // PWA install prompt capture
+  useEffect(() => {
+    const onBeforeInstall = (e) => { e.preventDefault(); setDeferredPrompt(e); };
+    const onInstalled = () => { setDeferredPrompt(null); setIsAppInstalled(true); };
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+    if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
+      setIsAppInstalled(true);
+    }
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
 
   // Guard browser back button during active quiz/incident sessions
   useEffect(() => {
@@ -3223,6 +3278,68 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         </div>
       )}
 
+      {/* ── INSTALL APP MODAL ────────────────────────────── */}
+      {showInstall&&(()=>{
+        const platform=(()=>{
+          const ua=navigator.userAgent||"";
+          if(/iPad|iPhone|iPod/.test(ua)&&!window.MSStream) return "ios";
+          if(/Android/i.test(ua)) return "android";
+          return "desktop";
+        })();
+        const sections=[
+          {id:"ios",label:t("installIphone"),steps:[t("installStepIphoneSafari"),t("installStepIphoneShare"),t("installStepIphoneAdd"),t("installStepConfirm")]},
+          {id:"android",label:t("installAndroid"),steps:[t("installStepAndroidChrome"),t("installStepAndroidMenu"),t("installStepAndroidAdd"),t("installStepConfirm")]},
+          {id:"desktop",label:t("installDesktop"),steps:[t("installStepDesktopChrome"),t("installStepDesktopIcon"),t("installStepDesktopConfirm")]},
+        ];
+        // Show detected platform first
+        const ordered=[...sections].sort((a,b)=>a.id===platform?-1:b.id===platform?1:0);
+        return (
+        <div onClick={()=>setShowInstall(false)} style={{position:"fixed",inset:0,background:"var(--overlay)",zIndex:5010,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+          <div role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}
+            style={{background:"var(--bg-card)",border:"1px solid var(--glass-12)",borderRadius:18,padding:"22px 20px",width:"min(400px,100%)",maxHeight:"85vh",overflowY:"auto",animation:"fadeIn 0.25s ease",direction:dir,position:"relative"}}>
+            <button onClick={()=>setShowInstall(false)} aria-label={lang==="en"?"Close":"סגור"}
+              style={{position:"absolute",top:12,insetInlineEnd:14,background:"none",border:"none",color:"var(--text-muted)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
+            <div style={{fontWeight:800,color:"var(--text-primary)",fontSize:16,marginBottom:6}}>{t("installTitle")}</div>
+            <div style={{color:"var(--text-secondary)",fontSize:13,lineHeight:1.5,marginBottom:16}}>{t("installDesc")}</div>
+
+            {isAppInstalled&&(
+              <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:10,padding:"10px 14px",marginBottom:14,color:"#10B981",fontSize:13,fontWeight:700,textAlign:"center"}}>
+                ✓ {t("installAlreadyInstalled")}
+              </div>
+            )}
+
+            {deferredPrompt&&!isAppInstalled&&(
+              <button onClick={async()=>{
+                deferredPrompt.prompt();
+                const{outcome}=await deferredPrompt.userChoice;
+                if(outcome==="accepted"){setIsAppInstalled(true);}
+                setDeferredPrompt(null);
+              }} style={{width:"100%",padding:"12px",background:"linear-gradient(135deg,#00D4FF 0%,#A855F7 100%)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",marginBottom:16,letterSpacing:0.5}}>
+                {t("installNow")}
+              </button>
+            )}
+
+            {ordered.map((section,si)=>(
+              <details key={section.id} open={section.id===platform} style={{marginBottom:si<ordered.length-1?10:0}}>
+                <summary style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:12,padding:"10px 14px",color:"var(--text-primary)",fontSize:14,fontWeight:700,cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",justifyContent:"space-between",direction:dir}}>
+                  <span>{section.label}</span>
+                  <span style={{fontSize:11,color:"var(--text-dim)",fontWeight:400}}>{section.id===platform?(lang==="en"?"Your device":"המכשיר שלך"):""}</span>
+                </summary>
+                <ol style={{margin:"10px 0 0",paddingInlineStart:0,listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>
+                  {section.steps.map((step,i)=>(
+                    <li key={i} style={{display:"flex",alignItems:"flex-start",gap:10,fontSize:13,color:"var(--text-secondary)",lineHeight:1.5}}>
+                      <span style={{width:22,height:22,borderRadius:"50%",background:"rgba(0,212,255,0.12)",color:"#00D4FF",fontSize:12,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            ))}
+          </div>
+        </div>
+        );
+      })()}
+
       {/* Leaderboard ranks by total_score (accumulated permanently, never decremented).
            The RPC get_leaderboard orders by total_score DESC.
            best_score is NOT used for ranking - it's a per-topic canonical metric. */}
@@ -3323,6 +3440,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{padding:"10px 16px 4px",borderTop:"1px solid var(--glass-6)",marginTop:4}}>
             <span style={{fontSize:10,color:"var(--text-disabled)",fontWeight:700,letterSpacing:1,direction:dir}}>{lang==="en"?"APPLICATION":"האפליקציה"}</span>
           </div>
+          <button onClick={()=>{setShowInstall(true);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+            {t("installApp")}
+          </button>
           <button onClick={()=>{setScreen("status");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🟢 {lang==="en"?"System Status":"סטטוס מערכת"}
           </button>
