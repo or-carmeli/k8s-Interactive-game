@@ -680,7 +680,7 @@ function renderBidiInner(text, lang, keyPrefix) {
     if (/^[A-Za-z]/.test(part) || /^--?[A-Za-z]/.test(part) || /^\/[A-Za-z]/.test(part)) {
       const kind = getTermKind(part);
       const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : undefined;
-      return [idx === 0 && startsWithLatin ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{part}</span>];
+      return [idx === 0 && startsWithLatin ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",margin:"0 2px",...termStyle}}>{"\u2066"}{part}{"\u2069"}</span>];
     }
     // Left-arrow - wrap in LTR isolation to prevent bidi reordering
     if (/^[←]$/.test(part)) {
@@ -688,7 +688,7 @@ function renderBidiInner(text, lang, keyPrefix) {
     }
     // Non-matched (RTL) text — wrap in RTL isolation so Hebrew at bidi boundaries
     // (e.g. "או" between two LTR-isolated terms) doesn't get visually corrupted
-    return part ? <span key={k} dir="rtl" style={{unicodeBidi:"isolate"}}>{part}</span> : null;
+    return part ? <span key={k} dir="rtl" style={{unicodeBidi:"isolate"}}>{"\u2067"}{part}{"\u2069"}</span> : null;
   });
 }
 
