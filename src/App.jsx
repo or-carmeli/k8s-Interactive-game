@@ -675,7 +675,6 @@ function renderBidiInner(text, lang, keyPrefix) {
   const parts = text.split(/((?:(?<![\u0590-\u05FF])--?[A-Za-z][\w\-]*(?:=[^\s\u0590-\u05FF]*)?(?:\s+(?=(?:--?)?[A-Za-z]))?)+|(?:\/[A-Za-z][A-Za-z0-9\-_/.:]*)|(?:[A-Za-z](?:[A-Za-z0-9\-_:/=]|\.[A-Za-z0-9])*(?:\s+(?=(?:--?)?[A-Za-z]))?)+|[←])/);
   if (parts.length <= 1) return text;
   const startsWithLatin = /^[A-Za-z]/.test(text) || /^--?[A-Za-z]/.test(text) || /^\/[A-Za-z]/.test(text);
-  const isLtrPart = (p) => /^[A-Za-z]/.test(p) || /^--?[A-Za-z]/.test(p) || /^\/[A-Za-z]/.test(p) || /^[←]$/.test(p);
   return parts.map((part, idx) => {
     const k = `${keyPrefix}-${idx}`;
     if (/^[A-Za-z]/.test(part) || /^--?[A-Za-z]/.test(part) || /^\/[A-Za-z]/.test(part)) {
@@ -687,13 +686,9 @@ function renderBidiInner(text, lang, keyPrefix) {
     if (/^[←]$/.test(part)) {
       return <span key={k} dir="ltr" style={{unicodeBidi:"isolate",padding:"0 2px"}}>{part}</span>;
     }
-    // Non-matched (RTL) text
-    let result = part;
-    if (idx > 0 && isLtrPart(parts[idx - 1])) result = "\u200F" + result;
-    // Anchor trailing Hebrew-hyphen to RTL context (ה-Pod, ב-namespace, ל-Service)
-    // so bidi algorithm doesn't visually misplace the hyphen
-    if (/[\u0590-\u05FF]-$/.test(part) && idx + 1 < parts.length && isLtrPart(parts[idx + 1])) result += "\u200F";
-    return result;
+    // Non-matched (RTL) text — wrap in RTL isolation so Hebrew at bidi boundaries
+    // (e.g. "או" between two LTR-isolated terms) doesn't get visually corrupted
+    return part ? <span key={k} dir="rtl" style={{unicodeBidi:"isolate"}}>{part}</span> : null;
   });
 }
 
@@ -832,13 +827,13 @@ function Footer({ lang, onPrivacy, onTerms }) {
   const btnStyle = {...linkStyle,background:"none",border:"none",cursor:"pointer",padding:0};
   const hoverIn = e=>{e.currentTarget.style.color="var(--text-primary)";};
   const hoverOut = e=>{e.currentTarget.style.color="var(--text-muted)";};
-  const dot = <span style={{color:"var(--text-disabled)"}}>·</span>;
+  const dot = <span style={{color:"var(--text-disabled)",margin:"0 2px"}}>·</span>;
   return (
-    <footer style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid var(--glass-5)"}}>
-      <p style={{color:"var(--text-dim)",fontSize:12,margin:"0 0 10px 0"}}>
+    <footer style={{textAlign:"center",marginTop:28,paddingTop:18,borderTop:"1px solid var(--glass-5)",opacity:0.75}}>
+      <p style={{color:"var(--text-dim)",fontSize:12,margin:"0 0 10px 0",direction:"ltr"}}>
         © {year} KubeQuest
       </p>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",fontSize:11}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,flexWrap:"wrap",fontSize:11}}>
         {onPrivacy&&<><button onClick={onPrivacy} style={btnStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           {lang==="en"?"Privacy Policy":"מדיניות פרטיות"}
         </button>{dot}</>}
@@ -849,12 +844,12 @@ function Footer({ lang, onPrivacy, onTerms }) {
           {lang==="en"?"Contact":"צור קשר"}
         </a>
         {dot}
-        <a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+        <a href="https://github.com/or-carmeli/KubeQuest" target="_blank" rel="noopener noreferrer" style={{...linkStyle,direction:"ltr",unicodeBidi:"isolate"}} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           GitHub
         </a>
         {dot}
         <a href="https://buymeacoffee.com/ocarmeli7n" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
-          ☕ {lang==="en"?"Support":"תמיכה"}
+          {lang==="en"?"Support ☕":"תמיכה ☕"}
         </a>
       </div>
     </footer>
