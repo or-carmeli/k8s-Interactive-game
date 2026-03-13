@@ -3739,8 +3739,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div key={i} className="stats-cell" style={{background:s.premium?`${s.color}08`:"var(--glass-3)",border:`1px solid ${s.premium?`${s.color}30`:"var(--glass-7)"}`,borderRadius:12,padding:"12px 6px 10px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,boxShadow:s.premium?`0 0 10px ${s.color}15`:"none"}}>
                 <div style={{fontSize:17,lineHeight:1}}>{s.icon}</div>
                 <div style={{fontSize:22,fontWeight:800,color:s.color,lineHeight:1,letterSpacing:-0.5,direction:"ltr"}}>{s.displayValue||s.value}</div>
-                <div style={{fontSize:11,fontWeight:700,color:s.color,opacity:0.7,lineHeight:1,letterSpacing:0.5,direction:"ltr"}}>{s.label}</div>
-                {s.sub&&<div style={{fontSize:9,color:s.color,opacity:0.35,lineHeight:1.2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%",paddingInline:2}}>{s.sub}</div>}
+                <div style={{fontSize:11,fontWeight:700,color:s.color,opacity:0.65,lineHeight:1,letterSpacing:0.5,direction:"ltr"}}>{s.label}</div>
+                {s.sub&&<div style={{fontSize:9,color:"rgba(255,255,255,0.55)",lineHeight:1.2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%",paddingInline:2}}>{s.sub}</div>}
               </div>
             ))}
           </div>
