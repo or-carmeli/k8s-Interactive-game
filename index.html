@@ -94,30 +94,29 @@
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
+          // Track whether we already had a controller (i.e. not first install)
+          var hadController = !!navigator.serviceWorker.controller;
+
           navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
             .then(reg => {
               console.log("SW registered:", reg.scope);
-              // Check for updates periodically
+              // Check for updates every 60 s
               setInterval(() => reg.update(), 60000);
-              reg.addEventListener("updatefound", () => {
-                var newSW = reg.installing;
-                if (!newSW) return;
-                newSW.addEventListener("statechange", () => {
-                  if (newSW.state === "activated" && navigator.serviceWorker.controller) {
-                    // Don't reload during initial boot (first 5 s) or active quiz - defer
-                    var bootAge = Date.now() - (window.__KQ_BOOT_TIME__ || 0);
-                    if (bootAge < 5000 || window.__KQ_QUIZ_ACTIVE__) {
-                      console.log("[KubeQuest] New SW activated; deferring reload (boot:" + bootAge + "ms, quiz:" + !!window.__KQ_QUIZ_ACTIVE__ + ")");
-                      window.__KQ_PENDING_RELOAD__ = true;
-                      return;
-                    }
-                    console.log("[KubeQuest] New SW activated, reloading for fresh assets");
-                    window.location.reload();
-                  }
-                });
-              });
             })
             .catch(e => console.log("SW error:", e));
+
+          // When a new SW takes control, notify the React app (not on first install)
+          var reloading = false;
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (reloading) return;
+            reloading = true;
+            if (!hadController) {
+              console.log("[KubeQuest] SW installed for the first time");
+              return;
+            }
+            console.log("[KubeQuest] New SW activated - dispatching update event");
+            window.dispatchEvent(new CustomEvent("kq-sw-updated"));
+          });
         });
       }
     </script>

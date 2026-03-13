@@ -17,9 +17,8 @@
 //     while preserving user progress.
 //  6. ErrorBoundary recovery - components/ErrorBoundary.jsx catches render
 //     errors and offers "Clear app data & reload" which calls clearAppData().
-//  7. Deferred SW reload - index.html SW updatefound handler checks
-//     window.__KQ_QUIZ_ACTIVE__ and defers page reload until the user
-//     finishes an active quiz or incident.
+//  7. SW update banner - when a new SW activates, the app shows a
+//     non-intrusive banner letting the user refresh at their convenience.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DATA_VERSION_KEY = "kq_data_version";
