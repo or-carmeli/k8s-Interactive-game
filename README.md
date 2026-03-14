@@ -140,7 +140,8 @@ flowchart LR
 ```mermaid
 flowchart TB
     USER([User])
-    EDGE["Edge Security<br/>HTTPS / HSTS · Edge Protection"]
+
+    EDGE["Edge Security<br/>HTTPS / HSTS"]
     APP["Application Security<br/>Strict CSP · No Inline Scripts"]
     API["API Validation<br/>RPC Validation · Rate Limiting"]
     DB[("Database Security<br/>PostgreSQL · Row Level Security")]
@@ -156,38 +157,16 @@ flowchart TB
     style DB fill:#111827,stroke:#F59E0B,stroke-width:2px,color:#ffffff
 ```
 
-### Browser Security
+### Security Highlights
 
-- HTTPS enforced via 308 permanent redirect with HSTS (`max-age=31536000; includeSubDomains; preload`)
-- Strict Content Security Policy with no `unsafe-inline` in `script-src` - all scripts loaded from explicit allowlist
-- Full security header coverage: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP, CORP
-
-### Application Security
-
-- Zero inline scripts - all JavaScript extracted to external files for CSP compliance
-- Script sources restricted to `self` and required third-party domains only
-- Edge Middleware validates host headers, enforces path length limits, and blocks common scanner probes
-- CORS restricted to the production origin
-
-### Platform Security
-
-- Vercel Edge Network provides built-in DDoS mitigation and bot challenge mode
-- Static assets served from global CDN with immutable cache headers
-- Service worker uses build-stamped cache versioning to prevent stale deployments
-
-### Database Security
-
-- Row Level Security (RLS) enabled on all user-facing tables
-- Quiz answers and explanations accessible only through `SECURITY DEFINER` RPCs that validate submissions before revealing correct answers
-- Database-level rate limiting on answer check operations (120 checks/minute per user)
-- Query result size clamping prevents unbounded data extraction
-- Only the public `anon` key is exposed to the frontend - no `service_role` keys in client code
-
-### Supply Chain Security
-
-- Automated vulnerability scanning with Trivy and npm audit (weekly + on push)
-- CodeQL static analysis for JavaScript security patterns
-- Container images signed with Cosign (keyless, GitHub OIDC) and published with SBOM and provenance attestations
+- HTTPS enforced with HSTS and strict Content Security Policy (no inline scripts)
+- Edge protection and request filtering at the platform layer
+- Strict CORS policy restricting cross-origin access
+- Backend validation through controlled RPC endpoints
+- Rate limiting applied to answer verification operations
+- PostgreSQL protected with Row Level Security (RLS)
+- Container images signed with Cosign and published with SBOM attestations
+- Automated vulnerability scanning (Trivy, npm audit, CodeQL)
 
 ---
 
