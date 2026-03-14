@@ -129,6 +129,51 @@ flowchart LR
 
 > **Production** runs on Vercel + Supabase. The `k8s/` manifests and Docker image on GHCR enable self-hosting on any Kubernetes cluster.
 
+### Stack Layers
+
+**Frontend** - React single-page application built with Vite, deployed on Vercel. Includes a manual service worker for offline caching and a PWA manifest for installability. All routing is handled client-side.
+
+**Platform** - Vercel Edge Network serves static assets and runs Edge Middleware for request validation, host header verification, and automated scanner blocking. Security headers (CSP, HSTS, COOP, CORP) are enforced via `vercel.json`.
+
+**Backend** - Supabase provides authentication, real-time subscriptions, and a PostgreSQL database. All sensitive operations (answer validation, score updates) run through `SECURITY DEFINER` RPC functions that enforce server-side logic. A Supabase Edge Function runs periodic health checks across all services.
+
+---
+
+## Security Model
+
+### Browser Security
+
+- HTTPS enforced via 308 permanent redirect with HSTS (`max-age=31536000; includeSubDomains; preload`)
+- Strict Content Security Policy with no `unsafe-inline` in `script-src` - all scripts loaded from explicit allowlist
+- Full security header coverage: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP, CORP
+
+### Application Security
+
+- Zero inline scripts - all JavaScript extracted to external files for CSP compliance
+- Script sources restricted to `self` and required third-party domains only
+- Edge Middleware validates host headers, enforces path length limits, and blocks common scanner probes
+- CORS restricted to the production origin
+
+### Platform Security
+
+- Vercel Edge Network provides built-in DDoS mitigation and bot challenge mode
+- Static assets served from global CDN with immutable cache headers
+- Service worker uses build-stamped cache versioning to prevent stale deployments
+
+### Database Security
+
+- Row Level Security (RLS) enabled on all user-facing tables
+- Quiz answers and explanations accessible only through `SECURITY DEFINER` RPCs that validate submissions before revealing correct answers
+- Database-level rate limiting on answer check operations (120 checks/minute per user)
+- Query result size clamping prevents unbounded data extraction
+- Only the public `anon` key is exposed to the frontend - no `service_role` keys in client code
+
+### Supply Chain Security
+
+- Automated vulnerability scanning with Trivy and npm audit (weekly + on push)
+- CodeQL static analysis for JavaScript security patterns
+- Container images signed with Cosign (keyless, GitHub OIDC) and published with SBOM and provenance attestations
+
 ---
 
 ## Local Development
