@@ -68,7 +68,7 @@ export function getTermKind(token) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 // Inline-code style for backtick-wrapped terms only (subtle, readable)
-export const CODE_SPAN_STYLE = {background:"rgba(255,255,255,0.06)",borderRadius:4,padding:"2px 6px",fontSize:"0.95em",fontFamily:"'JetBrains Mono','Fira Code',monospace",color:"inherit"};
+export const CODE_SPAN_STYLE = {background:"rgba(255,255,255,0.06)",borderRadius:4,padding:"2px 6px",fontSize:"0.95em",fontFamily:"'JetBrains Mono','Fira Code',monospace",color:"inherit",whiteSpace:"nowrap"};
 
 // ─── renderBidiInner ──────────────────────────────────────────────────────────
 
