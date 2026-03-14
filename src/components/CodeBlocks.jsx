@@ -55,7 +55,7 @@ export function TerminalBlock({ children, label, variant }) {
     headerBorder = "rgba(0,212,255,0.07)";
   } else {
     headerIcon = ">_";
-    headerText = "Terminal";
+    headerText = "";
     headerColor = "rgba(0,212,255,0.5)";
     headerBg = "rgba(0,212,255,0.03)";
     headerBorder = "rgba(0,212,255,0.08)";
@@ -87,7 +87,7 @@ export function TerminalBlock({ children, label, variant }) {
         }}
       >
         <span style={{ opacity: 0.7 }}>{headerIcon}</span>
-        <span>{headerText}</span>
+        {headerText && <span>{headerText}</span>}
       </div>
       <div style={{ padding: "10px 14px" }}>
         {label && (
