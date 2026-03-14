@@ -67,11 +67,8 @@ export function getTermKind(token) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-// Inline-code style for CLI tools, dotted paths, backtick spans
-export const CODE_SPAN_STYLE = {background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",fontSize:"0.88em",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",color:"var(--code-text)"};
-
-// Concept tag style for K8s resource types - highlighted but not code
-export const CONCEPT_TAG_STYLE = {background:"var(--concept-bg)",border:"1px solid var(--concept-border)",borderRadius:6,padding:"1px 6px",fontSize:"0.92em",fontWeight:600,color:"var(--concept-text)",marginInline:4};
+// Inline-code style for backtick-wrapped terms only (subtle, readable)
+export const CODE_SPAN_STYLE = {background:"rgba(255,255,255,0.06)",borderRadius:4,padding:"2px 6px",fontSize:"0.95em",fontFamily:"'JetBrains Mono','Fira Code',monospace",color:"inherit"};
 
 // ─── renderBidiInner ──────────────────────────────────────────────────────────
 
@@ -98,9 +95,7 @@ export function renderBidiInner(text, lang, keyPrefix) {
   return parts.map((part, idx) => {
     const k = `${keyPrefix}-${idx}`;
     if (/^[A-Za-z]/.test(part) || /^--?[A-Za-z]/.test(part) || /^\/[A-Za-z]/.test(part)) {
-      const kind = getTermKind(part);
-      const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : undefined;
-      return [idx === 0 && startsWithLatin && lang === "he" ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",margin:"0 2px",...termStyle}}>{"\u2066"}{part}{"\u2069"}</span>];
+      return [idx === 0 && startsWithLatin && lang === "he" ? "\u200F" : null, <span key={k} dir="ltr" style={{unicodeBidi:"isolate",margin:"0 2px"}}>{"\u2066"}{part}{"\u2069"}</span>];
     }
     // Left-arrow - wrap in LTR isolation to prevent bidi reordering
     if (/^[←]$/.test(part)) {
@@ -143,9 +138,7 @@ export function renderHebrewPrefixTerms(text, lang, keyPrefix) {
   if (parts.length <= 1 && parts[0]?.type === "text") return null;
   return parts.map((p, i) => {
     if (p.type === "prefixTerm") {
-      const kind = getTermKind(p.term);
-      const termStyle = kind === "code" ? CODE_SPAN_STYLE : kind === "concept" ? CONCEPT_TAG_STYLE : CONCEPT_TAG_STYLE;
-      return <span key={`${keyPrefix}-hp${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{p.prefix}{"\u2011"}<span dir="ltr" style={{unicodeBidi:"isolate",...termStyle}}>{p.term}</span></span>;
+      return <span key={`${keyPrefix}-hp${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{p.prefix}{"\u2011"}<span dir="ltr" style={{unicodeBidi:"isolate"}}>{p.term}</span></span>;
     }
     return <span key={`${keyPrefix}-ht${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{renderBidiInner(p.value, lang, `${keyPrefix}h${i}`)}</span>;
   });

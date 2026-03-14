@@ -13,7 +13,7 @@ import { INCIDENTS } from "./content/incidents";
 import { CHEATSHEET } from "./content/cheatsheet";
 import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from "./utils/quizPersistence";
 import { safeGetItem, safeGetJSON, checkDataVersion } from "./utils/storage";
-import { hasHebrew, getTermKind, K8S_CONCEPT_TERMS, K8S_CODE_TERMS, CODE_SPAN_STYLE, CONCEPT_TAG_STYLE, renderBidiInner, HE_PREFIX_TERM_RE, renderHebrewPrefixTerms, renderBidi, CLI_COMMAND_RE, splitCliParts, renderBidiBlock } from "./utils/bidi";
+import { hasHebrew, K8S_CONCEPT_TERMS, K8S_CODE_TERMS, CODE_SPAN_STYLE, renderBidiInner, HE_PREFIX_TERM_RE, renderHebrewPrefixTerms, renderBidi, CLI_COMMAND_RE, splitCliParts, renderBidiBlock } from "./utils/bidi";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory, fetchMaintenanceWindows } from "./api/monitoring";
 
@@ -2833,7 +2833,7 @@ export default function K8sQuestApp() {
     const parts = text.split(/(`[^`]+`)/g);
     return parts.map((part, i) =>
       part.startsWith("`") && part.endsWith("`") && part.length > 2
-        ? <code key={i} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:"0.88em",color:"var(--code-text)",background:"rgba(0,212,255,0.06)",borderRadius:4,padding:"1px 5px",direction:"ltr",unicodeBidi:"isolate"}}>{part.slice(1,-1)}</code>
+        ? <code key={i} style={{fontFamily:"'JetBrains Mono','Fira Code',monospace",fontSize:"0.95em",color:"inherit",background:"rgba(255,255,255,0.06)",borderRadius:4,padding:"2px 6px",direction:"ltr",unicodeBidi:"isolate"}}>{part.slice(1,-1)}</code>
         : part
     );
   };
@@ -4648,7 +4648,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 </div>
               )}
 
-              <div dir={dir} style={{color:"var(--text-secondary)",fontSize:13,fontWeight:600,marginBottom:8,textAlign:dir==="rtl"?"right":"left",opacity:0.7}}>{t("answerPrompt")}</div>
+              {!dispShowExplanation&&<div dir={dir} style={{color:"var(--text-secondary)",fontSize:13,fontWeight:600,marginBottom:8,textAlign:dir==="rtl"?"right":"left",opacity:0.7}}>{t("answerPrompt")}</div>}
 
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
                 {(currentQuestions[questionIndex]?.options || []).map((opt,i)=>{
