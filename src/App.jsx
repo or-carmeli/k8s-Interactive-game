@@ -609,7 +609,9 @@ function classifyFragment(text) {
 function splitQuestionSegments(qText) {
   const segments = [];
   // Match: quoted strings (8+ chars) OR inline CLI commands (kubectl/helm/etc with args)
-  const splitPat = /('(?:[^']{8,})'|"(?:[^"]{8,})"|(?:(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+(?:\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+)*))/g;
+  // Lookbehind on quotes: opening quote must NOT follow a letter/digit to avoid
+  // false matches across two short-quoted terms like 'api' ב-namespace 'prod'.
+  const splitPat = /((?<![A-Za-z0-9\u0590-\u05FF])'(?:[^']{8,})'|(?<![A-Za-z0-9\u0590-\u05FF])"(?:[^"]{8,})"|(?:(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+(?:\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+)*))/g;
 
   let last = 0;
   const matches = [];
@@ -689,6 +691,13 @@ function splitQuestionSegments(qText) {
 function renderQuestion(qText, lang) {
   if (!qText) return null;
   warnIfHebrew(qText, lang, "quiz.question");
+  // Normalize: ensure fenced code blocks (```...```) are separated from
+  // surrounding text by blank lines so the \n\n split detects them as
+  // separate paragraphs and routes them to YamlBlock/TerminalBlock.
+  if (qText.includes("```")) {
+    qText = qText.replace(/(```\w*\n[\s\S]*?\n```)/g, "\n\n$1\n\n");
+    qText = qText.replace(/\n{3,}/g, "\n\n").trim();
+  }
   const paragraphs = qText.split(/\n\n+/);
 
   // Single paragraph - try structured split for mixed Hebrew+command+error questions

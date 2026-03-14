@@ -38,6 +38,7 @@ export function TerminalBlock({ children, label, variant }) {
         borderRadius: 10,
         padding: "10px 14px",
         direction: "ltr",
+        unicodeBidi: "isolate",
       }}
     >
       {label && (
@@ -115,6 +116,7 @@ export function YamlBlock({ children, label }) {
         padding: "10px 14px",
         overflowX: "auto",
         direction: "ltr",
+        unicodeBidi: "isolate",
       }}
     >
       {label && (
