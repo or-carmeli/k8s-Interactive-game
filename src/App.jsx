@@ -1182,7 +1182,9 @@ export default function K8sQuestApp() {
     const idx = LEVEL_ORDER.indexOf(level);
     if (idx === 0) return false;
     const prevResult = completedTopics[`${topicId}_${LEVEL_ORDER[idx - 1]}`];
-    return !prevResult;
+    // Require the previous level to have been completed with actual questions.
+    // A corrupt or empty entry (total=0) must not unlock the next level.
+    return !prevResult || !prevResult.total;
   };
 
   const getNextLevel = (level) => {
@@ -1573,6 +1575,7 @@ export default function K8sQuestApp() {
       quizRunId:     quizRunIdRef.current,
       userId:        user?.id || "guest",
       lang,
+      quizType:      isFree ? selectedTopic.id : "topic",
       topicId:       selectedTopic.id,
       topicName:     selectedTopic.name,
       topicColor:    selectedTopic.color,
@@ -2195,11 +2198,13 @@ export default function K8sQuestApp() {
     return true;
   };
 
-  // Wraps a quiz-start function: shows resume modal when applicable, otherwise starts immediately
-  const tryStartQuiz = (startFn) => {
+  // Wraps a quiz-start function: shows resume modal only when the saved quiz type matches quizType
+  // quizType: "daily" | "mixed" | "bookmarks" | "topic"
+  const tryStartQuiz = (startFn, quizType) => {
     const userId = isGuest ? "guest" : user?.id;
     const saved  = loadQuizState();
-    if (saved && saved.userId === userId && shouldShowResumeModal(saved)) {
+    const savedType = saved?.quizType ?? saved?.topicId; // fallback for old saved states
+    if (saved && saved.userId === userId && savedType === quizType && shouldShowResumeModal(saved)) {
       setResumeData(saved);
       setShowResumeModal(true);
       pendingQuizStartRef.current = startFn;
@@ -3637,7 +3642,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </div>
                 ))}
               </div>
-              <button onClick={()=>tryStartQuiz(startBookmarksQuiz)}
+              <button onClick={()=>tryStartQuiz(startBookmarksQuiz,"bookmarks")}
                 style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.1))",border:"1px solid rgba(168,85,247,0.4)",borderRadius:12,color:"#A855F7",fontSize:15,fontWeight:800,cursor:"pointer"}}>
                 {t("startSavedQuiz")}
               </button>
@@ -3664,10 +3669,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <button onClick={()=>{setScreen("incidentList");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🚨 {lang==="en"?"Incident Mode":"מצב אירוע"}
           </button>
-          <button onClick={()=>{tryStartQuiz(startMixedQuiz);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{tryStartQuiz(startMixedQuiz,"mixed");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             {t("mixedQuizBtn")}
           </button>
-          <button onClick={()=>{tryStartQuiz(startDailyChallenge);setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
+          <button onClick={()=>{tryStartQuiz(startDailyChallenge,"daily");setShowMenu(false);}} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,direction:dir}}>
             🔥 {t("dailyChallengeTitle")}
           </button>
           <button onClick={()=>{setIsInterviewMode(p=>!p);}} aria-pressed={isInterviewMode} style={{width:"100%",padding:"10px 16px",background:"none",border:"none",color:isInterviewMode?"#A855F7":"var(--text-secondary)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:10,fontWeight:isInterviewMode?700:400,direction:dir}}>
@@ -3900,7 +3905,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const el = document.getElementById(`topic-card-${id}`);
             if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); setHighlightTopic(id); setTimeout(() => setHighlightTopic(null), 1500); }
           }}/>
-          <button onClick={()=>tryStartQuiz(startDailyChallenge)} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.14),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.4)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s",boxShadow:"0 0 16px rgba(245,158,11,0.12)"}}
+          <button onClick={()=>tryStartQuiz(startDailyChallenge,"daily")} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,rgba(245,158,11,0.14),rgba(239,68,68,0.08))",border:"1px solid rgba(245,158,11,0.4)",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s",boxShadow:"0 0 16px rgba(245,158,11,0.12)"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <span className="action-emoji" style={{fontSize:28,flexShrink:0}}>🔥</span>
@@ -3915,7 +3920,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
             <span dir="ltr" style={{color:"#F59E0B",fontSize:18,flexShrink:0,opacity:0.7,unicodeBidi:"isolate"}}>{dir==="rtl"?"‹":"›"}</span>
           </button>
-          <button onClick={()=>tryStartQuiz(startMixedQuiz)} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
+          <button onClick={()=>tryStartQuiz(startMixedQuiz,"mixed")} className="action-card" style={{width:"100%",marginBottom:12,padding:"16px 20px",background:"linear-gradient(135deg,#A855F722,#7C3AED22)",border:"1px solid #A855F755",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",transition:"transform 0.2s"}}
             onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
             <div className="action-card-inner" style={{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1}}>
               <div className="action-text" style={{textAlign:"start",minWidth:0}}>
@@ -3964,7 +3969,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     const locked=isLevelLocked(topic.id,lvl);
                     return(
                       <button key={lvl} className={locked?"":"card-hover"}
-                        onClick={()=>tryStartQuiz(()=>startTopic(topic,lvl))}
+                        onClick={()=>tryStartQuiz(()=>startTopic(topic,lvl),"topic")}
                         disabled={locked}
                         aria-label={`${getLocalizedField(cfg, "label", lang)}${done?` - ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
                         style={{padding:"10px 8px",
@@ -3987,7 +3992,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>);})()}
           {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"var(--glass-2)",border:"1px solid var(--glass-5)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"var(--text-secondary)",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--glass-4)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"var(--text-secondary)"}}><span>{a.icon}</span>{getLocalizedField(a, "name", lang)}</div>)}</div></div>}
           </>)}
-          {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={(topic,lvl)=>tryStartQuiz(()=>startTopic(topic,lvl))} startMixedQuiz={()=>tryStartQuiz(startMixedQuiz)} lang={lang} t={t} dir={dir}/>}
+          {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={(topic,lvl)=>tryStartQuiz(()=>startTopic(topic,lvl),"topic")} startMixedQuiz={()=>tryStartQuiz(startMixedQuiz,"mixed")} lang={lang} t={t} dir={dir}/>}
           <Footer lang={lang} onPrivacy={()=>setScreen("privacy")} onTerms={()=>setScreen("terms")}/>
         </div>
       )}
@@ -4024,7 +4029,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     <span style={{marginLeft:"auto",background:`${LEVEL_CONFIG[level]?.color}22`,color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{levelLabel(level)}</span>
                   </div>
                   <div dir={dir} style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5,marginBottom:10}}>{renderBidiBlock(question.q, lang)}</div>
-                  <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level),"topic")} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
                     {lang==="en"?"Go to Topic →":"עבור לנושא →"}
                   </button>
                 </div>
@@ -4075,7 +4080,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                             <span style={{color:"#EF4444"}}>{correct}/{total} {lang==="en"?"correct":"נכון"}</span>
                           </div>
                         </div>
-                        <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{flexShrink:0,padding:"8px 14px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                        <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level),"topic")} style={{flexShrink:0,padding:"8px 14px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                           {lang==="en"?"Retry":"נסה שוב"}
                         </button>
                       </div>
@@ -4098,7 +4103,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                           <span style={{color:"#10B981",fontSize:13,flexShrink:0,marginTop:1}}>✓</span>
                           <span style={{color:"#10B981",fontSize:13,lineHeight:1.4}}>{renderBidi(q.options[q.answer],lang)}</span>
                         </div>
-                        <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{flexShrink:0,padding:"6px 12px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                        <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level),"topic")} style={{flexShrink:0,padding:"6px 12px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,color:"#EF4444",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                           {lang==="en"?"Retry":"נסה שוב"}
                         </button>
                       </div>
