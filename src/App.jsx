@@ -4117,7 +4117,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           </div>
           <div style={{marginTop:32,padding:"14px 16px",borderTop:"1px solid var(--glass-6)"}}>
             <div style={{color:"var(--text-muted)",fontSize:11,fontWeight:600,letterSpacing:0.3,marginBottom:6}}>{lang==="en"?"Disclaimer":"הצהרה"}</div>
-            <p style={{color:"var(--text-dim)",fontSize:11,lineHeight:1.6,margin:0}}>{lang==="en"?"KubeQuest is an independent learning project and is not affiliated with, sponsored by, or endorsed by Civo or any other company. Kubernetes is a registered trademark of the Cloud Native Computing Foundation.":"KubeQuest הוא פרויקט לימודי עצמאי ואינו קשור, ממומן או מאושר על ידי Civo או כל חברה אחרת. Kubernetes הוא סימן מסחרי רשום של Cloud Native Computing Foundation."}</p>
+            <p style={{color:"var(--text-dim)",fontSize:11,lineHeight:1.6,margin:0}}>{lang==="en"?"KubeQuest is an independent learning project and is not affiliated with, sponsored by, or endorsed by any company. Kubernetes is a registered trademark of the Cloud Native Computing Foundation.":"KubeQuest הוא פרויקט לימודי עצמאי ואינו קשור, ממומן או מאושר על ידי כל חברה. Kubernetes הוא סימן מסחרי רשום של Cloud Native Computing Foundation."}</p>
           </div>
         </div>
       )}
