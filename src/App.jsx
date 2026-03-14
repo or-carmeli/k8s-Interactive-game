@@ -2338,8 +2338,8 @@ export default function K8sQuestApp() {
     if (!correct && !isFree && !isRetryRef.current && selectedTopic && selectedLevel) {
       const key = `${selectedTopic.id}_${selectedLevel}`;
       setCompletedTopics(prev => {
-        const existing = prev[key] || { correct: 0, total: 0, wrongQuestions: [], wrongIndices: [] };
-        return { ...prev, [key]: { ...existing, wrongQuestions: [...(existing.wrongQuestions || []), { q: q.q, options: q.options, answer: result.correctIndex }], wrongIndices: [...(existing.wrongIndices || []), questionIndex] } };
+        const existing = prev[key] || { correct: 0, total: 0, wrongIndices: [] };
+        return { ...prev, [key]: { ...existing, wrongIndices: [...(existing.wrongIndices || []), questionIndex] } };
       });
     }
     // Single atomic setStats call - prevents React batching from clobbering streak
@@ -2422,11 +2422,7 @@ export default function K8sQuestApp() {
       // Preserve retryComplete so replaying doesn't re-lock the next level
       const keepRetryComplete = prevResult?.retryComplete || bestCorrect === currentQuestions.length;
       const wrongIdx = !isFreeMode(selectedTopic.id) ? quizHistory.map((h,i)=>h.chosen!==h.answer?i:null).filter(v=>v!==null) : (completedTopics[key]?.wrongIndices??[]);
-      // Store full wrong-question data so the Mistakes screen doesn't depend on local content order
-      const wrongQuestions = !isFreeMode(selectedTopic.id)
-        ? quizHistory.filter(h=>h.chosen!==h.answer).map(h=>({q:h.q,options:h.options,answer:h.answer}))
-        : (completedTopics[key]?.wrongQuestions??[]);
-      const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, wrongIndices: wrongIdx, wrongQuestions, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
+      const newCompleted = { ...completedTopics, [key]: { correct: bestCorrect, total: currentQuestions.length, wrongIndices: wrongIdx, ...(keepRetryComplete ? { retryComplete: true } : {}) } };
       // total_score is already accumulated per-answer - don't override it.
       // best_score tracks the canonical best-topic score separately.
       const newStats = { ...stats, best_score: computeScore(newCompleted) };
@@ -4044,11 +4040,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         TOPICS.forEach(topic=>(['easy','medium','hard']).forEach(lvl=>{
           const r=completedTopics[`${topic.id}_${lvl}`];
           if(!r) return;
-          if(r.wrongQuestions&&r.wrongQuestions.length>0){
-            r.wrongQuestions.forEach(q=>{wrongItems.push({topic,level:lvl,q});});
-          } else if(r.wrongIndices&&r.wrongIndices.length>0){
+          if(r.wrongIndices&&r.wrongIndices.length>0){
             const rawQs=getLocalizedField(topic.levels[lvl], "questions", lang);
             r.wrongIndices.forEach(idx=>{const q=rawQs?.[idx];if(q) wrongItems.push({topic,level:lvl,q});});
+          } else if(r.wrongQuestions&&r.wrongQuestions.length>0){
+            r.wrongQuestions.forEach(q=>{wrongItems.push({topic,level:lvl,q});});
           } else if((!r.wrongIndices||(Array.isArray(r.wrongIndices)&&r.wrongIndices.length===0&&!r.retryComplete))&&r.correct<r.total){
             wrongItems.push({topic,level:lvl,legacy:true,correct:r.correct,total:r.total});
           }
