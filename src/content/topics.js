@@ -1132,7 +1132,7 @@ export const TOPICS = [
                 "Service קיים אבל כש-selector לא תואם Pods, ה-Endpoints ריקים וזה גורם לשגיאת 503.\nלתקן selector או labels כך שה-Pods יתאימו ל-Service.\n• Ingress Controller חסר: לא היה מגיב בכלל. • TLS: שגיאת SSL, לא 503. • Namespace: השגיאה היא endpoints ריקים.\n503 + endpoints not found = בעיית selector/labels.",
             },
             {
-              q: "ה-Pod מנסה לגשת ל-api-svc.backend.cluster.local ולא מצליח. מה ה-FQDN הנכון של Service בשם api-svc ב-Namespace backend?",
+              q: "ה-Pod מנסה לגשת ל-Service ולא מצליח.\n\nכתובת שנוסתה:\n\n```\napi-svc.backend.cluster.local\n```\n\nמה ה-FQDN הנכון של Service בשם api-svc ב-Namespace backend?",
               options: [
               "api-svc.backend.svc.cluster.local",
               "api-svc.svc.cluster.local",
@@ -1230,7 +1230,7 @@ export const TOPICS = [
                 "Service exists but selector doesn't match any Pods → empty Endpoints → 503.\nAlign Pod labels with the Service selector.\n• No Ingress Controller: no response at all. • TLS: SSL error, not 503. • Namespace: error says empty endpoints.\n503 + \"endpoints not found\" = selector/label mismatch.",
             },
             {
-              q: "A Pod tries to access api-svc.backend.cluster.local and fails. What is the correct FQDN for Service api-svc in Namespace backend?",
+              q: "A Pod tries to access a Service and fails.\n\nAddress tried:\n\n```\napi-svc.backend.cluster.local\n```\n\nWhat is the correct FQDN for Service api-svc in Namespace backend?",
               options: [
               "api-svc.backend.svc.cluster.local",
               "api-svc.svc.cluster.local",
@@ -2352,7 +2352,7 @@ export const TOPICS = [
                 "ה-PVC מפנה ל-StorageClass בשם fast-ssd שלא קיים ב-Cluster.\nללא StorageClass, ה-provisioner לא יודע ליצור PV. הריצו kubectl get storageclass לראות מה קיים.\n• PVC גדול מדי = שגיאה על capacity • Node מלא = לא קשור ל-provisioning • Namespace שונה = שגיאה אחרת.",
             },
             {
-              q: "הפקודה helm upgrade כשל באמצע. Release ב-status 'failed'. ה-ConfigMap מחצית עודכן. מה הצעד הבא?",
+              q: "הרצת:\n\n```\nhelm upgrade\n```\n\nה-upgrade כשל באמצע.\nRelease ב-status failed.\nה-ConfigMap עודכן חלקית.\n\nמה הצעד הבא?",
               options: [
               "helm upgrade שוב",
               "helm rollback my-release [last-good-revision] להחזיר למצב עקבי",
@@ -2450,7 +2450,7 @@ export const TOPICS = [
                 "The PVC references a StorageClass named fast-ssd that doesn't exist in the Cluster.\nWithout a valid StorageClass, the provisioner can't create a PV. Run kubectl get storageclass to check.\n• Too large = capacity error • Node full = unrelated to provisioning • Different namespace = different error.",
             },
             {
-              q: "helm upgrade failed midway. The Release is in 'failed' status. A ConfigMap is half-updated. What is the next step?",
+              q: "Command:\n\n```\nhelm upgrade\n```\n\nThe upgrade failed midway.\nRelease status: failed.\nA ConfigMap is half-updated.\n\nWhat is the next step?",
               options: [
               "Delete the ConfigMap",
               "Run helm upgrade again",
@@ -2690,7 +2690,7 @@ export const TOPICS = [
         theoryEn: "Common Pod Errors\n🔹 CrashLoopBackOff - the container crashes repeatedly and Kubernetes keeps restarting it.\n🔹 ImagePullBackOff - the container image cannot be pulled due to a wrong name or missing credentials.\n🔹 OOMKilled - the container exceeded its memory limit and was terminated by the kernel.\n🔹 Pending - no Node is available to schedule the Pod, often due to insufficient resources or a mismatched nodeSelector.\nCODE:\nkubectl describe pod my-pod   # check Events\nkubectl logs my-pod --previous  # logs before crash\nkubectl top pod                 # CPU/Memory",
         questions: [
             {
-              q: "פרסמת גרסה חדשה. ה-Pod עולה, קורס מיד, ו-Kubernetes מפעיל אותו שוב ושוב. איזה סטטוס תראה ב-kubectl get pods?",
+              q: "פרסמת גרסה חדשה.\nה-Pod עולה, קורס מיד, ו-Kubernetes מפעיל אותו שוב ושוב.\n\nאיזה סטטוס תראה בפלט הפקודה?\n\n```\nkubectl get pods\n```",
               options: [
               "CrashLoopBackOff",
               "OOMKilled",
@@ -2714,7 +2714,7 @@ export const TOPICS = [
                 "Kubernetes לא מצליח להוריד את ה-image ומחכה יותר ויותר בין ניסיונות.\nשתי הסיבות הנפוצות: שגיאה בשם ה-image/tag, או חוסר imagePullSecrets ל-registry פרטי.",
             },
             {
-              q: "ה-Pod רץ שעות, ואז מסתיים לפתע. kubectl describe מראה 'Reason: OOMKilled'. מה קרה ומה הפתרון?",
+              q: "ה-Pod רץ שעות, ואז מסתיים לפתע.\n\nהרצת:\n\n```\nkubectl describe pod\n```\n\nפלט:\n\n```\nReason: OOMKilled\n```\n\nמה קרה ומה הפתרון?",
               options: [
               "ה-Pod פונה בגלל disk מלא; הוסף storage",
               "ה-liveness probe נכשל; תקן את ה-probe",
@@ -2726,7 +2726,7 @@ export const TOPICS = [
                 "הקונטיינר חרג מ-limits.memory וה-Linux kernel ממית אותו עם exit code 137.\nהגדילו limits.memory, או בדקו memory leak עם kubectl top pod.",
             },
             {
-              q: "ה-Pod נשאר ב-Pending. kubectl describe מראה: '0/3 nodes are available: 3 Insufficient cpu'. מה הגורם השורשי?",
+              q: "ה-Pod נשאר ב-Pending.\n\nהרצת:\n\n```\nkubectl describe pod\n```\n\nפלט:\n\n```\n0/3 nodes are available:\n3 Insufficient cpu\n```\n\nמה הגורם השורשי?",
               options: [
               "ה-image של הקונטיינר גדול מדי",
               "NetworkPolicy חוסמת את ה-Pod",
@@ -2762,7 +2762,7 @@ export const TOPICS = [
                 "שלב נורמלי, אבל כשנמשך זמן רב מציין בעיה.\nסיבות נפוצות: PVC לא Bound, Secret/ConfigMap חסר, image גדול, או בעיה ב-CNI.",
             },
             {
-              q: "ה-Pod מצב Terminating ולא נמחק. אפילו kubectl delete pod my-pod --grace-period=0 --force לא עוזר. מה הסיבה?",
+              q: "ה-Pod במצב Terminating ולא נמחק.\n\nהרצת:\n\n```\nkubectl delete pod my-pod\n  --grace-period=0 --force\n```\n\nה-Pod עדיין לא נמחק.\n\nמה הסיבה?",
               options: [
               "Node נפל",
               "RBAC חוסם",
@@ -2774,7 +2774,7 @@ export const TOPICS = [
                 "Finalizer מונע מחיקה עד ש-controller חיצוני מנקה אותו. אפילו --force לא עוזר.\nכשה-controller לא זמין, ה-Pod תקוע.\nפתרון: kubectl patch pod my-pod -p '{\"metadata\":{\"finalizers\":null}}' מסיר finalizers ידנית.",
             },
             {
-              q: "ה-Node ב-DiskPressure.\n\nkubectl describe node מציג:\nConditions:\n  DiskPressure True\n\nמה הסיבות הנפוצות?",
+              q: "ה-Node ב-DiskPressure.\n\nהרצת:\n\n```\nkubectl describe node\n```\n\nפלט:\n\n```\nConditions:\n  DiskPressure True\n```\n\nמה הסיבות הנפוצות?",
               options: [
               "RAM מלא",
               "Network congestion",
@@ -2788,7 +2788,7 @@ export const TOPICS = [
         ],
         questionsEn: [
             {
-              q: "You deployed a new version. The pod starts, immediately crashes, and Kubernetes keeps restarting it. What status do you see in kubectl get pods?",
+              q: "You deployed a new version.\nThe Pod starts, immediately crashes, and Kubernetes keeps restarting it.\n\nWhat status do you see?\n\n```\nkubectl get pods\n```",
               options: [
               "CrashLoopBackOff",
               "OOMKilled",
@@ -2812,7 +2812,7 @@ export const TOPICS = [
                 "Kubernetes failed to pull the image and waits with increasing delay before retrying.\nTwo most common causes: typo in image name/tag, or missing imagePullSecrets for a private registry.",
             },
             {
-              q: "A pod ran fine for hours then suddenly terminated. kubectl describe shows 'Reason: OOMKilled'. What happened and what is the fix?",
+              q: "A Pod ran fine for hours, then suddenly terminated.\n\nCommand:\n\n```\nkubectl describe pod\n```\n\nOutput:\n\n```\nReason: OOMKilled\n```\n\nWhat happened and what is the fix?",
               options: [
               "Pod evicted due to low disk; add more storage",
               "Container exceeded its memory limit; increase limits.memory or optimize the app",
@@ -2824,7 +2824,7 @@ export const TOPICS = [
                 "The container exceeded limits.memory and the Linux kernel killed it with exit code 137.\nIncrease limits.memory, or use kubectl top pod to identify a memory leak.",
             },
             {
-              q: "A pod stays Pending. kubectl describe shows: '0/3 nodes are available: 3 Insufficient cpu'. What is the root cause?",
+              q: "A Pod stays Pending.\n\nCommand:\n\n```\nkubectl describe pod\n```\n\nOutput:\n\n```\n0/3 nodes are available:\n3 Insufficient cpu\n```\n\nWhat is the root cause?",
               options: [
               "The container image is too large",
               "The pod requests more CPU than any available node can provide",
@@ -2860,7 +2860,7 @@ export const TOPICS = [
                 "Normal briefly, but when prolonged it indicates a blocker.\nCommon causes: PVC still Pending, missing Secret/ConfigMap, large image downloading, or CNI failure.",
             },
             {
-              q: "A Pod is stuck in Terminating and even kubectl delete pod my-pod --grace-period=0 --force doesn't help. What is the cause?",
+              q: "A Pod is stuck in Terminating.\n\nCommand:\n\n```\nkubectl delete pod my-pod\n  --grace-period=0 --force\n```\n\nThe Pod is still not deleted.\n\nWhat is the cause?",
               options: [
               "Node is down",
               "Namespace is locked",
@@ -2872,7 +2872,7 @@ export const TOPICS = [
                 "A finalizer blocks deletion until an external controller clears it. Even --force can't bypass it.\nIf the controller is unavailable, the Pod stays stuck.\nFix: kubectl patch pod my-pod -p '{\"metadata\":{\"finalizers\":null}}' removes finalizers manually.",
             },
             {
-              q: "A Node shows DiskPressure.\n\nkubectl describe node shows:\nConditions:\n  DiskPressure True\n\nWhat are the common causes?",
+              q: "A Node shows DiskPressure.\n\nCommand:\n\n```\nkubectl describe node\n```\n\nOutput:\n\n```\nConditions:\n  DiskPressure True\n```\n\nWhat are the common causes?",
               options: [
               "Accumulated logs, old images, or a full Node disk",
               "High CPU",
@@ -2890,7 +2890,7 @@ export const TOPICS = [
         theoryEn: "Advanced Debugging\n🔹 kubectl port-forward - forwards a port from a Pod to your local machine for direct access.\n🔹 kubectl cp - copies files between a Pod and your local filesystem.\n🔹 kubectl top - displays real-time CPU and memory usage for Pods or Nodes.\n🔹 Stuck in Terminating - a Pod may hang in Terminating state if blocked by a finalizer.\nCODE:\nkubectl port-forward pod/my-pod 8080:80\nkubectl cp my-pod:/app/log.txt ./log.txt\nkubectl top pod --sort-by=memory\nkubectl patch pod my-pod -p '{\"metadata\":{\"finalizers\":null}}'",
         questions: [
             {
-              q: "לאחר Deployment, ה-Pods החדשים ב-CrashLoopBackOff. הגרסה הקודמת עבדה מצוין. מה שתי פעולות ה-debug הראשונות שלך לפני שמחליטים מה לעשות?",
+              q: "לאחר Deployment, ה-Pods החדשים ב-CrashLoopBackOff.\nהגרסה הקודמת עבדה מצוין.\n\nמה שתי פעולות ה-debug הראשונות שלך?",
               options: [
               "Scale down ל-0 ו-redeploy מחדש",
               "מחק את כל ה-Pods ותן ל-Kubernetes ליצור אותם מחדש",
@@ -2902,7 +2902,7 @@ export const TOPICS = [
                 "לפני rollback חשוב להבין מה השתנה.\nlogs --previous מציג output מה-crash, ו-describe pod מציג Events.\nרק אחרי שמבינים את הסיבה, מחליטים לתקן code או לעשות rollout undo.",
             },
             {
-              q: "ה-Node מראה NotReady ב-kubectl get nodes. Pods מפונים ממנו. מה שתי הפעולות הראשונות שלך?",
+              q: "ה-Node מראה NotReady.\nPods מפונים ממנו.\n\nהרצת:\n\n```\nkubectl get nodes\n```\n\nמה שתי הפעולות הראשונות שלך?",
               options: [
               "kubectl drain <name> --force להעביר Pods ואז למחוק ולהצטרף מחדש",
               "kubectl describe node <name> לבדוק Conditions ו-Events, ואז SSH ל-Node ולהריץ systemctl status kubelet",
@@ -2962,7 +2962,7 @@ export const TOPICS = [
                 "קוד 404 אומר שה-path ב-livenessProbe.httpGet.path לא קיים באפליקציה. ה-Pod רץ ומגיב.\nבדקו איזה endpoint health האפליקציה חושפת (/health, /ping, /livez) ועדכנו.\n• DNS לא קשור (probe רץ ישירות ל-Pod IP) • image נכון (404 = שרת עונה) • RBAC לא משפיע על probes.",
             },
             {
-              q: "הפקודה kubectl logs my-pod מחזיר:\n\nError from server (BadRequest): container 'my-container' in pod 'my-pod' is not running\n\nמה עושים?",
+              q: "הרצת:\n\n```\nkubectl logs my-pod\n```\n\nפלט:\n\n```\nError from server (BadRequest):\ncontainer 'my-container' in pod\n'my-pod' is not running\n```\n\nמה עושים?",
               options: [
               "הוסף sidecar",
               "Pod Running בטח",
@@ -2988,7 +2988,7 @@ export const TOPICS = [
         ],
         questionsEn: [
             {
-              q: "After a deployment, new pods are in CrashLoopBackOff. The previous version worked fine. What are your first two debugging steps before deciding what to do?",
+              q: "After a Deployment, the new Pods are in CrashLoopBackOff.\nThe previous version worked fine.\n\nWhat are your first two debugging steps?",
               options: [
               "Run kubectl logs <new-pod> --previous and kubectl describe pod <new-pod>",
               "Delete all pods and wait for recreation",
@@ -3000,7 +3000,7 @@ export const TOPICS = [
                 "Before rollback, understand what changed.\nlogs --previous shows the crash output, describe pod shows the Events timeline.\nOnly after understanding the cause. Decide to fix code or run rollout undo.",
             },
             {
-              q: "A Node shows NotReady in kubectl get nodes. Pods on it are being evicted. What are your first two steps?",
+              q: "A Node shows NotReady.\nPods on it are being evicted.\n\nCommand:\n\n```\nkubectl get nodes\n```\n\nWhat are your first two steps?",
               options: [
               "kubectl delete node <name> and let the cluster autoscaler provision a new Node",
               "kubectl drain <name> --force to move Pods then delete and rejoin the Node",
@@ -3060,7 +3060,7 @@ export const TOPICS = [
                 "A 404 means the path in livenessProbe.httpGet.path doesn't exist in the app. The Pod is running and responding.\nCheck which health endpoint the app exposes (/health, /ping, /livez) and update the spec.\n• DNS unrelated (probe runs directly to Pod IP) • Image is correct (404 = server responds) • RBAC doesn't affect probes.",
             },
             {
-              q: "kubectl logs my-pod returns:\n\nError from server (BadRequest): container 'my-container' in pod 'my-pod' is not running\n\nWhat do you do?",
+              q: "Command:\n\n```\nkubectl logs my-pod\n```\n\nOutput:\n\n```\nError from server (BadRequest):\ncontainer 'my-container' in pod\n'my-pod' is not running\n```\n\nWhat do you do?",
               options: [
               "Pod is not Running. Check kubectl get pod my-pod for status, then kubectl describe pod my-pod for Events",
               "Delete the Pod",
