@@ -964,7 +964,6 @@ export default function K8sQuestApp() {
   const [showInstall, setShowInstall]                   = useState(false);
   const [deferredPrompt, setDeferredPrompt]             = useState(null);
   const [isAppInstalled, setIsAppInstalled]             = useState(false);
-  const [swUpdateReady, setSwUpdateReady]               = useState(false);
   const [dbStatus, setDbStatus]                         = useState(null); // null | "ok" | "error"
   const [monitorServices, setMonitorServices]           = useState(null); // null = loading, [] = loaded
   const [monitorUptime, setMonitorUptime]               = useState(null);
@@ -1475,13 +1474,6 @@ export default function K8sQuestApp() {
     if (isStatusDomain) return;
     try { localStorage.setItem("kq_screen_v1", screen); } catch {}
   }, [screen, topicScreen]);
-
-  // Listen for Service Worker update events (dispatched by index.html registration)
-  useEffect(() => {
-    const onSwUpdate = () => setSwUpdateReady(true);
-    window.addEventListener("kq-sw-updated", onSwUpdate);
-    return () => window.removeEventListener("kq-sw-updated", onSwUpdate);
-  }, []);
 
   // Pre-load saved quiz data when returning home (modal is NOT shown here - only when starting a quiz)
   useEffect(() => {
@@ -3105,14 +3097,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
   return (
     <div data-kq-rendered="app" dir={isStatusDomain?"ltr":undefined} style={{minHeight:"100vh",background:"var(--gradient-body)",fontFamily:"Segoe UI, system-ui, sans-serif",direction:isStatusDomain?"ltr":dir,position:"relative",overflowX:"hidden"}}>
-      {/* ── App update banner ── */}
-      {swUpdateReady && (
-        <div role="alert" style={{position:"fixed",top:0,left:0,right:0,zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",gap:12,padding:"10px 20px",background:"linear-gradient(135deg,#0ea5e9,#6366f1)",color:"#fff",fontSize:13,fontWeight:600,fontFamily:"system-ui,sans-serif",direction:"ltr",boxShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>
-          <span>{lang === "en" ? "A new version is available" : "\u05D2\u05E8\u05E1\u05D4 \u05D7\u05D3\u05E9\u05D4 \u05D6\u05DE\u05D9\u05E0\u05D4"}</span>
-          <button onClick={() => window.location.reload()} style={{padding:"5px 16px",background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.4)",borderRadius:6,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>{lang === "en" ? "Refresh" : "\u05E8\u05E2\u05E0\u05DF"}</button>
-          <button onClick={() => setSwUpdateReady(false)} aria-label="Dismiss" style={{background:"none",border:"none",color:"rgba(255,255,255,0.7)",fontSize:18,cursor:"pointer",padding:"0 4px",lineHeight:1}}>&times;</button>
-        </div>
-      )}
       {/* ── Standalone status header (status.kubequest.online only) ── */}
       {isStatusDomain && (
         <header style={{borderBottom:"1px solid var(--glass-5)",padding:"12px 24px"}}>

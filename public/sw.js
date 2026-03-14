@@ -85,8 +85,3 @@ self.addEventListener("fetch", e => {
       .catch(() => caches.match(e.request))
   );
 });
-
-// Allow the app to trigger immediate SW activation
-self.addEventListener("message", e => {
-  if (e.data === "SKIP_WAITING") self.skipWaiting();
-});
