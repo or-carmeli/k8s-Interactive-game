@@ -71,7 +71,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "Deployment מנהל Pods זהים דרך ReplicaSet ושומר על מספר ה-replicas הרצוי.\nמספק rolling updates, rollback, והחלפה אוטומטית של Pods שקרסו.\nPod שנמחק. Deployment יוצר חדש מיד.",
+                "Deployment מנהל Pods זהים דרך ReplicaSet ושומר על מספר ה-replicas הרצוי.\nמספק rolling updates, rollback, והחלפה אוטומטית של Pods שקרסו.\nאם Pod נמחק, ה-Deployment יוצר אחד חדש מיד.",
             },
             {
               q: "מה liveness probe עושה?",
@@ -259,7 +259,7 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "Rolling Update מחליף Pods בהדרגה - חדש עולה, רק אז ישן יורד.\nתמיד יש Pods זמינים, כך שאין downtime.\nבשונה מ-Recreate שמוחק הכל ויוצר downtime.",
+                "Rolling Update מחליף Pods בהדרגה: חדש עולה, רק אז ישן יורד.\nתמיד יש Pods זמינים, כך שאין downtime.\nבשונה מ-Recreate שמוחק הכל ויוצר downtime.",
             },
             {
               q: "כיצד מבצעים rollback?",
