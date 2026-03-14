@@ -2761,6 +2761,7 @@ export default function K8sQuestApp() {
     const elements = [];
     let codeLines = [];
     let inCode = false;
+    let flowIdx = 0;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (line === 'CODE:') {
@@ -2770,6 +2771,35 @@ export default function K8sQuestApp() {
       }
       if (inCode) {
         codeLines.push(<div key={i} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:11,color:"var(--code-text)",lineHeight:1.8,whiteSpace:"pre",direction:"ltr",textAlign:"left"}}>  {line}</div>);
+        continue;
+      }
+      if (line.startsWith('CMD:')) {
+        elements.push(
+          <div key={i} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:12,color:"var(--code-text)",background:"rgba(125,211,252,0.06)",borderRadius:6,padding:"8px 12px",marginTop:12,direction:"ltr",textAlign:"left",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{line.slice(4)}</div>
+        );
+        continue;
+      }
+      if (line.startsWith('DESC:')) {
+        elements.push(
+          <div key={i} style={{color:"var(--text-secondary)",fontSize:12,lineHeight:1.5,padding:"4px 12px 0",direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{line.slice(5)}</div>
+        );
+        continue;
+      }
+      if (line.startsWith('FLOW_TITLE:')) {
+        flowIdx = 0;
+        elements.push(
+          <div key={i} style={{color:"var(--text-primary)",fontSize:14,fontWeight:700,marginTop:22,marginBottom:8,paddingTop:14,borderTop:"1px solid rgba(255,255,255,0.06)",direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{line.slice(11)}</div>
+        );
+        continue;
+      }
+      if (line.startsWith('FLOW:')) {
+        flowIdx++;
+        elements.push(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+            <span style={{width:20,height:20,borderRadius:"50%",background:"rgba(0,212,255,0.12)",border:"1px solid rgba(0,212,255,0.25)",color:"#00D4FF",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{flowIdx}</span>
+            <span style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:11,color:"var(--code-text)",direction:"ltr"}}>{line.slice(5)}</span>
+          </div>
+        );
         continue;
       }
       if (line.startsWith('🔹')) {

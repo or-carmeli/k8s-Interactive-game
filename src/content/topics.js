@@ -2486,8 +2486,8 @@ export const TOPICS = [
     descriptionEn: "Debugging · Observability · Diagnosis · Tools",
     levels: {
       easy: {
-        theory: "פקודות Debug בסיסיות.\n🔹 kubectl describe: events ומידע מפורט על resource\n🔹 kubectl logs: לוגים של קונטיינר\n🔹 kubectl exec: מריץ פקודה בתוך Pod\n🔹 kubectl get pods -A: כל ה-Pods בכל ה-Namespaces\nCODE:\nkubectl describe pod my-pod\nkubectl logs my-pod\nkubectl logs my-pod -c my-container\nkubectl exec -it my-pod -- bash\nkubectl get pods -A",
-        theoryEn: "Basic Debug Commands.\n🔹 kubectl describe: events and detailed info about a resource\n🔹 kubectl logs: container logs\n🔹 kubectl exec: runs a command inside a Pod\n🔹 kubectl get pods -A: all Pods in all Namespaces\nCODE:\nkubectl describe pod my-pod\nkubectl logs my-pod\nkubectl logs my-pod -c my-container\nkubectl exec -it my-pod -- bash\nkubectl get pods -A",
+        theory: "פקודות Debug בסיסיות\n\nCMD:kubectl describe pod <pod-name>\nDESC:מידע מפורט על Pod כולל Events\n\nCMD:kubectl logs <pod-name>\nDESC:צפייה בלוגים של הקונטיינר\n\nCMD:kubectl exec -it <pod-name> -- bash\nDESC:הרצת פקודה או פתיחת shell בתוך הקונטיינר\n\nCMD:kubectl get pods -A\nDESC:רשימת כל ה-Pods בכל ה-Namespaces\n\nCMD:kubectl get events -A\nDESC:רשימת אירועים מכל ה-Namespaces\n\nFLOW_TITLE:זרימת עבודה לדיבוג\nFLOW:kubectl get pods -A\nFLOW:kubectl describe pod my-pod\nFLOW:kubectl logs my-pod\nFLOW:kubectl exec -it my-pod -- bash",
+        theoryEn: "Basic Debug Commands\n\nCMD:kubectl describe pod <pod-name>\nDESC:Detailed info about a Pod including Events\n\nCMD:kubectl logs <pod-name>\nDESC:View container logs\n\nCMD:kubectl exec -it <pod-name> -- bash\nDESC:Run a command or open a shell inside the container\n\nCMD:kubectl get pods -A\nDESC:List all Pods in all Namespaces\n\nCMD:kubectl get events -A\nDESC:List events from all Namespaces\n\nFLOW_TITLE:Debugging Workflow\nFLOW:kubectl get pods -A\nFLOW:kubectl describe pod my-pod\nFLOW:kubectl logs my-pod\nFLOW:kubectl exec -it my-pod -- bash",
         questions: [
             {
               q: "ה-Pod 'web-server' לא מגיב ואתה לא יודע למה. איזו פקודה תיתן לך events ומצב מפורט כדי להתחיל לאבחן?",
