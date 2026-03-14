@@ -867,7 +867,8 @@ function Footer({ lang, onPrivacy, onTerms }) {
 export default function K8sQuestApp() {
   console.info("[KubeQuest:boot] K8sQuestApp render");
   const { theme, toggleTheme } = useTheme();
-  const [lang, setLang]                   = useState("he");
+  const [lang, setLangRaw]                 = useState(() => safeGetItem("lang_v1", "he"));
+  const setLang = (l) => { setLangRaw(l); try { localStorage.setItem("lang_v1", l); } catch {} };
   const [gender, setGender]               = useState(() => safeGetItem("gender_v1", "m"));
   const handleSetGender = (g) => { setGender(g); localStorage.setItem("gender_v1", g); };
   const t = (key) => {
@@ -1004,6 +1005,7 @@ export default function K8sQuestApp() {
   const isGuest = user?.id === "guest";
   const achievementsLoaded = useRef(false);
   const loadingDataRef = useRef(false); // prevents concurrent loadUserData calls
+  const prevLangRef = useRef(lang);     // tracks previous lang for mid-quiz language switch detection
   const quizRunIdRef  = useRef(null);
   const answerCacheRef = useRef({});  // prefetched { [questionId]: { correctIndex, explanation } }
   const liveIndexRef  = useRef(0);   // highest question index reached; never decremented
@@ -1393,6 +1395,24 @@ export default function K8sQuestApp() {
     }).catch(() => {});
   }, [questionIndex, screen, topicScreen]);
 
+  // When language changes during an active quiz, restart with correct language.
+  // Online questions have server-assigned IDs tied to a specific language, so a
+  // full restart is the only safe option.
+  useEffect(() => {
+    if (prevLangRef.current === lang) return;
+    prevLangRef.current = lang;
+    if (screen !== "topic" || !selectedTopic || !selectedLevel) return;
+    const isFree = isFreeMode(selectedTopic.id);
+    if (isFree) {
+      // Mixed / daily / bookmarks - can't reliably swap, go home
+      clearQuizState();
+      setScreen("home");
+      return;
+    }
+    // Restart the topic quiz in the new language
+    startTopic(selectedTopic, selectedLevel);
+  }, [lang]);
+
   // Move focus to the question container whenever the question changes so screen
   // readers announce the new question automatically.
   useEffect(() => {
@@ -1422,6 +1442,7 @@ export default function K8sQuestApp() {
     saveQuizState({
       quizRunId:     quizRunIdRef.current,
       userId:        user?.id || "guest",
+      lang,
       topicId:       selectedTopic.id,
       topicName:     selectedTopic.name,
       topicColor:    selectedTopic.color,
@@ -1946,6 +1967,8 @@ export default function K8sQuestApp() {
     else if (saved.topicId === "bookmarks")  topic = BOOKMARKS_TOPIC;
     else                                     topic = TOPICS.find(tp => tp.id === saved.topicId);
     if (!topic || !saved.questions?.length) { clearQuizState(); setResumeData(null); return; }
+    // Discard saved quiz if it was in a different language
+    if (saved.lang && saved.lang !== lang) { clearQuizState(); setResumeData(null); return; }
 
     // Restore shuffled question list to the correct state slot
     if (isFreeMode(topic.id) || saved.retryMode) setMixedQuestions(saved.questions);
@@ -3856,9 +3879,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const q=searchQuery.toLowerCase();
             const results=[];
             TOPICS.forEach(topic=>(['easy','medium','hard']).forEach(lvl=>{
-              (topic.levels?.[lvl]?.questions||[]).forEach(question=>{
-                const text=lang==="en"?(question.qEn||question.q):question.q;
-                if(text.toLowerCase().includes(q)) results.push({topic,level:lvl,question});
+              const qs=lang==="en"?topic.levels?.[lvl]?.questionsEn:topic.levels?.[lvl]?.questions;
+              (qs||[]).forEach(question=>{
+                if(question.q.toLowerCase().includes(q)) results.push({topic,level:lvl,question});
               });
             }));
             const capped=results.slice(0,25);
@@ -3872,7 +3895,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     <span style={{color:topic.color,fontSize:12,fontWeight:700}}>{topic.name}</span>
                     <span style={{marginLeft:"auto",background:`${LEVEL_CONFIG[level]?.color}22`,color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
                   </div>
-                  <div dir={dir} style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5,marginBottom:10}}>{renderBidiBlock(lang==="en"?(question.qEn||question.q):question.q, lang)}</div>
+                  <div dir={dir} style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5,marginBottom:10}}>{renderBidiBlock(question.q, lang)}</div>
                   <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
                     {lang==="en"?"Go to Topic →":"עבור לנושא →"}
                   </button>
