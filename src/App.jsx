@@ -2866,16 +2866,16 @@ export default function K8sQuestApp() {
       </div>
     );
     return (
-      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <div dir={textDir} style={{display:"flex",flexDirection:"column",gap:10,direction:textDir,textAlign}}>
         {correctLines.length > 0 && (
           <div>
-            <div dir={textDir} style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",marginBottom:6,textAlign}}>{sectionTitle}</div>
+            <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",marginBottom:6}}>{sectionTitle}</div>
             {correctLines.map((line, i) => bullet(line, `c${i}`))}
           </div>
         )}
         {wrongLines.length > 0 && (
           <div style={{marginTop:4}}>
-            <div dir={textDir} style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",marginBottom:6,textAlign}}>{wrongTitle}</div>
+            <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",marginBottom:6}}>{wrongTitle}</div>
             {wrongLines.map((line, i) => bullet(line, `w${i}`))}
           </div>
         )}
@@ -2884,10 +2884,13 @@ export default function K8sQuestApp() {
   };
 
   // Renders incident step prompt: title (bold), facts/bullets (normal), terminal output (monospace LTR), question (amber).
+  // All Hebrew text lines use explicit RTL direction. Terminal/command blocks use LTR with bidi isolation.
   const renderIncidentPrompt = (text) => {
     if (!text) return null;
     const terminalPat = /^(kubectl|NAME\s|READY|STATUS\s|\s{2,}|[a-z0-9]+(-[a-z0-9]+)+\s|FATAL|Error|Failed|rpc error|unauthorized|  [A-Za-z])/;
     const _hasHe = (s) => /[\u0590-\u05FF]/.test(s);
+    const textDir = lang==="he"?"rtl":"ltr";
+    const textAlign = lang==="he"?"right":"left";
     const lines = text.split("\n");
     const titleIdx = lines.findIndex(l => l.trim() && !(!_hasHe(l) && terminalPat.test(l)));
     let questionIdx = -1;
@@ -2900,7 +2903,7 @@ export default function K8sQuestApp() {
       elements.push(
         <div key={`term-${elements.length}`} style={{background:"rgba(0,0,0,0.3)",borderRadius:8,padding:"10px 12px",marginTop:6,marginBottom:6,overflowX:"auto",direction:"ltr",unicodeBidi:"isolate"}}>
           {termGroup.map((tl, ti) => (
-            <div key={ti} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:12,color:"var(--code-text)",lineHeight:1.8,whiteSpace:"pre",direction:"ltr",unicodeBidi:"isolate"}}>{tl}</div>
+            <div key={ti} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:12,color:"var(--code-text)",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"keep-all",overflowWrap:"break-word",direction:"ltr",unicodeBidi:"isolate"}}>{tl}</div>
           ))}
         </div>
       );
@@ -2921,19 +2924,19 @@ export default function K8sQuestApp() {
       const isQ = i === questionIdx && i !== titleIdx;
       const isBullet = line.trim().startsWith("\u2022");
       if (isTitle) {
-        elements.push(<div key={i} dir="auto" style={{color:"var(--text-bright)",fontSize:15,fontWeight:700,lineHeight:1.6,marginBottom:4}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>);
+        elements.push(<div key={i} dir={textDir} style={{color:"var(--text-bright)",fontSize:15,fontWeight:700,lineHeight:1.6,marginBottom:4,direction:textDir,textAlign}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>);
       } else if (isQ) {
-        elements.push(<div key={i} dir="auto" style={{color:"#fbbf24",fontSize:14,fontWeight:600,lineHeight:1.8,marginTop:8}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>);
+        elements.push(<div key={i} dir={textDir} style={{color:"#fbbf24",fontSize:14,fontWeight:600,lineHeight:1.8,marginTop:8,direction:textDir,textAlign}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>);
       } else if (isBullet) {
         const bulletText = line.trim().slice(1).trim();
         elements.push(
-          <div key={i} dir="auto" style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:4,lineHeight:1.8}}>
+          <div key={i} dir={textDir} style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:4,lineHeight:1.8,direction:textDir,textAlign}}>
             <span style={{flexShrink:0,color:"var(--text-dim)",fontSize:14,lineHeight:1.8}}>{"\u2022"}</span>
             <span style={{flex:1,color:"var(--text-primary)",fontSize:14,lineHeight:1.8}}>{lang === "he" ? renderBidiBlock(bulletText, lang) : renderInline(bulletText)}</span>
           </div>
         );
       } else {
-        elements.push(<div key={i} dir="auto" style={{color:"var(--text-primary)",fontSize:14,lineHeight:1.8,marginBottom:4}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>);
+        elements.push(<div key={i} dir={textDir} style={{color:"var(--text-primary)",fontSize:14,lineHeight:1.8,marginBottom:4,direction:textDir,textAlign}}>{lang === "he" ? renderBidiBlock(line, lang) : renderInline(line)}</div>);
       }
     });
     flushTerm();
@@ -5018,7 +5021,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1.2,color:"var(--text-muted)"}}>{t("incidentActiveLabel")}</span>
               </div>
               {/* Incident code */}
-              <div style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"var(--text-secondary)",marginBottom:6,letterSpacing:0.5}}>{ri.incidentCode||"INC-0000"}</div>
+              <div style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"var(--text-secondary)",marginBottom:6,letterSpacing:0.5,direction:"ltr",unicodeBidi:"isolate",textAlign:"left"}}>{ri.incidentCode||"INC-0000"}</div>
               {/* Title */}
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
                 <span style={{fontSize:18}}>{ri.icon}</span>
@@ -5033,7 +5036,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   {l:"Cluster",v:ri.cluster},
                   {l:"Status",v:lang==="he"?"בבדיקה":"Investigating"},
                 ].map(m=>(
-                  <div key={m.l} style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",lineHeight:1.7}}>
+                  <div key={m.l} style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",lineHeight:1.7,direction:"ltr",unicodeBidi:"isolate",textAlign:"left"}}>
                     <span style={{color:"#64748b"}}>{m.l}:</span> {m.v}
                   </div>
                 ))}
@@ -5088,7 +5091,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                           <div style={{fontSize:10,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",marginBottom:2,letterSpacing:0.5}}>{incident.incidentCode||""}</div>
                           <div style={{color:"var(--text-primary)",fontWeight:800,fontSize:13,marginBottom:2,lineHeight:1.4}}>{lang==="he"?(incident.titleShortHe||incident.titleHe):(incident.titleShort||incident.title)}</div>
                           <div style={{color:"#cbd5e1",fontSize:11,lineHeight:1.4,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
-                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",color:"#94a3b8",fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",color:"#94a3b8",fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",direction:"ltr",unicodeBidi:"isolate"}}>
                             <span>{incident.steps.length} {t("incidentSteps")}</span>
                             <span style={{opacity:0.4}}>|</span>
                             <span>{incident.estimatedTime}</span>
@@ -5122,7 +5125,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-muted)",padding:"7px 12px",borderRadius:7,cursor:"pointer",fontSize:13}}>
                 {lang==="he"?"חזרה":"Return"}
               </button>
-              <div style={{display:"flex",gap:12,alignItems:"center",fontSize:12,fontWeight:600,fontFamily:"'SF Mono','Fira Code',monospace"}}>
+              <div style={{display:"flex",gap:12,alignItems:"center",fontSize:12,fontWeight:600,fontFamily:"'SF Mono','Fira Code',monospace",direction:"ltr",unicodeBidi:"isolate"}}>
                 <span style={{color:"var(--text-secondary)"}}>{incidentStepIndex+1}/{totalSteps}</span>
                 <span style={{color:"#A855F7"}}>{incidentScore}/{maxScore}</span>
                 <span style={{color:incidentMistakes>0?"#EF4444":"var(--text-dim)"}}>{incidentMistakes} {lang==="he"?"שג.":"err"}</span>
@@ -5140,7 +5143,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <span style={{fontSize:20,marginTop:2}}>{selectedIncident.icon}</span>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-                  <span style={{fontSize:10,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",letterSpacing:0.5}}>{selectedIncident.incidentCode||""}</span>
+                  <span style={{fontSize:10,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",letterSpacing:0.5,direction:"ltr",unicodeBidi:"isolate"}}>{selectedIncident.incidentCode||""}</span>
                   <span style={{color:INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty]?.color||"#F59E0B",fontSize:10,fontWeight:700}}>{INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty]?.[lang==="he"?"labelHe":"label"]}</span>
                 </div>
                 <div style={{color:"var(--text-bright)",fontWeight:800,fontSize:14,lineHeight:1.4}}>{lang==="he"?(selectedIncident.titleShortHe||selectedIncident.titleHe):(selectedIncident.titleShort||selectedIncident.title)}</div>
@@ -5148,11 +5151,11 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             </div>
 
             {/* Prompt */}
-            <div style={{background:"rgba(15,23,42,0.7)",border:"1px solid var(--glass-10)",borderRadius:12,padding:"16px 18px",marginBottom:16,overflowX:"auto"}}>
+            <div dir={dir} style={{background:"rgba(15,23,42,0.7)",border:"1px solid var(--glass-10)",borderRadius:12,padding:"16px 18px",marginBottom:16,overflowX:"auto",direction:dir}}>
               {renderIncidentPrompt(lang === "he" ? (step.promptHe || step.prompt) : step.prompt)}
             </div>
 
-            {/* Options */}
+            {/* Options - card layout always follows page direction (RTL for Hebrew), only text content isolates LTR for commands */}
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
               {(lang === "he" ? (step.optionsHe || step.options) : step.options || []).map((opt,i)=>{
                 const isCorrect  = incidentAnswerResult ? i === incidentAnswerResult.correctIndex : i === step?.answer;
@@ -5168,23 +5171,23 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 const hasCmd = cmdMatch && cmdMatch[1];
                 const cmdText = hasCmd ? cmdMatch[1].trim() : null;
                 const cmdNote = hasCmd ? cmdMatch[2] : null;
-                // For non-command options or mixed content
-                const optDir = (dir==="rtl" && !hasHebrew(opt)) ? "ltr" : dir;
+                // Content direction: LTR for pure commands, otherwise follows page dir
+                const contentDir = (dir==="rtl" && !hasHebrew(opt)) ? "ltr" : dir;
                 return(
                   <button key={i} className="incident-opt" onClick={()=>{ if (!incidentSubmitted) submitIncidentStep(i); }}
                     aria-pressed={!incidentSubmitted ? i===incidentAnswer : undefined}
-                    style={{width:"100%",textAlign:optDir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s",direction:optDir}}>
-                    <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1,direction:"ltr"}}>
+                    style={{width:"100%",textAlign:dir==="rtl"?"right":"left",padding:"13px 14px",background:bg,border:`1px solid ${border}`,borderRadius:10,color,fontSize:14,cursor:incidentSubmitted?"default":"pointer",display:"flex",alignItems:"flex-start",gap:10,transition:"all 0.15s",direction:dir}}>
+                    <span style={{flexShrink:0,width:24,height:24,borderRadius:6,background:labelBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:labelColor,marginTop:1}}>
                       {["A","B","C","D"][i]}
                     </span>
-                    <span style={{flex:1,minWidth:0,direction:optDir,textAlign:optDir==="rtl"?"right":"left"}}>
+                    <span style={{flex:1,minWidth:0}}>
                       {hasCmd ? (
                         <>
-                          <span style={{display:"block",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:12,lineHeight:1.7,direction:"ltr",unicodeBidi:"isolate",textAlign:"left",overflowWrap:"break-word",color:"inherit"}}>{cmdText}</span>
-                          {cmdNote && <span style={{display:"block",fontSize:12,color:"var(--text-dim)",lineHeight:1.5,marginTop:3}}>{cmdNote}</span>}
+                          <span style={{display:"block",fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:12,lineHeight:1.7,direction:"ltr",unicodeBidi:"isolate",textAlign:"left",wordBreak:"keep-all",overflowWrap:"break-word",color:"inherit"}}>{cmdText}</span>
+                          {cmdNote && <span dir={dir} style={{display:"block",fontSize:12,color:"var(--text-dim)",lineHeight:1.5,marginTop:3,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>{cmdNote}</span>}
                         </>
                       ) : (
-                        <span dir={optDir} style={{lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",unicodeBidi:"isolate"}}>{lang==="he"?renderBidi(opt,lang):opt}</span>
+                        <span dir={contentDir} style={{display:"block",lineHeight:1.7,wordBreak:"break-word",overflowWrap:"anywhere",direction:contentDir,unicodeBidi:"isolate",textAlign:contentDir==="rtl"?"right":"left"}}>{lang==="he"?renderBidi(opt,lang):opt}</span>
                       )}
                     </span>
                     {incidentSubmitted&&isCorrect&&<span style={{flexShrink:0,fontSize:15}}>✓</span>}
