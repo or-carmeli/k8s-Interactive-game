@@ -13,6 +13,7 @@ import { INCIDENTS } from "./content/incidents";
 import { CHEATSHEET } from "./content/cheatsheet";
 import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from "./utils/quizPersistence";
 import { safeGetItem, safeGetJSON, checkDataVersion } from "./utils/storage";
+import { getLocalizedField, warnIfHebrew } from "./utils/i18n";
 import { hasHebrew, K8S_CONCEPT_TERMS, K8S_CODE_TERMS, CODE_SPAN_STYLE, renderBidiInner, HE_PREFIX_TERM_RE, renderHebrewPrefixTerms, renderBidi, CLI_COMMAND_RE, splitCliParts, renderBidiBlock } from "./utils/bidi";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory, fetchMaintenanceWindows } from "./api/monitoring";
@@ -678,6 +679,7 @@ function splitQuestionSegments(qText) {
 // Paragraphs with inner \n are rendered as monospace code blocks.
 function renderQuestion(qText, lang) {
   if (!qText) return null;
+  warnIfHebrew(qText, lang, "quiz.question");
   const paragraphs = qText.split(/\n\n+/);
 
   // Single paragraph - try structured split for mixed Hebrew+command+error questions
@@ -876,6 +878,7 @@ export default function K8sQuestApp() {
     return TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.he[key] ?? key;
   };
   const dir = lang === "he" ? "rtl" : "ltr";
+  const levelLabel = (lvl) => getLocalizedField(LEVEL_CONFIG[lvl], "label", lang);
 
   const [authChecked, setAuthChecked]     = useState(false);
   const [dataLoaded,  setDataLoaded]      = useState(false);
@@ -1051,8 +1054,8 @@ export default function K8sQuestApp() {
 
   // Shuffle answer options so the correct answer isn't predictably the longest/same position
   const getLevelData = (topic, level) => ({
-    theory: lang === "en" ? topic.levels[level].theoryEn : topic.levels[level].theory,
-    questions: lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions,
+    theory: getLocalizedField(topic.levels[level], "theory", lang),
+    questions: getLocalizedField(topic.levels[level], "questions", lang),
   });
 
   const isLevelLocked = (topicId, level) => {
@@ -2356,13 +2359,13 @@ export default function K8sQuestApp() {
           fetchTheory(supabase, topic.id, level, lang),
         ]);
       } catch {
-        rawQs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
-        theory = lang === "en" ? topic.levels[level].theoryEn : topic.levels[level].theory;
+        rawQs = getLocalizedField(topic.levels[level], "questions", lang);
+        theory = getLocalizedField(topic.levels[level], "theory", lang);
       }
       setLoadingQuestions(false);
     } else {
-      rawQs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
-      theory = lang === "en" ? topic.levels[level].theoryEn : topic.levels[level].theory;
+      rawQs = getLocalizedField(topic.levels[level], "questions", lang);
+      theory = getLocalizedField(topic.levels[level], "theory", lang);
     }
     setTopicQuestions(shuffleOptions(rawQs || []));
     setTheoryContent(theory);
@@ -2403,7 +2406,7 @@ export default function K8sQuestApp() {
         const all = [];
         TOPICS.forEach(topic => {
           LEVEL_ORDER.forEach(level => {
-            const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+            const qs = getLocalizedField(topic.levels[level], "questions", lang);
             qs.forEach(q => all.push(q));
           });
         });
@@ -2418,7 +2421,7 @@ export default function K8sQuestApp() {
       const all = [];
       TOPICS.forEach(topic => {
         LEVEL_ORDER.forEach(level => {
-          const qs = lang === "en" ? topic.levels[level].questionsEn : topic.levels[level].questions;
+          const qs = getLocalizedField(topic.levels[level], "questions", lang);
           qs.forEach(q => all.push(q));
         });
       });
@@ -2461,7 +2464,7 @@ export default function K8sQuestApp() {
     }
     if (!dailyQs) {
       // Offline fallback - annual-seeded shuffle + daily window
-      const pool = lang === "en" ? DAILY_QUESTIONS.en : DAILY_QUESTIONS.he;
+      const pool = DAILY_QUESTIONS[lang] || DAILY_QUESTIONS.he;
       const annualSeed = new Date().getFullYear() * 31337;
       const annualRng = mulberry32(annualSeed);
       const shuffled = [...pool];
@@ -2536,6 +2539,7 @@ export default function K8sQuestApp() {
             question_id: qid, topic_id: selectedTopic.id, topic_name: selectedTopic.name,
             topic_color: selectedTopic.color, level: selectedLevel, question_index: questionIndex,
             question_text: q.q, options: q.options, answer: answerResult?.correctIndex ?? q.answer, explanation: answerResult?.explanation ?? q.explanation,
+            lang,
           }];
       try { localStorage.setItem("bookmarks_v1", JSON.stringify(next)); } catch {}
       return next;
@@ -2601,7 +2605,12 @@ export default function K8sQuestApp() {
   const getIncidentStep = (idx) => {
     if (incidentSteps && incidentSteps[idx]) {
       const s = incidentSteps[idx];
-      return { ...s, promptHe: s.prompt_he ?? s.promptHe, optionsHe: s.options_he ?? s.optionsHe };
+      return {
+        ...s,
+        promptHe: s.prompt_he ?? s.promptHe,
+        optionsHe: s.options_he ?? s.optionsHe,
+        explanationHe: s.explanation_he ?? s.explanationHe,
+      };
     }
     return selectedIncident?.steps?.[idx];
   };
@@ -2623,12 +2632,12 @@ export default function K8sQuestApp() {
       } catch {
         correct = ans === step.answer;
         correctAnswer = step.answer;
-        result = { correct, correctIndex: correctAnswer, explanation: step.explanation, explanationHe: step.explanationHe || step.explanation_he };
+        result = { correct, correctIndex: correctAnswer, explanation: step.explanation, explanationHe: step.explanationHe };
       }
     } else {
       correct = ans === step.answer;
       correctAnswer = step.answer;
-      result = { correct, correctIndex: correctAnswer, explanation: step.explanation, explanationHe: step.explanationHe || step.explanation_he };
+      result = { correct, correctIndex: correctAnswer, explanation: step.explanation, explanationHe: step.explanationHe };
     }
 
     setIncidentAnswer(ans);
@@ -3286,7 +3295,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       <div style={{position:"fixed",inset:0,pointerEvents:"none",backgroundImage:"linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px)",backgroundSize:"48px 48px"}}/>
       {flash&&!a11y.reduceMotion&&<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:800,background:"radial-gradient(circle at 50% 45%,rgba(16,185,129,0.14) 0%,transparent 60%)",animation:"correctFlash 0.6s ease forwards"}}/>}
       {showConfetti&&!a11y.reduceMotion&&<Confetti/>}
-      {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"var(--text-primary)",fontSize:14,fontWeight:700}}>{lang==="en"?newAchievement.nameEn:newAchievement.name}</div></div></div>}
+      {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"var(--text-primary)",fontSize:14,fontWeight:700}}>{getLocalizedField(newAchievement, "name", lang)}</div></div></div>}
       {saveError&&<div role="alert" aria-live="assertive" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
       {resumeToast&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,padding:"10px 20px",color:"#00D4FF",fontSize:13,fontWeight:600,zIndex:9999,boxShadow:"0 0 20px rgba(0,212,255,0.15)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap"}}>{t("resumeToast")}</div>}
 
@@ -3309,7 +3318,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{flex:1}}>
                 <div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{resumeData.topicName}</div>
                 <div style={{color:"var(--text-muted)",fontSize:12}}>
-                  {lang==="en"?LEVEL_CONFIG[resumeData.level]?.labelEn:LEVEL_CONFIG[resumeData.level]?.label}
+                  {levelLabel(resumeData.level)}
                 </div>
               </div>
             </div>
@@ -3499,7 +3508,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {bookmarks.map((b, i) => (
                   <div key={b.question_id} style={{background:"var(--glass-3)",border:"1px solid var(--glass-7)",borderRadius:10,padding:"11px 13px",display:"flex",alignItems:"flex-start",gap:10}}>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:11,color:b.topic_color||"#A855F7",fontWeight:700,marginBottom:4}}>{b.topic_name} · {lang==="en"?LEVEL_CONFIG[b.level]?.labelEn:LEVEL_CONFIG[b.level]?.label}</div>
+                      <div style={{fontSize:11,color:b.topic_color||"#A855F7",fontWeight:700,marginBottom:4}}>{b.topic_name} · {levelLabel(b.level)}</div>
                       <div dir={dir} style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5}}>{renderBidiBlock(b.question_text, lang)}</div>
                     </div>
                     <button onClick={()=>{
@@ -3821,7 +3830,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <div aria-hidden="true" style={{fontSize:24,width:44,height:44,borderRadius:10,background:`${topic.color}14`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${topic.color}22`,flexShrink:0}}>{topic.icon}</div>
                   <div style={{flex:1}}>
                     <h3 style={{margin:0,fontWeight:700,color:"var(--text-primary)",fontSize:15}}>{topic.name}</h3>
-                    <div style={{color:"var(--text-dim)",fontSize:12}}>{lang==="en"?topic.descriptionEn:topic.description}</div>
+                    <div style={{color:"var(--text-dim)",fontSize:12}}>{getLocalizedField(topic, "description", lang)}</div>
                   </div>
                   {(()=>{const done=LEVEL_ORDER.filter(lvl=>completedTopics[`${topic.id}_${lvl}`]).length;return done>0&&<div style={{display:"flex",alignItems:"center",gap:6}}>
                     <div style={{fontSize:11,color:topic.color,fontWeight:700,whiteSpace:"nowrap"}}>{done}/3</div>
@@ -3838,13 +3847,13 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                       <button key={lvl} className={locked?"":"card-hover"}
                         onClick={()=>tryStartQuiz(()=>startTopic(topic,lvl))}
                         disabled={locked}
-                        aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` - ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
+                        aria-label={`${getLocalizedField(cfg, "label", lang)}${done?` - ${done.correct}/${done.total}`:""}${locked?" (locked)":""}`}
                         style={{padding:"10px 8px",
                           background:locked?"var(--glass-1)":done?`${cfg.color}12`:"var(--glass-3)",
                           border:`1px solid ${locked?"var(--glass-4)":done?cfg.color+"44":"var(--glass-7)"}`,
                           borderRadius:10,textAlign:"center",opacity:locked?0.45:1,cursor:locked?"not-allowed":"pointer"}}>
                         <div style={{fontSize:16}} aria-hidden="true">{locked?"🔒":cfg.icon}</div>
-                        <div style={{fontSize:12,fontWeight:700,color:locked?"#334155":done?cfg.color:"var(--text-muted)"}}>{lang==="en"?cfg.labelEn:cfg.label}</div>
+                        <div style={{fontSize:12,fontWeight:700,color:locked?"#334155":done?cfg.color:"var(--text-muted)"}}>{getLocalizedField(cfg, "label", lang)}</div>
                         {done&&!locked&&<div style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}} aria-hidden="true">
                           {done.correct>0?"✓":""} {done.correct}/{done.total}
                         </div>}
@@ -3857,7 +3866,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               </section>
             ))}
           </div>);})()}
-          {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"var(--glass-2)",border:"1px solid var(--glass-5)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"var(--text-secondary)",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--glass-4)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"var(--text-secondary)"}}><span>{a.icon}</span>{lang==="en"?a.nameEn:a.name}</div>)}</div></div>}
+          {unlockedAchievements.length>0&&<div style={{marginTop:18,background:"var(--glass-2)",border:"1px solid var(--glass-5)",borderRadius:12,padding:"14px 18px"}}><div style={{color:"var(--text-secondary)",fontSize:11,fontWeight:700,marginBottom:10,letterSpacing:1}}>{t("achievementsTitle")}</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{ACHIEVEMENTS.filter(a=>unlockedAchievements.includes(a.id)).map(a=><div key={a.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--glass-4)",borderRadius:20,padding:"5px 12px",fontSize:12,color:"var(--text-secondary)"}}><span>{a.icon}</span>{getLocalizedField(a, "name", lang)}</div>)}</div></div>}
           </>)}
           {homeTab==="roadmap"&&<RoadmapView topics={TOPICS} levelConfig={LEVEL_CONFIG} completedTopics={completedTopics} isLevelLocked={isLevelLocked} startTopic={(topic,lvl)=>tryStartQuiz(()=>startTopic(topic,lvl))} startMixedQuiz={()=>tryStartQuiz(startMixedQuiz)} lang={lang} t={t} dir={dir}/>}
           <Footer lang={lang} onPrivacy={()=>setScreen("privacy")} onTerms={()=>setScreen("terms")}/>
@@ -3879,7 +3888,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const q=searchQuery.toLowerCase();
             const results=[];
             TOPICS.forEach(topic=>(['easy','medium','hard']).forEach(lvl=>{
-              const qs=lang==="en"?topic.levels?.[lvl]?.questionsEn:topic.levels?.[lvl]?.questions;
+              const qs=getLocalizedField(topic.levels?.[lvl], "questions", lang);
               (qs||[]).forEach(question=>{
                 if(question.q.toLowerCase().includes(q)) results.push({topic,level:lvl,question});
               });
@@ -3893,7 +3902,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,direction:"ltr"}}>
                     <span style={{fontSize:16}}>{topic.icon}</span>
                     <span style={{color:topic.color,fontSize:12,fontWeight:700}}>{topic.name}</span>
-                    <span style={{marginLeft:"auto",background:`${LEVEL_CONFIG[level]?.color}22`,color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
+                    <span style={{marginLeft:"auto",background:`${LEVEL_CONFIG[level]?.color}22`,color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:6}}>{levelLabel(level)}</span>
                   </div>
                   <div dir={dir} style={{color:"var(--text-light)",fontSize:13,lineHeight:1.5,marginBottom:10}}>{renderBidiBlock(question.q, lang)}</div>
                   <button onClick={()=>tryStartQuiz(()=>startTopic(topic,level))} style={{padding:"7px 14px",background:`${topic.color}15`,border:`1px solid ${topic.color}44`,borderRadius:8,color:topic.color,fontSize:12,fontWeight:700,cursor:"pointer"}}>
@@ -3915,7 +3924,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           if(r.wrongQuestions&&r.wrongQuestions.length>0){
             r.wrongQuestions.forEach(q=>{wrongItems.push({topic,level:lvl,q});});
           } else if(r.wrongIndices&&r.wrongIndices.length>0){
-            const rawQs=lang==="en"?topic.levels[lvl].questionsEn:topic.levels[lvl].questions;
+            const rawQs=getLocalizedField(topic.levels[lvl], "questions", lang);
             r.wrongIndices.forEach(idx=>{const q=rawQs?.[idx];if(q) wrongItems.push({topic,level:lvl,q});});
           } else if((!r.wrongIndices||(Array.isArray(r.wrongIndices)&&r.wrongIndices.length===0&&!r.retryComplete))&&r.correct<r.total){
             wrongItems.push({topic,level:lvl,legacy:true,correct:r.correct,total:r.total});
@@ -3942,7 +3951,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{color:"var(--text-primary)",fontWeight:700,fontSize:14}}>{topic.name}</div>
                           <div style={{color:"var(--text-muted)",fontSize:12,marginTop:2,display:"flex",alignItems:"center",gap:8,direction:"ltr"}}>
-                            <span style={{color:LEVEL_CONFIG[level]?.color,fontWeight:600}}>{lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}</span>
+                            <span style={{color:LEVEL_CONFIG[level]?.color,fontWeight:600}}>{levelLabel(level)}</span>
                             <span>·</span>
                             <span style={{color:"#EF4444"}}>{correct}/{total} {lang==="en"?"correct":"נכון"}</span>
                           </div>
@@ -3961,7 +3970,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         <span style={{fontSize:15}}>{topic.icon}</span>
                         <span style={{color:"var(--text-secondary)",fontSize:12,fontWeight:600}}>{topic.name}</span>
                         <span style={{color:LEVEL_CONFIG[level]?.color,fontSize:11,fontWeight:700,background:`${LEVEL_CONFIG[level]?.color}18`,border:`1px solid ${LEVEL_CONFIG[level]?.color}44`,borderRadius:6,padding:"2px 6px"}}>
-                          {lang==="en"?LEVEL_CONFIG[level]?.labelEn:LEVEL_CONFIG[level]?.label}
+                          {levelLabel(level)}
                         </span>
                       </div>
                       <div style={{color:"var(--text-primary)",fontSize:14,lineHeight:1.5,marginBottom:8,direction:dir}}>{renderBidiBlock(q.q, lang)}</div>
@@ -4556,7 +4565,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",direction:dir,marginBottom:6}}>
               <button onClick={()=>setScreen("home")} aria-label={t("back")} style={{background:"var(--glass-4)",border:"1px solid var(--glass-9)",color:"var(--text-secondary)",width:34,height:34,borderRadius:8,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span aria-hidden="true">{dir==="rtl"?"→":"←"}</span></button>
-              <span style={{fontSize:12,color:LEVEL_CONFIG[selectedLevel]?.color,background:`${LEVEL_CONFIG[selectedLevel]?.color||"#888"}18`,padding:"3px 10px",borderRadius:20,fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>{LEVEL_CONFIG[selectedLevel]?.icon} {lang==="en"?LEVEL_CONFIG[selectedLevel]?.labelEn:LEVEL_CONFIG[selectedLevel]?.label}</span>
+              <span style={{fontSize:12,color:LEVEL_CONFIG[selectedLevel]?.color,background:`${LEVEL_CONFIG[selectedLevel]?.color||"#888"}18`,padding:"3px 10px",borderRadius:20,fontWeight:700,whiteSpace:"nowrap",flexShrink:0}}>{LEVEL_CONFIG[selectedLevel]?.icon} {levelLabel(selectedLevel)}</span>
             </div>
             <h2 style={{margin:0,color:selectedTopic.color,fontSize:17,fontWeight:800,textAlign:"center"}}>{selectedTopic.name}</h2>
           </div>
@@ -4675,6 +4684,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
 
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
                 {(currentQuestions[questionIndex]?.options || []).map((opt,i)=>{
+                  if (i === 0) (currentQuestions[questionIndex]?.options || []).forEach((o,j) => warnIfHebrew(o, lang, `quiz.option[${j}]`));
                   const q_cur = currentQuestions[questionIndex];
                   const isCorrect = dispAnswerResult ? i === dispAnswerResult.correctIndex : (typeof q_cur?.answer === "number" ? i === q_cur.answer : false);
                   const isChosen  = i===dispSelectedAnswer;
@@ -4735,6 +4745,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     const timedOut = dispSelectedAnswer === null || dispSelectedAnswer === -1;
                     const isCorrect = dispAnswerResult ? dispAnswerResult.correct : (!timedOut && dispSelectedAnswer === q.answer);
                     const explanationText = dispAnswerResult?.explanation || q.explanation || "";
+                    warnIfHebrew(explanationText, lang, "quiz.explanation");
                     const correctIdx = dispAnswerResult?.correctIndex ?? q.answer;
                     const paragraphs = explanationText.split("\n").flatMap(p => {
                       const t2 = p.trim(); if (!t2) return [];
@@ -4869,7 +4880,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             <div style={{fontSize:52,marginBottom:10,animation:"popIn 1s ease"}}>
               {allCorrect?"🌟":anyCorrect?"👍":"💪"}
             </div>
-            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} - {lang==="en"?LEVEL_CONFIG[selectedLevel]?.labelEn:LEVEL_CONFIG[selectedLevel]?.label}</h2>
+            <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} - {levelLabel(selectedLevel)}</h2>
             <div style={{display:"inline-flex",alignItems:"center",gap:10,marginBottom:8,background:"var(--glass-4)",borderRadius:30,padding:"8px 20px"}}>
               <span style={{color:"var(--text-primary)",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
               {allCorrect&&<span style={{color:"#F59E0B",fontSize:13,fontWeight:700}}>{t("perfect")}</span>}
@@ -4920,7 +4931,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 return(
                   <button onClick={()=>startTopic(selectedTopic,nextLvl)}
                     style={{padding:14,background:`linear-gradient(135deg,${nextCfg.color}ee,${nextCfg.color}88)`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",boxShadow:`0 4px 20px ${nextCfg.color}55`}}>
-                    {t("nextLevelBtn")} {nextCfg.icon} {lang==="en"?nextCfg.labelEn:nextCfg.label}
+                    {t("nextLevelBtn")} {nextCfg.icon} {getLocalizedField(nextCfg, "label", lang)}
                   </button>
                 );
               })()}
@@ -4963,7 +4974,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
               {(()=>{
-                const lvlLabel = lang==="en" ? LEVEL_CONFIG[selectedLevel]?.labelEn : LEVEL_CONFIG[selectedLevel]?.label;
+                const lvlLabel = levelLabel(selectedLevel);
                 const perfect = result?.correct === result?.total;
                 const isDaily = selectedTopic.id === "daily";
                 const dateStr = new Date().toLocaleDateString(lang==="en"?"en-US":"he-IL",{month:"short",day:"numeric"});
@@ -5061,10 +5072,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               {/* Title */}
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
                 <span style={{fontSize:18}}>{ri.icon}</span>
-                <span style={{color:"var(--text-bright)",fontWeight:800,fontSize:15,lineHeight:1.3}}>{lang==="he"?(ri.titleShortHe||ri.titleHe):(ri.titleShort||ri.title)}</span>
+                <span style={{color:"var(--text-bright)",fontWeight:800,fontSize:15,lineHeight:1.3}}>{getLocalizedField(ri, "titleShort", lang) || getLocalizedField(ri, "title", lang)}</span>
               </div>
               {/* Description */}
-              <div style={{color:"#cbd5e1",fontSize:12,lineHeight:1.5,marginBottom:8}}>{lang==="he"?ri.descriptionHe:ri.description}</div>
+              <div style={{color:"#cbd5e1",fontSize:12,lineHeight:1.5,marginBottom:8}}>{getLocalizedField(ri, "description", lang)}</div>
               {/* Metadata - stacked */}
               <div style={{display:"flex",flexDirection:"column",gap:2,marginBottom:10}}>
                 {[
@@ -5107,7 +5118,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div key={difficulty} style={{marginBottom:28}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
                   <span style={{background:`${config.color}12`,padding:"3px 10px",borderRadius:8,fontSize:11,fontWeight:700,letterSpacing:0.5,color:config.color,display:"inline-flex",alignItems:"center",gap:5}}>
-                    {lang==="he"?config.labelHe:config.label}
+                    {getLocalizedField(config, "label", lang)}
                     {locked&&<span style={{fontSize:11}}>🔒</span>}
                   </span>
                 </div>
@@ -5125,8 +5136,8 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         <span style={{width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--glass-3)",borderRadius:9,flexShrink:0,fontSize:20,marginTop:2}}>{incident.icon}</span>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:10,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",marginBottom:2,letterSpacing:0.5}}>{incident.incidentCode||""}</div>
-                          <div style={{color:"var(--text-primary)",fontWeight:800,fontSize:13,marginBottom:2,lineHeight:1.4}}>{lang==="he"?(incident.titleShortHe||incident.titleHe):(incident.titleShort||incident.title)}</div>
-                          <div style={{color:"#cbd5e1",fontSize:11,lineHeight:1.4,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
+                          <div style={{color:"var(--text-primary)",fontWeight:800,fontSize:13,marginBottom:2,lineHeight:1.4}}>{getLocalizedField(incident, "titleShort", lang) || getLocalizedField(incident, "title", lang)}</div>
+                          <div style={{color:"#cbd5e1",fontSize:11,lineHeight:1.4,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getLocalizedField(incident, "description", lang)}</div>
                           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",color:"#94a3b8",fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",direction:"ltr",unicodeBidi:"isolate"}}>
                             <span>{incident.steps.length} {t("incidentSteps")}</span>
                             <span style={{opacity:0.4}}>|</span>
@@ -5180,20 +5191,20 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
                   <span style={{fontSize:10,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",letterSpacing:0.5,direction:"ltr",unicodeBidi:"isolate"}}>{selectedIncident.incidentCode||""}</span>
-                  <span style={{color:INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty]?.color||"#F59E0B",fontSize:10,fontWeight:700}}>{INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty]?.[lang==="he"?"labelHe":"label"]}</span>
+                  <span style={{color:INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty]?.color||"#F59E0B",fontSize:10,fontWeight:700}}>{getLocalizedField(INCIDENT_DIFFICULTY_CONFIG[selectedIncident.difficulty], "label", lang)}</span>
                 </div>
-                <div style={{color:"var(--text-bright)",fontWeight:800,fontSize:14,lineHeight:1.4}}>{lang==="he"?(selectedIncident.titleShortHe||selectedIncident.titleHe):(selectedIncident.titleShort||selectedIncident.title)}</div>
+                <div style={{color:"var(--text-bright)",fontWeight:800,fontSize:14,lineHeight:1.4}}>{getLocalizedField(selectedIncident, "titleShort", lang) || getLocalizedField(selectedIncident, "title", lang)}</div>
               </div>
             </div>
 
             {/* Prompt */}
             <div dir={dir} style={{background:"rgba(15,23,42,0.7)",border:"1px solid var(--glass-10)",borderRadius:12,padding:"16px 18px",marginBottom:16,overflowX:"auto",direction:dir}}>
-              {renderIncidentPrompt(lang === "he" ? (step.promptHe || step.prompt) : step.prompt)}
+              {renderIncidentPrompt(getLocalizedField(step, "prompt", lang))}
             </div>
 
             {/* Options - card layout always follows page direction (RTL for Hebrew), only text content isolates LTR for commands */}
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
-              {(lang === "he" ? (step.optionsHe || step.options) : step.options || []).map((opt,i)=>{
+              {(getLocalizedField(step, "options", lang) || []).map((opt,i)=>{
                 const isCorrect  = incidentAnswerResult ? i === incidentAnswerResult.correctIndex : i === step?.answer;
                 const isChosen   = i === incidentAnswer;
                 let bg = "var(--glass-2)", border = "var(--glass-9)", color = "var(--text-light)", labelBg = "var(--glass-7)", labelColor = "var(--text-secondary)";
@@ -5238,9 +5249,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
               <div style={{animation:"fadeIn 0.3s ease"}}>
                 {(()=>{
                   const incCorrect = incidentAnswerResult ? incidentAnswerResult.correct : incidentAnswer === step.answer;
-                  const incExplanation = incidentAnswerResult
-                    ? (lang === "he" ? (incidentAnswerResult.explanationHe || incidentAnswerResult.explanation) : incidentAnswerResult.explanation)
-                    : (lang === "he" ? (step.explanationHe || step.explanation) : step.explanation);
+                  const incExplanation = getLocalizedField(
+                    incidentAnswerResult || step, "explanation", lang
+                  );
                   return (
                     <>
                       <div style={{background:incCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",borderInlineStart:`3px solid ${incCorrect?"#10B981":"#EF4444"}`,borderRadius:8,padding:"16px 18px",marginBottom:14}}>
@@ -5273,7 +5284,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           <div style={{maxWidth:480,margin:"30px auto",padding:"0 18px",textAlign:"center",animation:"fadeIn 0.5s ease",direction:dir}}>
             <div style={{fontSize:56,marginBottom:10}}>{perfect?"🏆":goodRun?"🎯":"💪"}</div>
             <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 6px",color:"#22C55E"}}>{t("incidentResolved")}</h2>
-            <p style={{color:"var(--text-muted)",fontSize:13,margin:"0 0 20px"}}>{lang==="he"?selectedIncident.titleHe:selectedIncident.title}</p>
+            <p style={{color:"var(--text-muted)",fontSize:13,margin:"0 0 20px"}}>{getLocalizedField(selectedIncident, "title", lang)}</p>
 
             {/* Stats grid */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:24}}>
