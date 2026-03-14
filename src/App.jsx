@@ -286,8 +286,8 @@ const TRANSLATIONS = {
     tryAgainCorrect: "✅ נכון! כל הכבוד",
     tryAgainWrong: "❌ לא נכון",
     exitTryAgain: "חזרי לסקירה", exitTryAgain_m: "חזור לסקירה",
-    incidentModeBtn: "🚨 מצב אירוע", incidentModeDesc: "הדמיית אירועי Kubernetes אמיתיים",
-    incidentModeBtn_m: "🚨 מצב אירוע",
+    incidentModeBtn: "🔍 מצב אירוע", incidentModeDesc: "הדמיית אירועי Kubernetes אמיתיים",
+    incidentModeBtn_m: "🔍 מצב אירוע",
     incidentListTitle: "בחר אירוע",
     incidentDifficulty: "רמה", incidentSteps: "שלבים", incidentEstTime: "זמן משוער",
     incidentStep: "שלב", incidentScore: "ניקוד", incidentMistakes: "שגיאות", incidentTime: "זמן",
@@ -301,8 +301,8 @@ const TRANSLATIONS = {
     incidentResumeBanner: "המשיכי את האירוע", incidentResumeBanner_m: "המשך את האירוע",
     incidentDiscard: "נטשי", incidentDiscard_m: "נטוש",
     incidentActiveLabel: "אירוע פעיל", incidentAvailableLabel: "אירועים זמינים",
-    incidentHeaderSub: "חקרו, זהו ופתרו תקלות Kubernetes אמיתיות.",
-    incidentResumeBtn: "המשיכי חקירה", incidentResumeBtn_m: "המשך חקירה",
+    incidentHeaderSub: "סימולציה של תקלות Kubernetes אמיתיות.",
+    incidentResumeBtn: "המשיכי חקירה ←", incidentResumeBtn_m: "המשך חקירה ←",
     incidentUnlockIntermediate: "השלימו 2 אירועים קלים כדי לפתוח",
     incidentUnlockHard: "השלימו 2 אירועים בינוניים כדי לפתוח",
     incidentLocked: "נעול",
@@ -457,7 +457,7 @@ const TRANSLATIONS = {
     tryAgainCorrect: "✅ Correct! Well done",
     tryAgainWrong: "❌ Incorrect",
     exitTryAgain: "Back to Review",
-    incidentModeBtn: "🚨 Incident Mode", incidentModeDesc: "Simulate real K8s production incidents",
+    incidentModeBtn: "🔍 Incident Mode", incidentModeDesc: "Simulate real K8s production incidents",
     incidentListTitle: "Choose an Incident",
     incidentDifficulty: "Difficulty", incidentSteps: "steps", incidentEstTime: "Est. time",
     incidentStep: "Step", incidentScore: "Score", incidentMistakes: "Mistakes", incidentTime: "Time",
@@ -470,8 +470,8 @@ const TRANSLATIONS = {
     incidentResumeBanner: "Continue Incident",
     incidentDiscard: "Discard",
     incidentActiveLabel: "Active Incident", incidentAvailableLabel: "Available Incidents",
-    incidentHeaderSub: "Investigate, diagnose, and resolve real K8s incidents.",
-    incidentResumeBtn: "Resume Investigation",
+    incidentHeaderSub: "Simulate real Kubernetes production incidents.",
+    incidentResumeBtn: "Resume Investigation →",
     incidentUnlockIntermediate: "Complete 2 Easy incidents to unlock",
     incidentUnlockHard: "Complete 2 Intermediate incidents to unlock",
     incidentLocked: "Locked",
@@ -4942,36 +4942,43 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
             const riPct = Math.round((riStepNum / riTotalSteps) * 100);
             return(
             <div style={{marginBottom:24,borderInlineStart:"3px solid #EF4444",paddingInlineStart:14,direction:dir}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--text-dim)"}}>{t("incidentActiveLabel")}</span>
-                <span style={{width:6,height:6,borderRadius:"50%",background:"#EF4444",animation:"pulse 2s infinite"}}/>
+              {/* Header row */}
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                <span style={{width:7,height:7,borderRadius:"50%",background:"#EF4444",boxShadow:"0 0 6px rgba(239,68,68,0.5)",animation:"pulse 2s infinite"}}/>
+                <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1.2,color:"var(--text-muted)"}}>{t("incidentActiveLabel")}</span>
               </div>
-              <div style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"var(--text-dim)",marginBottom:4,letterSpacing:0.5}}>{ri.incidentCode||"INC-0000"}</div>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+              {/* Incident code */}
+              <div style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"var(--text-secondary)",marginBottom:6,letterSpacing:0.5}}>{ri.incidentCode||"INC-0000"}</div>
+              {/* Title */}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
                 <span style={{fontSize:18}}>{ri.icon}</span>
                 <span style={{color:"var(--text-bright)",fontWeight:800,fontSize:15,lineHeight:1.3}}>{lang==="he"?(ri.titleShortHe||ri.titleHe):(ri.titleShort||ri.title)}</span>
               </div>
-              <div style={{color:"var(--text-secondary)",fontSize:12,lineHeight:1.5,marginBottom:8}}>{lang==="he"?ri.descriptionHe:ri.description}</div>
-              <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:10}}>
+              {/* Description */}
+              <div style={{color:"#cbd5e1",fontSize:12,lineHeight:1.5,marginBottom:8}}>{lang==="he"?ri.descriptionHe:ri.description}</div>
+              {/* Metadata - stacked */}
+              <div style={{display:"flex",flexDirection:"column",gap:2,marginBottom:10}}>
                 {[
-                  {l:"Cluster",v:ri.cluster},
                   {l:"Namespace",v:ri.namespace},
+                  {l:"Cluster",v:ri.cluster},
                   {l:"Status",v:lang==="he"?"בבדיקה":"Investigating"},
                 ].map(m=>(
-                  <span key={m.l} style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"var(--text-dim)",lineHeight:1.6}}>
-                    <span style={{color:"var(--text-muted)"}}>{m.l}:</span> {m.v}
-                  </span>
+                  <div key={m.l} style={{fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",lineHeight:1.7}}>
+                    <span style={{color:"#64748b"}}>{m.l}:</span> {m.v}
+                  </div>
                 ))}
               </div>
+              {/* Progress */}
               <div style={{marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                  <span style={{fontSize:11,fontWeight:600,color:"var(--text-muted)"}}>{t("incidentStep")} {riStepNum}/{riTotalSteps}</span>
-                  <span style={{fontSize:11,color:"var(--text-dim)"}}>{riPct}%</span>
+                  <span style={{fontSize:11,fontWeight:600,color:"#94a3b8"}}>{t("incidentStep")} {riStepNum} / {riTotalSteps}</span>
+                  <span style={{fontSize:11,color:"#64748b"}}>{riPct}%</span>
                 </div>
                 <div style={{height:4,background:"var(--glass-6)",borderRadius:4,overflow:"hidden",direction:"ltr"}}>
                   <div style={{height:"100%",borderRadius:4,width:`${riPct}%`,background:"linear-gradient(90deg,#EF4444,#F59E0B)",transition:"width 0.4s ease"}}/>
                 </div>
               </div>
+              {/* CTA */}
               <button onClick={resumeIncident} style={{width:"100%",padding:"11px 20px",background:"linear-gradient(135deg,#EF4444,#DC2626)",border:"none",borderRadius:10,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:6,boxShadow:"0 0 16px rgba(239,68,68,0.25)",transition:"box-shadow 0.2s"}}
                 onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 0 24px rgba(239,68,68,0.4)";}}
                 onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 0 16px rgba(239,68,68,0.25)";}}
@@ -5008,10 +5015,10 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         onMouseLeave={locked?undefined:e=>{e.currentTarget.style.background="var(--glass-2)";e.currentTarget.style.borderColor="var(--glass-7)";}}>
                         <span style={{width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--glass-3)",borderRadius:9,flexShrink:0,fontSize:20,marginTop:2}}>{incident.icon}</span>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:10,fontFamily:"'SF Mono','Fira Code',monospace",color:"var(--text-dim)",marginBottom:2,letterSpacing:0.5}}>{incident.incidentCode||""}</div>
+                          <div style={{fontSize:10,fontFamily:"'SF Mono','Fira Code',monospace",color:"#94a3b8",marginBottom:2,letterSpacing:0.5}}>{incident.incidentCode||""}</div>
                           <div style={{color:"var(--text-primary)",fontWeight:800,fontSize:13,marginBottom:2,lineHeight:1.4}}>{lang==="he"?(incident.titleShortHe||incident.titleHe):(incident.titleShort||incident.title)}</div>
-                          <div style={{color:"var(--text-secondary)",fontSize:11,lineHeight:1.4,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
-                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",color:"var(--text-dim)",fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace"}}>
+                          <div style={{color:"#cbd5e1",fontSize:11,lineHeight:1.4,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lang==="he"?incident.descriptionHe:incident.description}</div>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",color:"#94a3b8",fontSize:11,fontFamily:"'SF Mono','Fira Code',monospace"}}>
                             <span>{incident.steps.length} {t("incidentSteps")}</span>
                             <span style={{opacity:0.4}}>|</span>
                             <span>{incident.estimatedTime}</span>
