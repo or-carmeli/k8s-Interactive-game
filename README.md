@@ -371,7 +371,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and question forma
 
 ## Disclaimer
 
-KubeQuest is an independent learning project and is not affiliated with any company or organization.
+KubeQuest is an independent learning project and is not affiliated with, sponsored by, or endorsed by Civo or any other company.
 Kubernetes is a registered trademark of the Cloud Native Computing Foundation.
 
 ---
