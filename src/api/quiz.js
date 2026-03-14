@@ -88,6 +88,13 @@ export async function checkDailyAnswer(supabase, questionId, selectedIndex) {
 /**
  * Fetch incident metadata (without step answers).
  * Returns: [{ id, icon, title, title_he, description, description_he, difficulty, estimated_time }]
+ *
+ * NOTE: Currently unused - incident metadata comes from the static INCIDENTS
+ * array (src/content/incidents.js) which uses camelCase keys (titleHe, descriptionHe).
+ * If this function is wired into the UI, its snake_case columns (title_he,
+ * description_he) must be normalized to camelCase before rendering, otherwise
+ * getLocalizedField() will not detect the Hebrew variants. See getIncidentStep()
+ * in App.jsx for the pattern used with incident steps.
  */
 export async function fetchIncidents(supabase) {
   const { data, error } = await supabase
