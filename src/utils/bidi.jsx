@@ -87,6 +87,12 @@ export function renderBidiInner(text, lang, keyPrefix) {
   // See bidi.test.jsx for regression cases. Do NOT remove without updating tests.
   text = text.replace(/([\u0590-\u05EA])\/([A-Za-z])/g, "$1 / $2");
   text = text.replace(/([A-Za-z])\/([\u0590-\u05EA])/g, "$1 / $2");
+  // Pure non-Hebrew text (e.g. URLs, commands): wrap as single LTR unit.
+  // Prevents neutral characters (<, >, brackets) from being fragmented
+  // into RTL spans which reorders them visually (e.g. <any-node-IP> breaks).
+  if (!hasHebrew(text)) {
+    return <span key={keyPrefix} dir="ltr" style={{unicodeBidi:"isolate"}}>{text}</span>;
+  }
   // Split on: flag sequences (--flag, -f), slash-paths (/api/v1), Latin word sequences, or left-arrow
   // Slash-paths require NOT preceded by Hebrew to avoid capturing "/ServiceAccount" from "משתמש/ServiceAccount"
   const parts = text.split(/((?:(?<![\u0590-\u05FF])--?[A-Za-z][\w\-]*(?:=[^\s\u0590-\u05FF]*)?(?:\s+(?=(?:--?)?[A-Za-z]))?)+|(?:(?<![\u0590-\u05EA])\/[A-Za-z][A-Za-z0-9\-_/.:]*)|(?:[A-Za-z](?:[A-Za-z0-9\-_:/=]|\.[A-Za-z0-9])*(?:\s+(?=(?:--?)?[A-Za-z]))?)+|[←])/);
