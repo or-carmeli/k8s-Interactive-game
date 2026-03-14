@@ -685,6 +685,39 @@ function splitQuestionSegments(qText) {
   return merged;
 }
 
+// Classifies a single line as block-level code (YAML, terminal, DNS) vs prose text.
+// Returns true only if the line has NO Hebrew characters AND matches a code pattern.
+// Used by renderQuestion pre-processing to insert paragraph breaks at text/code
+// transitions so code sections flow into the multi-paragraph detection path.
+function isBlockCodeLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (hasHebrew(trimmed)) return false;
+
+  // YAML: key: value
+  if (/^\s*[\w.\-/]+:\s/.test(trimmed)) return true;
+  // YAML: bare key: (apiVersion:, spec:, metadata:, etc.)
+  if (/^\s*[\w.\-/]{2,}:\s*$/.test(trimmed)) return true;
+  // YAML list item: - item
+  if (/^\s*-\s+\S/.test(trimmed)) return true;
+  // Indented continuation (2+ leading spaces) - check raw line for whitespace
+  if (/^\s{2,}\S/.test(line)) return true;
+
+  // CLI commands: kubectl, helm, docker, etc.
+  if (/^(\$\s*)?(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s/.test(trimmed)) return true;
+  // Terminal output headers
+  if (/^(?:NAME|READY|STATUS|NAMESPACE|AGE|RESTARTS|IP|NODE)\s/.test(trimmed)) return true;
+  // Error/status lines
+  if (/^(error:|Error:|ERROR|Failed|FATAL|rpc error|unauthorized|forbidden|Back-off|warning:|Warning:)/i.test(trimmed)) return true;
+  // Resource-like lines: hyphenated name followed by columns (e.g. my-pod-abc  1/1  Running)
+  if (/^[a-z0-9]+(-[a-z0-9]+)+\s/.test(trimmed)) return true;
+
+  // DNS/FQDN on its own line (e.g. api.prod.svc.cluster.local)
+  if (/^[a-z0-9]([a-z0-9.\-]*[a-z0-9])?$/.test(trimmed) && trimmed.includes('.') && trimmed.length >= 5) return true;
+
+  return false;
+}
+
 // Render a question text that may contain \n\n paragraphs and code blocks.
 // Single-paragraph questions with embedded commands/errors are split into structured sections.
 // Paragraphs with inner \n are rendered as monospace code blocks.
@@ -698,17 +731,42 @@ function renderQuestion(qText, lang) {
     qText = qText.replace(/(```\w*\n[\s\S]*?\n```)/g, "\n\n$1\n\n");
     qText = qText.replace(/\n{3,}/g, "\n\n").trim();
   }
+  // Pre-process: insert paragraph breaks at text<->code transitions.
+  // Single-paragraph questions with \n-separated YAML/terminal lines mixed with
+  // Hebrew text need code lines promoted to separate paragraphs so the
+  // multi-paragraph path routes them to YamlBlock/TerminalBlock.
+  if (qText.includes("\n")) {
+    const rawLines = qText.split("\n");
+    const processed = [];
+    let inFence = false;
+    let prevType = null; // "code" | "text" | null
+    for (const line of rawLines) {
+      if (line.trim().startsWith("```")) {
+        if (!inFence && prevType === "text" && processed.length > 0) processed.push("");
+        inFence = !inFence;
+        processed.push(line);
+        if (!inFence) prevType = null;
+        continue;
+      }
+      if (inFence) { processed.push(line); continue; }
+      if (!line.trim()) { processed.push(line); prevType = null; continue; }
+      const curType = isBlockCodeLine(line) ? "code" : "text";
+      if (prevType !== null && prevType !== curType) processed.push("");
+      processed.push(line);
+      prevType = curType;
+    }
+    qText = processed.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
   const paragraphs = qText.split(/\n\n+/);
 
   // Single paragraph - try structured split for mixed Hebrew+command+error questions
   if (paragraphs.length <= 1) {
     const segments = splitQuestionSegments(qText);
-    const qDir = hasHebrew(qText) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
 
     // If only one segment (no embedded commands/errors), render as before
     if (segments.length <= 1) {
       return (
-        <div dir={qDir} style={{color:"var(--text-primary)",fontSize:16,fontWeight:700,lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
+        <div dir="auto" style={{color:"var(--text-primary)",fontSize:16,fontWeight:700,lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",unicodeBidi:"isolate"}}>
           {lang==="he"?renderBidi(qText,lang):renderBidiInner(qText,lang,"q")}
         </div>
       );
@@ -721,7 +779,7 @@ function renderQuestion(qText, lang) {
     if (questionSeg) reordered.push(questionSeg);
     for (const s of segments) { if (s !== questionSeg) reordered.push(s); }
     return (
-      <div dir={qDir} style={{display:"flex",flexDirection:"column",gap:8}}>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {reordered.map((seg, idx) => {
           if (seg.type === "command") {
             return <TerminalBlock key={idx}>{seg.content}</TerminalBlock>;
@@ -731,15 +789,14 @@ function renderQuestion(qText, lang) {
           }
           if (seg.type === "question") {
             return (
-              <div key={idx} dir={qDir} style={{color:"var(--text-primary)",fontSize:16,fontWeight:700,lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:qDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
+              <div key={idx} dir="auto" style={{color:"var(--text-primary)",fontSize:16,fontWeight:700,lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",unicodeBidi:"isolate"}}>
                 {lang==="he"?renderBidi(seg.content,lang):renderBidiInner(seg.content,lang,`q${idx}`)}
               </div>
             );
           }
           // Regular text (description)
-          const tDir = hasHebrew(seg.content) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
           return (
-            <div key={idx} dir={tDir} style={{color:"var(--text-secondary)",fontSize:13.5,fontWeight:400,lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:tDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
+            <div key={idx} dir="auto" style={{color:"var(--text-secondary)",fontSize:13.5,fontWeight:400,lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",unicodeBidi:"isolate"}}>
               {lang==="he"?renderBidi(seg.content,lang):renderBidiInner(seg.content,lang,`t${idx}`)}
             </div>
           );
@@ -858,9 +915,8 @@ function renderQuestion(qText, lang) {
         // Regular text paragraph
         const isFirst = idx === firstTextIdx;
         const isLast = idx === lastTextIdx;
-        const pDir = hasHebrew(para) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
         return (
-          <div key={idx} dir={pDir} style={{color:isFirst||isLast?"var(--text-primary)":"var(--text-secondary)",fontSize:isFirst?16:(isLast?15:13.5),fontWeight:isFirst?700:(isLast?600:400),lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",textAlign:pDir==="ltr"?"left":"right",unicodeBidi:"isolate"}}>
+          <div key={idx} dir="auto" style={{color:isFirst||isLast?"var(--text-primary)":"var(--text-secondary)",fontSize:isFirst?16:(isLast?15:13.5),fontWeight:isFirst?700:(isLast?600:400),lineHeight:1.6,wordBreak:"break-word",overflowWrap:"anywhere",unicodeBidi:"isolate"}}>
             {lang==="he"?renderBidi(para,lang):renderBidiInner(para,lang,`p${idx}`)}
           </div>
         );
