@@ -23,11 +23,7 @@ Practice real-world Kubernetes scenarios, sharpen your troubleshooting skills, a
 
 ## Demo
 
-![KubeQuest Demo](public/demo.gif)
-
-## Screenshots
-
-![KubeQuest preview](public/preview.png)
+![KubeQuest Demo](public/GIF-Demo-README.gif)
 
 ---
 
@@ -140,6 +136,61 @@ flowchart LR
 ---
 
 ## Security Model
+
+```mermaid
+flowchart TB
+    USER([User])
+
+    subgraph Edge["Edge Security"]
+        TLS["HTTPS / HSTS"]
+        MW["Middleware<br/>Host Validation · Path Blocking"]
+        DDOS["Vercel DDoS<br/>Bot Challenge"]
+    end
+
+    subgraph App["Application Security"]
+        CSP["Strict CSP<br/>No Inline Scripts"]
+        SPA["React SPA<br/>External Scripts Only"]
+        SW["Service Worker<br/>Cache Versioning"]
+    end
+
+    subgraph Validation["API / Validation"]
+        RPC["RPC Functions<br/>Answer Validation"]
+        RATE["Rate Limiting<br/>120 req/min per user"]
+        CLAMP["Query Clamping<br/>Result Size Limits"]
+    end
+
+    subgraph Data["Database"]
+        DB[("PostgreSQL<br/>Row Level Security")]
+    end
+
+    subgraph Supply["Supply Chain"]
+        TRIVY["Trivy Scan"]
+        AUDIT["npm audit"]
+        CODEQL["CodeQL"]
+        COSIGN["Cosign + SBOM"]
+    end
+
+    USER -->|HTTPS| TLS
+    TLS --> MW
+    MW --> DDOS
+    DDOS --> CSP
+    CSP --> SPA
+    SPA --> SW
+    SPA --> RPC
+    RPC --> RATE
+    RATE --> CLAMP
+    CLAMP --> DB
+
+    TRIVY ~~~ AUDIT
+    AUDIT ~~~ CODEQL
+    CODEQL ~~~ COSIGN
+
+    style Edge fill:#111827,stroke:#EF4444,stroke-width:2px,color:#ffffff
+    style App fill:#111827,stroke:#00D4FF,stroke-width:2px,color:#ffffff
+    style Validation fill:#111827,stroke:#A855F7,stroke-width:2px,color:#ffffff
+    style Data fill:#111827,stroke:#F59E0B,stroke-width:2px,color:#ffffff
+    style Supply fill:#111827,stroke:#10B981,stroke-width:2px,color:#ffffff
+```
 
 ### Browser Security
 
