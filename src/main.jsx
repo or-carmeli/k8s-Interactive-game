@@ -33,10 +33,15 @@ try {
             The application could not initialize.<br/>
             <span style="font-size:12px;color:#64748b">${String(err).slice(0, 200)}</span>
           </p>
-          <button onclick="localStorage.clear();sessionStorage.clear();location.reload()" style="padding:10px 22px;background:linear-gradient(135deg,rgba(0,212,255,0.18),rgba(168,85,247,0.18));border:1px solid rgba(0,212,255,0.45);border-radius:10px;color:#00D4FF;font-size:14px;font-weight:700;cursor:pointer">
+          <button id="kq-fatal-clear" style="padding:10px 22px;background:linear-gradient(135deg,rgba(0,212,255,0.18),rgba(168,85,247,0.18));border:1px solid rgba(0,212,255,0.45);border-radius:10px;color:#00D4FF;font-size:14px;font-weight:700;cursor:pointer">
             Clear Data &amp; Reload
           </button>
         </div>
       </div>`;
+    document.getElementById("kq-fatal-clear").addEventListener("click", function () {
+      localStorage.clear();
+      sessionStorage.clear();
+      location.reload();
+    });
   }
 }
