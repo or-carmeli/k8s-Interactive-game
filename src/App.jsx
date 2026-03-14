@@ -4911,6 +4911,41 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                 {t("freeModeBadge")}
               </div>
             )}
+            {/* Retry wrong answers - primary CTA after result */}
+            {!isFreeMode(selectedTopic.id)&&wrongQs.length>0&&(<>
+              <style>{`@keyframes retryPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}`}</style>
+              <button onClick={()=>{
+                try {
+                const qs=wrongQs.map(h=>({q:h.q,options:h.options,answer:h.answer,explanation:h.explanation}));
+                console.debug("[RETRY] starting retry", { count: qs.length, hasOptions: qs.every(q=>Array.isArray(q.options)), hasAnswer: qs.every(q=>typeof q.answer==="number") });
+                if (!qs.length) { console.error("[RETRY] no wrong questions to retry"); return; }
+                setMixedQuestions(qs);
+                setRetryMode(true);
+                isRetryRef.current=true;
+                setAllowNextLevel(false);
+                setTopicScreen("quiz");
+                setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
+                setShowExplanation(false); setAnswerResult(null);
+                setHintVisible(false); setEliminatedOption(null);
+                setTryAgainActive(false); setTryAgainSelected(null);
+                topicCorrectRef.current=0; lastSessionScoreRef.current=0; bestImprovedRef.current=true;
+                liveIndexRef.current=0;
+                quizRunIdRef.current=Date.now().toString(36);
+                submittingRef.current=false;
+                answerCacheRef.current={};
+                setSessionScore(0);
+                setQuizHistory([]); setShowReview(false);
+                // BUG-C fix: retries must never reset streak
+                if (timerEnabled||isInterviewMode) setTimeLeft(isInterviewMode?(INTERVIEW_DURATIONS[selectedLevel]||25):(TIMER_DURATIONS[selectedLevel]||30));
+                setScreen("topic");
+                window.va?.track("retry_quiz", { topic: selectedTopic?.name || selectedTopic?.id });
+                console.debug("[RETRY] screen set to topic");
+                } catch (err) { console.error("[RETRY] failed:", err); }
+              }}
+                style={{width:"100%",padding:13,marginBottom:16,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:12,color:"#EF4444",fontSize:14,fontWeight:700,cursor:"pointer",animation:"retryPulse 2s ease-in-out infinite"}}>
+                {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
+              </button>
+            </>)}
             {isGuest&&<div style={{background:"rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.15)",borderRadius:12,padding:"11px 16px",marginBottom:16,fontSize:13,color:"#4a9aba"}}>
               {t("guestSaveHint")}{" "}
               <button onClick={()=>{try{localStorage.removeItem("k8s_guest_session")}catch{}setAuthScreen("signup");setUser(null);try{window.va?.track("signup_clicked",{source:"quiz_game"})}catch{}}} style={{background:"none",border:"none",color:"#00D4FF",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>{t("signupLink")}</button>
@@ -4935,41 +4970,6 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   </button>
                 );
               })()}
-              {/* Retry wrong answers */}
-              {!isFreeMode(selectedTopic.id)&&wrongQs.length>0&&(
-                <button onClick={()=>{
-                  try {
-                  const qs=wrongQs.map(h=>({q:h.q,options:h.options,answer:h.answer,explanation:h.explanation}));
-                  console.debug("[RETRY] starting retry", { count: qs.length, hasOptions: qs.every(q=>Array.isArray(q.options)), hasAnswer: qs.every(q=>typeof q.answer==="number") });
-                  if (!qs.length) { console.error("[RETRY] no wrong questions to retry"); return; }
-                  setMixedQuestions(qs);
-                  setRetryMode(true);
-                  isRetryRef.current=true;
-                  setAllowNextLevel(false);
-                  setTopicScreen("quiz");
-                  setQuestionIndex(0); setSelectedAnswer(null); setSubmitted(false);
-                  setShowExplanation(false); setAnswerResult(null);
-                  // Reset per-question ephemeral state (hint, eliminate, try-again)
-                  setHintVisible(false); setEliminatedOption(null);
-                  setTryAgainActive(false); setTryAgainSelected(null);
-                  topicCorrectRef.current=0; lastSessionScoreRef.current=0; bestImprovedRef.current=true;
-                  liveIndexRef.current=0;
-                  quizRunIdRef.current=Date.now().toString(36);
-                  submittingRef.current=false;
-                  answerCacheRef.current={};
-                  setSessionScore(0);
-                  setQuizHistory([]); setShowReview(false);
-                  // BUG-C fix: retries must never reset streak
-                  if (timerEnabled||isInterviewMode) setTimeLeft(isInterviewMode?(INTERVIEW_DURATIONS[selectedLevel]||25):(TIMER_DURATIONS[selectedLevel]||30));
-                  setScreen("topic");
-                  window.va?.track("retry_quiz", { topic: selectedTopic?.name || selectedTopic?.id });
-                  console.debug("[RETRY] screen set to topic");
-                  } catch (err) { console.error("[RETRY] failed:", err); }
-                }}
-                  style={{padding:13,background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:12,color:"#EF4444",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                  {lang==="en"?`Retry ${wrongQs.length} wrong answer${wrongQs.length>1?"s":""}`:`תרגלי ${wrongQs.length} ${wrongQs.length>1?"שאלות":"שאלה"} שגויות`}
-                </button>
-              )}
               {quizHistory.length>0&&<button onClick={()=>setShowReview(p=>!p)} style={{padding:13,background:"var(--glass-4)",border:"1px solid var(--glass-9)",borderRadius:12,color:"var(--text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                 {showReview?t("hideReview"):t("reviewBtn")}
               </button>}
