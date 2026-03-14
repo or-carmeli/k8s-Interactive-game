@@ -369,6 +369,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and question forma
 
 ---
 
+## Disclaimer
+
+KubeQuest is an independent learning project and is not affiliated with any company or organization.
+Kubernetes is a registered trademark of the Cloud Native Computing Foundation.
+
+---
+
 ## License
 
 [MIT](LICENSE) © 2026 Or Carmeli
