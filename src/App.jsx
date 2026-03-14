@@ -15,6 +15,7 @@ import { saveQuizState, loadQuizState, clearQuizState, isRecentQuizState } from 
 import { safeGetItem, safeGetJSON, checkDataVersion } from "./utils/storage";
 import { getLocalizedField, warnIfHebrew } from "./utils/i18n";
 import { hasHebrew, K8S_CONCEPT_TERMS, K8S_CODE_TERMS, CODE_SPAN_STYLE, renderBidiInner, HE_PREFIX_TERM_RE, renderHebrewPrefixTerms, renderBidi, CLI_COMMAND_RE, splitCliParts, renderBidiBlock } from "./utils/bidi";
+import { TerminalBlock, YamlBlock } from "./components/CodeBlocks";
 import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
 import { fetchSystemStatus, fetchUptimeHistory, fetchIncidentHistory, fetchMaintenanceWindows } from "./api/monitoring";
 
@@ -604,11 +605,11 @@ function classifyFragment(text) {
 
 // Splits a single-paragraph question into structured segments: intro text, commands, errors, and final question.
 // Returns an array of { type: "text"|"command"|"error"|"question", content: string }.
-// Only splits when there are clearly delimited quoted error/output strings or substantial CLI commands.
+// Detects quoted strings, inline CLI commands, and YAML-like content.
 function splitQuestionSegments(qText) {
   const segments = [];
-  // Only match: quoted strings (single/double) with 8+ chars, and CLI commands with 3+ tokens
-  const splitPat = /('(?:[^']{8,})'|"(?:[^"]{8,})")/g;
+  // Match: quoted strings (8+ chars) OR inline CLI commands (kubectl/helm/etc with args)
+  const splitPat = /('(?:[^']{8,})'|"(?:[^"]{8,})"|(?:(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+(?:\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+)*))/g;
 
   let last = 0;
   const matches = [];
@@ -618,7 +619,6 @@ function splitQuestionSegments(qText) {
   }
 
   if (matches.length === 0) {
-    // No quoted blocks - return as single segment
     return [{ type: "question", content: qText }];
   }
 
@@ -643,13 +643,11 @@ function splitQuestionSegments(qText) {
   for (let i = 0; i < segments.length; i++) {
     const s = segments[i];
     if (s.type === "text" && s.content.replace(/[.\s,:;?!]/g, "").length < 3) {
-      // Too short to stand alone - merge with nearest text neighbor
       if (merged.length > 0 && merged[merged.length - 1].type === "text") {
         merged[merged.length - 1].content += " " + s.content;
       } else if (i + 1 < segments.length && segments[i + 1].type === "text") {
         segments[i + 1].content = s.content + " " + segments[i + 1].content;
       } else {
-        // Can't merge, keep it
         merged.push(s);
       }
     } else {
@@ -657,7 +655,16 @@ function splitQuestionSegments(qText) {
     }
   }
 
-  // Mark the last Hebrew text segment as the "question" (the actual prompt line)
+  // Mark first Hebrew text segment as "question" title (problem statement)
+  let foundFirst = false;
+  for (let i = 0; i < merged.length; i++) {
+    if (merged[i].type === "text" && hasHebrew(merged[i].content)) {
+      merged[i].type = "question";
+      foundFirst = true;
+      break;
+    }
+  }
+  // Mark last Hebrew text segment as "question" (the actual prompt)
   for (let i = merged.length - 1; i >= 0; i--) {
     if (merged[i].type === "text" && hasHebrew(merged[i].content)) {
       merged[i].type = "question";
@@ -671,7 +678,6 @@ function splitQuestionSegments(qText) {
     }
   }
 
-  // If we ended up with just one segment, type it as question
   if (merged.length <= 1) return [{ type: "question", content: qText }];
 
   return merged;
@@ -709,18 +715,10 @@ function renderQuestion(qText, lang) {
       <div dir={qDir} style={{display:"flex",flexDirection:"column",gap:8}}>
         {reordered.map((seg, idx) => {
           if (seg.type === "command") {
-            return (
-              <pre key={idx} dir="ltr" style={{margin:0,background:"rgba(0,212,255,0.06)",border:"1px solid rgba(0,212,255,0.12)",borderRadius:8,padding:"10px 14px",fontFamily:"'JetBrains Mono','Fira Code',monospace",fontSize:13,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",textAlign:"left",direction:"ltr",lineHeight:1.6}}>
-                <span style={{color:"rgba(0,212,255,0.4)",fontSize:9,fontWeight:600,letterSpacing:0.5,display:"block",marginBottom:2}}>$</span>{seg.content}
-              </pre>
-            );
+            return <TerminalBlock key={idx}>{seg.content}</TerminalBlock>;
           }
           if (seg.type === "error") {
-            return (
-              <div key={idx} dir="ltr" style={{margin:0,background:"rgba(239,68,68,0.05)",border:"1px solid rgba(239,68,68,0.12)",borderRadius:8,padding:"10px 14px",fontFamily:"'JetBrains Mono','Fira Code',monospace",fontSize:13,color:"rgba(252,165,165,0.85)",overflowX:"auto",whiteSpace:"pre",textAlign:"left",direction:"ltr",lineHeight:1.6}}>
-                {seg.content}
-              </div>
-            );
+            return <TerminalBlock key={idx} variant="output">{seg.content}</TerminalBlock>;
           }
           if (seg.type === "question") {
             return (
@@ -763,39 +761,92 @@ function renderQuestion(qText, lang) {
     merged.push(para);
   }
   if (fenceBuf.length) merged.push(fenceBuf.join("\n\n"));
-  // Find last text paragraph index for title/hierarchy detection
-  const firstTextIdx = merged.findIndex(p => !p.trimStart().startsWith("```") && (() => { const ls = p.split("\n").filter(l => l.trim()); return !ls.every(l => !hasHebrew(l)) || ls.filter(l => terminalPat.test(l)).length < Math.ceil(ls.length * 0.5); })());
-  const lastTextIdx = (() => { for (let i = merged.length - 1; i >= 0; i--) { const p = merged[i]; if (!p.trimStart().startsWith("```")) { const ls = p.split("\n").filter(l => l.trim()); const noHe = ls.every(l => !hasHebrew(l)); const mc = ls.filter(l => terminalPat.test(l)).length; if (!(noHe && ls.length >= 1 && mc >= Math.ceil(ls.length * 0.5))) return i; } } return -1; })();
+
+  // Pre-process: detect label paragraphs (short text ending with ':') before code blocks
+  // and absorb them as labels for the following code block.
+  const labelMap = new Set(); // indices of label paragraphs absorbed into code blocks
+  const blockLabels = {};     // idx of code block -> label text
+  for (let i = 0; i < merged.length - 1; i++) {
+    const p = merged[i];
+    const next = merged[i + 1];
+    // Skip if this is itself a code block
+    if (p.trimStart().startsWith("```")) continue;
+    // Check if this is a short label paragraph (ends with ':' and < 60 chars)
+    const trimmed = p.trim();
+    if (trimmed.length < 60 && trimmed.endsWith(":") && (next.trimStart().startsWith("```") || (() => {
+      const ls = next.split("\n").filter(l => l.trim());
+      const noHe = ls.every(l => !hasHebrew(l));
+      const mc = ls.filter(l => terminalPat.test(l)).length;
+      return noHe && ls.length >= 1 && mc >= Math.ceil(ls.length * 0.5);
+    })())) {
+      labelMap.add(i);
+      blockLabels[i + 1] = trimmed;
+    }
+  }
+
+  // Find first/last text paragraph index for title/hierarchy detection
+  const firstTextIdx = merged.findIndex((p, i) => !labelMap.has(i) && !p.trimStart().startsWith("```") && (() => { const ls = p.split("\n").filter(l => l.trim()); return !ls.every(l => !hasHebrew(l)) || ls.filter(l => terminalPat.test(l)).length < Math.ceil(ls.length * 0.5); })());
+  const lastTextIdx = (() => { for (let i = merged.length - 1; i >= 0; i--) { if (labelMap.has(i)) continue; const p = merged[i]; if (!p.trimStart().startsWith("```")) { const ls = p.split("\n").filter(l => l.trim()); const noHe = ls.every(l => !hasHebrew(l)); const mc = ls.filter(l => terminalPat.test(l)).length; if (!(noHe && ls.length >= 1 && mc >= Math.ceil(ls.length * 0.5))) return i; } } return -1; })();
   return (
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       {merged.map((para, idx) => {
-        // Fenced code block (```...```)
+        // Skip label paragraphs absorbed into code blocks
+        if (labelMap.has(idx)) return null;
+        const label = blockLabels[idx] || undefined;
+
+        // Fenced code block (```...```) - route to TerminalBlock or YamlBlock
         if (para.trimStart().startsWith("```")) {
-          const code = para.replace(/^```[a-z]*\n?/m, "").replace(/\n?```\s*$/m, "").trim();
-          return (
-            <pre key={idx} dir="ltr" style={{margin:0,background:"rgba(0,212,255,0.06)",border:"1px solid rgba(0,212,255,0.12)",borderRadius:8,padding:"10px 14px",fontFamily:"'JetBrains Mono','Fira Code',monospace",fontSize:13,color:"#7dd3fc",overflowX:"auto",whiteSpace:"pre",textAlign:"left",direction:"ltr",lineHeight:1.6}}>
-              {code}
-            </pre>
-          );
+          const langMatch = para.match(/^```(\w*)/);
+          const codeLang = langMatch?.[1] || "";
+          const code = para.replace(/^```\w*\n?/m, "").replace(/\n?```\s*$/m, "").trim();
+
+          // YAML block
+          if (codeLang === "yaml" || codeLang === "yml" || (!codeLang && /^\s*[\w.\-/]+:\s/m.test(code) && /\n\s+\w/.test(code))) {
+            return <YamlBlock key={idx} label={label}>{code}</YamlBlock>;
+          }
+
+          // Terminal command block
+          const isCommand = /^(\$\s*)?(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s/m.test(code);
+          if (isCommand) {
+            return <TerminalBlock key={idx} label={label}>{code}</TerminalBlock>;
+          }
+
+          // Error output block
+          const firstCodeLine = code.split("\n")[0]?.trim() || "";
+          const isFencedError = /^(error|Error|ERROR|Failed|FATAL|rpc error|unauthorized|forbidden|Back-off|warning:|denied)/i.test(firstCodeLine);
+          if (isFencedError) {
+            return <TerminalBlock key={idx} label={label} variant="error">{code}</TerminalBlock>;
+          }
+
+          // Generic output block
+          return <TerminalBlock key={idx} label={label} variant="output">{code}</TerminalBlock>;
         }
+
+        // Auto-detected code block (non-fenced terminal output)
         const lines = para.split("\n");
         const nonEmpty = lines.filter(l => l.trim());
         const matchCount = nonEmpty.filter(l => !hasHebrew(l) && terminalPat.test(l)).length;
         const noHebrew = nonEmpty.every(l => !hasHebrew(l));
         const isCode = noHebrew && nonEmpty.length >= 1 && matchCount >= Math.ceil(nonEmpty.length * 0.5);
         if (isCode) {
-          // Detect if this looks like an error/output vs a command
+          const cleaned = para.replace(/^["״"]+|["״"]+$/g, "").trim();
           const firstLine = nonEmpty[0]?.trim() || "";
           const isError = /^(error:|Error:|ERROR|Failed|FATAL|rpc error|unauthorized|forbidden|Back-off|warning:)/i.test(firstLine);
-          const blockBg = isError ? "rgba(239,68,68,0.03)" : "rgba(0,212,255,0.04)";
-          const blockBorder = isError ? "rgba(239,68,68,0.08)" : "rgba(0,212,255,0.10)";
-          const blockColor = isError ? "rgba(252,165,165,0.85)" : "#7dd3fc";
-          return (
-            <pre key={idx} dir="ltr" style={{margin:0,background:blockBg,border:`1px solid ${blockBorder}`,borderRadius:8,padding:"10px 14px",fontFamily:"'JetBrains Mono','Fira Code',monospace",fontSize:13,color:blockColor,overflowX:"auto",whiteSpace:"pre",textAlign:"left",direction:"ltr",lineHeight:1.6}}>
-              {para.replace(/^["״"]+|["״"]+$/g, "").trim()}
-            </pre>
-          );
+          const isCommand = /^(\$\s*)?(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s/.test(firstLine);
+          // YAML-like content
+          if (/^\s*[\w.\-/]+:\s/m.test(cleaned) && /\n\s+\w/.test(cleaned)) {
+            return <YamlBlock key={idx} label={label}>{cleaned}</YamlBlock>;
+          }
+          if (isError) {
+            return <TerminalBlock key={idx} label={label} variant="error">{cleaned}</TerminalBlock>;
+          }
+          if (isCommand) {
+            return <TerminalBlock key={idx} label={label}>{cleaned}</TerminalBlock>;
+          }
+          return <TerminalBlock key={idx} label={label} variant="output">{cleaned}</TerminalBlock>;
         }
+
+        // Regular text paragraph
         const isFirst = idx === firstTextIdx;
         const isLast = idx === lastTextIdx;
         const pDir = hasHebrew(para) ? (lang === "he" ? "rtl" : "ltr") : "ltr";
