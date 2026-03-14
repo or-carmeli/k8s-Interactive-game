@@ -73,12 +73,13 @@ if ("serviceWorker" in navigator) {
         console.log("SW error:", e);
       });
 
-    // Log SW lifecycle changes (silent update - no UI notification)
+    // Notify the app when a new SW takes control (not on first install)
     navigator.serviceWorker.addEventListener("controllerchange", function () {
       if (!hadController) {
         console.log("[KubeQuest] SW installed for the first time");
       } else {
-        console.log("[KubeQuest] New SW activated - new assets will load on next navigation");
+        console.log("[KubeQuest] New SW activated - prompting user to refresh");
+        window.dispatchEvent(new CustomEvent("kq-sw-updated"));
       }
     });
   });

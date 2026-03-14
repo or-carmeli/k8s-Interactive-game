@@ -113,15 +113,19 @@ export default function StatsView({
     );
   }
 
-  // ── Summary stats config ───────────────────────────────────────────────────
-  const summaryCards = [
-    { icon: "🎯", label: t("statsAccuracy"),       value: `${accuracy}%`,           color: "#10B981" },
-    { icon: "📝", label: t("statsTotalAnswered"),   value: stats.total_answered,     color: "#00D4FF" },
-    { icon: "✅", label: t("statsCorrectAnswers"),  value: stats.total_correct,      color: "#10B981" },
-    { icon: "❌", label: t("statsWrongAnswers"),    value: wrongCount,               color: "#EF4444" },
-    { icon: "⭐", label: t("score"),                value: stats.total_score,        color: "#F59E0B" },
-    { icon: "🔥", label: t("streak"),               value: `x${stats.current_streak}`, color: "#FF6B35",
+  // ── Primary stats (hero cards) ────────────────────────────────────────────
+  const primaryStats = [
+    { label: t("statsAccuracy"), value: `${accuracy}%`, color: accuracyColor(accuracy) },
+    { label: t("score"),         value: stats.total_score, color: "#F59E0B" },
+    { label: t("streak"),        value: `x${stats.current_streak}`, color: "#FF6B35",
       sub: `${t("statsBestStreak")}: ${stats.max_streak}` },
+  ];
+
+  // ── Secondary stats (compact row) ─────────────────────────────────────────
+  const secondaryStats = [
+    { label: t("statsTotalAnswered"),  value: stats.total_answered },
+    { label: t("statsCorrectAnswers"), value: stats.total_correct },
+    { label: t("statsWrongAnswers"),   value: wrongCount },
   ];
 
   // ── Incident progress ─────────────────────────────────────────────────────
@@ -136,6 +140,8 @@ export default function StatsView({
   const doneIncidents = completedIncidentIds.length;
   const incidentPct = totalIncidents > 0 ? Math.round(doneIncidents / totalIncidents * 100) : 0;
 
+  const unlockedCount = achievements.filter(a => unlockedAchievements.includes(a.id)).length;
+
   return (
     <div className="page-pad" style={{ maxWidth: 660, margin: "0 auto", padding: "20px 16px", animation: "fadeIn 0.3s ease", direction: dir }}>
       {/* ── Back button ───────────────────────────────────────────────────────── */}
@@ -144,43 +150,57 @@ export default function StatsView({
       </button>
 
       {/* ── Title ─────────────────────────────────────────────────────────────── */}
-      <h2 style={{ fontSize: 20, fontWeight: 800, textAlign: "center", color: "var(--text-primary)", marginBottom: 24, marginTop: 0 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 800, textAlign: "center", color: "var(--text-primary)", marginBottom: 28, marginTop: 0 }}>
         {t("statsTitle")}
       </h2>
 
-      {/* ── Summary overview ──────────────────────────────────────────────────── */}
-      <SectionLabel text={t("statsOverview")} />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 10 }}>
-        {summaryCards.map((s, i) => (
+      {/* ── Primary stats (hero row) ──────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 12 }}>
+        {primaryStats.map((s, i) => (
           <div key={i} style={{
-            background: `${s.color}08`,
-            border: `1px solid ${s.color}22`,
-            borderRadius: 12,
-            padding: "14px 12px",
+            background: "var(--glass-2)",
+            border: "1px solid var(--glass-8)",
+            borderRadius: 14,
+            padding: "16px 10px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             gap: 2,
           }}>
-            <span style={{ fontSize: 18 }}>{s.icon}</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</span>
-            <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>{s.label}</span>
+            <span style={{ fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1.2 }}>{s.value}</span>
+            <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, marginTop: 2 }}>{s.label}</span>
             {s.sub && <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{s.sub}</span>}
           </div>
         ))}
       </div>
 
+      {/* ── Secondary stats (compact row) ─────────────────────────────────────── */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: 16,
+        marginBottom: 8,
+        padding: "8px 0",
+      }}>
+        {secondaryStats.map((s, i) => (
+          <div key={i} style={{ textAlign: "center" }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", display: "block" }}>{s.value}</span>
+            <span style={{ fontSize: 10, color: "var(--text-dim)", fontWeight: 500 }}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+
       {/* ── Badges row ────────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
-        <Badge icon="📚" text={`${completedLevelCount}/${totalLevels} ${t("statsCompletedLevels")}`} color="#00D4FF" />
+      <div style={{ display: "flex", gap: 6, marginBottom: 32, flexWrap: "wrap", justifyContent: "center" }}>
+        <Badge text={`${completedLevelCount}/${totalLevels} ${t("statsCompletedLevels")}`} />
         {dailyStreak && dailyStreak.streak > 0 && (
-          <Badge icon="🔥" text={`${dailyStreak.streak} ${t("dailyStreak")}`} color="#FF6B35" />
+          <Badge text={`🔥 ${dailyStreak.streak} ${t("dailyStreak")}`} />
         )}
       </div>
 
       {/* ── Topic breakdown ───────────────────────────────────────────────────── */}
       <SectionLabel text={t("statsTopicBreakdown")} />
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 32 }}>
         {topics.map(topic => {
           const progress = topicProgress(topic.id, completedTopics);
           const status = getTopicStatus(topic.id, completedTopics);
@@ -197,65 +217,60 @@ export default function StatsView({
           return (
             <div key={topic.id} style={{
               background: "var(--glass-2)",
-              border: "1px solid var(--glass-7)",
-              borderRadius: 14,
-              padding: "14px 18px",
-              marginBottom: 12,
+              border: "1px solid var(--glass-6)",
+              borderRadius: 12,
+              padding: "14px 16px",
+              marginBottom: 8,
             }}>
               {/* Header row */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{
-                    fontSize: 16,
-                    width: 32, height: 32,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    background: `${topic.color}14`,
-                    borderRadius: 8,
-                    flexShrink: 0,
-                  }}>{topic.icon}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{topic.name}</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <span style={{ fontSize: 15, flexShrink: 0 }}>{topic.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{topic.name}</span>
                 </div>
                 <span style={{
-                  fontSize: 11, fontWeight: 700,
+                  fontSize: 10, fontWeight: 600,
                   color: statusColor,
-                  background: `${statusColor}14`,
-                  padding: "2px 8px",
-                  borderRadius: 10,
+                  background: `${statusColor}12`,
+                  padding: "2px 7px",
+                  borderRadius: 6,
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
                 }}>{statusLabel}</span>
               </div>
 
               {/* Progress bar */}
-              <div style={{ height: 7, background: "var(--glass-6)", borderRadius: 4, marginBottom: 10, overflow: "hidden" }}>
+              <div style={{ height: 5, background: "var(--glass-5)", borderRadius: 3, marginBottom: 8, overflow: "hidden" }}>
                 <div style={{
-                  height: "100%", borderRadius: 4,
+                  height: "100%", borderRadius: 3,
                   width: `${progress}%`,
-                  background: `linear-gradient(90deg, ${topic.color}, ${topic.color}88)`,
+                  background: topic.color,
                   transition: "width 0.5s ease",
                 }} />
               </div>
 
               {/* Stats row */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 4 }}>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
+                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
                   {progress}% {t("statsLearningProgress")}
                 </span>
                 {answered > 0 && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
                       {answered} {t("statsAnswered")}
                     </span>
                     <span style={{
-                      fontSize: 12, fontWeight: 700,
+                      fontSize: 11, fontWeight: 700,
                       color: accuracyColor(acc),
                     }}>
-                      {acc}% {t("statsAccuracy")}
+                      {acc}%
                     </span>
                   </div>
                 )}
               </div>
 
               {/* Level pills */}
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                 {levelOrder.map(lvl => {
                   const r = completedTopics[`${topic.id}_${lvl}`];
                   const cfg = levelConfig[lvl];
@@ -263,18 +278,18 @@ export default function StatsView({
                   const attempted = !!r;
                   return (
                     <div key={lvl} style={{
-                      fontSize: 11,
-                      padding: "3px 8px",
-                      borderRadius: 8,
-                      background: done ? `${cfg.color}18` : "var(--glass-3)",
-                      border: `1px solid ${done ? `${cfg.color}40` : "var(--glass-6)"}`,
+                      fontSize: 10,
+                      padding: "2px 7px",
+                      borderRadius: 6,
+                      background: done ? `${cfg.color}15` : "var(--glass-3)",
+                      border: `1px solid ${done ? `${cfg.color}30` : "var(--glass-5)"}`,
                       color: done ? cfg.color : attempted ? "var(--text-secondary)" : "var(--text-dim)",
                       fontWeight: done ? 700 : 400,
-                      display: "flex", alignItems: "center", gap: 4,
+                      display: "flex", alignItems: "center", gap: 3,
                     }}>
                       {done ? "✓" : cfg.icon} {getLocalizedField(cfg, "label", lang)}
                       {attempted && r.total > 0 && (
-                        <span style={{ fontSize: 10, opacity: 0.7 }}>{r.correct}/{r.total}</span>
+                        <span style={{ fontSize: 9, opacity: 0.6 }}>{r.correct}/{r.total}</span>
                       )}
                     </div>
                   );
@@ -286,31 +301,33 @@ export default function StatsView({
       </div>
 
       {/* ── Achievements ──────────────────────────────────────────────────────── */}
-      <SectionLabel text={t("statsAchievements")} />
-      <div style={{ marginBottom: 24 }}>
+      <SectionLabel text={`${t("statsAchievements")} (${unlockedCount}/${achievements.length})`} />
+      <div style={{ marginBottom: 32 }}>
         {achievements.map(ach => {
           const unlocked = unlockedAchievements.includes(ach.id);
           return (
             <div key={ach.id} style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              padding: "10px 14px",
-              background: unlocked ? "var(--glass-3)" : "var(--glass-1)",
-              border: `1px solid ${unlocked ? "var(--glass-8)" : "var(--glass-4)"}`,
-              borderRadius: 12,
-              marginBottom: 8,
-              opacity: unlocked ? 1 : 0.4,
+              gap: 10,
+              padding: "8px 12px",
+              background: unlocked ? "var(--glass-3)" : "transparent",
+              border: unlocked ? "1px solid var(--glass-6)" : "1px solid transparent",
+              borderRadius: 10,
+              marginBottom: 4,
+              opacity: unlocked ? 1 : 0.35,
             }}>
-              <span style={{ fontSize: 22, flexShrink: 0 }}>{ach.icon}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: unlocked ? "var(--text-primary)" : "var(--text-dim)" }}>
-                  {getLocalizedField(ach, "name", lang)}
-                </div>
-              </div>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{ach.icon}</span>
+              <span style={{
+                flex: 1,
+                fontSize: 12, fontWeight: unlocked ? 600 : 400,
+                color: unlocked ? "var(--text-primary)" : "var(--text-dim)",
+              }}>
+                {getLocalizedField(ach, "name", lang)}
+              </span>
               {unlocked
-                ? <span style={{ fontSize: 11, color: "#10B981", fontWeight: 700 }}>✓</span>
-                : <span style={{ fontSize: 11, color: "var(--text-disabled)" }}>🔒</span>
+                ? <span style={{ fontSize: 10, color: "#10B981", fontWeight: 700 }}>✓</span>
+                : <span style={{ fontSize: 10, color: "var(--text-disabled)" }}>🔒</span>
               }
             </div>
           );
@@ -323,46 +340,44 @@ export default function StatsView({
           <SectionLabel text={t("statsIncidents")} />
           <div style={{
             background: "var(--glass-2)",
-            border: "1px solid var(--glass-7)",
-            borderRadius: 14,
-            padding: "14px 18px",
-            marginBottom: 24,
+            border: "1px solid var(--glass-6)",
+            borderRadius: 12,
+            padding: "14px 16px",
+            marginBottom: 32,
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
                 🚨 {t("statsIncidents")}
               </span>
-              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                {doneIncidents}/{totalIncidents} {t("statsCompleted").toLowerCase()}
+              <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                {doneIncidents}/{totalIncidents}
               </span>
             </div>
 
             {/* Progress bar */}
-            <div style={{ height: 7, background: "var(--glass-6)", borderRadius: 4, marginBottom: 12, overflow: "hidden" }}>
+            <div style={{ height: 5, background: "var(--glass-5)", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
               <div style={{
-                height: "100%", borderRadius: 4,
+                height: "100%", borderRadius: 3,
                 width: `${incidentPct}%`,
-                background: "linear-gradient(90deg, #EF4444, #EF444488)",
+                background: "#EF4444",
                 transition: "width 0.5s ease",
               }} />
             </div>
 
             {/* Per-difficulty breakdown */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 6 }}>
               {["easy", "intermediate", "hard"].map(diff => (
                 <div key={diff} style={{
                   flex: 1,
-                  minWidth: 80,
                   textAlign: "center",
-                  padding: "8px 6px",
-                  background: `${INCIDENT_DIFFICULTY[diff].color}08`,
-                  border: `1px solid ${INCIDENT_DIFFICULTY[diff].color}22`,
-                  borderRadius: 8,
+                  padding: "6px 4px",
+                  background: "var(--glass-2)",
+                  borderRadius: 6,
                 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: INCIDENT_DIFFICULTY[diff].color }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
                     {incidentsDoneByDiff[diff]}/{incidentsByDiff[diff]}
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>
+                  <div style={{ fontSize: 9, color: "var(--text-dim)", marginTop: 1 }}>
                     {getLocalizedField(INCIDENT_DIFFICULTY[diff], "label", lang)}
                   </div>
                 </div>
@@ -384,27 +399,27 @@ function SectionLabel({ text }) {
   return (
     <div style={{
       fontSize: 11, fontWeight: 700, color: "var(--text-muted)",
-      marginBottom: 10, letterSpacing: 0.6, textTransform: "uppercase",
+      marginBottom: 10, letterSpacing: 0.5, textTransform: "uppercase",
     }}>
       {text}
     </div>
   );
 }
 
-function Badge({ icon, text, color }) {
+function Badge({ text }) {
   return (
     <span style={{
-      fontSize: 12, fontWeight: 600,
-      color,
-      background: `${color}12`,
-      border: `1px solid ${color}22`,
-      padding: "4px 10px",
+      fontSize: 11, fontWeight: 500,
+      color: "var(--text-muted)",
+      background: "var(--glass-3)",
+      border: "1px solid var(--glass-6)",
+      padding: "3px 10px",
       borderRadius: 20,
       display: "inline-flex",
       alignItems: "center",
       gap: 4,
     }}>
-      {icon} {text}
+      {text}
     </span>
   );
 }

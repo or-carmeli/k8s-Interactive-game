@@ -365,6 +365,8 @@ const TRANSLATIONS = {
     installStepDesktopIcon: "לחצי על אייקון ההתקנה (⊕) בשורת הכתובת", installStepDesktopIcon_m: "לחץ על אייקון ההתקנה (⊕) בשורת הכתובת",
     installStepDesktopConfirm: "לחצי \"Install\" בחלון שנפתח", installStepDesktopConfirm_m: "לחץ \"Install\" בחלון שנפתח",
     installAlreadyInstalled: "האפליקציה כבר מותקנת!",
+    updateAvailable: "גרסה חדשה זמינה",
+    updateRefresh: "רענון",
   },
   en: {
     tagline: "Learn Kubernetes in a fun and interactive way",
@@ -533,6 +535,8 @@ const TRANSLATIONS = {
     installStepDesktopIcon: "Click the install icon (⊕) in the address bar",
     installStepDesktopConfirm: "Click \"Install\" in the popup",
     installAlreadyInstalled: "The app is already installed!",
+    updateAvailable: "New version available",
+    updateRefresh: "Refresh",
   },
 };
 
@@ -1046,6 +1050,7 @@ export default function K8sQuestApp() {
   const incidentTimerRef = useRef(null);
   const incidentCheckingRef = useRef(false);
   const [reportDialog,  setReportDialog]  = useState(null); // {qText, qIndex} | null
+  const [swUpdateAvailable, setSwUpdateAvailable] = useState(false);
   const [reportType,    setReportType]    = useState("");
   const [reportNote,    setReportNote]    = useState("");
   const [reportSent,    setReportSent]    = useState(false);
@@ -1147,6 +1152,13 @@ export default function K8sQuestApp() {
   })();
 
   useEffect(() => { const t = setTimeout(() => setMinLoadElapsed(true), 500); return () => clearTimeout(t); }, []);
+
+  // SW update listener - sets flag when a new service worker takes control
+  useEffect(() => {
+    const h = () => setSwUpdateAvailable(true);
+    window.addEventListener("kq-sw-updated", h);
+    return () => window.removeEventListener("kq-sw-updated", h);
+  }, []);
 
   // Boot elapsed timer - updates every second while loading gate is active (for debug panel)
   const [bootElapsed, setBootElapsed] = useState(0);
@@ -3297,6 +3309,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
       {newAchievement&&<div role="alert" aria-live="assertive" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid #00D4FF55",borderRadius:14,padding:"12px 22px",display:"flex",alignItems:"center",gap:12,zIndex:9999,boxShadow:"0 0 40px rgba(0,212,255,0.3)",animation:"toast 0.4s ease",direction:"ltr"}}><span aria-hidden="true" style={{fontSize:26}}>{newAchievement.icon}</span><div><div style={{color:"#00D4FF",fontWeight:800,fontSize:11,letterSpacing:1}}>{t("newAchievement")}</div><div style={{color:"var(--text-primary)",fontSize:14,fontWeight:700}}>{getLocalizedField(newAchievement, "name", lang)}</div></div></div>}
       {saveError&&<div role="alert" aria-live="assertive" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"rgba(239,68,68,0.12)",border:"1px solid #EF444455",borderRadius:10,padding:"10px 18px",color:"#EF4444",fontSize:13,zIndex:9999}}>{saveError}</div>}
       {resumeToast&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,var(--bg-elevated),var(--bg-card))",border:"1px solid rgba(0,212,255,0.35)",borderRadius:12,padding:"10px 20px",color:"#00D4FF",fontSize:13,fontWeight:600,zIndex:9999,boxShadow:"0 0 20px rgba(0,212,255,0.15)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap"}}>{t("resumeToast")}</div>}
+
+      {/* SW update banner - shown only on safe (non-interactive) screens */}
+      {swUpdateAvailable&&screen!=="topic"&&screen!=="incident"&&<div role="status" aria-live="polite" style={{position:"fixed",bottom:"calc(72px + env(safe-area-inset-bottom, 0px))",left:"50%",transform:"translateX(-50%)",background:"var(--bg-card)",border:"1px solid var(--glass-9)",borderRadius:10,padding:"7px 14px",display:"flex",alignItems:"center",gap:10,zIndex:9998,boxShadow:"0 2px 8px rgba(0,0,0,0.2)",animation:"fadeIn 0.3s ease",whiteSpace:"nowrap",fontSize:12}}><span style={{color:"var(--text-muted)"}}>{t("updateAvailable")}</span><button onClick={()=>window.location.reload()} style={{background:"none",border:"none",padding:0,color:"#00D4FF",fontSize:12,fontWeight:600,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:2}}>{t("updateRefresh")}</button></div>}
 
       {showResumeModal&&resumeData&&(()=>{
         const { answered, total, pct } = getResumeProgress(resumeData);
