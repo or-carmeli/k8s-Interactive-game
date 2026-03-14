@@ -4999,10 +4999,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
           ? TOPICS.findIndex(t=>t.id===selectedTopic.id)+1
           : -1;
         return(
-          <div style={{maxWidth:480,margin:"30px auto",padding:"0 14px",textAlign:"center",animation:"fadeIn 0.5s ease"}}>
-            <div style={{fontSize:52,marginBottom:10,animation:"popIn 1s ease"}}>
-              {allCorrect?"🌟":anyCorrect?"👍":"💪"}
-            </div>
+          <div style={{maxWidth:480,margin:"20px auto",padding:"0 14px",textAlign:"center",animation:"fadeIn 0.5s ease"}}>
             <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 8px",color:selectedTopic.color,wordBreak:"break-word"}}>{selectedTopic.name} - {levelLabel(selectedLevel)}</h2>
             <div style={{display:"inline-flex",alignItems:"center",gap:10,marginBottom:8,background:"var(--glass-4)",borderRadius:30,padding:"8px 20px"}}>
               <span style={{color:"var(--text-primary)",fontSize:16,fontWeight:700}}>{result?.correct}/{result?.total} {t("correctCount")}</span>
@@ -5404,8 +5401,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
         const perfect  = incidentScore === maxScore;
         const goodRun  = incidentMistakes <= 1;
         return(
-          <div style={{maxWidth:480,margin:"30px auto",padding:"0 18px",textAlign:"center",animation:"fadeIn 0.5s ease",direction:dir}}>
-            <div style={{fontSize:56,marginBottom:10}}>{perfect?"🏆":goodRun?"🎯":"💪"}</div>
+          <div style={{maxWidth:480,margin:"20px auto",padding:"0 18px",textAlign:"center",animation:"fadeIn 0.5s ease",direction:dir}}>
             <h2 style={{fontSize:22,fontWeight:900,margin:"0 0 6px",color:"#22C55E"}}>{t("incidentResolved")}</h2>
             <p style={{color:"var(--text-muted)",fontSize:13,margin:"0 0 20px"}}>{getLocalizedField(selectedIncident, "title", lang)}</p>
 
