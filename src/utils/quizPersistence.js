@@ -20,6 +20,8 @@ export function loadQuizState() {
     }
     // Validate minimum required fields
     if (!state.topicId || !state.level || !Array.isArray(state.questions) || !state.questions.length) return null;
+    // Normalize lang to a valid value (prevents stale/corrupt state from causing mixed-language bugs)
+    if (state.lang && state.lang !== "he" && state.lang !== "en") state.lang = "he";
     // Clamp questionIndex to valid range to prevent out-of-bounds after back navigation
     const maxIdx = state.questions.length - 1;
     if (typeof state.questionIndex !== "number" || !isFinite(state.questionIndex) || state.questionIndex < 0) {

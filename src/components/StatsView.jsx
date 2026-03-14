@@ -1,3 +1,5 @@
+import { getLocalizedField } from "../utils/i18n";
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const LVL_ORDER = ["easy", "medium", "hard"];
@@ -270,7 +272,7 @@ export default function StatsView({
                       fontWeight: done ? 700 : 400,
                       display: "flex", alignItems: "center", gap: 4,
                     }}>
-                      {done ? "✓" : cfg.icon} {lang === "en" ? cfg.labelEn : cfg.label}
+                      {done ? "✓" : cfg.icon} {getLocalizedField(cfg, "label", lang)}
                       {attempted && r.total > 0 && (
                         <span style={{ fontSize: 10, opacity: 0.7 }}>{r.correct}/{r.total}</span>
                       )}
@@ -303,7 +305,7 @@ export default function StatsView({
               <span style={{ fontSize: 22, flexShrink: 0 }}>{ach.icon}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: unlocked ? "var(--text-primary)" : "var(--text-dim)" }}>
-                  {lang === "en" ? ach.nameEn : ach.name}
+                  {getLocalizedField(ach, "name", lang)}
                 </div>
               </div>
               {unlocked

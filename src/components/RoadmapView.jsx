@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getLocalizedField } from "../utils/i18n";
 
 const STAGE_SUBTITLES = {
   workloads:       "Pods · Deployments · StatefulSets · Scheduling · Resources",
@@ -246,11 +247,11 @@ export default function RoadmapView({
                         <button key={lvl} className={lvlLocked?"":"card-hover"}
                           onClick={()=>startTopic(topic,lvl)}
                           disabled={lvlLocked}
-                          aria-label={`${lang==="en"?cfg.labelEn:cfg.label}${done?` - ${done.correct}/${done.total}`:""}${lvlLocked?" (locked)":""}`}
+                          aria-label={`${getLocalizedField(cfg, "label", lang)}${done?` - ${done.correct}/${done.total}`:""}${lvlLocked?" (locked)":""}`}
                           style={{padding:"10px 8px",background:lvlLocked?"var(--glass-1)":done?`${cfg.color}12`:"var(--glass-3)",border:`1px solid ${lvlLocked?"var(--glass-4)":done?cfg.color+"44":"var(--glass-7)"}`,borderRadius:10,textAlign:"center",opacity:lvlLocked?0.45:1,cursor:lvlLocked?"not-allowed":"pointer"}}>
                           <div aria-hidden="true" style={{fontSize:16}}>{lvlLocked?"🔒":cfg.icon}</div>
                           <div style={{fontSize:12,fontWeight:700,color:lvlLocked?"var(--text-disabled)":done?cfg.color:"var(--text-muted)"}}>
-                            {lang==="en"?cfg.labelEn:cfg.label}
+                            {getLocalizedField(cfg, "label", lang)}
                           </div>
                           {done&&!lvlLocked&&<div aria-hidden="true" style={{fontSize:10,color:done.correct>0?cfg.color:"#EF4444"}}>{done.correct>0?"✓":""} {done.correct}/{done.total}</div>}
                           <div aria-hidden="true" style={{fontSize:10,color:lvlLocked?"var(--text-faint)":"var(--text-dim)"}}>+{cfg.points}{t("pts")}</div>
