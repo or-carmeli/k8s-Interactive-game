@@ -331,7 +331,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "`QoS` (Quality of Service) קובע את סדר העדיפויות של `Pods` כש-`Node` נמצא בלחץ משאבים, בעיקר לחץ זיכרון.\nKubernetes קובע את ה-`QoS` class באופן אוטומטי לפי ה-`requests` וה-`limits` שמוגדרים לקונטיינרים.\n\n`Guaranteed`: `requests` ו-`limits` מוגדרים ושווים בכל הקונטיינרים. הגנה מקסימלית מפינוי.\n`Burstable`: `requests` מוגדרים אבל `limits` גבוהים יותר. הגנה חלקית.\n`BestEffort`: אין `requests` ואין `limits`. `Pods` אלו יפונו ראשונים כש-`Node` חווה לחץ זיכרון.",
+                "`QoS` class נקבעת לפי ההגדרות של `requests` ו-`limits` לכל קונטיינר ב-Pod.\n\n`Guaranteed`: כאשר לכל הקונטיינרים מוגדרים `requests` ו-`limits`, ובכל אחד מהם requests=limits.\n\n`Burstable`: כאשר מוגדרים `requests` או `limits`, אבל אין התאמה מלאה של requests=limits לכל הקונטיינרים.\n\n`BestEffort`: כאשר לא מוגדרים כלל `requests` או `limits`.\n\nמבחינת eviction: `BestEffort` יפונה ראשון, אחריו `Burstable`, ו-`Guaranteed` הוא המוגן ביותר.",
             },
             {
               q: "מה `ephemeral container` ב-Kubernetes?",
@@ -498,7 +498,7 @@ export const TOPICS = [
                 "topologySpreadConstraints מפזר Pods באופן אחיד בין failure domains (Nodes, Zones).\nללא פיזור, כל ה-Pods עלולים לרוץ על Node אחד. אם קורס, השירות נופל.\nפיזור מבטיח שחלק מה-Pods ממשיכים לרוץ גם בכשל של Node או Zone.",
             },
             {
-              q: "Pod נשאר במצב Pending.\nהפלט של kubectl describe pod מראה את האירוע הבא:\n\n```\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available:\n    3 node(s) had untolerated taint {dedicated=gpu}\n```\n\nמה הפתרון הנכון?",
+              q: "Pod נשאר במצב Pending.\n\nהרצת:\n\n```\nkubectl describe pod\n```\n\nפלט:\n\n```\nFailedScheduling\n0/3 nodes available\nuntolerated taint: dedicated=gpu\n```\n\nמה הפתרון הנכון?",
               options: [
               "להעביר את ה-Pod ל-Namespace ייעודי לעבודות GPU",
               "להוסיף Node חדש ל-Cluster ללא taint",
@@ -522,7 +522,7 @@ export const TOPICS = [
                 "StatefulSet יוצר Pods בסדר (OrderedReady): Pod-0 חייב להיות Ready לפני ש-Pod-1 נוצר.\nלתקן את Pod-0 כדי שיגיע למצב Ready, או להגדיר podManagementPolicy: Parallel.\n• PVC: Pod-1 לא נוצר בכלל. • Quota: גם Pod-0 לא היה עולה. • imagePullSecret: היה גורם ל-ImagePullBackOff.\nבברירת מחדל, StatefulSet יוצר Pods בסדר עוקב ותקיעה ב-Pod מוקדם חוסמת את כל השאר.",
             },
             {
-              q: "עדכון Rolling update נתקע.\n\nkubectl rollout status מציג:\nWaiting for rollout to finish: 3 out of 5 new replicas have been updated...\nה-YAML מגדיר maxUnavailable: 0.\n\nמה הסיבה?",
+              q: "עדכון Rolling update נתקע.\n\nהרצת:\n\n```\nkubectl rollout status deployment/my-app\n```\n\nפלט:\n\n```\nWaiting for rollout to finish:\n3 out of 5 new replicas have been updated\n```\n\nבנוסף, מוגדר maxUnavailable: 0\n\nמה הסיבה?",
               options: [
               "Pods החדשים לא עוברים readiness probe, ו-maxUnavailable:0 מונע הורדת ישנים",
               "ה-TLS certificate שגוי ב-admission webhook שבודק את ה-Pod spec",
@@ -534,7 +534,7 @@ export const TOPICS = [
                 "maxUnavailable:0 מונע הורדת Pod ישן עד שהחדש עובר readiness.\nאם Pods חדשים נכשלים ב-readiness, ה-rollout נתקע. יש לבדוק kubectl logs.\nmaxUnavailable:0 = בטיחות מלאה, אבל readiness כושל = rollout תקוע.",
             },
             {
-              q: "ה-Deployment לא מנהל Pods. kubectl get pods --show-labels מראה: app=backend-v2.\n\nה-Deployment spec:\nspec:\n  selector:\n    matchLabels:\n      app: backend\n\nמה הבעיה?",
+              q: "ה-Deployment לא מנהל Pods.\n\nהרצת:\n\n```\nkubectl get pods --show-labels\n```\n\nפלט:\n\n```\napp=backend-v2\n```\n\nהגדרת Deployment:\n\n```yaml\nselector:\n  matchLabels:\n    app: backend\n```\n\nמה הבעיה?",
               options: [
               "ה-Namespace של ה-Pods שונה מה-Namespace של ה-Deployment",
               "ה-Service חסר ולכן ה-Deployment לא מזהה את ה-Pods",
@@ -596,7 +596,7 @@ export const TOPICS = [
                 "topologySpreadConstraints distributes Pods evenly across failure domains (Nodes, Zones).\nWithout spreading, all Pods may land on one Node. If it fails, the service is down.\nEven distribution ensures partial availability even when a Node or Zone fails.",
             },
             {
-              q: "A Pod remains in Pending state.\nThe output of kubectl describe pod shows the following event:\n\n```\nEvents:\n  Warning  FailedScheduling  0/3 nodes are available:\n    3 node(s) had untolerated taint {dedicated=gpu}\n```\n\nWhat is the correct fix?",
+              q: "A Pod remains in Pending state.\n\nCommand:\n\n```\nkubectl describe pod\n```\n\nOutput:\n\n```\nFailedScheduling\n0/3 nodes available\nuntolerated taint: dedicated=gpu\n```\n\nWhat should you add to the Pod\nso it gets scheduled?",
               options: [
               "Add a new Node to the cluster without any taints",
               "Add a matching toleration to the Pod spec for the taint",
@@ -620,7 +620,7 @@ export const TOPICS = [
                 "StatefulSet uses OrderedReady: Pod-0 must be Ready before Pod-1 is created.\nFix Pod-0 to become Ready, or set podManagementPolicy: Parallel.\n• PVC: Pod-1 was never created. • Quota: Pod-0 wouldn't exist either. • imagePullSecret: would cause ImagePullBackOff.\nDefault StatefulSet creates Pods sequentially. A stuck Pod blocks all subsequent ones.",
             },
             {
-              q: "A rolling update is stuck.\n\nkubectl rollout status shows:\nWaiting for rollout to finish: 3 out of 5 new replicas updated...\nThe YAML sets maxUnavailable: 0.\n\nWhat is the cause?",
+              q: "A rolling update is stuck.\n\nCommand:\n\n```\nkubectl rollout status deployment/my-app\n```\n\nOutput:\n\n```\nWaiting for rollout to finish:\n3 out of 5 new replicas have been updated\n```\n\nConfig: maxUnavailable: 0\n\nWhat is the cause?",
               options: [
               "An admission webhook TLS certificate is invalid and rejecting new Pod specs",
               "New Pods are failing readiness probes, and maxUnavailable:0 prevents removing old ones",
@@ -632,7 +632,7 @@ export const TOPICS = [
                 "maxUnavailable:0 prevents removing old Pods until new ones pass readiness.\nNew Pods fail readiness → rollout stalls. Check kubectl logs on new Pods.\nmaxUnavailable:0 = safe but readiness failure = permanent stall.",
             },
             {
-              q: "A Deployment does not manage its Pods. kubectl get pods --show-labels shows: app=backend-v2.\n\nThe Deployment spec reads:\nspec:\n  selector:\n    matchLabels:\n      app: backend\n\nWhat is wrong?",
+              q: "A Deployment does not manage its Pods.\n\nCommand:\n\n```\nkubectl get pods --show-labels\n```\n\nOutput:\n\n```\napp=backend-v2\n```\n\nDeployment spec:\n\n```yaml\nselector:\n  matchLabels:\n    app: backend\n```\n\nWhat is wrong?",
               options: [
               "The Service is missing so the Deployment cannot discover its Pods",
               "The Pods are in a different Namespace than the Deployment",
@@ -1108,7 +1108,7 @@ export const TOPICS = [
                 "Labels הם case-sensitive. app: App ≠ app: app. כתוצאה מכך Endpoints ריקים.\nלתקן selector ל-app: App כדי שיתאים ל-label.\n• port שגוי: שגיאת חיבור, לא Endpoints ריקים. • Pod לא Ready: לא הבעיה כאן. • Namespace: לא רלוונטי.\nבדוק kubectl get endpoints ו-kubectl get pods --show-labels.",
             },
             {
-              q: "כלל ה-NetworkPolicy חוסמת DNS. Pods לא מצליחים לפתור שמות.\n\nNetworkPolicy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n - ports:\n - port: 443\n\nמה חסר?",
+              q: "NetworkPolicy חוסמת DNS.\nPods לא מצליחים לפתור שמות.\n\nהגדרה:\n\n```yaml\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n```\n\nמה חסר?",
               options: [
               "ingress rule",
               "TLS certificate",
@@ -1120,7 +1120,7 @@ export const TOPICS = [
                 "Egress policy מאפשרת רק port 443. DNS (port 53) חסום.\nלהוסיף egress rule ל-port 53 (UDP+TCP) לאפשר DNS.\nכל egress policy חייבת לכלול port 53, אחרת name resolution נכשל.",
             },
             {
-              q: "ה-Ingress מחזיר שגיאת 503.\n\nהפלט של kubectl describe ingress מציג:\n\n```\nBackend: api-svc:80 (<error: endpoints not found>)\n```\n\nמה הבעיה?",
+              q: "ה-Ingress מחזיר שגיאת 503.\n\nהרצת:\n\n```\nkubectl describe ingress\n```\n\nפלט:\n\n```\nBackend: api-svc:80\n(<error: endpoints not found>)\n```\n\nמה הבעיה?",
               options: [
               "ה-Service קיים אבל ה-selector לא מתאים לאף Pod",
               "תעודת ה-TLS שגויה וחוסמת חיבורים נכנסים",
@@ -1144,7 +1144,7 @@ export const TOPICS = [
                 "FQDN מלא: service.namespace.svc.cluster.local.\napi-svc.backend.cluster.local חסר .svc ולא יפעל.\napi-svc.backend עובד בזכות search domains אבל אינו FQDN.",
             },
             {
-              q: "ה-Pod לא מצליח להגיע לאינטרנט.\n\nkubectl exec -- curl https://google.com מחזיר timeout.\n\nNetworkPolicy:\nspec:\n  podSelector: {matchLabels: {app: worker}}\n  policyTypes: [Egress]\n  egress:\n - to:\n - podSelector: {}\n\nמה חסר?",
+              q: "ה-Pod לא מצליח להגיע לאינטרנט.\n\nהרצת:\n\n```\nkubectl exec -- curl https://google.com\n```\n\nתוצאה: timeout\n\nהגדרת NetworkPolicy:\n\n```yaml\nspec:\n  podSelector:\n    matchLabels:\n      app: worker\n  policyTypes: [Egress]\n  egress:\n  - to:\n    - podSelector: {}\n```\n\nמה חסר?",
               options: [
               "ingress rule לאפשר תגובות נכנסות",
               "Service מסוג LoadBalancer ב-Namespace",
@@ -1206,7 +1206,7 @@ export const TOPICS = [
                 "Labels are case-sensitive. app: App ≠ app: app → empty Endpoints.\nChange selector to app: App to match the Pod label.\n• Wrong port: connection error, not empty Endpoints. • Not Ready: different issue. • Namespace: not relevant here.\nAlways verify with kubectl get endpoints and kubectl get pods --show-labels.",
             },
             {
-              q: "A NetworkPolicy blocks DNS. Pods cannot resolve names.\n\nThe policy:\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n - ports:\n - port: 443\n\nWhat is missing?",
+              q: "A NetworkPolicy blocks DNS.\nPods cannot resolve names.\n\nPolicy:\n\n```yaml\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n```\n\nWhat is missing?",
               options: [
               "A TLS certificate",
               "A namespaceSelector",
@@ -1218,7 +1218,7 @@ export const TOPICS = [
                 "Egress policy allows only port 443. DNS (port 53) is blocked.\nAdd egress rule for port 53 (UDP+TCP) to allow DNS resolution.\nEvery egress policy must include port 53, or name resolution fails.",
             },
             {
-              q: "An Ingress returns a 503 error.\n\nThe output of kubectl describe ingress shows:\n\n```\nBackend: api-svc:80 (<error: endpoints not found>)\n```\n\nWhat is the problem?",
+              q: "An Ingress returns a 503 error.\n\nCommand:\n\n```\nkubectl describe ingress\n```\n\nOutput:\n\n```\nBackend: api-svc:80\n(<error: endpoints not found>)\n```\n\nWhat is the problem?",
               options: [
               "The Service exists but its selector does not match any Pods",
               "The Ingress Controller is not installed in the cluster",
@@ -1242,7 +1242,7 @@ export const TOPICS = [
                 "Full FQDN: service.namespace.svc.cluster.local.\napi-svc.backend.cluster.local is missing .svc and won't resolve.\napi-svc.backend works via search domains but is not a FQDN.",
             },
             {
-              q: "A Pod cannot reach the internet.\n\nkubectl exec -- curl https://google.com times out.\n\nNetworkPolicy:\nspec:\n  podSelector: {matchLabels: {app: worker}}\n  policyTypes: [Egress]\n  egress:\n - to:\n - podSelector: {}\n\nWhat is missing?",
+              q: "A Pod cannot reach the internet.\n\nCommand:\n\n```\nkubectl exec -- curl https://google.com\n```\n\nResult: timeout\n\nNetworkPolicy:\n\n```yaml\nspec:\n  podSelector:\n    matchLabels:\n      app: worker\n  policyTypes: [Egress]\n  egress:\n  - to:\n    - podSelector: {}\n```\n\nWhat is missing?",
               options: [
               "A LoadBalancer Service in the Namespace",
               "An egress rule with ipBlock: cidr: 0.0.0.0/0 to allow external IPs",
@@ -2340,7 +2340,7 @@ export const TOPICS = [
                 "Immediate יוצר PV מיד, אך הוא עלול להיווצר ב-Zone שונה מה-Pod.\nWaitForFirstConsumer מעכב יצירת PV עד שה-Pod מתזמן ל-Node, ויוצר PV באותה Zone.\nקריטי בסביבות multi-AZ כמו AWS EKS.",
             },
             {
-              q: "ה-PVC נשאר במצב Pending.\n\nהפלט של kubectl describe pvc מציג:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io 'fast-ssd' not found\n```\n\nמה הבעיה?",
+              q: "ה-PVC נשאר במצב Pending.\n\nהרצת:\n\n```\nkubectl describe pvc\n```\n\nפלט:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io\n  'fast-ssd' not found\n```\n\nמה הבעיה?",
               options: [
               "ה-StorageClass בשם fast-ssd לא קיים ב-Cluster",
               "ה-PVC וה-Pod נמצאים ב-Namespaces שונים",
@@ -2438,7 +2438,7 @@ export const TOPICS = [
                 "Immediate creates a PV right away, but it might end up in a different Zone than the Pod.\nWaitForFirstConsumer delays PV creation until the Pod is scheduled, then creates it in the same Zone.\nCritical in multi-AZ environments like AWS EKS.",
             },
             {
-              q: "A PVC stays in Pending state.\n\nThe output of kubectl describe pvc shows:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io 'fast-ssd' not found\n```\n\nWhat is wrong?",
+              q: "A PVC stays in Pending state.\n\nCommand:\n\n```\nkubectl describe pvc\n```\n\nOutput:\n\n```\nEvents:\n  Warning  ProvisioningFailed\n  storageclass.storage.k8s.io\n  'fast-ssd' not found\n```\n\nWhat is wrong?",
               options: [
               "The PVC requests more storage than the Cluster can provide",
               "The StorageClass named fast-ssd does not exist in the Cluster",
@@ -2974,7 +2974,7 @@ export const TOPICS = [
                 "Kubernetes לא יכול לקרוא logs מ-container שלא רץ.\nבדקו סטטוס עם kubectl get pod. אם CrashLoopBackOff השתמשו ב---previous.\nאם Init:Error. בדקו logs של ה-init container עם -c <init-name>.",
             },
             {
-              q: "Cluster חדש הותקן זה עתה.\n\nהפלט של kubectl get nodes מציג:\n\n```\nNAME    STATUS     ROLES           AGE\nmaster  NotReady   control-plane   5m\n```\n\nמה הצעד הראשון?",
+              q: "Cluster חדש הותקן זה עתה.\n\nהרצת:\n\n```\nkubectl get nodes\n```\n\nפלט:\n\n```\nNAME    STATUS     ROLES           AGE\nmaster  NotReady   control-plane   5m\n```\n\nמה הצעד הראשון?",
               options: [
               "ה-etcd database כשל ויש לשחזר מגיבוי",
               "למחוק את ה-Node ולהתקין אותו מחדש",
@@ -3072,7 +3072,7 @@ export const TOPICS = [
                 "Kubernetes can't stream logs from a container that isn't running.\nCheck status with kubectl get pod. If CrashLoopBackOff, use --previous.\nIf Init:Error, check init container logs with -c <init-name>.",
             },
             {
-              q: "A new cluster was just initialized.\n\nThe output of kubectl get nodes shows:\n\n```\nNAME    STATUS     ROLES           AGE\nmaster  NotReady   control-plane   5m\n```\n\nWhat is the first step?",
+              q: "A new cluster was just initialized.\n\nCommand:\n\n```\nkubectl get nodes\n```\n\nOutput:\n\n```\nNAME    STATUS     ROLES           AGE\nmaster  NotReady   control-plane   5m\n```\n\nWhat is the first step?",
               options: [
               "CNI plugin is not installed. Check and install Calico or Flannel",
               "Delete the Node and reinstall it from scratch",
