@@ -146,7 +146,20 @@ export function renderHebrewPrefixTerms(text, lang, keyPrefix) {
     if (p.type === "prefixTerm") {
       return <span key={`${keyPrefix}-hp${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{p.prefix}{"\u2011"}<span dir="ltr" style={{unicodeBidi:"isolate"}}>{p.term}</span></span>;
     }
-    return <span key={`${keyPrefix}-ht${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{renderBidiInner(p.value, lang, `${keyPrefix}h${i}`)}</span>;
+    // Extract trailing whitespace from text preceding a prefix term so the space
+    // sits outside bidi isolation spans. Without this, a trailing space inside an
+    // LTR-isolated English word (e.g. "Pods ") appears visually *before* the word
+    // in RTL context, creating a gap before and missing space after.
+    let value = p.value;
+    let gap = null;
+    if (parts[i + 1]?.type === "prefixTerm" && /\s+$/.test(value)) {
+      gap = value.match(/(\s+)$/)[1];
+      value = value.slice(0, -gap.length);
+    }
+    return [
+      value ? <span key={`${keyPrefix}-ht${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{renderBidiInner(value, lang, `${keyPrefix}h${i}`)}</span> : null,
+      gap,
+    ];
   });
 }
 
@@ -171,6 +184,21 @@ export function renderBidi(text, lang) {
   // Render as a single isolated LTR code span to prevent bidi fragmentation on <> and dots
   if (/^[<\w][\w.<>\-]*\.svc\.cluster\.local$/.test(text.trim()) || /^<[\w-]+>(\.<[\w-]+>)*(\.[a-z.]+)*$/.test(text.trim())) {
     return <span dir="ltr" style={{unicodeBidi:"isolate",...CODE_SPAN_STYLE}}>{text}</span>;
+  }
+
+  // Handle "Keyword: explanation" pattern in mixed Hebrew/English text.
+  // Isolates the leading English keyword (e.g. "Always:", "ClusterIP:",
+  // "Helm Chart:", "External Secrets Operator:") as its own LTR span so it stays
+  // visually at the RTL line start, while the rest of the text flows naturally in RTL.
+  // Without this, renderBidiInner groups "Always: Kubernetes" as one LTR run,
+  // which breaks the visual order in RTL paragraphs.
+  // Supports multi-word English terms - matches any leading Latin text up to the
+  // first colon, as long as no Hebrew appears before it.
+  const kwMatch = text.match(/^([A-Za-z][^:\u0590-\u05EA]*:)\s+([\s\S]+)$/);
+  if (kwMatch && hasHebrew(kwMatch[2])) {
+    const rest = kwMatch[2];
+    const prefixed = renderHebrewPrefixTerms(rest, lang, "kwr");
+    return <><span dir="ltr" style={{unicodeBidi:"isolate"}}>{kwMatch[1]}</span>{" "}{prefixed || renderBidiInner(rest, lang, "kwr")}</>;
   }
 
   // Handle inline backtick code spans first: `term` → <span dir="ltr" style={code}>term</span>
@@ -249,6 +277,9 @@ export function splitCliParts(text, lang, keyPrefix) {
 // or returns text unchanged for non-Hebrew text without CLI commands.
 export function renderBidiBlock(text, lang) {
   if (!text) return text;
+  // Strip LTR marks (U+200E) - the span-based bidi isolation is more robust
+  // and these marks interfere with the keyword regex in renderBidi.
+  if (lang === "he") text = text.replace(/\u200E/g, "");
   // Quick check: does the text contain a CLI command outside backticks?
   const bare = text.replace(/`[^`]+`/g, "");
   const hasCli = CLI_COMMAND_RE.test(bare);
