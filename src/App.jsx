@@ -16,7 +16,7 @@ import { safeGetItem, safeGetJSON, checkDataVersion } from "./utils/storage";
 import { getLocalizedField, warnIfHebrew } from "./utils/i18n";
 import { hasHebrew, K8S_CONCEPT_TERMS, K8S_CODE_TERMS, CODE_SPAN_STYLE, renderBidiInner, HE_PREFIX_TERM_RE, renderHebrewPrefixTerms, renderBidi, CLI_COMMAND_RE, splitCliParts, renderBidiBlock } from "./utils/bidi";
 import { TerminalBlock, YamlBlock } from "./components/CodeBlocks";
-import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank } from "./api/quiz";
+import { fetchQuizQuestions, fetchMixedQuestions, checkQuizAnswer, fetchTheory, fetchDailyQuestions, checkDailyAnswer, fetchIncidents, fetchIncidentSteps, checkIncidentAnswer, fetchLeaderboard, fetchUserRank, saveUserProgress } from "./api/quiz";
 import StatusView from "./components/StatusView";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -1813,9 +1813,10 @@ export default function K8sQuestApp() {
     if (savedQuiz && savedQuiz.userId === userId) setResumeData(savedQuiz);
   };
 
-  // Persist stats to Supabase. Writes BOTH total_score and best_score.
-  // total_score is passed through as-is (accumulated). best_score is recomputed
-  // by the caller via computeScore() before calling this function.
+  // Persist stats to Supabase via server RPC. The RPC does NOT accept
+  // total_score - it is managed exclusively by the answer-check RPCs
+  // (server-authoritative scoring). best_score is recomputed by the caller
+  // via computeScore() and passed through.
   const saveUserData = async (ns, nc, na) => {
     if (!user || isGuest || !supabase) return;
     setSaveError("");
@@ -1823,15 +1824,19 @@ export default function K8sQuestApp() {
     const cleanNc = Object.fromEntries(
       Object.entries(nc).filter(([k]) => !isFreeMode(k.split("_")[0]))
     );
-    // BUG-B fix: use UPDATE (not upsert) - the row is always created by loadUserData,
-    // so upsert here was inserting duplicate rows when user_id had no UNIQUE constraint.
-    const { error } = await supabase.from("user_stats").update({
-      username: user.user_metadata?.username || user.email?.split("@")[0] || "",
-      ...ns, completed_topics: cleanNc, achievements: na,
-      topic_stats: topicStats,          // Fix 4: persist weak-area data across devices
-      updated_at: new Date().toISOString(),
-    }).eq("user_id", user.id);
-    if (error) {
+    try {
+      await saveUserProgress(supabase, {
+        username: user.user_metadata?.username || user.email?.split("@")[0] || "",
+        bestScore: ns.best_score || 0,
+        totalAnswered: ns.total_answered || 0,
+        totalCorrect: ns.total_correct || 0,
+        maxStreak: ns.max_streak || 0,
+        currentStreak: ns.current_streak || 0,
+        completedTopics: cleanNc,
+        achievements: na,
+        topicStats: topicStats,
+      });
+    } catch {
       setSaveError(t("saveErrorText"));
     }
   };
@@ -2187,9 +2192,11 @@ export default function K8sQuestApp() {
       setCheckingAnswer(true);
       const originalIndex = q._optionMap ? q._optionMap[selectedAnswer] : selectedAnswer;
       const isDaily = selectedTopic?.id === "daily";
+      // Pass quizRunId for server-side scoring (null for retries -> skip scoring)
+      const scoreRunId = isRetryRef.current ? null : quizRunIdRef.current;
       const callRpc = () => isDaily
-        ? checkDailyAnswer(supabase, q.id, originalIndex)
-        : checkQuizAnswer(supabase, q.id, originalIndex);
+        ? checkDailyAnswer(supabase, q.id, originalIndex, scoreRunId)
+        : checkQuizAnswer(supabase, q.id, originalIndex, scoreRunId);
       let rpcResult;
       try {
         rpcResult = await callRpc();
@@ -2234,7 +2241,7 @@ export default function K8sQuestApp() {
     if (correct) {
       topicCorrectRef.current += 1;
       setFlash(true); setTimeout(() => setFlash(false), 600);
-      if (!isRetryRef.current) setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel]?.points ?? 0));
+      if (!isRetryRef.current) setSessionScore(p => p + (LEVEL_CONFIG[selectedLevel==="mixed"&&q.level?q.level:selectedLevel]?.points ?? 0));
     }
     setQuizHistory(prev => {
       if (prev.length > questionIndex) return prev; // guard against double-submit
@@ -2255,7 +2262,9 @@ export default function K8sQuestApp() {
     setStats(prev => {
       if (isRetryRef.current) return prev;
       const streak = correct ? prev.current_streak + 1 : 0;
-      const points = correct ? (LEVEL_CONFIG[selectedLevel]?.points ?? 0) : 0;
+      // For mixed mode, use the question's actual level for accurate local display
+      const effectiveLevel = selectedLevel === "mixed" && q.level ? q.level : selectedLevel;
+      const points = correct ? (LEVEL_CONFIG[effectiveLevel]?.points ?? 0) : 0;
       return {
         ...prev,
         current_streak: isFree ? prev.current_streak : streak,
@@ -4304,6 +4313,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                   <span aria-live="polite" aria-atomic="true" style={{color:"var(--text-primary)",fontSize:14,fontWeight:700}}>
                     {t("question")} {questionIndex+1} {t("of")} {currentQuestions.length}
                   </span>
+                  {selectedLevel==="mixed"&&currentQuestions[questionIndex]?.level&&<span style={{fontSize:11,color:LEVEL_CONFIG[currentQuestions[questionIndex].level]?.color||"var(--text-dim)",fontWeight:700,background:`${LEVEL_CONFIG[currentQuestions[questionIndex].level]?.color||"#888"}18`,padding:"2px 8px",borderRadius:6}}>{LEVEL_CONFIG[currentQuestions[questionIndex].level]?.icon} {lang==="he"?LEVEL_CONFIG[currentQuestions[questionIndex].level]?.label:LEVEL_CONFIG[currentQuestions[questionIndex].level]?.labelEn}</span>}
                   {isInHistoryMode && !tryAgainActive && <span style={{fontSize:11,color:"#A855F7",fontWeight:700,background:"rgba(168,85,247,0.12)",padding:"2px 8px",borderRadius:6}}>{t("reviewing")}</span>}
                   {tryAgainActive && <span style={{fontSize:11,color:"#F59E0B",fontWeight:700,background:"rgba(245,158,11,0.12)",padding:"2px 8px",borderRadius:6}}>{t("tryAgainBadge")}</span>}
                 </div>
@@ -4454,7 +4464,7 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                         <div style={{background:isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.10)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:"flex-start",gap:8,borderBottom:`1px solid ${isCorrect?"rgba(16,185,129,0.12)":"rgba(239,68,68,0.12)"}`,direction:dir,textAlign:dir==="rtl"?"right":"left"}}>
                           <span style={{fontWeight:900,fontSize:15,color:isCorrect?"#10B981":"#EF4444",letterSpacing:0.3}}>
                             {isCorrect
-                              ? (tryAgainActive ? t("tryAgainCorrect") : `${t("correct")}${isInHistoryMode?"":" +"+(LEVEL_CONFIG[selectedLevel]?.points??0)+" "+t("pts")}`)
+                              ? (tryAgainActive ? t("tryAgainCorrect") : `${t("correct")}${isInHistoryMode?"":" +"+(LEVEL_CONFIG[selectedLevel==="mixed"&&q.level?q.level:selectedLevel]?.points??0)+" "+t("pts")}`)
                               : timedOut
                                 ? <>{t("timeUp")} {lang==="he"?"התשובה הנכונה היא":"The correct answer is"}: <span dir={hasHebrew(q.options[correctIdx])?"rtl":"ltr"} style={{unicodeBidi:"isolate"}}>{renderBidi(q.options[correctIdx],lang)}</span></>
                                 : (tryAgainActive ? t("tryAgainWrong") : t("incorrect"))}

@@ -19,7 +19,7 @@ export async function fetchQuizQuestions(supabase, topicId, level, lang) {
 
 /**
  * Fetch random mixed questions across all topics (WITHOUT answers).
- * Returns: [{ id, q, options }]
+ * Returns: [{ id, q, options, level }]
  */
 export async function fetchMixedQuestions(supabase, lang, limit = 10) {
   const { data, error } = await supabase.rpc("get_mixed_questions", {
@@ -32,13 +32,19 @@ export async function fetchMixedQuestions(supabase, lang, limit = 10) {
 
 /**
  * Validate a quiz answer server-side.
+ * When quizRunId is provided and the answer is correct, the server atomically
+ * increments the user's total_score (idempotent per question+run).
+ * Points are derived entirely from the question's DB level - the client
+ * does not influence scoring.
  * Returns: { correct: bool, correct_answer: number, explanation: string }
  */
-export async function checkQuizAnswer(supabase, questionId, selectedIndex) {
-  const { data, error } = await supabase.rpc("check_quiz_answer", {
+export async function checkQuizAnswer(supabase, questionId, selectedIndex, quizRunId = null) {
+  const params = {
     p_question_id: questionId,
     p_selected: selectedIndex,
-  });
+  };
+  if (quizRunId) params.p_quiz_run_id = quizRunId;
+  const { data, error } = await supabase.rpc("check_quiz_answer", params);
   if (error) throw error;
   return data;
 }
@@ -74,13 +80,17 @@ export async function fetchDailyQuestions(supabase, lang, limit = 10) {
 
 /**
  * Validate a daily question answer server-side.
+ * When quizRunId is provided and the answer is correct, the server atomically
+ * increments the user's total_score by 15 (idempotent per question+run).
  * Returns: { correct: bool, correct_answer: number, explanation: string }
  */
-export async function checkDailyAnswer(supabase, questionId, selectedIndex) {
-  const { data, error } = await supabase.rpc("check_daily_answer", {
+export async function checkDailyAnswer(supabase, questionId, selectedIndex, quizRunId = null) {
+  const params = {
     p_question_id: questionId,
     p_selected: selectedIndex,
-  });
+  };
+  if (quizRunId) params.p_quiz_run_id = quizRunId;
+  const { data, error } = await supabase.rpc("check_daily_answer", params);
   if (error) throw error;
   return data;
 }
@@ -151,4 +161,27 @@ export async function fetchUserRank(supabase, userId) {
   });
   if (error) throw error;
   return data;
+}
+
+/**
+ * Save user progress via server RPC.
+ * The server does NOT accept total_score - it is managed exclusively
+ * by the answer-check RPCs (server-authoritative scoring).
+ */
+export async function saveUserProgress(supabase, {
+  username, bestScore, totalAnswered, totalCorrect,
+  maxStreak, currentStreak, completedTopics, achievements, topicStats,
+}) {
+  const { error } = await supabase.rpc("save_user_progress", {
+    p_username: username,
+    p_best_score: bestScore,
+    p_total_answered: totalAnswered,
+    p_total_correct: totalCorrect,
+    p_max_streak: maxStreak,
+    p_current_streak: currentStreak,
+    p_completed_topics: completedTopics,
+    p_achievements: achievements,
+    p_topic_stats: topicStats,
+  });
+  if (error) throw error;
 }
