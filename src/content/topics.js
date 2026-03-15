@@ -107,7 +107,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "restartPolicy קובע מתי Kubernetes מפעיל מחדש קונטיינר שנפסק.\nAlways (ברירת מחדל): תמיד. OnFailure: רק בקריסה. Never: לעולם לא.\nOnSuccess לא קיים ב-Kubernetes.",
+                "restartPolicy קובע מתי Kubernetes מפעיל מחדש קונטיינר שנפסק.\nAlways (ברירת מחדל):\u200E תמיד. OnFailure:\u200E רק בקריסה. Never:\u200E לעולם לא.\nOnSuccess לא קיים ב-Kubernetes.",
             },
             {
               q: "מה ההבדל בין Job ל-CronJob?",
@@ -464,10 +464,10 @@ export const TOPICS = [
             {
               q: "מה תפקיד ה-HPA ב-Kubernetes?",
               options: [
-              "Horizontal Pod Autoscaler: מגדיל ומקטין Pods לפי עומס",
-              "High Performance App: תצורת Pod מותאמת לביצועים גבוהים",
-              "Helm Package Archive: פורמט שמירה של Helm charts",
-              "Host Port Assignment: מקצה ports ב-Node ל-Pods",
+              "Horizontal Pod Autoscaler:\u200E מגדיל ומקטין Pods לפי עומס",
+              "High Performance App:\u200E תצורת Pod מותאמת לביצועים גבוהים",
+              "Helm Package Archive:\u200E פורמט שמירה של Helm charts",
+              "Host Port Assignment:\u200E מקצה ports ב-Node ל-Pods",
 ],
               answer: 0,
               explanation:
@@ -507,7 +507,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "כל 3 ה-Nodes מסומנים עם taint (dedicated=gpu) וה-Pod חסר toleration תואם.\nלהוסיף toleration ל-spec של ה-Pod שמתאים ל-taint.\n• Node חדש: עוקף, לא פותר. • CPU request: לא רלוונטי. • Namespace: לא משפיע על taints.\nTaint = \"כניסה אסורה\". Toleration = אישור כניסה ב-spec של ה-Pod.",
+                "כל 3 ה-Nodes מסומנים עם taint (dedicated=gpu) וה-Pod חסר toleration תואם.\nלהוסיף toleration ל-spec של ה-Pod שמתאים ל-taint.\n• Node חדש:\u200E עוקף, לא פותר. • CPU request:\u200E לא רלוונטי. • Namespace:\u200E לא משפיע על taints.\nTaint = \"כניסה אסורה\". Toleration = אישור כניסה ב-spec של ה-Pod.",
             },
             {
               q: "StatefulSet עם 3 replicas רץ ב-Cluster.\nPod-0 לא במצב Ready, ו-Pod-1 נשאר במצב Pending.\n\nמה הסיבה הסבירה ביותר?",
@@ -519,7 +519,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "StatefulSet יוצר Pods בסדר (OrderedReady): Pod-0 חייב להיות Ready לפני ש-Pod-1 נוצר.\nלתקן את Pod-0 כדי שיגיע למצב Ready, או להגדיר podManagementPolicy: Parallel.\n• PVC: Pod-1 לא נוצר בכלל. • Quota: גם Pod-0 לא היה עולה. • imagePullSecret: היה גורם ל-ImagePullBackOff.\nבברירת מחדל, StatefulSet יוצר Pods בסדר עוקב ותקיעה ב-Pod מוקדם חוסמת את כל השאר.",
+                "StatefulSet יוצר Pods בסדר (OrderedReady):\u200E Pod-0 חייב להיות Ready לפני ש-Pod-1 נוצר.\nלתקן את Pod-0 כדי שיגיע למצב Ready, או להגדיר podManagementPolicy: Parallel.\n• PVC: Pod-1 לא נוצר בכלל. • Quota:\u200E גם Pod-0 לא היה עולה. • imagePullSecret:\u200E היה גורם ל-ImagePullBackOff.\nבברירת מחדל, StatefulSet יוצר Pods בסדר עוקב ותקיעה ב-Pod מוקדם חוסמת את כל השאר.",
             },
             {
               q: "עדכון Rolling update נתקע.\n\nהרצת:\n\n```\nkubectl rollout status deployment/my-app\n```\n\nפלט:\n\n```\nWaiting for rollout to finish:\n3 out of 5 new replicas have been updated\n```\n\nבנוסף, מוגדר maxUnavailable: 0\n\nמה הסיבה?",
@@ -674,10 +674,10 @@ export const TOPICS = [
             {
               q: "איזה Service מתאים לגישה חיצונית ב-cloud?",
               options: [
-              "ClusterIP: מספק IP פנימי שנגיש מכל Node ב-Cluster",
-              "ExternalName: ממפה ל-DNS חיצוני ומאפשר גישה דרך CNAME",
-              "LoadBalancer: יוצר Load Balancer ב-cloud ומקצה IP חיצוני",
-              "NodePort: חושף port על כל Node לגישה ממחשבים חיצוניים",
+              "ClusterIP:\u200E מספק IP פנימי שנגיש מכל Node ב-Cluster",
+              "ExternalName:\u200E ממפה ל-DNS חיצוני ומאפשר גישה דרך CNAME",
+              "LoadBalancer:\u200E יוצר Load Balancer ב-cloud ומקצה IP חיצוני",
+              "NodePort:\u200E חושף port על כל Node לגישה ממחשבים חיצוניים",
 ],
               answer: 2,
               explanation:
@@ -1081,7 +1081,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "NetworkPolicy היא רק spec. האכיפה תלויה ב-CNI plugin.\nCalico, Cilium ו-Weave אוכפים. Flannel ו-kubenet: לא.\nב-Flannel, NetworkPolicy נוצרת אבל לא נאכפת. אפס הגנה.",
+                "NetworkPolicy היא רק spec. האכיפה תלויה ב-CNI plugin.\nCalico, Cilium ו-Weave אוכפים. Flannel ו-kubenet:\u200E לא.\nב-Flannel, NetworkPolicy נוצרת אבל לא נאכפת. אפס הגנה.",
             },
             {
               q: "מה היתרון של IPVS על iptables ב-kube-proxy?",
@@ -1105,7 +1105,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "Labels הם case-sensitive. app: App ≠ app: app. כתוצאה מכך Endpoints ריקים.\nלתקן selector ל-app: App כדי שיתאים ל-label.\n• port שגוי: שגיאת חיבור, לא Endpoints ריקים. • Pod לא Ready: לא הבעיה כאן. • Namespace: לא רלוונטי.\nבדוק kubectl get endpoints ו-kubectl get pods --show-labels.",
+                "Labels הם case-sensitive. app: App ≠ app: app. כתוצאה מכך Endpoints ריקים.\nלתקן selector ל-app: App כדי שיתאים ל-label.\n• port שגוי: שגיאת חיבור, לא Endpoints ריקים. • Pod לא Ready:\u200E לא הבעיה כאן. • Namespace:\u200E לא רלוונטי.\nבדוק kubectl get endpoints ו-kubectl get pods --show-labels.",
             },
             {
               q: "NetworkPolicy חוסמת DNS.\nPods לא מצליחים לפתור שמות.\n\nהגדרה:\n\n```yaml\nspec:\n  podSelector: {}\n  policyTypes: [Egress]\n  egress:\n  - ports:\n    - port: 443\n```\n\nמה חסר?",
@@ -1129,7 +1129,7 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "Service קיים אבל כש-selector לא תואם Pods, ה-Endpoints ריקים וזה גורם לשגיאת 503.\nלתקן selector או labels כך שה-Pods יתאימו ל-Service.\n• Ingress Controller חסר: לא היה מגיב בכלל. • TLS: שגיאת SSL, לא 503. • Namespace: השגיאה היא endpoints ריקים.\n503 + endpoints not found = בעיית selector/labels.",
+                "Service קיים אבל כש-selector לא תואם Pods, ה-Endpoints ריקים וזה גורם לשגיאת 503.\nלתקן selector או labels כך שה-Pods יתאימו ל-Service.\n• Ingress Controller חסר:\u200E לא היה מגיב בכלל. • TLS:\u200E שגיאת SSL, לא 503. • Namespace:\u200E השגיאה היא endpoints ריקים.\n503 + endpoints not found = בעיית selector/labels.",
             },
             {
               q: "ה-Pod מנסה לגשת ל-Service ולא מצליח.\n\nכתובת שנוסתה:\n\n```\napi-svc.backend.cluster.local\n```\n\nמה ה-FQDN הנכון של Service בשם api-svc ב-Namespace backend?",
@@ -1315,19 +1315,19 @@ export const TOPICS = [
 ],
               answer: 3,
               explanation:
-                "ServiceAccount הוא זהות ל-Pod. כל Namespace מכיל default שמוקצה אוטומטית.\nPods שלא מציינים ServiceAccount מקבלים את default.\nbest practice: ליצור ServiceAccount ייעודי עם הרשאות מינימליות.",
+                "ServiceAccount הוא זהות ל-Pod. כל Namespace מכיל default שמוקצה אוטומטית.\nPods שלא מציינים ServiceAccount מקבלים את default.\nbest practice:\u200E ליצור ServiceAccount ייעודי עם הרשאות מינימליות.",
             },
             {
               q: "מה ראשי התיבות RBAC?",
               options: [
-              "Resource Based Auth Configuration: מנגנון הרשאות מבוסס ענן",
-              "Recursive Binding Access Control: ניהול bindings היררכיים",
-              "Runtime Binary Access Control: אבטחת binaries בזמן ריצה",
+              "Resource Based Auth Configuration:\u200E מנגנון הרשאות מבוסס ענן",
+              "Recursive Binding Access Control:\u200E ניהול bindings היררכיים",
+              "Runtime Binary Access Control:\u200E אבטחת binaries בזמן ריצה",
               "Role Based Access Control",
 ],
               answer: 3,
               explanation:
-                "RBAC = Role Based Access Control: מנגנון הרשאות ב-Kubernetes.\nשלושה מרכיבים: Roles (מה מותר), Subjects (מי מורשה), Bindings (מחברים ביניהם).\nמאפשר שליטה מדויקת. למשל לצפות ב-Pods אך לא למחוק.",
+                "RBAC = Role Based Access Control:\u200E מנגנון הרשאות ב-Kubernetes.\nשלושה מרכיבים: Roles (מה מותר), Subjects (מי מורשה), Bindings (מחברים ביניהם).\nמאפשר שליטה מדויקת. למשל לצפות ב-Pods אך לא למחוק.",
             },
             {
               q: "מה LimitRange עושה ב-Namespace?",
@@ -1356,7 +1356,7 @@ export const TOPICS = [
             {
               q: "מה ההבדל בין resource requests ל-limits?",
               options: [
-              "requests: הכמות המינימלית שה-Scheduler מבטיח; limits: הכמות המקסימלית שהקונטיינר יכול להשתמש",
+              "requests:\u200E הכמות המינימלית שה-Scheduler מבטיח; limits:\u200E הכמות המקסימלית שהקונטיינר יכול להשתמש",
               "requests ו-limits מגדירים את אותם ערכים. הם תמיד שווים",
               "limits קובעים עדיפות Scheduling; requests קובעים QoS class בלבד",
               "requests מגדירים כמות CPU ו-memory שמוקצית בעת יצירת ה-Node",
@@ -1527,15 +1527,15 @@ export const TOPICS = [
 ],
               answer: 0,
               explanation:
-                "Admission webhook מיירט בקשות ל-API server לפני שמירה ב-etcd.\nValidating: דוחה resources לא תקינים. Mutating: משנה resources לפני שמירה.\nכלים כמו OPA Gatekeeper ו-Kyverno עובדים כ-admission webhooks.",
+                "Admission webhook מיירט בקשות ל-API server לפני שמירה ב-etcd.\nValidating:\u200E דוחה resources לא תקינים. Mutating:\u200E משנה resources לפני שמירה.\nכלים כמו OPA Gatekeeper ו-Kyverno עובדים כ-admission webhooks.",
             },
             {
               q: "מה ההבדל בין LimitRange ל-ResourceQuota?",
               options: [
               "LimitRange: CPU quota ל-Node. ResourceQuota: memory quota ל-Cluster",
-              "LimitRange: מגביל מספר Pods. ResourceQuota: מגביל מספר Nodes",
-              "LimitRange: ברירות מחדל per-container. ResourceQuota: מגבלות לכל ה-Namespace",
-              "LimitRange: חל רק על Pods חדשים. ResourceQuota: חל רק על קיימים",
+              "LimitRange:\u200E מגביל מספר Pods. ResourceQuota:\u200E מגביל מספר Nodes",
+              "LimitRange:\u200E ברירות מחדל per-container. ResourceQuota:\u200E מגבלות לכל ה-Namespace",
+              "LimitRange:\u200E חל רק על Pods חדשים. ResourceQuota:\u200E חל רק על קיימים",
 ],
               answer: 2,
               explanation:
@@ -1558,8 +1558,8 @@ export const TOPICS = [
               options: [
               "External Secrets Operator: SecretStore + ExternalSecret CR",
               "Vault Agent Injector: sidecar שמזריק secrets ישירות ל-Pod",
-              "SOPS operator: מפענח קבצי YAML מוצפנים ויוצר K8s Secrets",
-              "Sealed Secrets controller: מצפין Secrets ושומר אותם ב-Git",
+              "SOPS operator:\u200E מפענח קבצי YAML מוצפנים ויוצר K8s Secrets",
+              "Sealed Secrets controller:\u200E מצפין Secrets ושומר אותם ב-Git",
 ],
               answer: 0,
               explanation:
@@ -1715,7 +1715,7 @@ export const TOPICS = [
 ],
               answer: 2,
               explanation:
-                "privileged: ללא הגבלות. baseline: חוסם שימושים מסוכנים (hostPID, privileged). restricted: הכי מחמירה.\nשלוש הרמות מסודרות מהכי פתוחה לסגורה ביותר.\nrestricted דורשת runAsNonRoot, drop ALL capabilities, ו-seccomp. best practice ל-production.",
+                "privileged:\u200E ללא הגבלות. baseline:\u200E חוסם שימושים מסוכנים (hostPID, privileged). restricted:\u200E הכי מחמירה.\nשלוש הרמות מסודרות מהכי פתוחה לסגורה ביותר.\nrestricted דורשת runAsNonRoot, drop ALL capabilities, ו-seccomp. best practice ל-production.",
             },
             {
               q: "מה תפקיד OPA/Gatekeeper ב-Kubernetes?",
@@ -1723,7 +1723,7 @@ export const TOPICS = [
               "controller שמנהל Pod autoscaling לפי custom metrics",
               "operator שמנהל certificate lifecycle עבור Ingress resources",
               "admission controller מובנה שמאמת resource quotas לפני יצירה",
-              "Open Policy Agent: מנגנון policy-as-code לאכיפת כללים ב-K8s",
+              "Open Policy Agent:\u200E מנגנון policy-as-code לאכיפת כללים ב-K8s",
 ],
               answer: 3,
               explanation:
@@ -1901,7 +1901,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "RWO מאפשר mount לקריאה וכתיבה מ-Node אחד בלבד. מתאים לרוב ה-databases.\nRWX מאפשר כמה Nodes במקביל (דורש NFS/EFS).\nROX: קריאה בלבד ממספר Nodes.",
+                "RWO מאפשר mount לקריאה וכתיבה מ-Node אחד בלבד. מתאים לרוב ה-databases.\nRWX מאפשר כמה Nodes במקביל (דורש NFS/EFS).\nROX:\u200E קריאה בלבד ממספר Nodes.",
             },
             {
               q: "מה תפקיד Helm Chart?",
@@ -2282,10 +2282,10 @@ export const TOPICS = [
             {
               q: "מה תפקיד CSI ב-Kubernetes?",
               options: [
-              "Cluster Sync Interface: סטנדרט לסנכרון נתונים בין Clusters",
-              "Container Storage Interface: סטנדרט פתוח שמאפשר ל-vendors לכתוב storage drivers ל-K8s",
-              "Cloud Storage Integration: שכבת חיבור ל-cloud object storage כמו S3",
-              "Container Security Interface: סטנדרט לסריקת images ואכיפת מדיניות אבטחה",
+              "Cluster Sync Interface:\u200E סטנדרט לסנכרון נתונים בין Clusters",
+              "Container Storage Interface:\u200E סטנדרט פתוח שמאפשר ל-vendors לכתוב storage drivers ל-K8s",
+              "Cloud Storage Integration:\u200E שכבת חיבור ל-cloud object storage כמו S3",
+              "Container Security Interface:\u200E סטנדרט לסריקת images ואכיפת מדיניות אבטחה",
 ],
               answer: 1,
               explanation:
@@ -2528,9 +2528,9 @@ export const TOPICS = [
             {
               q: "מה ההבדל בין Running ל-Ready?",
               options: [
-              "Running: הקונטיינר פועל. Ready: ה-Pod עבר readiness probe ומוכן לקבל traffic",
-              "Running: ה-Pod ממתין ל-image pull. Ready: ה-image הורד והקונטיינר עלה",
-              "Ready: ה-Pod מחובר ל-Service. Running: ה-Pod פועל אך לא מחובר ל-Service",
+              "Running:\u200E הקונטיינר פועל. Ready:\u200E ה-Pod עבר readiness probe ומוכן לקבל traffic",
+              "Running:\u200E ה-Pod ממתין ל-image pull. Ready:\u200E ה-image הורד והקונטיינר עלה",
+              "Ready:\u200E ה-Pod מחובר ל-Service. Running:\u200E ה-Pod פועל אך לא מחובר ל-Service",
               "Running ו-Ready זהים. שניהם מציינים שה-Pod פועל ומקבל traffic",
 ],
               answer: 0,
@@ -2947,7 +2947,7 @@ export const TOPICS = [
 ],
               answer: 1,
               explanation:
-                "etcdctl snapshot save יוצר snapshot מלא של etcd: כל מצב ה-Cluster.\nחובה לציין --endpoints, --cacert, --cert, ו--key לאימות.\nזהו הכלי הראשי ל-Disaster Recovery.",
+                "etcdctl snapshot save יוצר snapshot מלא של etcd:\u200E כל מצב ה-Cluster.\nחובה לציין --endpoints, --cacert, --cert, ו--key לאימות.\nזהו הכלי הראשי ל-Disaster Recovery.",
             },
             {
               q: "ה-Pod רץ, אבל ה-liveness probe נכשל שוב ושוב.\n\nהפלט של kubectl describe pod מציג:\n\n```\nLiveness probe failed:\nHTTP probe failed with statuscode: 404\n```\n\nמה בודקים?",
