@@ -1785,12 +1785,16 @@ export default function K8sQuestApp() {
         // Fix 4: carry guest topicStats into the new account row
         let guestTopicStats = {};
         guestTopicStats = safeGetJSON("topicStats_v1", {});
-        supabase.from("user_stats").insert({
-          user_id: userId, username,
-          ...mergedStats, completed_topics: cleanNc, achievements: mergedAch,
-          topic_stats: guestTopicStats,
-          updated_at: new Date().toISOString(),
-        }).then(() => {});  // fire-and-forget - don't block the UI for new account creation
+        try {
+          await supabase.from("user_stats").insert({
+            user_id: userId, username,
+            ...mergedStats, completed_topics: cleanNc, achievements: mergedAch,
+            topic_stats: guestTopicStats,
+            updated_at: new Date().toISOString(),
+          });
+        } catch (insertErr) {
+          console.error("[KubeQuest:boot] user_stats INSERT failed:", insertErr);
+        }
       }
 
       achievementsLoaded.current = true;
