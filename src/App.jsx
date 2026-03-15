@@ -2826,6 +2826,56 @@ export default function K8sQuestApp() {
     return () => clearInterval(incidentTimerRef.current);
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── YAML code block renderer (VS Code style) ──────────────────────────────
+  const highlightYaml = (code) => {
+    return code.split("\n").map((line, i) => {
+      const indent = line.match(/^(\s*)/)[1].length;
+      const guides = [];
+      for (let g = 2; g <= indent; g += 2) {
+        guides.push(<span key={`g${g}`} style={{position:"absolute",left:g * 7.7 - 2,top:0,bottom:0,width:1,background:"rgba(255,255,255,0.06)"}}/>);
+      }
+      // Syntax highlight: key: value
+      const trimmed = line.trimStart();
+      let content;
+      const kvMatch = trimmed.match(/^([\w.-]+)(:)\s*(.*)$/);
+      if (kvMatch) {
+        const [, key, colon, val] = kvMatch;
+        let valSpan = null;
+        if (val) {
+          const isString = /^".*"$/.test(val) || /^'.*'$/.test(val);
+          const isNum = /^\d+(\.\d+)?$/.test(val);
+          const isBool = /^(true|false)$/i.test(val);
+          const color = isString ? "#CE9178" : isNum ? "#B5CEA8" : isBool ? "#569CD6" : "#D4D4D4";
+          valSpan = <span style={{color}}>{val}</span>;
+        }
+        content = <><span style={{color:"#9CDCFE"}}>{key}</span><span style={{color:"#D4D4D4"}}>{colon}</span>{val ? " " : ""}{valSpan}</>;
+      } else if (trimmed.startsWith("- ")) {
+        content = <><span style={{color:"#D4D4D4"}}>-</span><span style={{color:"#9CDCFE"}}>{trimmed.slice(1)}</span></>;
+      } else if (trimmed.startsWith("#")) {
+        content = <span style={{color:"#6A9955"}}>{trimmed}</span>;
+      } else {
+        content = <span style={{color:"#D4D4D4"}}>{trimmed}</span>;
+      }
+      return (
+        <div key={i} style={{position:"relative",minHeight:20}}>
+          {guides}
+          <span style={{whiteSpace:"pre"}}>{" ".repeat(indent)}</span>{content}
+        </div>
+      );
+    });
+  };
+
+  const YamlBlock = ({ code, keyProp }) => (
+    <div key={keyProp} dir="ltr" style={{marginTop:12,borderRadius:10,overflow:"hidden",border:"1px solid rgba(255,255,255,0.08)",boxShadow:"0 2px 12px rgba(0,0,0,0.25)",background:"#1E1E2E"}}>
+      <div style={{padding:"6px 14px",background:"rgba(255,255,255,0.04)",borderBottom:"1px solid rgba(255,255,255,0.06)",display:"flex",alignItems:"center",gap:6}}>
+        <span style={{fontSize:9,fontWeight:700,color:"#888",letterSpacing:1.5,textTransform:"uppercase"}}>YAML</span>
+      </div>
+      <div style={{padding:"14px 16px",fontFamily:"'JetBrains Mono','Fira Code','Source Code Pro','SF Mono',monospace",fontSize:12,lineHeight:1.65,overflowX:"auto",direction:"ltr",textAlign:"left"}}>
+        {highlightYaml(code)}
+      </div>
+    </div>
+  );
+
   const renderTheory = (text) => {
     const lines = text.split('\n');
     const elements = [];
@@ -2834,13 +2884,18 @@ export default function K8sQuestApp() {
     let flowIdx = 0;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (line === 'CODE:') {
+      if (line === 'CODE:' || (!inCode && line.startsWith('```'))) {
         inCode = true;
-        elements.push(<div key={i} style={{color:"#00D4FF",fontSize:10,fontWeight:800,marginTop:14,marginBottom:4,letterSpacing:2,opacity:0.7,direction:"ltr",textAlign:"left"}}>YAML / BASH</div>);
+        continue;
+      }
+      if (inCode && line.startsWith('```')) {
+        elements.push(<YamlBlock key={`code-${i}`} keyProp={`code-${i}`} code={codeLines.join("\n")} />);
+        codeLines = [];
+        inCode = false;
         continue;
       }
       if (inCode) {
-        codeLines.push(<div key={i} style={{fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace",fontSize:11,color:"var(--code-text)",lineHeight:1.8,whiteSpace:"pre",direction:"ltr",textAlign:"left"}}>  {line}</div>);
+        codeLines.push(line);
         continue;
       }
       if (line.startsWith('CMD:')) {
@@ -2886,11 +2941,7 @@ export default function K8sQuestApp() {
       elements.push(<div key={i} style={{color:"var(--text-primary)",fontSize:15,fontWeight:700,marginBottom:8}}>{line}</div>);
     }
     if (codeLines.length > 0) {
-      elements.push(
-        <div key="code-block" style={{maxWidth:"100%",overflowX:"auto",whiteSpace:"nowrap",boxSizing:"border-box",padding:"10px 12px",borderRadius:8}}>
-          {codeLines}
-        </div>
-      );
+      elements.push(<YamlBlock key="code-block" keyProp="code-block" code={codeLines.join("\n")} />);
     }
     return elements;
   };
@@ -4449,15 +4500,29 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     const explanationText = dispAnswerResult?.explanation || q.explanation || "";
                     warnIfHebrew(explanationText, lang, "quiz.explanation");
                     const correctIdx = dispAnswerResult?.correctIndex ?? q.answer;
-                    const paragraphs = explanationText.split("\n").flatMap(p => {
-                      const t2 = p.trim(); if (!t2) return [];
-                      // Don't split lines that are code blocks
-                      if (t2.startsWith("```") || (t2.startsWith("`") && t2.endsWith("`"))) return [t2];
-                      // Split on ". " at sentence boundaries, but not inside backtick-wrapped code
-                      // Temporarily replace backtick spans, split, then restore
-                      const codes = []; const safe = t2.replace(/`[^`]+`/g, m => { codes.push(m); return `\x00${codes.length-1}\x00`; });
-                      return safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i]));
-                    });
+                    const paragraphs = (() => {
+                      const rawLines = explanationText.split("\n");
+                      const result = [];
+                      let fenceLines = null;
+                      for (const p of rawLines) {
+                        const t2 = p.trim();
+                        if (!t2 && !fenceLines) continue;
+                        // Collect multi-line fenced code blocks into a single paragraph
+                        if (fenceLines) {
+                          fenceLines.push(p);
+                          if (t2.startsWith("```")) { result.push(fenceLines.join("\n")); fenceLines = null; }
+                          continue;
+                        }
+                        if (t2.startsWith("```") && !t2.endsWith("```")) { fenceLines = [p]; continue; }
+                        // Single-line code blocks
+                        if (t2.startsWith("```") || (t2.startsWith("`") && t2.endsWith("`"))) { result.push(t2); continue; }
+                        // Split on ". " at sentence boundaries, but not inside backtick-wrapped code
+                        const codes = []; const safe = t2.replace(/`[^`]+`/g, m => { codes.push(m); return `\x00${codes.length-1}\x00`; });
+                        result.push(...safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i])));
+                      }
+                      if (fenceLines) result.push(fenceLines.join("\n")); // unclosed fence
+                      return result;
+                    })();
                     return (
                       <div role="status" aria-live="polite" dir={dir} className="explanation-card" style={{background:isCorrect?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)",border:`1px solid ${isCorrect?"#10B98125":"#EF444425"}`,borderRadius:14,padding:0,marginBottom:8,overflow:"hidden"}}>
                         {/* Status banner */}
@@ -4479,8 +4544,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                               || (s.startsWith("```") && s.endsWith("```"))
                               || (s.startsWith("`") && s.endsWith("`") && !(/[\u0590-\u05FF]/).test(s));
                             if (isCodeOnly) {
-                              const code = s.replace(/^```\s*|```$/g, "").replace(/^`|`$/g, "").trim();
-                              return <code key={idx} dir="ltr" style={{display:"block",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"10px 16px",fontSize:13,fontFamily:"'JetBrains Mono','Fira Code',monospace",color:"inherit",lineHeight:1.7,overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{code}</code>;
+                              const code = s.replace(/^```[a-z]*\n?|```$/g, "").replace(/^`|`$/g, "").trim();
+                              if (s.startsWith("```")) return <YamlBlock key={idx} keyProp={`exp-code-${idx}`} code={code} />;
+                              return <code key={idx} dir="ltr" style={{display:"block",background:"#1E1E2E",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"14px 16px",fontSize:12,fontFamily:"'JetBrains Mono','Fira Code','Source Code Pro',monospace",color:"#D4D4D4",lineHeight:1.65,overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all",boxShadow:"0 2px 12px rgba(0,0,0,0.25)"}}>{code}</code>;
                             }
                             return (
                               <div key={idx} dir={dir} style={{color:"var(--text-light)",fontSize:14,lineHeight:1.75,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
@@ -4496,12 +4562,26 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                     const q = currentQuestions[questionIndex];
                     const iExplanation = dispAnswerResult?.explanation || q.explanation || "";
                     const iCorrectIdx = dispAnswerResult?.correctIndex ?? q.answer;
-                    const iParagraphs = iExplanation.split("\n").flatMap(p => {
-                      const t2 = p.trim(); if (!t2) return [];
-                      if (t2.startsWith("```") || (t2.startsWith("`") && t2.endsWith("`"))) return [t2];
-                      const codes = []; const safe = t2.replace(/`[^`]+`/g, m => { codes.push(m); return `\x00${codes.length-1}\x00`; });
-                      return safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i]));
-                    });
+                    const iParagraphs = (() => {
+                      const rawLines = iExplanation.split("\n");
+                      const result = [];
+                      let fenceLines = null;
+                      for (const p of rawLines) {
+                        const t2 = p.trim();
+                        if (!t2 && !fenceLines) continue;
+                        if (fenceLines) {
+                          fenceLines.push(p);
+                          if (t2.startsWith("```")) { result.push(fenceLines.join("\n")); fenceLines = null; }
+                          continue;
+                        }
+                        if (t2.startsWith("```") && !t2.endsWith("```")) { fenceLines = [p]; continue; }
+                        if (t2.startsWith("```") || (t2.startsWith("`") && t2.endsWith("`"))) { result.push(t2); continue; }
+                        const codes = []; const safe = t2.replace(/`[^`]+`/g, m => { codes.push(m); return `\x00${codes.length-1}\x00`; });
+                        result.push(...safe.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean).map(s => s.replace(/\x00(\d+)\x00/g, (_,i) => codes[i])));
+                      }
+                      if (fenceLines) result.push(fenceLines.join("\n"));
+                      return result;
+                    })();
                     return (
                       <div dir={dir} style={{background:"rgba(168,85,247,0.06)",border:"1px solid rgba(168,85,247,0.22)",borderRadius:14,padding:0,marginBottom:8,direction:dir,animation:"fadeIn 0.3s ease",overflow:"hidden"}}>
                         <div style={{background:"rgba(168,85,247,0.10)",padding:"13px 20px",borderBottom:"1px solid rgba(168,85,247,0.12)",textAlign:dir==="rtl"?"right":"left"}}>
@@ -4515,8 +4595,9 @@ const displayName = isGuest ? t("guestName") : (user?.user_metadata?.username ||
                               || (s.startsWith("```") && s.endsWith("```"))
                               || (s.startsWith("`") && s.endsWith("`") && !(/[\u0590-\u05FF]/).test(s));
                             if (isCodeOnly) {
-                              const code = s.replace(/^```\s*|```$/g, "").replace(/^`|`$/g, "").trim();
-                              return <code key={idx} dir="ltr" style={{display:"block",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"10px 16px",fontSize:13,fontFamily:"'JetBrains Mono','Fira Code',monospace",color:"inherit",lineHeight:1.7,overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{code}</code>;
+                              const code = s.replace(/^```[a-z]*\n?|```$/g, "").replace(/^`|`$/g, "").trim();
+                              if (s.startsWith("```")) return <YamlBlock key={idx} keyProp={`iexp-code-${idx}`} code={code} />;
+                              return <code key={idx} dir="ltr" style={{display:"block",background:"#1E1E2E",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"14px 16px",fontSize:12,fontFamily:"'JetBrains Mono','Fira Code','Source Code Pro',monospace",color:"#D4D4D4",lineHeight:1.65,overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all",boxShadow:"0 2px 12px rgba(0,0,0,0.25)"}}>{code}</code>;
                             }
                             return (
                               <div key={idx} dir={dir} style={{color:"var(--text-light)",fontSize:14,lineHeight:1.85,direction:dir,textAlign:dir==="rtl"?"right":"left",wordBreak:"break-word",overflowWrap:"anywhere",maxWidth:"65ch",unicodeBidi:"isolate"}}>
