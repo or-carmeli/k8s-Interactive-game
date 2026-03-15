@@ -194,11 +194,14 @@ export function renderBidi(text, lang) {
   // which breaks the visual order in RTL paragraphs.
   // Supports multi-word English terms - matches any leading Latin text up to the
   // first colon, as long as no Hebrew appears before it.
-  const kwMatch = text.match(/^([A-Za-z][^:\u0590-\u05EA]*:)\s+([\s\S]+)$/);
+  // Capture keyword WITHOUT the colon. The colon must stay OUTSIDE the LTR span
+  // so it resolves to RTL base direction and appears between the English term and
+  // the Hebrew text (not at the far-right edge of the LTR span).
+  const kwMatch = text.match(/^([A-Za-z][^:\u0590-\u05EA]*):\s+([\s\S]+)$/);
   if (kwMatch && hasHebrew(kwMatch[2])) {
     const rest = kwMatch[2];
     const prefixed = renderHebrewPrefixTerms(rest, lang, "kwr");
-    return <><span dir="ltr" style={{unicodeBidi:"isolate"}}>{kwMatch[1]}</span>{" "}{prefixed || renderBidiInner(rest, lang, "kwr")}</>;
+    return <><span dir="ltr" style={{unicodeBidi:"isolate"}}>{kwMatch[1]}</span>{": "}{prefixed || renderBidiInner(rest, lang, "kwr")}</>;
   }
 
   // Handle inline backtick code spans first: `term` → <span dir="ltr" style={code}>term</span>

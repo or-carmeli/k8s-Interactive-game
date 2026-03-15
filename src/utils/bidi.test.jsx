@@ -433,9 +433,9 @@ describe("leading keyword bidi isolation", () => {
     const result = renderBidi(input, "he");
     const ltrs = ltrTexts(result);
 
-    // "Always:" should be its own isolated LTR span
-    expect(ltrs).toContain("Always:");
-    // "Kubernetes" should be a separate LTR span (not grouped with Always:)
+    // "Always" should be its own isolated LTR span (colon stays outside for correct RTL placement)
+    expect(ltrs).toContain("Always");
+    // "Kubernetes" should be a separate LTR span (not grouped with Always)
     expect(ltrs.some((t) => t === "Always: Kubernetes")).toBe(false);
   });
 
@@ -444,7 +444,7 @@ describe("leading keyword bidi isolation", () => {
     const result = renderBidi(input, "he");
     const ltrs = ltrTexts(result);
 
-    expect(ltrs).toContain("OnFailure:");
+    expect(ltrs).toContain("OnFailure");
     expect(ltrs.some((t) => t === "OnFailure: Kubernetes")).toBe(false);
   });
 
@@ -453,7 +453,7 @@ describe("leading keyword bidi isolation", () => {
     const result = renderBidi(input, "he");
     const ltrs = ltrTexts(result);
 
-    expect(ltrs).toContain("ClusterIP:");
+    expect(ltrs).toContain("ClusterIP");
     // Hebrew text should still be present
     const text = flattenText(result);
     expect(text).toContain("מספק");
@@ -475,7 +475,7 @@ describe("leading keyword bidi isolation", () => {
     const result = renderBidi(input, "he");
     const ltrs = ltrTexts(result);
 
-    expect(ltrs).toContain("LimitRange:");
+    expect(ltrs).toContain("LimitRange");
   });
 
   it("multi-word keyword: Helm Chart: is isolated", () => {
@@ -483,7 +483,7 @@ describe("leading keyword bidi isolation", () => {
     const result = renderBidi(input, "he");
     const ltrs = ltrTexts(result);
 
-    expect(ltrs).toContain("Helm Chart:");
+    expect(ltrs).toContain("Helm Chart");
   });
 
   it("multi-word keyword: External Secrets Operator: is isolated", () => {
@@ -491,7 +491,7 @@ describe("leading keyword bidi isolation", () => {
     const result = renderBidi(input, "he");
     const ltrs = ltrTexts(result);
 
-    expect(ltrs).toContain("External Secrets Operator:");
+    expect(ltrs).toContain("External Secrets Operator");
   });
 });
 
@@ -503,7 +503,7 @@ describe("U+200E LTR mark stripping", () => {
     const result = renderBidiBlock(input, "he");
     const ltrs = ltrTexts(result);
 
-    expect(ltrs).toContain("CrashLoopBackOff:");
+    expect(ltrs).toContain("CrashLoopBackOff");
   });
 
   it("strips U+200E for multi-word terms", () => {
@@ -511,7 +511,7 @@ describe("U+200E LTR mark stripping", () => {
     const result = renderBidiBlock(input, "he");
     const ltrs = ltrTexts(result);
 
-    expect(ltrs).toContain("Helm Chart:");
+    expect(ltrs).toContain("Helm Chart");
   });
 
   it("does not strip U+200E in English mode", () => {
