@@ -146,7 +146,20 @@ export function renderHebrewPrefixTerms(text, lang, keyPrefix) {
     if (p.type === "prefixTerm") {
       return <span key={`${keyPrefix}-hp${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{p.prefix}{"\u2011"}<span dir="ltr" style={{unicodeBidi:"isolate"}}>{p.term}</span></span>;
     }
-    return <span key={`${keyPrefix}-ht${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{renderBidiInner(p.value, lang, `${keyPrefix}h${i}`)}</span>;
+    // Extract trailing whitespace from text preceding a prefix term so the space
+    // sits outside bidi isolation spans. Without this, a trailing space inside an
+    // LTR-isolated English word (e.g. "Pods ") appears visually *before* the word
+    // in RTL context, creating a gap before and missing space after.
+    let value = p.value;
+    let gap = null;
+    if (parts[i + 1]?.type === "prefixTerm" && /\s+$/.test(value)) {
+      gap = value.match(/(\s+)$/)[1];
+      value = value.slice(0, -gap.length);
+    }
+    return [
+      value ? <span key={`${keyPrefix}-ht${i}`} dir="rtl" style={{unicodeBidi:"isolate"}}>{renderBidiInner(value, lang, `${keyPrefix}h${i}`)}</span> : null,
+      gap,
+    ];
   });
 }
 

@@ -220,6 +220,20 @@ describe("Hebrew prefix terms", () => {
   it("returns null when no prefix pattern exists", () => {
     expect(renderHebrewPrefixTerms("שלום עולם", "he", "t")).toBeNull();
   });
+
+  it("LTR word before prefix term has space outside isolation (Pods ב-StatefulSet)", () => {
+    const result = renderHebrewPrefixTerms("Pods ב-StatefulSet מקבלים שמות", "he", "t");
+    expect(result).not.toBeNull();
+    const text = flattenText(result);
+    expect(text).toContain("Pods");
+    expect(text).toContain("StatefulSet");
+
+    // "Pods" LTR span should NOT contain a trailing space (space must be outside isolation)
+    const ltrs = ltrTexts(result);
+    expect(ltrs).toContain("Pods");
+    // Ensure no LTR span has "Pods " with trailing space
+    expect(ltrs.some((t) => t === "Pods ")).toBe(false);
+  });
 });
 
 // ─── Mixed Hebrew/English rendering ──────────────────────────────────────────
