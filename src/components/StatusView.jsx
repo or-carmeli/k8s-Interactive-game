@@ -58,7 +58,7 @@ export default function StatusView({ supabase, lang, isStatusDomain, setScreen, 
         const [services, uptime, incidents, maintenance] = await Promise.all([
           fetchSystemStatus(supabase),
           fetchUptimeHistory(supabase, 30),
-          fetchIncidentHistory(supabase, 20),
+          fetchIncidentHistory(supabase),
           fetchMaintenanceWindows(supabase),
         ]);
         setMonitorServices(services);

@@ -26,8 +26,8 @@ export async function fetchUptimeHistory(supabase, days = 30) {
  * Returns: [{ id, title, severity, status, started_at, resolved_at,
  *             affected_services, impact, root_cause, resolution, prevention }]
  */
-export async function fetchIncidentHistory(supabase, limit = 20) {
-  const { data, error } = await supabase.rpc("get_incidents", { p_limit: limit });
+export async function fetchIncidentHistory(supabase) {
+  const { data, error } = await supabase.rpc("get_all_incidents");
   if (error) throw error;
   return data || [];
 }
