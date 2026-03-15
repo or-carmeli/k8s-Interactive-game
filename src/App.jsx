@@ -611,7 +611,9 @@ function splitQuestionSegments(qText) {
   // Match: quoted strings (8+ chars) OR inline CLI commands (kubectl/helm/etc with args)
   // Lookbehind on quotes: opening quote must NOT follow a letter/digit to avoid
   // false matches across two short-quoted terms like 'api' ב-namespace 'prod'.
-  const splitPat = /((?<![A-Za-z0-9\u0590-\u05FF])'(?:[^']{8,})'|(?<![A-Za-z0-9\u0590-\u05FF])"(?:[^"]{8,})"|(?:(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+(?:\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+)*))/g;
+  // Stop-word lookahead on trailing args: common English prose words (fails, but,
+  // the, etc.) stop command matching to prevent swallowing narrative text.
+  const splitPat = /((?<![A-Za-z0-9\u0590-\u05FF])'(?:[^']{8,})'|(?<![A-Za-z0-9\u0590-\u05FF])"(?:[^"]{8,})"|(?:(?:kubectl|helm|docker|kubeadm|crictl|etcdctl|curl|wget)\s+(?:[^\s\u0590-\u05FF(:]|:[^\s])+(?:\s+(?!(?:fails|returns|shows|but|and|or|the|it|this|which|what|however|because)(?:\s|$|[.,;:!?]))(?:[^\s\u0590-\u05FF(:]|:[^\s])+)*))/g;
 
   let last = 0;
   const matches = [];
