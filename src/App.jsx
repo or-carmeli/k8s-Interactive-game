@@ -1126,6 +1126,8 @@ export default function K8sQuestApp() {
   const loadingDataRef = useRef(false); // prevents concurrent loadUserData calls
   const prevLangRef = useRef(lang);     // tracks previous lang for mid-quiz language switch detection
   const quizRunIdRef  = useRef(null);
+  const prefetchedAnswerRef = useRef(null); // { idx, questionId, result } - cached answer-check RPC
+  const prefetchAbortRef = useRef(null);    // AbortController for in-flight prefetch
 
   const liveIndexRef  = useRef(0);   // highest question index reached; never decremented
   const questionRef   = useRef(null); // focus target when question changes
@@ -2176,6 +2178,29 @@ export default function K8sQuestApp() {
   const handleSelectAnswer = (idx) => {
     if (submitted) return;
     setSelectedAnswer(idx);
+
+    // Prefetch answer check (without scoring) so the result is ready when user confirms.
+    // Scoring happens separately at confirm time to preserve existing behavior.
+    const q = currentQuestions[questionIndex];
+    if (supabase && q?.id && typeof q.answer !== "number") {
+      prefetchAbortRef.current?.abort();
+      prefetchedAnswerRef.current = null;
+      const controller = new AbortController();
+      prefetchAbortRef.current = controller;
+      const originalIndex = q._optionMap ? q._optionMap[idx] : idx;
+      const isDaily = selectedTopic?.id === "daily";
+      const rpcCall = isDaily
+        ? checkDailyAnswer(supabase, q.id, originalIndex, null)
+        : checkQuizAnswer(supabase, q.id, originalIndex, null);
+      rpcCall.then(result => {
+        if (!controller.signal.aborted) {
+          prefetchedAnswerRef.current = { idx, questionId: q.id, result };
+        }
+      }).catch(() => {});
+    } else {
+      prefetchAbortRef.current?.abort();
+      prefetchedAnswerRef.current = null;
+    }
   };
 
   const handleSubmit = async () => {
@@ -2190,23 +2215,47 @@ export default function K8sQuestApp() {
     if (typeof q.answer === "number") {
       result = { correct: selectedAnswer === q.answer, correctIndex: q.answer, explanation: q.explanation };
     } else if (supabase && q.id) {
-      setCheckingAnswer(true);
       const originalIndex = q._optionMap ? q._optionMap[selectedAnswer] : selectedAnswer;
       const isDaily = selectedTopic?.id === "daily";
       // Pass quizRunId for server-side scoring (null for retries -> skip scoring)
       const scoreRunId = isRetryRef.current ? null : quizRunIdRef.current;
-      const callRpc = () => isDaily
-        ? checkDailyAnswer(supabase, q.id, originalIndex, scoreRunId)
-        : checkQuizAnswer(supabase, q.id, originalIndex, scoreRunId);
+
+      // Use prefetched answer-check if available and still matches current selection.
+      // The prefetch was called without a quizRunId (no scoring), so when we use it
+      // we must fire a separate scoring RPC in the background.
+      const cached = prefetchedAnswerRef.current;
       let rpcResult;
-      try {
-        rpcResult = await callRpc();
-      } catch {
-        try { rpcResult = await callRpc(); } catch { /* give up */ }
+      let usedPrefetch = false;
+      if (cached && cached.idx === selectedAnswer && cached.questionId === q.id) {
+        rpcResult = cached.result;
+        usedPrefetch = true;
+        prefetchedAnswerRef.current = null;
+        prefetchAbortRef.current = null;
+      } else {
+        // Prefetch missed or unavailable - fall back to synchronous RPC (includes scoring)
+        prefetchAbortRef.current?.abort();
+        prefetchedAnswerRef.current = null;
+        setCheckingAnswer(true);
+        const callRpc = () => isDaily
+          ? checkDailyAnswer(supabase, q.id, originalIndex, scoreRunId)
+          : checkQuizAnswer(supabase, q.id, originalIndex, scoreRunId);
+        try {
+          rpcResult = await callRpc();
+        } catch {
+          try { rpcResult = await callRpc(); } catch { /* give up */ }
+        }
       }
       if (rpcResult) {
         const correctIndex = q._optionMap ? q._optionMap.indexOf(rpcResult.correct_answer) : rpcResult.correct_answer;
         result = { correct: rpcResult.correct, correctIndex, explanation: rpcResult.explanation };
+        // When prefetch was used, fire the scoring RPC in the background.
+        // The fallback path already includes scoreRunId, so only do this for prefetch hits.
+        if (usedPrefetch && scoreRunId) {
+          (isDaily
+            ? checkDailyAnswer(supabase, q.id, originalIndex, scoreRunId)
+            : checkQuizAnswer(supabase, q.id, originalIndex, scoreRunId)
+          ).catch(() => {});
+        }
       } else {
         // RPC failed (likely stale question ID after DB re-seed) - clear stale
         // quiz and send user home so they can start fresh with valid questions.
@@ -2371,6 +2420,8 @@ export default function K8sQuestApp() {
       setScreen("topicComplete");
     } else {
       submittingRef.current = false;
+      prefetchAbortRef.current?.abort();
+      prefetchedAnswerRef.current = null;
       liveIndexRef.current = questionIndex + 1;
       setQuestionIndex(p => p + 1);
       setSelectedAnswer(null);
@@ -2386,6 +2437,8 @@ export default function K8sQuestApp() {
     quizRunIdRef.current = Date.now().toString(36);
     liveIndexRef.current = 0;
     submittingRef.current = false;
+    prefetchAbortRef.current?.abort();
+    prefetchedAnswerRef.current = null;
     clearQuizState();
     isRetryRef.current = false; // Only the explicit "retry wrong answers" flow sets this true
     setAnswerResult(null);
@@ -2748,7 +2801,7 @@ export default function K8sQuestApp() {
       }
       const idx = ["1","2","3","4"].indexOf(e.key);
       if (!submitted && idx !== -1 && currentQuestions[questionIndex] && idx < currentQuestions[questionIndex].options.length) {
-        setSelectedAnswer(idx);
+        handleSelectAnswer(idx);
       }
     };
     window.addEventListener("keydown", handler);
